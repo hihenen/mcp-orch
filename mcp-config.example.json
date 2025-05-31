@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "github-server": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "your-github-token"
+      },
+      "timeout": 60,
+      "autoApprove": ["list_issues", "create_issue"],
+      "transportType": "stdio",
+      "disabled": false
+    },
+    "notion-server": {
+      "command": "node",
+      "args": ["/path/to/notion-server"],
+      "env": {
+        "NOTION_API_KEY": "your-notion-api-key"
+      },
+      "transportType": "stdio",
+      "disabled": true
+    },
+    "local-server": {
+      "command": "python",
+      "args": ["-m", "my_mcp_server"],
+      "env": {
+        "SERVER_PORT": "8080"
+      },
+      "timeout": 30,
+      "autoApprove": [],
+      "transportType": "stdio",
+      "disabled": false
+    }
+  }
+}
