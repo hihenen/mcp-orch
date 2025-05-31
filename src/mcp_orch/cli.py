@@ -42,25 +42,15 @@ def setup_logging(log_level: str = "INFO"):
 
 @app.command()
 def serve(
-    mode: str = typer.Option(
-        "proxy",
-        "--mode", "-m",
-        help="운영 모드 (proxy 또는 batch)"
-    ),
     host: str = typer.Option(
         "0.0.0.0",
         "--host", "-h",
         help="서버 호스트"
     ),
     port: int = typer.Option(
-        3000,
+        8000,
         "--port", "-p",
         help="서버 포트"
-    ),
-    config_file: Optional[Path] = typer.Option(
-        None,
-        "--config", "-c",
-        help="설정 파일 경로"
     ),
     mcp_config: Optional[Path] = typer.Option(
         Path("mcp-config.json"),
@@ -72,86 +62,26 @@ def serve(
         "--log-level", "-l",
         help="로그 레벨 (DEBUG, INFO, WARNING, ERROR)"
     ),
-    reload: bool = typer.Option(
-        False,
-        "--reload", "-r",
-        help="코드 변경 시 자동 리로드"
-    ),
-    workers: int = typer.Option(
-        1,
-        "--workers", "-w",
-        help="워커 프로세스 수"
-    ),
-    sse_standard: bool = typer.Option(
-        False,
-        "--sse-standard",
-        help="MCP SDK 표준 SSE 구현 사용 (Cline 호환)"
-    ),
-    server_name: Optional[str] = typer.Option(
-        None,
-        "--server",
-        help="표준 SSE 모드에서 사용할 서버 이름 (기본값: 첫 번째 서버)"
-    ),
-    mcp_proxy: bool = typer.Option(
-        False,
-        "--mcp-proxy",
-        help="mcp-proxy 호환 모드 사용 (단일 포트에서 여러 서버 제공)"
-    ),
 ):
-    """MCP Orch 서버 실행"""
+    """MCP Orch 서버 실행 (mcp-proxy 호환 모드)"""
     setup_logging(log_level)
     
     # 설정 로드
     settings = Settings.from_env()
-    settings.server.mode = mode
-    settings.server.host = host
-    settings.server.port = port
-    settings.server.log_level = log_level
-    settings.server.reload = reload
-    settings.server.workers = workers
-    
-    if config_file:
-        settings.config_file = config_file
     settings.mcp_config_file = mcp_config
     
-    # 모드 확인
-    console.print(f"[bold green]Starting MCP Orch in {mode.upper()} mode[/bold green]")
+    # 서버 시작 메시지
+    console.print("[bold green]Starting MCP Orch Server[/bold green]")
     console.print(f"Host: {host}:{port}")
     console.print(f"MCP Config: {mcp_config}")
     console.print(f"Log Level: {log_level}")
+    console.print("[bold yellow]Using mcp-proxy compatible mode[/bold yellow]")
+    console.print("[cyan]Multiple servers will be available on different endpoints[/cyan]")
     
-    # mcp-proxy 모드 확인
-    if mcp_proxy:
-        console.print("[bold yellow]Using mcp-proxy compatible mode[/bold yellow]")
-        console.print("[cyan]Multiple servers will be available on different endpoints[/cyan]")
-        # mcp-proxy 호환 모드 실행
-        from .api.mcp_proxy_mode import run_mcp_proxy_mode
-        
-        asyncio.run(run_mcp_proxy_mode(settings, host=host, port=port))
-    # SSE 표준 모드 확인
-    elif sse_standard:
-        console.print("[bold yellow]Using MCP SDK Standard SSE implementation[/bold yellow]")
-        # MCP 표준 SSE 서버 실행
-        from .api.mcp_sse_server import create_mcp_sse_server
-        
-        async def run_sse_server():
-            server = await create_mcp_sse_server(str(mcp_config))
-            await server.start(host=host, port=port, server_name=server_name)
-        
-        asyncio.run(run_sse_server())
-    else:
-        # FastAPI 앱 생성
-        fastapi_app = create_app(settings)
-        
-        # Uvicorn 서버 실행
-        uvicorn.run(
-            fastapi_app,
-            host=host,
-            port=port,
-            log_level=log_level.lower(),
-            reload=reload,
-            workers=workers if not reload else 1,
-        )
+    # mcp-proxy 호환 모드 실행
+    from .api.mcp_proxy_mode import run_mcp_proxy_mode
+    
+    asyncio.run(run_mcp_proxy_mode(settings, host=host, port=port))
 
 
 @app.command()
