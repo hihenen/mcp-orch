@@ -1,0 +1,139 @@
+{
+  "common": {
+    "appName": "MCP Orch",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "servers": "Servers",
+    "tools": "Tools",
+    "execution": "Execution",
+    "logs": "Logs",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "MCP Orchestration Overview",
+    "mode": {
+      "title": "Operation Mode",
+      "proxy": "Proxy Mode",
+      "batch": "Batch Mode",
+      "proxyDescription": "Integrate multiple MCP servers into a single endpoint",
+      "batchDescription": "Automatically parallelize tasks with LLM"
+    },
+    "stats": {
+      "totalServers": "Total Servers",
+      "activeServers": "Active Servers",
+      "totalTools": "Total Tools",
+      "executionsToday": "Executions Today"
+    },
+    "serverStatus": {
+      "title": "Server Status",
+      "online": "Online",
+      "offline": "Offline",
+      "connecting": "Connecting",
+      "error": "Error",
+      "availableTools": "Available Tools",
+      "cpu": "CPU",
+      "memory": "Memory"
+    }
+  },
+  "servers": {
+    "title": "MCP Servers",
+    "subtitle": "Manage your MCP server connections",
+    "addServer": "Add Server",
+    "editServer": "Edit Server",
+    "deleteServer": "Delete Server",
+    "confirmDelete": "Are you sure you want to delete this server?",
+    "form": {
+      "name": "Server Name",
+      "command": "Command",
+      "args": "Arguments",
+      "env": "Environment Variables",
+      "timeout": "Timeout (seconds)",
+      "autoApprove": "Auto-approve Tools",
+      "transportType": "Transport Type",
+      "disabled": "Disabled",
+      "namePlaceholder": "e.g., github-server",
+      "commandPlaceholder": "e.g., npx",
+      "argsPlaceholder": "One argument per line",
+      "envPlaceholder": "KEY=value format, one per line"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Connection Error"
+    }
+  },
+  "tools": {
+    "title": "Tools",
+    "subtitle": "Browse and execute available tools",
+    "search": "Search tools...",
+    "execute": "Execute",
+    "parameters": "Parameters",
+    "description": "Description",
+    "server": "Server",
+    "noTools": "No tools available",
+    "execution": {
+      "title": "Execute Tool",
+      "running": "Running...",
+      "completed": "Completed",
+      "failed": "Failed",
+      "result": "Result",
+      "error": "Error"
+    }
+  },
+  "logs": {
+    "title": "Logs",
+    "subtitle": "View system and execution logs",
+    "level": {
+      "all": "All",
+      "info": "Info",
+      "warning": "Warning",
+      "error": "Error",
+      "debug": "Debug"
+    },
+    "clear": "Clear Logs",
+    "download": "Download",
+    "autoScroll": "Auto-scroll",
+    "search": "Search logs..."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure application settings",
+    "language": {
+      "title": "Language",
+      "description": "Select your preferred language"
+    },
+    "theme": {
+      "title": "Theme",
+      "description": "Choose your preferred theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "api": {
+      "title": "API Configuration",
+      "endpoint": "API Endpoint",
+      "timeout": "Request Timeout (ms)",
+      "retries": "Max Retries"
+    }
+  }
+}

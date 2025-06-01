@@ -1,0 +1,139 @@
+{
+  "common": {
+    "appName": "MCP Orch",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "add": "추가",
+    "search": "검색",
+    "filter": "필터",
+    "refresh": "새로고침",
+    "close": "닫기",
+    "confirm": "확인",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "yes": "예",
+    "no": "아니오"
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "servers": "서버",
+    "tools": "도구",
+    "execution": "실행",
+    "logs": "로그",
+    "settings": "설정"
+  },
+  "dashboard": {
+    "title": "대시보드",
+    "subtitle": "MCP 오케스트레이션 개요",
+    "mode": {
+      "title": "운영 모드",
+      "proxy": "프록시 모드",
+      "batch": "배치 모드",
+      "proxyDescription": "여러 MCP 서버를 하나의 엔드포인트로 통합",
+      "batchDescription": "LLM과 함께 작업을 자동으로 병렬화"
+    },
+    "stats": {
+      "totalServers": "전체 서버",
+      "activeServers": "활성 서버",
+      "totalTools": "전체 도구",
+      "executionsToday": "오늘 실행 횟수"
+    },
+    "serverStatus": {
+      "title": "서버 상태",
+      "online": "온라인",
+      "offline": "오프라인",
+      "connecting": "연결 중",
+      "error": "오류",
+      "availableTools": "사용 가능한 도구",
+      "cpu": "CPU",
+      "memory": "메모리"
+    }
+  },
+  "servers": {
+    "title": "MCP 서버",
+    "subtitle": "MCP 서버 연결 관리",
+    "addServer": "서버 추가",
+    "editServer": "서버 편집",
+    "deleteServer": "서버 삭제",
+    "confirmDelete": "이 서버를 삭제하시겠습니까?",
+    "form": {
+      "name": "서버 이름",
+      "command": "명령어",
+      "args": "인자",
+      "env": "환경 변수",
+      "timeout": "타임아웃 (초)",
+      "autoApprove": "자동 승인 도구",
+      "transportType": "전송 타입",
+      "disabled": "비활성화",
+      "namePlaceholder": "예: github-server",
+      "commandPlaceholder": "예: npx",
+      "argsPlaceholder": "한 줄에 하나의 인자",
+      "envPlaceholder": "KEY=value 형식, 한 줄에 하나씩"
+    },
+    "status": {
+      "connected": "연결됨",
+      "disconnected": "연결 끊김",
+      "error": "연결 오류"
+    }
+  },
+  "tools": {
+    "title": "도구",
+    "subtitle": "사용 가능한 도구 탐색 및 실행",
+    "search": "도구 검색...",
+    "execute": "실행",
+    "parameters": "매개변수",
+    "description": "설명",
+    "server": "서버",
+    "noTools": "사용 가능한 도구가 없습니다",
+    "execution": {
+      "title": "도구 실행",
+      "running": "실행 중...",
+      "completed": "완료됨",
+      "failed": "실패",
+      "result": "결과",
+      "error": "오류"
+    }
+  },
+  "logs": {
+    "title": "로그",
+    "subtitle": "시스템 및 실행 로그 보기",
+    "level": {
+      "all": "전체",
+      "info": "정보",
+      "warning": "경고",
+      "error": "오류",
+      "debug": "디버그"
+    },
+    "clear": "로그 지우기",
+    "download": "다운로드",
+    "autoScroll": "자동 스크롤",
+    "search": "로그 검색..."
+  },
+  "settings": {
+    "title": "설정",
+    "subtitle": "애플리케이션 설정 구성",
+    "language": {
+      "title": "언어",
+      "description": "선호하는 언어를 선택하세요"
+    },
+    "theme": {
+      "title": "테마",
+      "description": "선호하는 테마를 선택하세요",
+      "light": "라이트",
+      "dark": "다크",
+      "system": "시스템"
+    },
+    "api": {
+      "title": "API 설정",
+      "endpoint": "API 엔드포인트",
+      "timeout": "요청 타임아웃 (ms)",
+      "retries": "최대 재시도 횟수"
+    }
+  }
+}
