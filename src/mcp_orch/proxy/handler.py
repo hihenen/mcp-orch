@@ -115,9 +115,12 @@ class ProxyHandler:
             "status": "success",
             "tools": [
                 {
+                    "id": f"{tool.server_name}.{tool.name}",  # 고유 ID 추가
                     "namespace": tool.namespace,
                     "name": tool.name,
                     "server": tool.server_name,
+                    "serverId": tool.server_name,  # 프론트엔드 호환성을 위해 추가
+                    "serverName": tool.server_name,  # 프론트엔드 호환성을 위해 추가
                     "description": tool.description,
                     "input_schema": tool.input_schema,
                     "output_schema": tool.output_schema
