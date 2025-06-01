@@ -212,6 +212,8 @@ class ProxyHandler:
                     "name": server.name,
                     "connected": server.connected,
                     "transport_type": server.transport_type,
+                    "command": server.command,
+                    "args": server.args,
                     "tools_count": len(server.tools),
                     "last_connected": server.last_connected.isoformat() if server.last_connected else None,
                     "error": server.error

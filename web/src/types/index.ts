@@ -8,12 +8,17 @@ export interface MCPServer {
   timeout?: number;
   autoApprove?: string[];
   transportType: 'stdio' | 'http';
+  transport_type?: 'stdio' | 'http'; // Backend compatibility
   disabled: boolean;
   status: 'online' | 'offline' | 'connecting' | 'error';
+  connected?: boolean; // Backend field
   lastError?: string;
+  error?: string | null; // Backend field
   availableTools?: number;
+  tools_count?: number; // Backend field
   cpu?: number;
   memory?: number;
+  last_connected?: string; // Backend field (ISO date string)
 }
 
 // Tool related types

@@ -232,17 +232,31 @@ export default function ServerDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Type</div>
-              <div className="text-sm font-medium">SSE</div>
+              <div className="text-sm text-muted-foreground mb-1">Transport Type</div>
+              <div className="text-sm font-medium">{server.transport_type?.toUpperCase() || 'STDIO'}</div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">URL</div>
-              <div className="text-sm font-medium font-mono">/sse/{server.name}</div>
+              <div className="text-sm text-muted-foreground mb-1">Command</div>
+              <div className="text-sm font-medium font-mono break-all">{server.command || 'N/A'}</div>
             </div>
+            {server.args && server.args.length > 0 && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Arguments</div>
+                <div className="text-sm font-medium font-mono break-all">{server.args.join(' ')}</div>
+              </div>
+            )}
             <div>
-              <div className="text-sm text-muted-foreground mb-1">Timeout</div>
-              <div className="text-sm font-medium">60s</div>
+              <div className="text-sm text-muted-foreground mb-1">Tools Count</div>
+              <div className="text-sm font-medium">{server.tools_count || serverTools.length}</div>
             </div>
+            {server.last_connected && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Last Connected</div>
+                <div className="text-sm font-medium">
+                  {new Date(server.last_connected).toLocaleString()}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
