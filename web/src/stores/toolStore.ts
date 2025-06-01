@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { Tool } from '@/types';
+import { getApiClient } from '@/lib/api';
 
 interface ToolState {
   tools: Tool[];
@@ -19,6 +20,7 @@ interface ToolState {
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   setSelectedServerId: (serverId: string | null) => void;
+  fetchTools: () => Promise<void>;
   
   // Selectors
   getToolById: (id: string) => Tool | undefined;
@@ -67,6 +69,24 @@ export const useToolStore = create<ToolState>()(
       setSearchQuery: (searchQuery) => set({ searchQuery }),
       
       setSelectedServerId: (selectedServerId) => set({ selectedServerId }),
+      
+      fetchTools: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const apiClient = getApiClient();
+          const response = await apiClient.getTools();
+          if (response.success && response.data) {
+            set({ tools: response.data, isLoading: false });
+          } else {
+            throw new Error(response.error || 'Failed to fetch tools');
+          }
+        } catch (error) {
+          set({ 
+            error: error instanceof Error ? error.message : 'Failed to fetch tools',
+            isLoading: false 
+          });
+        }
+      },
       
       getToolById: (id) => {
         const state = get();

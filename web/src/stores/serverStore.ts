@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { MCPServer } from '@/types';
+import { getApiClient } from '@/lib/api';
 
 interface ServerState {
   servers: MCPServer[];
@@ -15,6 +16,7 @@ interface ServerState {
   setServerStatus: (id: string, status: MCPServer['status'], error?: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+  fetchServers: () => Promise<void>;
   
   // Selectors
   getServerById: (id: string) => MCPServer | undefined;
@@ -61,6 +63,24 @@ export const useServerStore = create<ServerState>()(
         setLoading: (isLoading) => set({ isLoading }),
         
         setError: (error) => set({ error }),
+        
+        fetchServers: async () => {
+          set({ isLoading: true, error: null });
+          try {
+            const apiClient = getApiClient();
+            const response = await apiClient.getServers();
+            if (response.success && response.data) {
+              set({ servers: response.data, isLoading: false });
+            } else {
+              throw new Error(response.error || 'Failed to fetch servers');
+            }
+          } catch (error) {
+            set({ 
+              error: error instanceof Error ? error.message : 'Failed to fetch servers',
+              isLoading: false 
+            });
+          }
+        },
         
         getServerById: (id) => {
           const state = get();

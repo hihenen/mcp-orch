@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Server, Zap, Activity, Settings } from "lucide-react";
+import { Server, Zap } from "lucide-react";
 import { useServerStore } from "@/stores/serverStore";
 import { useToolStore } from "@/stores/toolStore";
 import { useExecutionStore } from "@/stores/executionStore";
+import { ServerStatusCard } from "@/components/dashboard/ServerStatusCard";
 import { MCPServer, Tool, Execution } from "@/types";
 
 export default function DashboardPage() {
@@ -42,17 +42,18 @@ export default function DashboardPage() {
         const toolsResponse = await fetch('http://localhost:8000/tools');
         if (toolsResponse.ok) {
           const toolsData = await toolsResponse.json();
+          console.log('Tools API response:', toolsData);
           const tools: Tool[] = toolsData.map((tool: any) => {
-            const [serverName, toolName] = tool.namespace.split('.');
             return {
               id: tool.namespace,
-              name: toolName || tool.name,
+              name: tool.name,
               description: tool.description || '',
-              serverId: serverName,
-              serverName: serverName,
+              serverId: tool.server,
+              serverName: tool.server,
               parameters: [],
             };
           });
+          console.log('Mapped tools:', tools);
           useToolStore.getState().setTools(tools);
         }
 
@@ -168,31 +169,12 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {servers.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No servers connected</p>
+                <p className="text-gray-500 text-center py-8 col-span-full">No servers connected</p>
               ) : (
                 servers.map((server) => (
-                  <div key={server.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <Server className={`w-8 h-8 ${
-                        server.status === "online" ? "text-blue-600" : "text-gray-400"
-                      }`} />
-                      <div>
-                        <h3 className="font-semibold">{server.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {server.availableTools} tools available
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className={
-                      server.status === "online" 
-                        ? "bg-green-100 text-green-800" 
-                        : "bg-gray-100 text-gray-800"
-                    }>
-                      {server.status === "online" ? "Online" : "Offline"}
-                    </Badge>
-                  </div>
+                  <ServerStatusCard key={server.id} server={server} />
                 ))
               )}
             </div>

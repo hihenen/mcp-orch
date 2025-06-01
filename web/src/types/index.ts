@@ -26,6 +26,9 @@ export interface Tool {
   parameters?: ToolParameter[];
 }
 
+// Alias for compatibility
+export type MCPTool = Tool;
+
 export interface ToolParameter {
   name: string;
   type: string;
