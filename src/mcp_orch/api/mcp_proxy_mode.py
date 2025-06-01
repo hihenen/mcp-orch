@@ -104,9 +104,29 @@ async def create_mcp_proxy_app(
     async def get_status(request: Request):
         return JSONResponse(status_info)
     
+    # API 엔드포인트들
+    async def get_servers(request: Request):
+        """서버 목록 반환"""
+        servers_response = await proxy_handler._handle_list_servers({})
+        return JSONResponse(servers_response.get("servers", []))
+    
+    async def get_tools(request: Request):
+        """도구 목록 반환"""
+        tools_response = await proxy_handler._handle_list_tools({})
+        return JSONResponse(tools_response.get("tools", []))
+    
+    async def get_server_tools(request: Request):
+        """특정 서버의 도구 목록 반환"""
+        server_name = request.path_params["server_name"]
+        tools_response = await proxy_handler._handle_list_tools({"server_name": server_name})
+        return JSONResponse(tools_response.get("tools", []))
+    
     # 라우트 목록
     routes = [
-        Route("/status", endpoint=get_status)
+        Route("/status", endpoint=get_status),
+        Route("/servers", endpoint=get_servers),
+        Route("/tools", endpoint=get_tools),
+        Route("/tools/{server_name}", endpoint=get_server_tools)
     ]
     
     # 서버별 SSE 엔드포인트 생성

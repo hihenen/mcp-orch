@@ -46,115 +46,50 @@ export default function ToolsPage() {
   const [executionResult, setExecutionResult] = useState<any>(null);
 
   useEffect(() => {
-    // In a real app, this would fetch from the API
-    // For now, we'll use mock data
-    const mockTools: Tool[] = [
-      {
-        id: "github.create_issue",
-        name: "create_issue",
-        description: "Create a new issue in a GitHub repository",
-        serverId: "github-server",
-        serverName: "GitHub Server",
-        parameters: [
-          {
-            name: "repository",
-            type: "string",
-            description: "Repository name (owner/repo)",
-            required: true,
-          },
-          {
-            name: "title",
-            type: "string",
-            description: "Issue title",
-            required: true,
-          },
-          {
-            name: "body",
-            type: "string",
-            description: "Issue body content",
-            required: false,
-          },
-          {
-            name: "labels",
-            type: "array",
-            description: "Labels to add to the issue",
-            required: false,
-          },
-        ],
-      },
-      {
-        id: "github.list_issues",
-        name: "list_issues",
-        description: "List issues in a GitHub repository",
-        serverId: "github-server",
-        serverName: "GitHub Server",
-        parameters: [
-          {
-            name: "repository",
-            type: "string",
-            description: "Repository name (owner/repo)",
-            required: true,
-          },
-          {
-            name: "state",
-            type: "string",
-            description: "Issue state (open, closed, all)",
-            required: false,
-            default: "open",
-          },
-        ],
-      },
-      {
-        id: "notion.create_page",
-        name: "create_page",
-        description: "Create a new page in Notion",
-        serverId: "notion-server",
-        serverName: "Notion Server",
-        parameters: [
-          {
-            name: "parent_id",
-            type: "string",
-            description: "Parent page or database ID",
-            required: true,
-          },
-          {
-            name: "title",
-            type: "string",
-            description: "Page title",
-            required: true,
-          },
-          {
-            name: "content",
-            type: "object",
-            description: "Page content blocks",
-            required: false,
-          },
-        ],
-      },
-      {
-        id: "slack.send_message",
-        name: "send_message",
-        description: "Send a message to a Slack channel",
-        serverId: "slack-server",
-        serverName: "Slack Server",
-        parameters: [
-          {
-            name: "channel",
-            type: "string",
-            description: "Channel ID or name",
-            required: true,
-          },
-          {
-            name: "text",
-            type: "string",
-            description: "Message text",
-            required: true,
-          },
-        ],
-      },
-    ];
-    
-    useToolStore.getState().setTools(mockTools);
+    // Fetch tools from the API
+    const fetchTools = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/tools');
+        if (response.ok) {
+          const data = await response.json();
+          // Transform API response to match our Tool type
+          const tools: Tool[] = data.map((tool: any) => {
+            const [serverName, toolName] = tool.namespace.split('.');
+            
+            // Parse input schema to extract parameters
+            const parameters: ToolParameter[] = [];
+            if (tool.input_schema?.properties) {
+              const required = tool.input_schema.required || [];
+              Object.entries(tool.input_schema.properties).forEach(([name, schema]: [string, any]) => {
+                parameters.push({
+                  name,
+                  type: schema.type || 'string',
+                  description: schema.description || '',
+                  required: required.includes(name),
+                  default: schema.default,
+                });
+              });
+            }
+            
+            return {
+              id: tool.namespace,
+              name: toolName || tool.name,
+              description: tool.description || '',
+              serverId: serverName,
+              serverName: serverName,
+              parameters,
+            };
+          });
+          useToolStore.getState().setTools(tools);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tools:', error);
+        // Fallback to empty array if API fails
+        useToolStore.getState().setTools([]);
+      }
+    };
+
+    fetchTools();
   }, []);
 
   const filteredTools = tools.filter(tool => 

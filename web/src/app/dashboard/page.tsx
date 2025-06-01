@@ -1,13 +1,97 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Server, Zap, Activity, Settings } from "lucide-react";
+import { useServerStore } from "@/stores/serverStore";
+import { useToolStore } from "@/stores/toolStore";
+import { useExecutionStore } from "@/stores/executionStore";
+import { MCPServer, Tool, Execution } from "@/types";
 
 export default function DashboardPage() {
   const [mode, setMode] = useState<"proxy" | "batch">("proxy");
+  const { servers } = useServerStore();
+  const { tools } = useToolStore();
+  const { executions } = useExecutionStore();
+
+  useEffect(() => {
+    // Fetch data from the API
+    const fetchData = async () => {
+      try {
+        // Fetch servers
+        const serversResponse = await fetch('http://localhost:8000/servers');
+        if (serversResponse.ok) {
+          const serversData = await serversResponse.json();
+          const servers: MCPServer[] = serversData.map((server: any) => ({
+            id: server.name,
+            name: server.name,
+            command: server.command || '',
+            args: server.args || [],
+            env: server.env || {},
+            transportType: server.transport_type || 'stdio' as const,
+            status: server.connected ? 'online' : 'offline',
+            availableTools: server.tools_count || 0,
+            disabled: false,
+          }));
+          useServerStore.getState().setServers(servers);
+        }
+
+        // Fetch tools
+        const toolsResponse = await fetch('http://localhost:8000/tools');
+        if (toolsResponse.ok) {
+          const toolsData = await toolsResponse.json();
+          const tools: Tool[] = toolsData.map((tool: any) => {
+            const [serverName, toolName] = tool.namespace.split('.');
+            return {
+              id: tool.namespace,
+              name: toolName || tool.name,
+              description: tool.description || '',
+              serverId: serverName,
+              serverName: serverName,
+              parameters: [],
+            };
+          });
+          useToolStore.getState().setTools(tools);
+        }
+
+        // For now, use mock executions until we have a real executions API
+        const mockExecutions: Execution[] = [
+          {
+            id: "exec-1",
+            toolId: "brave-search.web_search",
+            toolName: "web_search",
+            serverId: "brave-search",
+            serverName: "brave-search",
+            parameters: { query: "MCP protocol" },
+            status: "completed",
+            startedAt: new Date(Date.now() - 3600000),
+            completedAt: new Date(Date.now() - 3500000),
+            duration: 100000,
+            result: { success: true },
+          },
+        ];
+        useExecutionStore.getState().setExecutions(mockExecutions);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        // Fallback to empty data if API fails
+        useServerStore.getState().setServers([]);
+        useToolStore.getState().setTools([]);
+        useExecutionStore.getState().setExecutions([]);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const activeServers = servers.filter(s => s.status === "online").length;
+  const totalTools = tools.length;
+  const todayExecutions = executions.filter(e => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return e.startedAt >= today;
+  }).length;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -46,7 +130,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">Total Servers</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">{servers.length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -54,7 +138,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">Active Servers</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">2</div>
+              <div className="text-2xl font-bold text-green-600">{activeServers}</div>
             </CardContent>
           </Card>
           <Card>
@@ -62,7 +146,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">Total Tools</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">{totalTools}</div>
             </CardContent>
           </Card>
           <Card>
@@ -70,7 +154,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">Executions Today</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">156</div>
+              <div className="text-2xl font-bold">{todayExecutions}</div>
             </CardContent>
           </Card>
         </div>
@@ -85,38 +169,32 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Server className="w-8 h-8 text-blue-600" />
-                  <div>
-                    <h3 className="font-semibold">GitHub Server</h3>
-                    <p className="text-sm text-gray-600">12 tools available</p>
+              {servers.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No servers connected</p>
+              ) : (
+                servers.map((server) => (
+                  <div key={server.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <Server className={`w-8 h-8 ${
+                        server.status === "online" ? "text-blue-600" : "text-gray-400"
+                      }`} />
+                      <div>
+                        <h3 className="font-semibold">{server.name}</h3>
+                        <p className="text-sm text-gray-600">
+                          {server.availableTools} tools available
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={
+                      server.status === "online" 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-gray-100 text-gray-800"
+                    }>
+                      {server.status === "online" ? "Online" : "Offline"}
+                    </Badge>
                   </div>
-                </div>
-                <Badge className="bg-green-100 text-green-800">Online</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Server className="w-8 h-8 text-purple-600" />
-                  <div>
-                    <h3 className="font-semibold">Notion Server</h3>
-                    <p className="text-sm text-gray-600">8 tools available</p>
-                  </div>
-                </div>
-                <Badge className="bg-green-100 text-green-800">Online</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Server className="w-8 h-8 text-gray-400" />
-                  <div>
-                    <h3 className="font-semibold">Slack Server</h3>
-                    <p className="text-sm text-gray-600">4 tools available</p>
-                  </div>
-                </div>
-                <Badge className="bg-gray-100 text-gray-800">Offline</Badge>
-              </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

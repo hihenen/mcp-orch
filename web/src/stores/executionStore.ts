@@ -8,6 +8,7 @@ interface ExecutionState {
   error: string | null;
   
   // Actions
+  setExecutions: (executions: Execution[]) => void;
   addExecution: (execution: Execution) => void;
   updateExecution: (id: string, updates: Partial<Execution>) => void;
   removeExecution: (id: string) => void;
@@ -40,6 +41,8 @@ export const useExecutionStore = create<ExecutionState>()(
         isLoading: false,
         error: null,
 
+        setExecutions: (executions) => set({ executions }),
+        
         addExecution: (execution) =>
           set((state) => ({
             executions: [execution, ...state.executions].slice(0, 1000), // Keep last 1000 executions

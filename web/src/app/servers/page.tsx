@@ -46,46 +46,58 @@ export default function ServersPage() {
   });
 
   useEffect(() => {
-    // In a real app, this would fetch from the API
-    // For now, we'll use mock data
-    const mockServers: MCPServer[] = [
-      {
-        id: "github-server",
-        name: "GitHub Server",
-        command: "npx",
-        args: ["-y", "@modelcontextprotocol/server-github"],
-        env: { GITHUB_TOKEN: "***" },
-        transportType: "stdio",
-        status: "online",
-        availableTools: 12,
-        disabled: false,
-      },
-      {
-        id: "notion-server",
-        name: "Notion Server",
-        command: "node",
-        args: ["/path/to/notion-server"],
-        env: { NOTION_API_KEY: "***" },
-        transportType: "stdio",
-        status: "online",
-        availableTools: 8,
-        disabled: false,
-      },
-      {
-        id: "slack-server",
-        name: "Slack Server",
-        command: "python",
-        args: ["-m", "slack_mcp_server"],
-        env: { SLACK_TOKEN: "***" },
-        transportType: "stdio",
-        status: "offline",
-        availableTools: 4,
-        disabled: false,
-      },
-    ];
-    
-    // Simulate API call
-    useServerStore.getState().setServers(mockServers);
+    // Fetch servers from the API
+    const fetchServers = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/servers');
+        if (response.ok) {
+          const data = await response.json();
+          // Transform API response to match our MCPServer type
+          const servers: MCPServer[] = data.map((server: any) => ({
+            id: server.name,
+            name: server.name,
+            command: server.command || '',
+            args: server.args || [],
+            env: server.env || {},
+            transportType: 'stdio' as const,
+            status: server.connected ? 'online' : 'offline',
+            availableTools: server.tools_count || 0,
+            disabled: false,
+          }));
+          useServerStore.getState().setServers(servers);
+        }
+      } catch (error) {
+        console.error('Failed to fetch servers:', error);
+        // Fallback to mock data if API fails
+        const mockServers: MCPServer[] = [
+          {
+            id: "brave-search",
+            name: "brave-search",
+            command: "npx",
+            args: ["-y", "@modelcontextprotocol/server-brave-search"],
+            env: {},
+            transportType: "stdio",
+            status: "online",
+            availableTools: 2,
+            disabled: false,
+          },
+          {
+            id: "excel-mcp-server",
+            name: "excel-mcp-server",
+            command: "npx",
+            args: ["-y", "@smithery/cli@latest", "run", "@negokaz/excel-mcp-server"],
+            env: {},
+            transportType: "stdio",
+            status: "online",
+            availableTools: 5,
+            disabled: false,
+          },
+        ];
+        useServerStore.getState().setServers(mockServers);
+      }
+    };
+
+    fetchServers();
   }, []);
 
   const handleSubmit = () => {
