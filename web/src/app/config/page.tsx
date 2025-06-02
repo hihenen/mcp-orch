@@ -16,7 +16,7 @@ import {
   Settings
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { AppLayout } from '@/components/layout/AppLayout';
+
 
 interface ConfigValidation {
   valid: boolean;
@@ -248,8 +248,7 @@ export default function ConfigPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Configuration</h1>
         <p className="text-gray-600 dark:text-gray-400">
@@ -365,8 +364,7 @@ export default function ConfigPage() {
           <strong>Note:</strong> Changes to the configuration will require a server reload to take effect.
           Use the "Reload Servers" button after saving to apply your changes.
         </p>
-        </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }

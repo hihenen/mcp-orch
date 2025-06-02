@@ -120,6 +120,7 @@ export default function DashboardPage() {
             >
               <Zap className="w-4 h-4 mr-2" />
               Batch Mode
+              (Comming Soon....)
             </Button>
           </div>
         </div>

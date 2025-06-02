@@ -15,6 +15,7 @@ import { useToolStore } from '@/stores/toolStore';
 import { ToolExecutionModal } from '@/components/tools/ToolExecutionModal';
 import { ExecutionTimeline } from '@/components/tools/ExecutionTimeline';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { api } from '@/lib/api';
 
 export default function ServerDetailPage() {
   const params = useParams();
@@ -61,6 +62,24 @@ export default function ServerDetailPage() {
     loadServerData();
   }, [serverId, servers, tools, fetchServers, fetchTools, getToolsByServerId]);
 
+  // 서버 목록이 업데이트되면 현재 서버 정보도 업데이트
+  useEffect(() => {
+    if (servers.length > 0 && serverId) {
+      const updatedServer = servers.find(s => s.name === serverId);
+      if (updatedServer) {
+        setServer(updatedServer);
+      }
+    }
+  }, [servers, serverId]);
+
+  // 도구 목록이 업데이트되면 서버별 도구도 업데이트
+  useEffect(() => {
+    if (serverId) {
+      const updatedServerTools = getToolsByServerId(serverId);
+      setServerTools(updatedServerTools);
+    }
+  }, [tools, serverId, getToolsByServerId]);
+
   const filteredTools = serverTools.filter(tool =>
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tool.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -70,24 +89,58 @@ export default function ServerDetailPage() {
     router.push('/dashboard');
   };
 
-  const handleRestart = () => {
-    // TODO: Implement server restart
-    console.log('Restart server:', serverId);
+  const handleRestart = async () => {
+    try {
+      const result = await api.restartServer(serverId);
+      if (result.status === 'success') {
+        // 서버 목록 새로고침
+        await fetchServers();
+        
+        // 도구 목록도 새로고침
+        await fetchTools();
+        
+        // 서버별 도구 다시 가져오기
+        const updatedServerTools = getToolsByServerId(serverId);
+        setServerTools(updatedServerTools);
+        
+        // 성공 메시지 표시 (나중에 토스트로 변경 가능)
+        console.log(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to restart server:', error);
+    }
   };
 
   const handleConfigure = () => {
-    // TODO: Navigate to server configuration
-    router.push(`/servers/${serverId}/configure`);
+    // Configuration 페이지로 이동
+    router.push('/config');
   };
 
   const handleViewLogs = () => {
-    // TODO: Navigate to server logs
-    router.push(`/servers/${serverId}/logs`);
+    // 로그 페이지로 이동 (서버 필터링)
+    router.push(`/logs?server=${serverId}`);
   };
 
-  const handleToggleStatus = () => {
-    // TODO: Implement server enable/disable
-    console.log('Toggle server status:', serverId);
+  const handleToggleStatus = async () => {
+    try {
+      const result = await api.toggleServer(serverId);
+      if (result.status === 'success') {
+        // 서버 목록 새로고침
+        await fetchServers();
+        
+        // 도구 목록도 새로고침 (서버가 활성화되면 도구가 로드됨)
+        await fetchTools();
+        
+        // 서버별 도구 다시 가져오기
+        const updatedServerTools = getToolsByServerId(serverId);
+        setServerTools(updatedServerTools);
+        
+        // 성공 메시지 표시
+        console.log(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to toggle server status:', error);
+    }
   };
 
   const handleExecuteTool = (tool: MCPTool) => {

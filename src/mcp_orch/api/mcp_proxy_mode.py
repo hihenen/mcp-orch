@@ -355,6 +355,59 @@ async def create_mcp_proxy_app(
         except Exception as e:
             return JSONResponse({"error": f"Failed to validate configuration: {str(e)}"}, status_code=500)
     
+    # 서버 제어 엔드포인트
+    async def restart_server(request: Request):
+        """서버 재시작"""
+        server_name = request.path_params["server_name"]
+        
+        try:
+            # 현재는 전체 서버를 재로드하는 방식으로 구현
+            # 개별 서버 재시작은 추후 구현 예정
+            await proxy_handler.reload_configuration()
+            
+            return JSONResponse({
+                "status": "success",
+                "message": f"Server '{server_name}' restarted successfully"
+            })
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+    
+    async def toggle_server(request: Request):
+        """서버 활성화/비활성화 토글"""
+        from pathlib import Path
+        
+        server_name = request.path_params["server_name"]
+        
+        try:
+            # 현재 설정 읽기
+            config_path = Path("mcp-config.json")
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            
+            # servers 또는 mcpServers 키 찾기
+            servers_key = "servers" if "servers" in config else "mcpServers" if "mcpServers" in config else None
+            if not servers_key or server_name not in config[servers_key]:
+                return JSONResponse({"error": f"Server '{server_name}' not found"}, status_code=404)
+            
+            # disabled 상태 토글
+            current_disabled = config[servers_key][server_name].get("disabled", False)
+            config[servers_key][server_name]["disabled"] = not current_disabled
+            
+            # 설정 저장
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            # 서버 재로드
+            await proxy_handler.reload_configuration()
+            
+            return JSONResponse({
+                "status": "success",
+                "message": f"Server '{server_name}' {'disabled' if not current_disabled else 'enabled'} successfully",
+                "disabled": not current_disabled
+            })
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+    
     # 라우트 목록
     routes = [
         Route("/status", endpoint=get_status),
@@ -369,7 +422,10 @@ async def create_mcp_proxy_app(
         Route("/api/config", endpoint=get_config),
         Route("/api/config", endpoint=update_config, methods=["PUT"]),
         Route("/api/config/reload", endpoint=reload_config, methods=["POST"]),
-        Route("/api/config/validate", endpoint=validate_config, methods=["POST"])
+        Route("/api/config/validate", endpoint=validate_config, methods=["POST"]),
+        # 서버 제어 엔드포인트
+        Route("/api/servers/{server_name}/restart", endpoint=restart_server, methods=["POST"]),
+        Route("/api/servers/{server_name}/toggle", endpoint=toggle_server, methods=["POST"])
     ]
     
     # 서버별 SSE 엔드포인트 생성

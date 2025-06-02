@@ -76,10 +76,6 @@ class ToolRegistry:
         config = config_parser.load()
         
         for server_name, server_config in config.servers.items():
-            if server_config.disabled:
-                logger.info(f"Skipping disabled server: {server_name}")
-                continue
-                
             server_info = ServerInfo(
                 name=server_name,
                 command=server_config.command,
@@ -92,6 +88,9 @@ class ToolRegistry:
             )
             
             self._servers[server_name] = server_info
+            
+            if server_config.disabled:
+                logger.info(f"Loaded disabled server: {server_name}")
             
         logger.info(f"Loaded {len(self._servers)} MCP server configurations")
             
