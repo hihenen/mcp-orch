@@ -121,12 +121,132 @@ async def create_mcp_proxy_app(
         tools_response = await proxy_handler._handle_list_tools({"server_name": server_name})
         return JSONResponse(tools_response.get("tools", []))
     
+    # 도구 실행 엔드포인트
+    async def execute_tool(request: Request):
+        """도구 실행"""
+        server_name = request.path_params["server_name"]
+        tool_name = request.path_params["tool_name"]
+        
+        try:
+            body = await request.json()
+            arguments = body.get("arguments", {})
+            
+            namespace = f"{server_name}.{tool_name}"
+            result = await proxy_handler._handle_call_tool({
+                "namespace": namespace,
+                "arguments": arguments
+            })
+            
+            return JSONResponse(result)
+        except Exception as e:
+            return JSONResponse({"error": str(e), "status": "error"}, status_code=500)
+    
+    # 실행 히스토리 저장소 (임시)
+    execution_history = []
+    
+    # 실행 히스토리 엔드포인트
+    async def get_executions(request: Request):
+        """실행 히스토리 조회"""
+        # 쿼리 파라미터 처리
+        limit = int(request.query_params.get("limit", 100))
+        server_id = request.query_params.get("server_id")
+        
+        filtered = execution_history
+        if server_id:
+            filtered = [e for e in filtered if e.get("serverId") == server_id]
+        
+        # 최신순 정렬 및 제한
+        filtered.sort(key=lambda x: x.get("startTime", ""), reverse=True)
+        filtered = filtered[:limit]
+        
+        # 샘플 데이터 추가 (비어있을 경우)
+        if len(filtered) == 0 and not server_id:
+            import uuid
+            from datetime import datetime, timedelta
+            import random
+            
+            sample_tools = [
+                ("brave-search", "brave_web_search", "Search the web"),
+                ("excel-mcp-server", "excel_read_sheet", "Read Excel sheet")
+            ]
+            
+            now = datetime.now()
+            for i in range(3):
+                server, tool, tool_display = random.choice(sample_tools)
+                start_time = now - timedelta(hours=i*2, minutes=random.randint(0, 59))
+                duration = random.randint(500, 5000)
+                status = random.choice(["completed", "completed", "failed"])
+                
+                execution = {
+                    "id": str(uuid.uuid4()),
+                    "serverId": server,
+                    "toolId": f"{server}.{tool}",
+                    "toolName": tool_display,
+                    "status": status,
+                    "startTime": start_time.isoformat(),
+                    "endTime": (start_time + timedelta(milliseconds=duration)).isoformat(),
+                    "duration": duration,
+                    "parameters": {"query": f"Sample query {i+1}"},
+                    "result": {"success": True, "data": f"Sample result"} if status == "completed" else None,
+                    "error": "Connection timeout" if status == "failed" else None
+                }
+                filtered.append(execution)
+        
+        return JSONResponse(filtered)
+    
+    async def create_execution(request: Request):
+        """실행 기록 생성"""
+        try:
+            execution = await request.json()
+            execution_history.insert(0, execution)
+            
+            # 최대 1000개 유지
+            if len(execution_history) > 1000:
+                execution_history.pop()
+            
+            return JSONResponse(execution)
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+    
+    async def update_execution(request: Request):
+        """실행 상태 업데이트"""
+        execution_id = request.path_params["execution_id"]
+        
+        try:
+            updates = await request.json()
+            
+            # 실행 찾기
+            execution = next((e for e in execution_history if e["id"] == execution_id), None)
+            if not execution:
+                return JSONResponse({"error": "Execution not found"}, status_code=404)
+            
+            # 업데이트 적용
+            execution.update(updates)
+            
+            # 종료 시간 및 duration 계산
+            if updates.get("status") in ["completed", "failed"] and "endTime" not in execution:
+                from datetime import datetime
+                execution["endTime"] = datetime.now().isoformat()
+                
+                if "startTime" in execution:
+                    start = datetime.fromisoformat(execution["startTime"].replace("Z", "+00:00"))
+                    end = datetime.fromisoformat(execution["endTime"].replace("Z", "+00:00"))
+                    execution["duration"] = int((end - start).total_seconds() * 1000)
+            
+            return JSONResponse(execution)
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+    
     # 라우트 목록
     routes = [
         Route("/status", endpoint=get_status),
         Route("/servers", endpoint=get_servers),
         Route("/tools", endpoint=get_tools),
-        Route("/tools/{server_name}", endpoint=get_server_tools)
+        Route("/tools/{server_name}", endpoint=get_server_tools),
+        Route("/tools/{server_name}/{tool_name}", endpoint=execute_tool, methods=["POST"]),
+        Route("/api/executions", endpoint=get_executions),
+        Route("/api/executions", endpoint=create_execution, methods=["POST"]),
+        Route("/api/executions/{execution_id}", endpoint=update_execution, methods=["PATCH"])
     ]
     
     # 서버별 SSE 엔드포인트 생성

@@ -123,7 +123,9 @@ class ProxyHandler:
                     "serverName": tool.server_name,  # 프론트엔드 호환성을 위해 추가
                     "description": tool.description,
                     "input_schema": tool.input_schema,
-                    "output_schema": tool.output_schema
+                    "inputSchema": tool.input_schema,  # 프론트엔드 호환성
+                    "output_schema": tool.output_schema,
+                    "outputSchema": tool.output_schema  # 프론트엔드 호환성
                 }
                 for tool in tools
             ]

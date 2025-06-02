@@ -103,7 +103,7 @@ export function ToolExecutionModal({ tool, isOpen, onClose }: ToolExecutionModal
     }
 
     try {
-      const result = await executeTool(tool.namespace, tool.name, parameters)
+      const result = await executeTool(tool.namespace || `${tool.serverId}.${tool.name}`, tool.name, parameters)
       const endTime = new Date()
       const duration = endTime.getTime() - startTime.getTime()
       
