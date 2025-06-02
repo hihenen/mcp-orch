@@ -18,6 +18,9 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
 from starlette.responses import JSONResponse
 from starlette.requests import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from .auth import AuthMiddleware
 
 from mcp.server import Server as MCPServer
 from mcp.server.sse import SseServerTransport
@@ -476,6 +479,10 @@ async def create_mcp_proxy_app(
     
     # 미들웨어 설정
     middleware = []
+    
+    # 인증 미들웨어 추가
+    middleware.append(Middleware(AuthMiddleware))
+    
     if allow_origins:
         middleware.append(
             Middleware(

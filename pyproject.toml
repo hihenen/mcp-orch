@@ -38,6 +38,7 @@ dependencies = [
     "alembic>=1.13.0",
     "sse-starlette>=1.6.0",
     "mcp>=1.9.1",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]

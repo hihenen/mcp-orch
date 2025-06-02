@@ -13,7 +13,8 @@ import {
   CheckCircle, 
   FileJson,
   Code,
-  Settings
+  Settings,
+  Key
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -34,9 +35,16 @@ export default function ConfigPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('editor');
+  const [apiToken, setApiToken] = useState<string>('');
+  const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
     loadConfig();
+    // Load API token from localStorage
+    const token = api.getApiToken();
+    if (token) {
+      setApiToken(token);
+    }
   }, []);
 
   const loadConfig = async () => {
@@ -247,6 +255,11 @@ export default function ConfigPage() {
     );
   }
 
+  const saveApiToken = () => {
+    api.setApiToken(apiToken || null);
+    setMessage({ type: 'success', text: 'API token saved successfully' });
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
@@ -267,6 +280,57 @@ export default function ConfigPage() {
         </Alert>
       )}
 
+      {/* API Token Configuration */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            <CardTitle>API Authentication</CardTitle>
+          </div>
+          <CardDescription>
+            Configure Bearer token for API authentication. Leave empty to disable authentication.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <input
+                  type={showToken ? 'text' : 'password'}
+                  value={apiToken}
+                  onChange={(e) => setApiToken(e.target.value)}
+                  placeholder="Enter your API token"
+                  className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowToken(!showToken)}
+              >
+                {showToken ? 'Hide' : 'Show'}
+              </Button>
+              <Button
+                size="sm"
+                onClick={saveApiToken}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Token
+              </Button>
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              <p>To enable API authentication:</p>
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>Set the <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">MCP_ORCH_API_TOKEN</code> environment variable on the server</li>
+                <li>Enter the same token here</li>
+                <li>All API requests will require the Bearer token</li>
+              </ol>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* MCP Configuration */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
