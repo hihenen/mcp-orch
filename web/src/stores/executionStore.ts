@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { Execution } from '@/types';
+import { getApiClient } from '@/lib/api';
 
 interface ExecutionState {
   executions: Execution[];
@@ -15,6 +16,7 @@ interface ExecutionState {
   clearExecutions: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+  fetchExecutions: (limit?: number) => Promise<void>;
   
   // Selectors
   getExecutionById: (id: string) => Execution | undefined;
@@ -66,6 +68,24 @@ export const useExecutionStore = create<ExecutionState>()(
         
         setError: (error) => set({ error }),
         
+        fetchExecutions: async (limit = 100) => {
+          set({ isLoading: true, error: null });
+          try {
+            const apiClient = getApiClient();
+            const response = await apiClient.getExecutions(limit);
+            if (response.success && response.data) {
+              set({ executions: response.data, isLoading: false });
+            } else {
+              throw new Error(response.error || 'Failed to fetch executions');
+            }
+          } catch (error) {
+            set({ 
+              error: error instanceof Error ? error.message : 'Failed to fetch executions',
+              isLoading: false 
+            });
+          }
+        },
+        
         getExecutionById: (id) => {
           const state = get();
           return state.executions.find((execution) => execution.id === id);
@@ -92,7 +112,10 @@ export const useExecutionStore = create<ExecutionState>()(
           today.setHours(0, 0, 0, 0);
           
           return state.executions.filter(
-            (execution) => new Date(execution.startedAt) >= today
+            (execution) => {
+              const startDate = execution.startedAt || execution.startTime;
+              return startDate ? new Date(startDate) >= today : false;
+            }
           );
         },
         

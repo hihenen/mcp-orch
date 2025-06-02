@@ -28,7 +28,13 @@ export interface Tool {
   description: string;
   serverId: string;
   serverName: string;
+  namespace: string;
   parameters?: ToolParameter[];
+  inputSchema?: {
+    type: string;
+    properties?: Record<string, any>;
+    required?: string[];
+  };
 }
 
 // Alias for compatibility
@@ -45,15 +51,18 @@ export interface ToolParameter {
 // Execution related types
 export interface Execution {
   id: string;
-  toolId: string;
+  toolId?: string;
   toolName: string;
+  toolNamespace?: string;
   serverId: string;
-  serverName: string;
+  serverName?: string;
   parameters: Record<string, any>;
   status: 'pending' | 'running' | 'completed' | 'failed';
   result?: any;
   error?: string;
-  startedAt: Date;
+  startTime?: string;
+  endTime?: string;
+  startedAt?: Date;
   completedAt?: Date;
   duration?: number;
 }

@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 import { MCPServer, MCPTool } from '@/types';
 import { useServerStore } from '@/stores/serverStore';
 import { useToolStore } from '@/stores/toolStore';
+import { ToolExecutionModal } from '@/components/tools/ToolExecutionModal';
+import { ExecutionTimeline } from '@/components/tools/ExecutionTimeline';
 
 export default function ServerDetailPage() {
   const params = useParams();
@@ -24,6 +26,8 @@ export default function ServerDetailPage() {
   const [serverTools, setServerTools] = useState<MCPTool[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const loadServerData = async () => {
@@ -54,7 +58,7 @@ export default function ServerDetailPage() {
     };
 
     loadServerData();
-  }, [serverId, servers, tools, fetchServers, fetchTools]);
+  }, [serverId, servers, tools, fetchServers, fetchTools, getToolsByServerId]);
 
   const filteredTools = serverTools.filter(tool =>
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,6 +87,16 @@ export default function ServerDetailPage() {
   const handleToggleStatus = () => {
     // TODO: Implement server enable/disable
     console.log('Toggle server status:', serverId);
+  };
+
+  const handleExecuteTool = (tool: MCPTool) => {
+    setSelectedTool(tool);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedTool(null);
+    setIsModalOpen(false);
   };
 
   if (isLoading) {
@@ -261,9 +275,10 @@ export default function ServerDetailPage() {
         </Card>
       </div>
 
-      {/* Available Tools */}
-      <Card>
-        <CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Available Tools */}
+        <Card>
+          <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Available Tools</CardTitle>
             <div className="relative">
@@ -285,12 +300,28 @@ export default function ServerDetailPage() {
           ) : (
             <div className="space-y-4">
               {filteredTools.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} serverName={server.name} />
+                <ToolCard 
+                  key={tool.id} 
+                  tool={tool} 
+                  serverName={server.name}
+                  onExecute={() => handleExecuteTool(tool)}
+                />
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Execution History */}
+        <ExecutionTimeline serverId={serverId} limit={20} />
+      </div>
+
+      {/* Tool Execution Modal */}
+      <ToolExecutionModal
+        tool={selectedTool}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
@@ -299,14 +330,10 @@ export default function ServerDetailPage() {
 interface ToolCardProps {
   tool: MCPTool;
   serverName: string;
+  onExecute: () => void;
 }
 
-function ToolCard({ tool, serverName }: ToolCardProps) {
-  const handleExecute = () => {
-    // TODO: Open execution modal
-    console.log('Execute tool:', tool.name);
-  };
-
+function ToolCard({ tool, serverName, onExecute }: ToolCardProps) {
   // Remove server prefix from tool name for display
   const displayName = tool.name.replace(`${serverName}.`, '');
 
@@ -328,7 +355,7 @@ function ToolCard({ tool, serverName }: ToolCardProps) {
           </div>
           <Button 
             size="sm" 
-            onClick={handleExecute}
+            onClick={onExecute}
             className="ml-4"
           >
             Execute

@@ -21,6 +21,7 @@ interface ToolState {
   setSearchQuery: (query: string) => void;
   setSelectedServerId: (serverId: string | null) => void;
   fetchTools: () => Promise<void>;
+  executeTool: (namespace: string, toolName: string, parameters: Record<string, any>) => Promise<any>;
   
   // Selectors
   getToolById: (id: string) => Tool | undefined;
@@ -85,6 +86,16 @@ export const useToolStore = create<ToolState>()(
             error: error instanceof Error ? error.message : 'Failed to fetch tools',
             isLoading: false 
           });
+        }
+      },
+      
+      executeTool: async (namespace: string, toolName: string, parameters: Record<string, any>) => {
+        const apiClient = getApiClient();
+        const response = await apiClient.executeTool(namespace, toolName, parameters);
+        if (response.success) {
+          return response.data;
+        } else {
+          throw new Error(response.error || 'Failed to execute tool');
         }
       },
       

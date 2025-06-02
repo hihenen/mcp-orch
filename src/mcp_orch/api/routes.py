@@ -113,6 +113,22 @@ async def call_tool(
     return ToolCallResponse(**result)
 
 
+@router.post("/tools/{namespace}/{tool_name}", response_model=ToolCallResponse, tags=["Tools"])
+async def call_tool_direct(
+    namespace: str,
+    tool_name: str,
+    tool_request: ToolCallRequest,
+    request: Request
+):
+    """
+    도구 호출 (직접 경로)
+    
+    서버와 도구 이름을 분리하여 호출
+    """
+    full_namespace = f"{namespace}.{tool_name}"
+    return await call_tool(full_namespace, tool_request, request)
+
+
 # 서버 관련 엔드포인트
 @router.get("/servers", tags=["Servers"])
 async def list_servers(request: Request):
@@ -424,6 +440,140 @@ async def sse_message_endpoint(server_name: str, request: Request):
 
 # SSE 핸들러 인스턴스를 저장할 전역 딕셔너리
 _sse_handlers: Dict[str, Any] = {}
+
+# 실행 히스토리를 저장할 임시 저장소 (실제로는 DB 사용 권장)
+_execution_history: List[Dict[str, Any]] = []
+
+# 실행 히스토리 관련 엔드포인트
+@router.get("/api/executions", tags=["Executions"])
+async def get_executions(
+    limit: int = 100,
+    server_id: Optional[str] = None,
+    tool_id: Optional[str] = None,
+    status: Optional[str] = None
+):
+    """실행 히스토리 조회"""
+    import uuid
+    from datetime import datetime, timedelta
+    import random
+    
+    # 필터링된 실행 목록
+    filtered_executions = _execution_history.copy()
+    
+    if server_id:
+        filtered_executions = [e for e in filtered_executions if e.get("serverId") == server_id]
+    if tool_id:
+        filtered_executions = [e for e in filtered_executions if e.get("toolId") == tool_id]
+    if status:
+        filtered_executions = [e for e in filtered_executions if e.get("status") == status]
+    
+    # 최신순 정렬 및 제한
+    filtered_executions.sort(key=lambda x: x.get("startTime", ""), reverse=True)
+    filtered_executions = filtered_executions[:limit]
+    
+    # 데모용 데이터 추가 (실행 히스토리가 없을 경우)
+    if len(filtered_executions) == 0 and not (server_id or tool_id or status):
+        # 샘플 실행 데이터 생성
+        sample_tools = [
+            ("brave-search", "search", "Search the web"),
+            ("excel-mcp-server", "excel_read_sheet", "Read Excel sheet"),
+            ("github", "create_issue", "Create GitHub issue"),
+            ("notion", "create_page", "Create Notion page")
+        ]
+        
+        now = datetime.now()
+        for i in range(5):
+            server, tool, tool_display = random.choice(sample_tools)
+            start_time = now - timedelta(hours=i*2, minutes=random.randint(0, 59))
+            duration = random.randint(500, 5000)
+            status = random.choice(["completed", "completed", "completed", "failed"])
+            
+            execution = {
+                "id": str(uuid.uuid4()),
+                "serverId": server,
+                "toolId": f"{server}.{tool}",
+                "toolName": tool_display,
+                "status": status,
+                "startTime": start_time.isoformat(),
+                "endTime": (start_time + timedelta(milliseconds=duration)).isoformat(),
+                "duration": duration,
+                "parameters": {
+                    "query": f"Sample query {i+1}"
+                } if "search" in tool else {
+                    "title": f"Sample {tool_display} {i+1}"
+                },
+                "result": {
+                    "success": True,
+                    "data": f"Sample result for {tool_display}"
+                } if status == "completed" else None,
+                "error": "Connection timeout" if status == "failed" else None
+            }
+            filtered_executions.append(execution)
+    
+    return filtered_executions
+
+
+@router.get("/api/executions/{execution_id}", tags=["Executions"])
+async def get_execution(execution_id: str):
+    """특정 실행 상세 정보 조회"""
+    execution = next((e for e in _execution_history if e["id"] == execution_id), None)
+    
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    
+    return execution
+
+
+@router.post("/api/executions", tags=["Executions"])
+async def create_execution(execution: Dict[str, Any]):
+    """새 실행 기록 생성"""
+    import uuid
+    from datetime import datetime
+    
+    # ID 생성
+    if "id" not in execution:
+        execution["id"] = str(uuid.uuid4())
+    
+    # 시작 시간 설정
+    if "startTime" not in execution:
+        execution["startTime"] = datetime.now().isoformat()
+    
+    # 상태 기본값
+    if "status" not in execution:
+        execution["status"] = "pending"
+    
+    _execution_history.insert(0, execution)
+    
+    # 최대 1000개까지만 유지
+    if len(_execution_history) > 1000:
+        _execution_history.pop()
+    
+    return execution
+
+
+@router.patch("/api/executions/{execution_id}", tags=["Executions"])
+async def update_execution(execution_id: str, updates: Dict[str, Any]):
+    """실행 상태 업데이트"""
+    execution = next((e for e in _execution_history if e["id"] == execution_id), None)
+    
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    
+    # 업데이트 적용
+    execution.update(updates)
+    
+    # 종료 시간 및 duration 계산
+    if updates.get("status") in ["completed", "failed"] and "endTime" not in execution:
+        from datetime import datetime
+        execution["endTime"] = datetime.now().isoformat()
+        
+        if "startTime" in execution:
+            start = datetime.fromisoformat(execution["startTime"].replace("Z", "+00:00"))
+            end = datetime.fromisoformat(execution["endTime"].replace("Z", "+00:00"))
+            execution["duration"] = int((end - start).total_seconds() * 1000)
+    
+    return execution
+
 
 # Cline이 사용하는 messages 엔드포인트 추가
 @router.post("/messages/{server_name}/", tags=["SSE"])
