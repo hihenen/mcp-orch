@@ -207,6 +207,14 @@ class ProxyHandler:
         """서버 목록 조회 처리"""
         servers = self.tool_registry.get_servers()
         
+        # 설정 파일에서 추가 정보 가져오기
+        config_parser = getattr(self.tool_registry, 'config_parser', None)
+        config_data = {}
+        if config_parser and hasattr(config_parser, '_config'):
+            config = config_parser._config
+            if hasattr(config, 'servers'):
+                config_data = config.servers
+        
         return {
             "status": "success",
             "servers": [
@@ -216,6 +224,10 @@ class ProxyHandler:
                     "transport_type": server.transport_type,
                     "command": server.command,
                     "args": server.args,
+                    "env": getattr(config_data.get(server.name, {}), 'env', {}),
+                    "timeout": getattr(config_data.get(server.name, {}), 'timeout', 30),
+                    "autoApprove": getattr(config_data.get(server.name, {}), 'autoApprove', []),
+                    "disabled": getattr(config_data.get(server.name, {}), 'disabled', False),
                     "tools_count": len(server.tools),
                     "last_connected": server.last_connected.isoformat() if server.last_connected else None,
                     "error": server.error
@@ -300,3 +312,9 @@ class ProxyHandler:
                 "status": "error",
                 "error": str(e)
             }
+    
+    async def reload_configuration(self) -> None:
+        """설정 재로드 (reload_servers의 별칭)"""
+        result = await self.reload_servers()
+        if result["status"] == "error":
+            raise Exception(result["error"])

@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, RefreshCw, Settings, FileText, Power, Server, Cpu, HardDrive, Search } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Settings, FileText, Power, Server, Cpu, HardDrive, Search, Copy, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MCPServer, MCPTool } from '@/types';
 import { useServerStore } from '@/stores/serverStore';
 import { useToolStore } from '@/stores/toolStore';
 import { ToolExecutionModal } from '@/components/tools/ToolExecutionModal';
 import { ExecutionTimeline } from '@/components/tools/ExecutionTimeline';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ServerDetailPage() {
   const params = useParams();
@@ -144,7 +145,7 @@ export default function ServerDetailPage() {
       </div>
 
       {/* Overview and Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Server Overview */}
         <Card className="md:col-span-1">
           <CardHeader>
@@ -244,33 +245,108 @@ export default function ServerDetailPage() {
           <CardHeader>
             <CardTitle className="text-lg">Connection Info</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Transport Type</div>
-              <div className="text-sm font-medium">{server.transport_type?.toUpperCase() || 'STDIO'}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Command</div>
-              <div className="text-sm font-medium font-mono break-all">{server.command || 'N/A'}</div>
-            </div>
-            {server.args && server.args.length > 0 && (
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Arguments</div>
-                <div className="text-sm font-medium font-mono break-all">{server.args.join(' ')}</div>
-              </div>
-            )}
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Tools Count</div>
-              <div className="text-sm font-medium">{server.tools_count || serverTools.length}</div>
-            </div>
-            {server.last_connected && (
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Last Connected</div>
-                <div className="text-sm font-medium">
-                  {new Date(server.last_connected).toLocaleString()}
+          <CardContent>
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="info">Info</TabsTrigger>
+                <TabsTrigger value="json">JSON</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="info" className="space-y-3 mt-4">
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Status</div>
+                  <div className="text-sm font-medium">
+                    <Badge variant={server.disabled ? 'secondary' : 'default'}>
+                      {server.disabled ? 'Disabled' : 'Enabled'}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            )}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Transport Type</div>
+                  <div className="text-sm font-medium">{server.transport_type?.toUpperCase() || 'STDIO'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Command</div>
+                  <div className="text-sm font-medium font-mono break-all">{server.command || 'N/A'}</div>
+                </div>
+                {server.args && server.args.length > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Arguments</div>
+                    <div className="text-sm font-medium font-mono break-all">{server.args.join(' ')}</div>
+                  </div>
+                )}
+                {server.env && Object.keys(server.env).length > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Environment Variables</div>
+                    <div className="text-sm font-medium font-mono">
+                      {Object.entries(server.env).map(([key, value]) => (
+                        <div key={key} className="break-all">
+                          {key}: {value}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Timeout</div>
+                  <div className="text-sm font-medium">{server.timeout || 30} seconds</div>
+                </div>
+                {server.autoApprove && server.autoApprove.length > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Auto Approve</div>
+                    <div className="text-sm font-medium">
+                      {server.autoApprove.map((pattern, idx) => (
+                        <Badge key={idx} variant="outline" className="mr-1 mb-1">
+                          {pattern}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Tools Count</div>
+                  <div className="text-sm font-medium">{server.tools_count || serverTools.length}</div>
+                </div>
+                {server.last_connected && (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Last Connected</div>
+                    <div className="text-sm font-medium">
+                      {new Date(server.last_connected).toLocaleString()}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="json" className="mt-4">
+                <ConnectionInfoJson server={server} />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+        
+        {/* MCP Client Integration */}
+        <Card className="md:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-lg">MCP Client Integration</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cline, Cursor, Claude Desktop 등에서 사용
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="json" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="json">JSON Config</TabsTrigger>
+                <TabsTrigger value="url">SSE URL</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="json" className="mt-4">
+                <ClineConfigJson server={server} />
+              </TabsContent>
+              
+              <TabsContent value="url" className="mt-4">
+                <ClineConfigUrl serverId={serverId} />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
@@ -363,5 +439,235 @@ function ToolCard({ tool, serverName, onExecute }: ToolCardProps) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Cline Config JSON Component
+function ClineConfigJson({ server }: { server: MCPServer }) {
+  const [copiedDirect, setCopiedDirect] = useState(false);
+  const [copiedProxy, setCopiedProxy] = useState(false);
+  const [activeConfig, setActiveConfig] = useState<'direct' | 'proxy'>('proxy');
+  
+  // Direct config - 개별 서버 직접 설치
+  const directConfig = {
+    "mcpServers": {
+      [server.name]: {
+        "command": server.command,
+        "args": server.args || [],
+        "env": server.env || {}
+      }
+    }
+  };
+  
+  // Proxy config - MCP-Orch를 통한 프록시 연결
+  const proxyConfig = {
+    "mcpServers": {
+      [`${server.name}-proxy`]: {
+        "disabled": false,
+        "timeout": 30,
+        "url": `http://localhost:8000/servers/${server.name}/sse`,
+        "transportType": "sse"
+      }
+    }
+  };
+  
+  const directConfigString = JSON.stringify(directConfig, null, 2);
+  const proxyConfigString = JSON.stringify(proxyConfig, null, 2);
+  
+  const handleCopyDirect = () => {
+    navigator.clipboard.writeText(directConfigString);
+    setCopiedDirect(true);
+    setTimeout(() => setCopiedDirect(false), 2000);
+  };
+  
+  const handleCopyProxy = () => {
+    navigator.clipboard.writeText(proxyConfigString);
+    setCopiedProxy(true);
+    setTimeout(() => setCopiedProxy(false), 2000);
+  };
+  
+  return (
+    <div className="space-y-4">
+      {/* Config Type Selector */}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={activeConfig === 'proxy' ? 'default' : 'outline'}
+          onClick={() => setActiveConfig('proxy')}
+          className="text-xs"
+        >
+          Proxy 연결 (권장)
+        </Button>
+        <Button
+          size="sm"
+          variant={activeConfig === 'direct' ? 'default' : 'outline'}
+          onClick={() => setActiveConfig('direct')}
+          className="text-xs"
+        >
+          직접 연결
+        </Button>
+      </div>
+      
+      {/* Proxy Config */}
+      {activeConfig === 'proxy' && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground">
+              MCP-Orch 프록시를 통한 연결 (Cline, Cursor 등)
+            </p>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCopyProxy}
+              className="h-7 px-2"
+            >
+              {copiedProxy ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
+          <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
+            <code>{proxyConfigString}</code>
+          </pre>
+          <p className="text-xs text-muted-foreground">
+            MCP-Orch가 실행 중이어야 하며, 모든 도구가 통합되어 제공됩니다.
+          </p>
+        </div>
+      )}
+      
+      {/* Direct Config */}
+      {activeConfig === 'direct' && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground">
+              개별 서버 직접 설치 (MCP-Orch 없이)
+            </p>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCopyDirect}
+              className="h-7 px-2"
+            >
+              {copiedDirect ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
+          <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
+            <code>{directConfigString}</code>
+          </pre>
+          <p className="text-xs text-muted-foreground">
+            서버가 로컬에 설치되어 있어야 합니다.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Connection Info JSON Component
+function ConnectionInfoJson({ server }: { server: MCPServer }) {
+  const [copied, setCopied] = useState(false);
+  
+  // 전체 서버 설정 포함
+  const serverConfig: any = {
+    "command": server.command,
+    "args": server.args || [],
+    "env": server.env || {},
+    "timeout": server.timeout || 30,
+    "autoApprove": server.autoApprove || [],
+    "transportType": server.transport_type || "stdio",
+    "disabled": server.disabled || false
+  };
+  
+  const config = {
+    "mcpServers": {
+      [server.name]: serverConfig
+    }
+  };
+  
+  const configString = JSON.stringify(config, null, 2);
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(configString);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-muted-foreground">
+          MCP-Orch에 등록된 전체 서버 설정
+        </p>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleCopy}
+          className="h-7 px-2"
+        >
+          {copied ? (
+            <Check className="h-3 w-3" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </Button>
+      </div>
+      <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
+        <code>{configString}</code>
+      </pre>
+      <p className="text-xs text-muted-foreground">
+        이 설정을 사용하여 다른 MCP-Orch 인스턴스나 로컬 환경에서 동일한 서버를 설정할 수 있습니다.
+      </p>
+    </div>
+  );
+}
+
+// Cline Config URL Component
+function ClineConfigUrl({ serverId }: { serverId: string }) {
+  const [copied, setCopied] = useState(false);
+  
+  // Get the current host
+  const host = typeof window !== 'undefined' ? window.location.origin.replace(/:\d+$/, ':8000') : 'http://localhost:8000';
+  const sseUrl = `${host}/servers/${serverId}/sse`;
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(sseUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-muted-foreground">
+          SSE 연결 URL (HTTP Transport)
+        </p>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleCopy}
+          className="h-7 px-2"
+        >
+          {copied ? (
+            <Check className="h-3 w-3" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </Button>
+      </div>
+      <div className="bg-muted p-3 rounded-md">
+        <code className="text-xs break-all">{sseUrl}</code>
+      </div>
+      <div className="mt-2">
+        <p className="text-xs text-muted-foreground">
+          이 URL은 HTTP 스트리밍 전송을 지원하는 클라이언트에서만 작동합니다.
+        </p>
+      </div>
+    </div>
   );
 }

@@ -50,8 +50,8 @@ class MCPConfig:
         """Create MCPConfig from dictionary."""
         config = cls()
         
-        # Parse MCP servers
-        mcp_servers = data.get('mcpServers', {})
+        # Parse MCP servers - support both 'mcpServers' and 'servers' keys
+        mcp_servers = data.get('mcpServers', data.get('servers', {}))
         for name, server_data in mcp_servers.items():
             if isinstance(server_data, dict):
                 config.servers[name] = MCPServerConfig.from_dict(name, server_data)

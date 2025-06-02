@@ -237,6 +237,124 @@ async def create_mcp_proxy_app(
         except Exception as e:
             return JSONResponse({"error": str(e)}, status_code=500)
     
+    # Configuration 관련 엔드포인트
+    async def get_config(request: Request):
+        """설정 파일 조회"""
+        import json
+        from pathlib import Path
+        
+        config_path = Path("mcp-config.json")
+        if not config_path.exists():
+            return JSONResponse({"error": "Configuration file not found"}, status_code=404)
+        
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            return JSONResponse(config)
+        except Exception as e:
+            return JSONResponse({"error": f"Failed to read configuration: {str(e)}"}, status_code=500)
+    
+    async def update_config(request: Request):
+        """설정 파일 업데이트"""
+        import json
+        from pathlib import Path
+        
+        config_path = Path("mcp-config.json")
+        
+        try:
+            # Content-Type 확인
+            content_type = request.headers.get("content-type", "")
+            if "application/json" not in content_type:
+                logger.warning(f"Invalid Content-Type: {content_type}")
+            
+            # Request body 읽기
+            body = await request.body()
+            logger.info(f"Received body: {body[:200]}...")  # 처음 200자만 로깅
+            
+            try:
+                config = json.loads(body)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON decode error: {e}")
+                return JSONResponse({"error": f"Invalid JSON: {str(e)}"}, status_code=400)
+            
+            # 설정 검증 - mcpServers 또는 servers 키 모두 지원
+            if "servers" not in config and "mcpServers" not in config:
+                return JSONResponse({"error": "Invalid configuration: 'servers' or 'mcpServers' field is required"}, status_code=400)
+            
+            # mcpServers를 servers로 정규화 (필요한 경우)
+            if "mcpServers" in config and "servers" not in config:
+                config["servers"] = config["mcpServers"]
+                del config["mcpServers"]
+            
+            # 백업 생성
+            if config_path.exists():
+                backup_path = config_path.with_suffix(".json.backup")
+                try:
+                    import shutil
+                    shutil.copy2(config_path, backup_path)
+                except Exception as e:
+                    logger.warning(f"Failed to create backup: {e}")
+            
+            # 설정 저장
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            return JSONResponse({"status": "success", "message": "Configuration updated successfully"})
+        except Exception as e:
+            return JSONResponse({"error": f"Failed to save configuration: {str(e)}"}, status_code=500)
+    
+    async def reload_config(request: Request):
+        """설정 재로드"""
+        try:
+            # 프록시 핸들러의 설정 재로드
+            await proxy_handler.reload_configuration()
+            
+            return JSONResponse({
+                "status": "success",
+                "message": "Configuration reloaded successfully",
+                "servers": []
+            })
+        except Exception as e:
+            return JSONResponse({"error": f"Failed to reload configuration: {str(e)}"}, status_code=500)
+    
+    async def validate_config(request: Request):
+        """설정 검증"""
+        try:
+            config = await request.json()
+            errors = []
+            warnings = []
+            
+            # 필수 필드 검증 - mcpServers 또는 servers 키 모두 지원
+            servers_key = "servers" if "servers" in config else "mcpServers" if "mcpServers" in config else None
+            
+            if servers_key is None:
+                errors.append("Missing required field: 'servers' or 'mcpServers'")
+            elif not isinstance(config[servers_key], dict):
+                errors.append(f"'{servers_key}' must be an object")
+            else:
+                # 각 서버 설정 검증
+                for server_name, server_config in config[servers_key].items():
+                    if "command" not in server_config:
+                        errors.append(f"Server '{server_name}': missing required field 'command'")
+                    
+                    if "args" in server_config and not isinstance(server_config["args"], list):
+                        errors.append(f"Server '{server_name}': 'args' must be an array")
+                    
+                    if "env" in server_config and not isinstance(server_config["env"], dict):
+                        errors.append(f"Server '{server_name}': 'env' must be an object")
+            
+            # 선택적 필드 검증
+            if "mode" in config and config["mode"] not in ["proxy", "batch"]:
+                warnings.append("'mode' should be either 'proxy' or 'batch'")
+            
+            return JSONResponse({
+                "valid": len(errors) == 0,
+                "errors": errors,
+                "warnings": warnings
+            })
+        except Exception as e:
+            return JSONResponse({"error": f"Failed to validate configuration: {str(e)}"}, status_code=500)
+    
     # 라우트 목록
     routes = [
         Route("/status", endpoint=get_status),
@@ -246,7 +364,12 @@ async def create_mcp_proxy_app(
         Route("/tools/{server_name}/{tool_name}", endpoint=execute_tool, methods=["POST"]),
         Route("/api/executions", endpoint=get_executions),
         Route("/api/executions", endpoint=create_execution, methods=["POST"]),
-        Route("/api/executions/{execution_id}", endpoint=update_execution, methods=["PATCH"])
+        Route("/api/executions/{execution_id}", endpoint=update_execution, methods=["PATCH"]),
+        # Configuration 엔드포인트
+        Route("/api/config", endpoint=get_config),
+        Route("/api/config", endpoint=update_config, methods=["PUT"]),
+        Route("/api/config/reload", endpoint=reload_config, methods=["POST"]),
+        Route("/api/config/validate", endpoint=validate_config, methods=["POST"])
     ]
     
     # 서버별 SSE 엔드포인트 생성

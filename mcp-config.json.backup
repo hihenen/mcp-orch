@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "BSAiFio-6UgIYNeno28H-8iPw_J-7iC"
+      },
+      "timeout": 60,
+      "autoApprove": [],
+      "transportType": "stdio",
+      "disabled": false
+    },
+    "excel-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@negokaz/excel-mcp-server",
+        "--key",
+        "78f3339f-b944-49c3-bbcb-57e6aa079e2b"
+      ],
+      "timeout": 300,
+      "autoApprove": [
+        "write_sheet_data",
+        "read_sheet_data"
+      ],
+      "transportType": "stdio",
+      "disabled": false
+    }
+  }
+}

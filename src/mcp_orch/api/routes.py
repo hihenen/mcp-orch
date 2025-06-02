@@ -323,6 +323,110 @@ async def get_configuration(request: Request):
     return config
 
 
+@router.get("/api/config", tags=["Configuration"])
+async def get_config_file(request: Request):
+    """MCP 설정 파일 내용 조회"""
+    import json
+    from pathlib import Path
+    
+    config_path = Path("mcp-config.json")
+    if not config_path.exists():
+        raise HTTPException(status_code=404, detail="Configuration file not found")
+    
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        return config
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read configuration: {str(e)}")
+
+
+@router.put("/api/config", tags=["Configuration"])
+async def update_config_file(config: Dict[str, Any], request: Request):
+    """MCP 설정 파일 업데이트"""
+    import json
+    from pathlib import Path
+    
+    config_path = Path("mcp-config.json")
+    
+    # 설정 검증
+    if "servers" not in config:
+        raise HTTPException(status_code=400, detail="Invalid configuration: 'servers' field is required")
+    
+    # 백업 생성
+    if config_path.exists():
+        backup_path = config_path.with_suffix(".json.backup")
+        try:
+            import shutil
+            shutil.copy2(config_path, backup_path)
+        except Exception as e:
+            logger.warning(f"Failed to create backup: {e}")
+    
+    # 설정 저장
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        return {"status": "success", "message": "Configuration updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save configuration: {str(e)}")
+
+
+@router.post("/api/config/reload", tags=["Configuration"])
+async def reload_config(request: Request):
+    """설정 재로드 및 서버 재시작"""
+    from .app import get_controller
+    controller = get_controller(request)
+    
+    try:
+        # 설정 재로드
+        result = await controller.reload_configuration()
+        
+        if result["status"] == "error":
+            raise HTTPException(status_code=500, detail=result["error"])
+        
+        return {
+            "status": "success",
+            "message": "Configuration reloaded successfully",
+            "servers": result.get("servers", [])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reload configuration: {str(e)}")
+
+
+@router.post("/api/config/validate", tags=["Configuration"])
+async def validate_config(config: Dict[str, Any]):
+    """설정 검증"""
+    errors = []
+    warnings = []
+    
+    # 필수 필드 검증
+    if "servers" not in config:
+        errors.append("Missing required field: 'servers'")
+    elif not isinstance(config["servers"], dict):
+        errors.append("'servers' must be an object")
+    else:
+        # 각 서버 설정 검증
+        for server_name, server_config in config["servers"].items():
+            if "command" not in server_config:
+                errors.append(f"Server '{server_name}': missing required field 'command'")
+            
+            if "args" in server_config and not isinstance(server_config["args"], list):
+                errors.append(f"Server '{server_name}': 'args' must be an array")
+            
+            if "env" in server_config and not isinstance(server_config["env"], dict):
+                errors.append(f"Server '{server_name}': 'env' must be an object")
+    
+    # 선택적 필드 검증
+    if "mode" in config and config["mode"] not in ["proxy", "batch"]:
+        warnings.append("'mode' should be either 'proxy' or 'batch'")
+    
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings
+    }
+
+
 # SSE/MCP 엔드포인트
 @router.get("/sse/{server_name}", tags=["SSE"])
 async def sse_endpoint(server_name: str, request: Request):
