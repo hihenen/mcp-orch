@@ -4,11 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  LayoutDashboard,
-  Server,
-  Wrench,
-  FileText,
-  Settings,
+  Users,
+  FolderOpen,
   Menu,
   X
 } from 'lucide-react';
@@ -17,29 +14,16 @@ import { Button } from '@/components/ui/button';
 
 const navItems = [
   {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
+    title: 'Teams',
+    href: '/teams',
+    icon: Users,
+    description: '팀 목록 보기'
   },
   {
-    title: 'Servers',
-    href: '/servers',
-    icon: Server,
-  },
-  {
-    title: 'Tools',
-    href: '/tools',
-    icon: Wrench,
-  },
-  {
-    title: 'Logs',
-    href: '/logs',
-    icon: FileText,
-  },
-  {
-    title: 'Configuration',
-    href: '/config',
-    icon: Settings,
+    title: 'My Projects',
+    href: '/projects',
+    icon: FolderOpen,
+    description: '개인 프로젝트 목록'
   },
 ];
 

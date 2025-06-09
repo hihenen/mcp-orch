@@ -17,6 +17,7 @@ interface ServerState {
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   fetchServers: () => Promise<void>;
+  loadServers: () => Promise<void>; // 별칭 추가
   
   // Selectors
   getServerById: (id: string) => MCPServer | undefined;
@@ -80,6 +81,11 @@ export const useServerStore = create<ServerState>()(
               isLoading: false 
             });
           }
+        },
+        
+        // loadServers는 fetchServers의 별칭
+        loadServers: async function() {
+          return this.fetchServers();
         },
         
         getServerById: (id) => {

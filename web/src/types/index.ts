@@ -2,6 +2,7 @@
 export interface MCPServer {
   id: string;
   name: string;
+  description?: string; // 서버 설명
   command: string;
   args: string[];
   env?: Record<string, string>;

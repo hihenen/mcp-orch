@@ -3,27 +3,27 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppStore } from '@/stores';
-import { useTranslations } from 'next-intl';
 
 export function ModeSelector() {
-  const t = useTranslations('dashboard.mode');
   const { operationMode, setOperationMode } = useAppStore();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
+        <CardTitle>Operation Mode</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={operationMode} onValueChange={(value) => setOperationMode(value as 'proxy' | 'batch')}>
+        <Tabs value={operationMode} onValueChange={(value: string) => setOperationMode(value as 'proxy' | 'batch')}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="proxy">{t('proxy')}</TabsTrigger>
-            <TabsTrigger value="batch">{t('batch')}</TabsTrigger>
+            <TabsTrigger value="proxy">Proxy Mode</TabsTrigger>
+            <TabsTrigger value="batch">Batch Mode</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="mt-4">
           <CardDescription>
-            {operationMode === 'proxy' ? t('proxyDescription') : t('batchDescription')}
+            {operationMode === 'proxy' 
+              ? 'Forward requests to MCP servers in real-time' 
+              : 'Execute multiple tools in parallel batches'}
           </CardDescription>
         </div>
       </CardContent>

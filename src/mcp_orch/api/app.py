@@ -14,8 +14,13 @@ from fastapi.responses import JSONResponse
 
 from ..config import Settings
 from ..core.controller import DualModeController
-from .middleware import AuthMiddleware
-from .routes import router
+from .jwt_auth import JWTAuthMiddleware
+from .users import router as users_router
+from .teams import router as teams_router
+from .projects import router as projects_router
+from .project_sse import router as project_sse_router
+from .servers import router as servers_router
+from .tools import router as tools_router
 
 logger = logging.getLogger(__name__)
 
@@ -73,23 +78,40 @@ def create_app(settings: Settings = None) -> FastAPI:
         allow_headers=["*"],
     )
     
-    # 인증 미들웨어
-    if settings.security.enable_auth:
-        app.add_middleware(AuthMiddleware, settings=settings)
+    # 통합 인증 미들웨어 (JWT + API 키 지원)
+    app.add_middleware(JWTAuthMiddleware, settings=settings)
         
     # 라우터 등록
-    app.include_router(router)
+    app.include_router(users_router)
+    app.include_router(teams_router)
+    app.include_router(projects_router)
+    app.include_router(project_sse_router)
+    app.include_router(servers_router)
+    app.include_router(tools_router)
     
     # 전역 예외 핸들러
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
-        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+        """Global exception handler with safe logging"""
+        
+        # Rich 로깅 대신 기본 로깅 사용하여 재귀 방지
+        import logging
+        basic_logger = logging.getLogger("mcp_orch.errors")
+        basic_logger.setLevel(logging.ERROR)
+        
+        # 간단한 콘솔 핸들러 사용
+        if not basic_logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            basic_logger.addHandler(handler)
+        
+        # 안전한 로깅
+        basic_logger.error(f"Unhandled exception in {request.url}: {str(exc)}")
+        
         return JSONResponse(
             status_code=500,
-            content={
-                "error": "Internal server error",
-                "message": str(exc) if settings.server.log_level == "DEBUG" else "An error occurred"
-            }
+            content={"detail": "Internal server error"}
         )
         
     # 헬스체크 엔드포인트

@@ -1,0 +1,81 @@
+"""Organization model for team management."""
+from enum import Enum
+from uuid import uuid4
+
+from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, UniqueConstraint, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
+from .base import Base
+
+
+class OrganizationRole(str, Enum):
+    """Organization member roles - GitLab style 3-tier system."""
+    OWNER = "owner"        # 🔴 Full control: team management, member management, server management, API keys
+    DEVELOPER = "developer"  # 🟡 Execution rights: server usage, tool execution, log viewing, API key viewing
+    REPORTER = "reporter"    # 🔵 Read-only: information viewing only, no API key access
+
+
+class Organization(Base):
+    """Organization model for team-based API key management."""
+    
+    __tablename__ = "organizations"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(255), unique=True, nullable=False, index=True)
+    description = Column(String(500), nullable=True)
+    
+    # Organization settings
+    is_personal = Column(Boolean, default=False, nullable=False)  # True for auto-created personal orgs
+    is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Billing/Plan info (for future use)
+    plan = Column(String(50), default="free", nullable=False)
+    max_api_keys = Column(Integer, default=5, nullable=False)
+    max_members = Column(Integer, default=10, nullable=False)
+    
+    # Relationships
+    members = relationship(
+        "OrganizationMember",
+        back_populates="organization",
+        cascade="all, delete-orphan"
+    )
+    mcp_servers = relationship(
+        "McpServer",
+        back_populates="organization",
+        cascade="all, delete-orphan"
+    )
+    
+    def __repr__(self) -> str:
+        return f"<Organization(id={self.id}, name={self.name})>"
+
+
+class OrganizationMember(Base):
+    """Membership relationship between users and organizations."""
+    
+    __tablename__ = "organization_members"
+    __table_args__ = (
+        UniqueConstraint("user_id", "organization_id", name="uq_user_org"),
+    )
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    role = Column(SQLEnum(OrganizationRole), nullable=False)
+    
+    # Invitation tracking
+    invited_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    invited_at = Column(DateTime, nullable=True)
+    joined_at = Column(DateTime, nullable=True)
+    
+    # Default organization flag
+    is_default = Column(Boolean, default=False, nullable=False)
+    
+    # Relationships
+    user = relationship("User", back_populates="organization_memberships", foreign_keys=[user_id])
+    organization = relationship("Organization", back_populates="members")
+    invited_by = relationship("User", foreign_keys=[invited_by_id])
+    
+    def __repr__(self) -> str:
+        return f"<OrganizationMember(user_id={self.user_id}, org_id={self.organization_id}, role={self.role})>"

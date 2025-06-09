@@ -10,17 +10,23 @@ import json
 import logging
 from typing import Dict, Any, Optional
 from contextlib import AsyncExitStack
+from uuid import UUID
+
 
 from fastapi import FastAPI
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
-from starlette.responses import JSONResponse
+import json
+from uuid import UUID
+from starlette.responses import JSONResponse as StarletteJSONResponse
+
+JSONResponse = StarletteJSONResponse
 from starlette.requests import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .auth import AuthMiddleware
+from .jwt_auth import JWTAuthMiddleware
 
 from mcp.server import Server as MCPServer
 from mcp.server.sse import SseServerTransport
@@ -32,6 +38,7 @@ from mcp.types import (
 )
 
 from ..proxy.handler import ProxyHandler
+from .users import router as users_router
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +98,7 @@ class MCPProxyServer:
 
 async def create_mcp_proxy_app(
     proxy_handler: ProxyHandler,
+    settings=None,
     port: int = 8000,
     host: str = "127.0.0.1",
     allow_origins: Optional[list[str]] = None
@@ -373,7 +381,9 @@ async def create_mcp_proxy_app(
                 "message": f"Server '{server_name}' restarted successfully"
             })
         except Exception as e:
-            return JSONResponse({"error": str(e)}, status_code=500)
+            import traceback
+            tb = traceback.format_exc()
+            return JSONResponse({"error": str(e), "traceback": tb}, status_code=500)
     
     async def toggle_server(request: Request):
         """서버 활성화/비활성화 토글"""
@@ -395,19 +405,196 @@ async def create_mcp_proxy_app(
             # disabled 상태 토글
             current_disabled = config[servers_key][server_name].get("disabled", False)
             config[servers_key][server_name]["disabled"] = not current_disabled
-            
+
             # 설정 저장
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
-            
+
             # 서버 재로드
             await proxy_handler.reload_configuration()
-            
+
             return JSONResponse({
                 "status": "success",
                 "message": f"Server '{server_name}' {'disabled' if not current_disabled else 'enabled'} successfully",
                 "disabled": not current_disabled
             })
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            return JSONResponse({"error": str(e), "traceback": tb}, status_code=500)
+    
+    # 사용자 관리 엔드포인트 추가
+    async def signup_user(request: Request):
+        """사용자 회원가입"""
+        try:
+            from .users import SignupRequest, SignupResponse, UserResponse, OrganizationResponse, OrganizationMemberResponse
+            from ..database import get_db
+            from ..models.user import User
+            from ..models.organization import Organization, OrganizationMember
+            from sqlalchemy.exc import IntegrityError
+            import bcrypt
+            
+            # 요청 데이터 파싱
+            body = await request.json()
+            signup_request = SignupRequest(**body)
+
+            # 데이터베이스 세션 생성
+            db = next(get_db())
+
+            try:
+                # 입력 검증
+                if len(signup_request.password) < 8:
+                    return JSONResponse(
+                        {"error": "비밀번호는 최소 8자 이상이어야 합니다."},
+                        status_code=400
+                    )
+
+                # 이메일 중복 확인
+                existing_user = db.query(User).filter(User.email == signup_request.email).first()
+                if existing_user:
+                    return JSONResponse(
+                        {"error": "이미 사용 중인 이메일입니다."},
+                        status_code=400
+                    )
+
+                # 비밀번호 해시화
+                hashed_password = bcrypt.hashpw(
+                    signup_request.password.encode('utf-8'),
+                    bcrypt.gensalt()
+                ).decode('utf-8')
+
+                # 사용자 생성
+                user = User(
+                    name=signup_request.name,
+                    email=signup_request.email,
+                    password=hashed_password
+                )
+                db.add(user)
+                db.flush()  # ID를 얻기 위해 flush
+
+                # 조직 생성
+                org_name = signup_request.organization_name or f"{signup_request.name}의 조직"
+                org_slug = signup_request.email.split('@')[0] + '-' + str(user.id)[:8]  # UUID의 처음 8자만 사용
+
+                organization = Organization(
+                    name=org_name,
+                    slug=org_slug
+                )
+                db.add(organization)
+                db.flush()  # ID를 얻기 위해 flush
+
+                # 조직 멤버십 생성 (관리자 권한)
+                membership = OrganizationMember(
+                    user_id=user.id,
+                    organization_id=organization.id,
+                    role="admin",
+                    is_default=True
+                )
+                db.add(membership)
+
+                db.commit()
+
+                from fastapi.encoders import jsonable_encoder
+                return JSONResponse(
+                    jsonable_encoder(
+                        SignupResponse(
+                            message="회원가입이 완료되었습니다.",
+                            user=UserResponse.from_orm(user),
+                            organization=OrganizationResponse.from_orm(organization),
+                            membership=OrganizationMemberResponse.from_orm(membership)
+                        )
+                    ),
+                    status_code=200
+                )
+
+            except IntegrityError:
+                db.rollback()
+                return JSONResponse(
+                    {"error": "이미 사용 중인 이메일입니다."},
+                    status_code=400
+                )
+            except Exception as e:
+                db.rollback()
+                import traceback
+                tb = traceback.format_exc()
+                return JSONResponse(
+                    {"error": f"서버 오류가 발생했습니다: {str(e)}", "traceback": tb},
+                    status_code=500
+                )
+            finally:
+                db.close()
+
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            return JSONResponse({"error": str(e), "traceback": tb}, status_code=500)
+    
+    async def login_user(request: Request):
+        """사용자 로그인"""
+        try:
+            from .users import LoginRequest, LoginResponse, UserResponse, OrganizationResponse, OrganizationMemberResponse
+            from ..database import get_db
+            from ..models.user import User
+            from ..models.organization import Organization, OrganizationMember
+            import bcrypt
+            
+            # 요청 데이터 파싱
+            body = await request.json()
+            login_request = LoginRequest(**body)
+
+            # 데이터베이스 세션 생성
+            db = next(get_db())
+
+            try:
+                # 사용자 조회
+                user = db.query(User).filter(User.email == login_request.email).first()
+                if not user:
+                    return JSONResponse(
+                        {"error": "이메일 또는 비밀번호가 올바르지 않습니다."},
+                        status_code=401
+                    )
+
+                # 비밀번호 확인
+                if not bcrypt.checkpw(login_request.password.encode('utf-8'), user.password.encode('utf-8')):
+                    return JSONResponse(
+                        {"error": "이메일 또는 비밀번호가 올바르지 않습니다."},
+                        status_code=401
+                    )
+
+                # 기본 조직 조회
+                membership = db.query(OrganizationMember).filter(
+                    OrganizationMember.user_id == user.id,
+                    OrganizationMember.is_default == True
+                ).first()
+
+                organization = None
+                if membership:
+                    organization = db.query(Organization).filter(
+                        Organization.id == membership.organization_id
+                    ).first()
+
+                from fastapi.encoders import jsonable_encoder
+                from starlette.responses import JSONResponse as StarletteJSONResponse
+                return StarletteJSONResponse(
+                    jsonable_encoder(
+                        LoginResponse(
+                            message="로그인이 완료되었습니다.",
+                            user=UserResponse.from_orm(user),
+                            organization=OrganizationResponse.from_orm(organization) if organization else None,
+                            membership=OrganizationMemberResponse.from_orm(membership) if membership else None
+                        )
+                    ),
+                    status_code=200
+                )
+
+            except Exception as e:
+                return JSONResponse(
+                    {"error": f"서버 오류가 발생했습니다: {str(e)}"},
+                    status_code=500
+                )
+            finally:
+                db.close()
+
         except Exception as e:
             return JSONResponse({"error": str(e)}, status_code=500)
     
@@ -428,7 +615,10 @@ async def create_mcp_proxy_app(
         Route("/api/config/validate", endpoint=validate_config, methods=["POST"]),
         # 서버 제어 엔드포인트
         Route("/api/servers/{server_name}/restart", endpoint=restart_server, methods=["POST"]),
-        Route("/api/servers/{server_name}/toggle", endpoint=toggle_server, methods=["POST"])
+        Route("/api/servers/{server_name}/toggle", endpoint=toggle_server, methods=["POST"]),
+        # 사용자 관리 엔드포인트
+        Route("/api/users/signup", endpoint=signup_user, methods=["POST"]),
+        Route("/api/users/login", endpoint=login_user, methods=["POST"])
     ]
     
     # 서버별 SSE 엔드포인트 생성
@@ -481,7 +671,7 @@ async def create_mcp_proxy_app(
     middleware = []
     
     # 인증 미들웨어 추가
-    middleware.append(Middleware(AuthMiddleware))
+    middleware.append(Middleware(JWTAuthMiddleware, settings=settings))
     
     if allow_origins:
         middleware.append(
@@ -521,6 +711,7 @@ async def run_mcp_proxy_mode(
     # 앱 생성
     app = await create_mcp_proxy_app(
         proxy_handler,
+        settings=settings,
         port=port,
         host=host,
         allow_origins=["*"]  # 개발용

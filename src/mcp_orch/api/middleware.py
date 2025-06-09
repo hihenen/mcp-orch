@@ -17,66 +17,6 @@ from ..config import Settings
 logger = logging.getLogger(__name__)
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    """
-    인증 미들웨어
-    
-    Bearer 토큰 또는 API 키를 사용한 인증을 처리합니다.
-    """
-    
-    def __init__(self, app, settings: Settings):
-        super().__init__(app)
-        self.settings = settings
-        self.api_keys = {
-            key_info["key"]: key_info
-            for key_info in settings.security.api_keys
-        }
-        
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """요청 처리"""
-        # 인증이 필요없는 경로
-        exempt_paths = ["/", "/health", "/docs", "/redoc", "/openapi.json"]
-        if request.url.path in exempt_paths:
-            return await call_next(request)
-            
-        # Authorization 헤더 확인
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            return JSONResponse(
-                status_code=401,
-                content={"error": "Authorization header required"}
-            )
-            
-        # Bearer 토큰 또는 API 키 확인
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-            if not self._validate_token(token):
-                return JSONResponse(
-                    status_code=401,
-                    content={"error": "Invalid token"}
-                )
-        else:
-            return JSONResponse(
-                status_code=401,
-                content={"error": "Invalid authorization format"}
-            )
-            
-        # 요청 처리
-        response = await call_next(request)
-        return response
-        
-    def _validate_token(self, token: str) -> bool:
-        """토큰 유효성 검증"""
-        # API 키로 확인
-        if token in self.api_keys:
-            return True
-            
-        # JWT 토큰 확인 (추후 구현)
-        # TODO: JWT 토큰 검증 로직 추가
-        
-        return False
-
-
 class LoggingMiddleware(BaseHTTPMiddleware):
     """
     로깅 미들웨어

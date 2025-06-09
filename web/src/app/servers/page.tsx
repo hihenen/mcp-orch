@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/dialog";
 import { Server, Plus, Edit, Trash2, Settings, Play, Square } from "lucide-react";
 import { useServerStore } from "@/stores/serverStore";
+import { useProjectStore } from "@/stores/projectStore";
 import { MCPServer } from "@/types";
+import { AlertCircle } from "lucide-react";
 
 interface ServerFormData {
   name: string;
@@ -33,6 +35,7 @@ interface ServerFormData {
 
 export default function ServersPage() {
   const { servers, addServer, updateServer, removeServer } = useServerStore();
+  const { currentProject, loadUserProjects } = useProjectStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<string | null>(null);
   const [formData, setFormData] = useState<ServerFormData>({
@@ -46,59 +49,56 @@ export default function ServersPage() {
   });
 
   useEffect(() => {
-    // Fetch servers from the API
-    const fetchServers = async () => {
+    // 사용자 프로젝트 목록을 로드합니다
+    loadUserProjects();
+  }, [loadUserProjects]);
+
+  useEffect(() => {
+    // 선택된 프로젝트가 있을 때만 서버 데이터를 불러옵니다
+    if (!currentProject) {
+      // 프로젝트가 선택되지 않았으면 서버 데이터를 비웁니다
+      useServerStore.getState().setServers([]);
+      return;
+    }
+
+    const fetchProjectServers = async () => {
       try {
-        const response = await fetch('http://localhost:8000/servers');
-        if (response.ok) {
-          const data = await response.json();
-          // Transform API response to match our MCPServer type
-          const servers: MCPServer[] = data.map((server: any) => ({
-            id: server.name,
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+
+        // 프로젝트별 서버 데이터 불러오기
+        const serversResponse = await fetch(`/api/projects/${currentProject.id}/servers`, { 
+          headers,
+          credentials: 'include'
+        });
+        
+        if (serversResponse.ok) {
+          const serversData = await serversResponse.json();
+          console.log('Project servers:', serversData);
+          
+          const servers: MCPServer[] = serversData.map((server: any) => ({
+            id: server.id || server.name,
             name: server.name,
             command: server.command || '',
             args: server.args || [],
             env: server.env || {},
             transportType: 'stdio' as const,
-            status: server.connected ? 'online' : 'offline',
-            availableTools: server.tools_count || 0,
-            disabled: false,
+            status: server.disabled ? 'offline' : 'online',
+            availableTools: 0, // 서버별 도구 수는 별도로 계산
+            disabled: server.disabled || false,
           }));
           useServerStore.getState().setServers(servers);
         }
       } catch (error) {
-        console.error('Failed to fetch servers:', error);
-        // Fallback to mock data if API fails
-        const mockServers: MCPServer[] = [
-          {
-            id: "brave-search",
-            name: "brave-search",
-            command: "npx",
-            args: ["-y", "@modelcontextprotocol/server-brave-search"],
-            env: {},
-            transportType: "stdio",
-            status: "online",
-            availableTools: 2,
-            disabled: false,
-          },
-          {
-            id: "excel-mcp-server",
-            name: "excel-mcp-server",
-            command: "npx",
-            args: ["-y", "@smithery/cli@latest", "run", "@negokaz/excel-mcp-server"],
-            env: {},
-            transportType: "stdio",
-            status: "online",
-            availableTools: 5,
-            disabled: false,
-          },
-        ];
-        useServerStore.getState().setServers(mockServers);
+        console.error('Failed to fetch project servers:', error);
+        // 에러 시 빈 데이터로 설정
+        useServerStore.getState().setServers([]);
       }
     };
 
-    fetchServers();
-  }, []);
+    fetchProjectServers();
+  }, [currentProject]);
 
   const handleSubmit = () => {
     const serverData: MCPServer = {
@@ -166,9 +166,20 @@ export default function ServersPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Server Management</h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold">Server Management</h1>
+              {currentProject && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
+                  <Server className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">{currentProject.name}</span>
+                </div>
+              )}
+            </div>
             <p className="text-gray-600 dark:text-gray-400">
-              Configure and manage your MCP servers
+              {currentProject 
+                ? `${currentProject.name} 프로젝트의 MCP 서버를 설정하고 관리합니다`
+                : '프로젝트를 선택하여 MCP 서버를 관리하세요'
+              }
             </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -271,92 +282,123 @@ export default function ServersPage() {
           </Dialog>
         </div>
 
-        <div className="grid gap-4">
-          {servers.map((server) => (
-            <Card key={server.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Server className={`w-8 h-8 ${
-                      server.status === "online" ? "text-green-600" : "text-gray-400"
-                    }`} />
-                    <div>
-                      <CardTitle>{server.name}</CardTitle>
-                      <CardDescription>
-                        {server.command} {server.args.join(" ")}
-                      </CardDescription>
+        {!currentProject ? (
+          // 프로젝트가 선택되지 않은 경우
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <AlertCircle className="w-16 h-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">프로젝트를 선택해주세요</h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md">
+                MCP 서버를 관리하려면 먼저 프로젝트를 선택해야 합니다. 
+                헤더의 프로젝트 선택기를 사용하여 프로젝트를 선택하거나 새로 만드세요.
+              </p>
+            </CardContent>
+          </Card>
+        ) : servers.length === 0 ? (
+          // 프로젝트는 선택되었지만 서버가 없는 경우
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Server className="w-16 h-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">서버가 없습니다</h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
+                {currentProject.name} 프로젝트에는 아직 MCP 서버가 없습니다. 
+                첫 번째 서버를 추가하여 시작하세요.
+              </p>
+              <Button onClick={() => { resetForm(); setEditingServer(null); setIsAddDialogOpen(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                첫 번째 서버 추가
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          // 서버 목록 표시
+          <div className="grid gap-4">
+            {servers.map((server) => (
+              <Card key={server.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Server className={`w-8 h-8 ${
+                        server.status === "online" ? "text-green-600" : "text-gray-400"
+                      }`} />
+                      <div>
+                        <CardTitle>{server.name}</CardTitle>
+                        <CardDescription>
+                          {server.command} {server.args.join(" ")}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={
+                        server.status === "online" 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-gray-100 text-gray-800"
+                      }>
+                        {server.status}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(server.id)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(server.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={
-                      server.status === "online" 
-                        ? "bg-green-100 text-green-800" 
-                        : "bg-gray-100 text-gray-800"
-                    }>
-                      {server.status}
-                    </Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Transport</p>
+                      <p className="font-medium">{server.transportType}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Tools</p>
+                      <p className="font-medium">{server.availableTools || 0} available</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Timeout</p>
+                      <p className="font-medium">{server.timeout || 60}s</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Environment</p>
+                      <p className="font-medium">{Object.keys(server.env || {}).length} vars</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(server.id)}
+                      variant="outline"
+                      size="sm"
+                      disabled={server.status === "online"}
                     >
-                      <Edit className="w-4 h-4" />
+                      <Play className="w-4 h-4 mr-2" />
+                      Start
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(server.id)}
+                      variant="outline"
+                      size="sm"
+                      disabled={server.status === "offline"}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Square className="w-4 h-4 mr-2" />
+                      Stop
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Configure
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Transport</p>
-                    <p className="font-medium">{server.transportType}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Tools</p>
-                    <p className="font-medium">{server.availableTools || 0} available</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Timeout</p>
-                    <p className="font-medium">{server.timeout || 60}s</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Environment</p>
-                    <p className="font-medium">{Object.keys(server.env || {}).length} vars</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={server.status === "online"}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={server.status === "offline"}
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configure
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

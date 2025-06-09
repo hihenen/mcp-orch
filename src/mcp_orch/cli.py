@@ -62,6 +62,74 @@ def serve(
         "--log-level", "-l",
         help="로그 레벨 (DEBUG, INFO, WARNING, ERROR)"
     ),
+    mode: str = typer.Option(
+        "api",
+        "--mode", "-m",
+        help="서버 모드 (api: FastAPI 웹서버, proxy: MCP Proxy 모드)"
+    ),
+):
+    """MCP Orch 서버 실행"""
+    setup_logging(log_level)
+    
+    # 설정 로드
+    settings = Settings.from_env()
+    settings.mcp_config_file = mcp_config
+    
+    if mode == "proxy":
+        # mcp-proxy 호환 모드 실행
+        console.print("[bold green]Starting MCP Orch Server[/bold green]")
+        console.print(f"Host: {host}:{port}")
+        console.print(f"MCP Config: {mcp_config}")
+        console.print(f"Log Level: {log_level}")
+        console.print("[bold yellow]Using mcp-proxy compatible mode[/bold yellow]")
+        console.print("[cyan]Multiple servers will be available on different endpoints[/cyan]")
+        
+        from .api.mcp_proxy_mode import run_mcp_proxy_mode
+        asyncio.run(run_mcp_proxy_mode(settings, host=host, port=port))
+    else:
+        # FastAPI 웹 서버 실행
+        console.print("[bold green]Starting MCP Orch FastAPI Server[/bold green]")
+        console.print(f"Host: {host}:{port}")
+        console.print(f"MCP Config: {mcp_config}")
+        console.print(f"Log Level: {log_level}")
+        console.print("[bold blue]Using FastAPI web server mode[/bold blue]")
+        console.print("[cyan]REST API endpoints and web interface available[/cyan]")
+        
+        # FastAPI 앱 생성
+        app_instance = create_app(settings)
+        
+        # uvicorn으로 서버 실행
+        uvicorn.run(
+            app_instance,
+            host=host,
+            port=port,
+            log_level=log_level.lower(),
+            access_log=True
+        )
+
+
+@app.command()
+def serve_proxy(
+    host: str = typer.Option(
+        "0.0.0.0",
+        "--host", "-h",
+        help="서버 호스트"
+    ),
+    port: int = typer.Option(
+        8000,
+        "--port", "-p",
+        help="서버 포트"
+    ),
+    mcp_config: Optional[Path] = typer.Option(
+        Path("mcp-config.json"),
+        "--mcp-config",
+        help="MCP 서버 설정 파일 경로"
+    ),
+    log_level: str = typer.Option(
+        "INFO",
+        "--log-level", "-l",
+        help="로그 레벨 (DEBUG, INFO, WARNING, ERROR)"
+    ),
 ):
     """MCP Orch 서버 실행 (mcp-proxy 호환 모드)"""
     setup_logging(log_level)

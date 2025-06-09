@@ -27,8 +27,10 @@ import {
 import { Search, Play, Code, Server, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useToolStore } from "@/stores/toolStore";
 import { useServerStore } from "@/stores/serverStore";
+import { useProjectStore } from "@/stores/projectStore";
 import { useExecutionStore } from "@/stores/executionStore";
 import { Tool, ToolParameter } from "@/types";
+import { AlertCircle } from "lucide-react";
 
 interface ParameterFormData {
   [key: string]: any;
@@ -37,6 +39,7 @@ interface ParameterFormData {
 export default function ToolsPage() {
   const { tools } = useToolStore();
   const { servers } = useServerStore();
+  const { currentProject, loadUserProjects } = useProjectStore();
   const { addExecution, updateExecution } = useExecutionStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
@@ -46,12 +49,29 @@ export default function ToolsPage() {
   const [executionResult, setExecutionResult] = useState<any>(null);
 
   useEffect(() => {
-    // Fetch tools from the API
-    const fetchTools = async () => {
+    // 사용자 프로젝트 목록을 로드합니다
+    loadUserProjects();
+  }, [loadUserProjects]);
+
+  useEffect(() => {
+    // 선택된 프로젝트가 있을 때만 도구 데이터를 불러옵니다
+    if (!currentProject) {
+      // 프로젝트가 선택되지 않았으면 도구 데이터를 비웁니다
+      useToolStore.getState().setTools([]);
+      return;
+    }
+
+    const fetchProjectTools = async () => {
       try {
-        const response = await fetch('http://localhost:8000/tools');
+        // 프로젝트별 도구 데이터 불러오기
+        const response = await fetch(`/api/tools?projectId=${currentProject.id}`, {
+          credentials: 'include'
+        });
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('Project tools:', data);
+          
           // Transform API response to match our Tool type
           const tools: Tool[] = data.map((tool: any) => {
             const [serverName, toolName] = tool.namespace.split('.');
@@ -83,14 +103,14 @@ export default function ToolsPage() {
           useToolStore.getState().setTools(tools);
         }
       } catch (error) {
-        console.error('Failed to fetch tools:', error);
-        // Fallback to empty array if API fails
+        console.error('Failed to fetch project tools:', error);
+        // 에러 시 빈 데이터로 설정
         useToolStore.getState().setTools([]);
       }
     };
 
-    fetchTools();
-  }, []);
+    fetchProjectTools();
+  }, [currentProject]);
 
   const filteredTools = tools.filter(tool => 
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,9 +248,20 @@ export default function ToolsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Tool Execution</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold">Tool Execution</h1>
+            {currentProject && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
+                <Code className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-primary">{currentProject.name}</span>
+              </div>
+            )}
+          </div>
           <p className="text-gray-600 dark:text-gray-400">
-            Search and execute tools from connected MCP servers
+            {currentProject 
+              ? `${currentProject.name} 프로젝트의 MCP 도구를 검색하고 실행합니다`
+              : '프로젝트를 선택하여 MCP 도구를 실행하세요'
+            }
           </p>
         </div>
 
@@ -246,50 +277,84 @@ export default function ToolsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4">
-          {filteredTools.map((tool) => {
-            const server = servers.find(s => s.id === tool.serverId);
-            const isAvailable = server?.status === "online";
-            
-            return (
-              <Card 
-                key={tool.id} 
-                className={`cursor-pointer transition-colors ${
-                  isAvailable ? "hover:bg-gray-50 dark:hover:bg-gray-800" : "opacity-60"
-                }`}
-                onClick={() => isAvailable && handleToolSelect(tool)}
+        {!currentProject ? (
+          // 프로젝트가 선택되지 않은 경우
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <AlertCircle className="w-16 h-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">프로젝트를 선택해주세요</h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md">
+                MCP 도구를 실행하려면 먼저 프로젝트를 선택해야 합니다. 
+                헤더의 프로젝트 선택기를 사용하여 프로젝트를 선택하거나 새로 만드세요.
+              </p>
+            </CardContent>
+          </Card>
+        ) : filteredTools.length === 0 ? (
+          // 프로젝트는 선택되었지만 도구가 없는 경우
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Code className="w-16 h-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">도구가 없습니다</h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
+                {currentProject.name} 프로젝트에는 아직 사용 가능한 MCP 도구가 없습니다. 
+                먼저 서버를 추가하고 활성화하세요.
+              </p>
+              <Button 
+                onClick={() => window.location.href = '/servers'}
+                className="flex items-center gap-2"
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Code className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <CardTitle className="text-lg">{tool.name}</CardTitle>
-                        <CardDescription>{tool.description}</CardDescription>
+                <Server className="w-4 h-4" />
+                서버 관리로 이동
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          // 도구 목록 표시
+          <div className="grid gap-4">
+            {filteredTools.map((tool) => {
+              const server = servers.find(s => s.id === tool.serverId);
+              const isAvailable = server?.status === "online";
+              
+              return (
+                <Card 
+                  key={tool.id} 
+                  className={`cursor-pointer transition-colors ${
+                    isAvailable ? "hover:bg-gray-50 dark:hover:bg-gray-800" : "opacity-60"
+                  }`}
+                  onClick={() => isAvailable && handleToolSelect(tool)}
+                >
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Code className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <CardTitle className="text-lg">{tool.name}</CardTitle>
+                          <CardDescription>{tool.description}</CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          <Server className="w-3 h-3 mr-1" />
+                          {tool.serverName}
+                        </Badge>
+                        {!isAvailable && (
+                          <Badge variant="secondary">Offline</Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        <Server className="w-3 h-3 mr-1" />
-                        {tool.serverName}
-                      </Badge>
-                      {!isAvailable && (
-                        <Badge variant="secondary">Offline</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                {tool.parameters && tool.parameters.length > 0 && (
-                  <CardContent>
-                    <div className="text-sm text-gray-500">
-                      Parameters: {tool.parameters.filter(p => p.required).length} required, {tool.parameters.filter(p => !p.required).length} optional
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+                  </CardHeader>
+                  {tool.parameters && tool.parameters.length > 0 && (
+                    <CardContent>
+                      <div className="text-sm text-gray-500">
+                        Parameters: {tool.parameters.filter(p => p.required).length} required, {tool.parameters.filter(p => !p.required).length} optional
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         <Dialog open={isExecuteDialogOpen} onOpenChange={setIsExecuteDialogOpen}>
           <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">

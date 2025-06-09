@@ -21,6 +21,7 @@ interface ToolState {
   setSearchQuery: (query: string) => void;
   setSelectedServerId: (serverId: string | null) => void;
   fetchTools: () => Promise<void>;
+  loadTools: () => Promise<void>; // 별칭 추가
   executeTool: (namespace: string, toolName: string, parameters: Record<string, any>) => Promise<any>;
   
   // Selectors
@@ -87,6 +88,11 @@ export const useToolStore = create<ToolState>()(
             isLoading: false 
           });
         }
+      },
+      
+      // loadTools는 fetchTools의 별칭
+      loadTools: async () => {
+        return get().fetchTools();
       },
       
       executeTool: async (namespace: string, toolName: string, parameters: Record<string, any>) => {
