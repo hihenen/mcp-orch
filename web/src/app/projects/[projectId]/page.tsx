@@ -830,6 +830,163 @@ export default function ProjectDetailPage() {
           </Card>
         </TabsContent>
 
+        {/* API Keys 탭 */}
+        <TabsContent value="api-keys" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold">API Keys</h3>
+              <p className="text-sm text-muted-foreground">
+                프로젝트별 API 키를 관리하고 Cline 설정을 생성하세요
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Cline 설정 다운로드
+              </Button>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                API 키 생성
+              </Button>
+            </div>
+          </div>
+
+          {/* API 키 목록 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                API Keys
+              </CardTitle>
+              <CardDescription>
+                프로젝트의 MCP 서버에 접근하기 위한 API 키들입니다
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* API 키가 없는 경우 */}
+                <div className="text-center py-8">
+                  <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">API 키가 없습니다</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    첫 번째 API 키를 생성하여 MCP 서버에 접근하세요
+                  </p>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    첫 번째 API 키 생성
+                  </Button>
+                </div>
+
+                {/* API 키 목록 테이블 (향후 구현) */}
+                {/* 
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="text-left p-4 font-medium text-sm text-gray-700">이름</th>
+                        <th className="text-left p-4 font-medium text-sm text-gray-700">키 프리픽스</th>
+                        <th className="text-left p-4 font-medium text-sm text-gray-700">상태</th>
+                        <th className="text-left p-4 font-medium text-sm text-gray-700">마지막 사용</th>
+                        <th className="text-left p-4 font-medium text-sm text-gray-700">생성일</th>
+                        <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      <tr className="hover:bg-gray-50">
+                        <td className="p-4">
+                          <div className="font-medium">Production API Key</div>
+                          <div className="text-sm text-muted-foreground">프로덕션 환경용</div>
+                        </td>
+                        <td className="p-4">
+                          <code className="bg-gray-100 px-2 py-1 rounded text-sm">project_abc...</code>
+                        </td>
+                        <td className="p-4">
+                          <Badge className="bg-green-100 text-green-800">활성</Badge>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">2시간 전</div>
+                          <div className="text-xs text-muted-foreground">192.168.1.100</div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">2025-06-10</div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Copy className="h-4 w-4 mr-2" />
+                                키 복사
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                키 재생성
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash className="h-4 w-4 mr-2" />
+                                키 삭제
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                */}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Cline 설정 미리보기 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Cline 설정 미리보기
+              </CardTitle>
+              <CardDescription>
+                생성된 API 키로 자동 생성되는 Cline MCP 설정입니다
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <pre className="text-sm text-gray-600">
+{`{
+  "mcpServers": {
+    "excel-server": {
+      "transport": "sse",
+      "url": "http://localhost:8000/projects/${projectId}/servers/excel-server/sse",
+      "headers": {
+        "Authorization": "Bearer project_abc123..."
+      }
+    }
+  }
+}`}
+                </pre>
+              </div>
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-blue-900">사용 방법</h4>
+                    <ol className="text-sm text-blue-700 mt-2 space-y-1">
+                      <li>1. API 키를 생성하세요</li>
+                      <li>2. "Cline 설정 다운로드" 버튼을 클릭하세요</li>
+                      <li>3. 다운로드된 설정을 Cline MCP 설정에 추가하세요</li>
+                      <li>4. Cline을 재시작하여 변경사항을 적용하세요</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Settings 탭 */}
         <TabsContent value="settings" className="space-y-6">
           <h3 className="text-lg font-semibold">프로젝트 설정</h3>

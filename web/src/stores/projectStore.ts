@@ -481,7 +481,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   loadProjectApiKeys: async (projectId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/projects/${projectId}/api-keys`, {
+      const response = await fetch(`/api/projects/${projectId}/api-keys`, {
         credentials: 'include',
       });
       
@@ -502,7 +502,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   createProjectApiKey: async (projectId: string, data: CreateProjectApiKeyRequest) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/projects/${projectId}/api-keys`, {
+      const response = await fetch(`/api/projects/${projectId}/api-keys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -537,7 +537,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   deleteProjectApiKey: async (projectId: string, keyId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/projects/${projectId}/api-keys/${keyId}`, {
+      const response = await fetch(`/api/projects/${projectId}/api-keys/${keyId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -564,7 +564,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   getProjectClineConfig: async (projectId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/projects/${projectId}/cline-config`, {
+      const response = await fetch(`/api/projects/${projectId}/cline-config`, {
         credentials: 'include',
       });
       
