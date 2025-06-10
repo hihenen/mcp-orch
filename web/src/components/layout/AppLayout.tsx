@@ -32,7 +32,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Main Content */}
         <main className="flex-1">
-          {children}
+          <div className="container mx-auto px-4 py-6">
+            {children}
+          </div>
         </main>
       </div>
     </SessionProvider>
