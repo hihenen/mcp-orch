@@ -1053,7 +1053,7 @@ async def list_project_servers(
             disabled=not server.is_enabled,
             status="offline",  # 실제 상태는 향후 구현
             tools_count=0,  # 실제 도구 개수는 향후 구현
-            last_connected=server.last_connected,
+            last_connected=server.last_used_at,
             created_at=server.created_at,
             updated_at=server.updated_at
         ))
@@ -1131,7 +1131,7 @@ async def create_project_server(
         disabled=not new_server.is_enabled,
         status="offline",
         tools_count=0,
-        last_connected=new_server.last_connected,
+        last_connected=new_server.last_used_at,
         created_at=new_server.created_at,
         updated_at=new_server.updated_at
     )
@@ -1228,7 +1228,7 @@ async def update_project_server(
         disabled=not server.is_enabled,
         status="offline",
         tools_count=0,
-        last_connected=server.last_connected,
+        last_connected=server.last_used_at,
         created_at=server.created_at,
         updated_at=server.updated_at
     )
