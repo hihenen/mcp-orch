@@ -1,92 +1,97 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getServerJwtToken } from '@/lib/jwt-utils';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
 // 프로젝트 API 키 목록 조회
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> }
-) {
+export const GET = auth(async function GET(req) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
+    // 1. NextAuth.js v5 세션 확인
+    if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId } = await context.params;
+    // 2. JWT 토큰 생성 (필수)
+    const jwtToken = await getServerJwtToken(req as any);
+    
+    if (!jwtToken) {
+      console.error('❌ Failed to generate JWT token');
+      return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
+    }
 
-    // 백엔드 API 호출
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/projects/${projectId}/api-keys`, {
-      method: 'GET',
+    console.log('✅ Using JWT token for backend request');
+
+    // 3. URL에서 projectId 추출
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split('/');
+    const projectId = pathSegments[pathSegments.indexOf('projects') + 1];
+
+    // 4. 백엔드 API 호출
+    const response = await fetch(`${BACKEND_URL}/projects/${projectId}/api-keys`, {
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': request.headers.get('cookie') || '',
+        'Authorization': `Bearer ${jwtToken}`,
       },
-      credentials: 'include',
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.detail || 'Failed to fetch API keys' },
-        { status: response.status }
-      );
+      const error = await response.text();
+      return NextResponse.json({ error }, { status: response.status });
     }
 
-    const apiKeys = await response.json();
-    return NextResponse.json(apiKeys);
-
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('API Keys fetch error:', error);
+    console.error('API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 // 프로젝트 API 키 생성
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> }
-) {
+export const POST = auth(async function POST(req) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
+    if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId } = await context.params;
-    const body = await request.json();
+    const body = await req.json();
+    const jwtToken = await getServerJwtToken(req as any);
+    
+    if (!jwtToken) {
+      console.error('❌ Failed to generate JWT token for POST');
+      return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
+    }
 
-    // 백엔드 API 호출
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/projects/${projectId}/api-keys`, {
+    // URL에서 projectId 추출
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split('/');
+    const projectId = pathSegments[pathSegments.indexOf('projects') + 1];
+
+    const response = await fetch(`${BACKEND_URL}/projects/${projectId}/api-keys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': request.headers.get('cookie') || '',
+        'Authorization': `Bearer ${jwtToken}`,
       },
-      credentials: 'include',
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.detail || 'Failed to create API key' },
-        { status: response.status }
-      );
+      const error = await response.text();
+      return NextResponse.json({ error }, { status: response.status });
     }
 
-    const newApiKey = await response.json();
-    return NextResponse.json(newApiKey);
-
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('API Key creation error:', error);
+    console.error('API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
