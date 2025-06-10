@@ -808,15 +808,10 @@ export default function ProjectDetailPage() {
         <TabsContent value="servers" className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">프로젝트 서버</h3>
-            <AddServerDialog 
-              open={isAddServerDialogOpen}
-              onOpenChange={setIsAddServerDialogOpen}
-              projectId={projectId}
-              onServerAdded={() => {
-                loadProjectServers(projectId);
-                toast.success('서버가 성공적으로 추가되었습니다.');
-              }}
-            />
+            <Button onClick={() => setIsAddServerDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              서버 추가
+            </Button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1305,6 +1300,17 @@ export default function ProjectDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AddServerDialog 컴포넌트 */}
+      <AddServerDialog 
+        open={isAddServerDialogOpen}
+        onOpenChange={setIsAddServerDialogOpen}
+        projectId={projectId}
+        onServerAdded={() => {
+          loadProjectServers(projectId);
+          toast.success('서버가 성공적으로 추가되었습니다.');
+        }}
+      />
     </div>
   );
 }
