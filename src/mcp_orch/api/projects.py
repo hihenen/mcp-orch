@@ -1050,7 +1050,7 @@ async def list_project_servers(
             args=server.args or [],
             env=server.env or {},
             cwd=server.cwd,
-            disabled=server.disabled or False,
+            disabled=not server.is_enabled,
             status="offline",  # 실제 상태는 향후 구현
             tools_count=0,  # 실제 도구 개수는 향후 구현
             last_connected=server.last_connected,
@@ -1112,7 +1112,7 @@ async def create_project_server(
         args=server_data.args,
         env=server_data.env,
         cwd=server_data.cwd,
-        disabled=False
+        created_by_id=current_user.id
     )
     
     db.add(new_server)
@@ -1128,7 +1128,7 @@ async def create_project_server(
         args=new_server.args or [],
         env=new_server.env or {},
         cwd=new_server.cwd,
-        disabled=new_server.disabled or False,
+        disabled=not new_server.is_enabled,
         status="offline",
         tools_count=0,
         last_connected=new_server.last_connected,
@@ -1225,7 +1225,7 @@ async def update_project_server(
         args=server.args or [],
         env=server.env or {},
         cwd=server.cwd,
-        disabled=server.disabled or False,
+        disabled=not server.is_enabled,
         status="offline",
         tools_count=0,
         last_connected=server.last_connected,
@@ -1325,16 +1325,16 @@ async def toggle_project_server(
         )
     
     # 서버 상태 토글
-    server.disabled = not (server.disabled or False)
+    server.is_enabled = not server.is_enabled
     server.updated_at = datetime.utcnow()
     
     db.commit()
     db.refresh(server)
     
-    status_text = "비활성화" if server.disabled else "활성화"
+    status_text = "비활성화" if not server.is_enabled else "활성화"
     return {
         "message": f"서버 '{server.name}'가 {status_text}되었습니다.",
-        "disabled": server.disabled
+        "disabled": not server.is_enabled
     }
 
 
