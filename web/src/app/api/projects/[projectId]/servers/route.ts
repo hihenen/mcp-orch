@@ -100,7 +100,8 @@ export const PUT = auth(async function PUT(req, ctx) {
 
     const { projectId } = await ctx.params;
     const body = await req.json();
-    const { serverId } = body;
+    const { searchParams } = new URL(req.url);
+    const serverId = searchParams.get('serverId');
 
     if (!serverId) {
       return NextResponse.json({ error: 'Server ID is required' }, { status: 400 });

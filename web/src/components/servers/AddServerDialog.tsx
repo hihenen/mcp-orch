@@ -139,41 +139,66 @@ export function AddServerDialog({
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.command.trim()) {
-      alert("입력 오류: 서버 이름과 명령어는 필수입니다."); // TODO: 토스트로 교체
+      alert("입력 오류: 서버 이름과 명령어는 필수입니다.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      if (isEditMode) {
-        // TODO: 실제 API 호출로 서버 수정
-        // const response = await fetch(`/api/projects/${projectId}/servers/${editServer.id}`, {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData),
-        //   credentials: 'include'
-        // });
+      if (isEditMode && editServer) {
+        // 서버 수정 API 호출
+        const response = await fetch(`/api/projects/${projectId}/servers?serverId=${editServer.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            command: formData.command,
+            args: formData.args,
+            env: formData.env,
+            cwd: formData.cwd || null
+          }),
+          credentials: 'include'
+        });
         
-        // if (!response.ok) throw new Error('서버 수정 실패');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '서버 수정 실패');
+        }
 
-        // 임시로 성공 처리
+        const result = await response.json();
+        console.log('서버 수정 성공:', result);
+        
         onServerUpdated?.(formData);
-        alert(`서버 수정 완료: ${formData.name} 서버가 성공적으로 수정되었습니다.`); // TODO: 토스트로 교체
+        alert(`서버 수정 완료: ${formData.name} 서버가 성공적으로 수정되었습니다.`);
       } else {
-        // TODO: 실제 API 호출로 서버 추가
-        // const response = await fetch(`/api/projects/${projectId}/servers`, {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData),
-        //   credentials: 'include'
-        // });
+        // 서버 추가 API 호출
+        const response = await fetch(`/api/projects/${projectId}/servers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            transport_type: formData.transport,
+            command: formData.command,
+            args: formData.args,
+            env: formData.env,
+            cwd: formData.cwd || null
+          }),
+          credentials: 'include'
+        });
 
-        // if (!response.ok) throw new Error('서버 추가 실패');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '서버 추가 실패');
+        }
 
-        // 임시로 성공 처리
+        const result = await response.json();
+        console.log('서버 추가 성공:', result);
+        
         onServerAdded(formData);
-        alert(`서버 추가 완료: ${formData.name} 서버가 성공적으로 추가되었습니다.`); // TODO: 토스트로 교체
+        alert(`서버 추가 완료: ${formData.name} 서버가 성공적으로 추가되었습니다.`);
       }
 
       resetForm();
@@ -181,7 +206,7 @@ export function AddServerDialog({
       
     } catch (error) {
       console.error(`서버 ${isEditMode ? '수정' : '추가'} 오류:`, error);
-      alert(`서버 ${isEditMode ? '수정' : '추가'} 실패: 서버 ${isEditMode ? '수정' : '추가'} 중 오류가 발생했습니다.`); // TODO: 토스트로 교체
+      alert(`서버 ${isEditMode ? '수정' : '추가'} 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
     } finally {
       setIsLoading(false);
     }

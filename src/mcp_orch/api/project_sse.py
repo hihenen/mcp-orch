@@ -259,7 +259,9 @@ async def add_project_server(
         command=server_data.get("command"),
         args=server_data.get("args", []),
         env=server_data.get("env", {}),
-        disabled=server_data.get("disabled", False)
+        disabled=server_data.get("disabled", False),
+        description=server_data.get("description"),
+        cwd=server_data.get("cwd")
     )
     
     db.add(server)

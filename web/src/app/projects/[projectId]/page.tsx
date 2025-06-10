@@ -44,6 +44,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { AddServerDialog } from '@/components/servers/AddServerDialog';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -87,6 +88,7 @@ export default function ProjectDetailPage() {
   });
   const [newlyCreatedApiKey, setNewlyCreatedApiKey] = useState<string | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const [isAddServerDialogOpen, setIsAddServerDialogOpen] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -806,10 +808,15 @@ export default function ProjectDetailPage() {
         <TabsContent value="servers" className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">프로젝트 서버</h3>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              서버 추가
-            </Button>
+            <AddServerDialog 
+              open={isAddServerDialogOpen}
+              onOpenChange={setIsAddServerDialogOpen}
+              projectId={projectId}
+              onServerAdded={() => {
+                loadProjectServers(projectId);
+                toast.success('서버가 성공적으로 추가되었습니다.');
+              }}
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
