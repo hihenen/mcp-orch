@@ -58,15 +58,18 @@ def verify_jwt_token(token: str) -> Optional[JWTUser]:
             logger.warning(f"❌ Invalid JWT token format: expected 3 parts, got {len(parts)}")
             return None
         
-        # 개발 환경에서는 서명 검증을 비활성화 (alg: "none" 지원)
-        # 프로덕션에서는 실제 시크릿으로 검증해야 함
+        # JWT 토큰 검증 (개발/프로덕션 환경 모두 지원)
         try:
-            # 먼저 서명 검증 없이 페이로드 디코딩 시도
+            # 설정에서 JWT 시크릿 가져오기
+            jwt_secret = settings.security.jwt_secret if settings else NEXTAUTH_SECRET
+            
+            # JWT 토큰 디코딩 (서명 검증 포함)
             payload = jwt.decode(
                 token,
-                key="",  # 빈 키 (서명 검증 비활성화 시 필요)
+                key=jwt_secret,
+                algorithms=[ALGORITHM],
                 options={
-                    "verify_signature": False,  # 개발용: 서명 검증 비활성화
+                    "verify_signature": True,   # 서명 검증 활성화
                     "verify_exp": True,         # 만료 시간 검증 활성화
                     "verify_aud": False,        # audience 검증 비활성화
                     "verify_iss": False         # issuer 검증 비활성화
@@ -225,14 +228,15 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             
             try:
                 # JWT 설정 확인
-                print(f"🔍 JWT_SECRET_KEY exists: {bool(self.settings.JWT_SECRET_KEY)}")
-                print(f"🔍 JWT_ALGORITHM: {self.settings.JWT_ALGORITHM}")
+                jwt_secret = self.settings.security.jwt_secret if self.settings else NEXTAUTH_SECRET
+                print(f"🔍 JWT secret exists: {bool(jwt_secret)}")
+                print(f"🔍 JWT_ALGORITHM: {ALGORITHM}")
                 
                 # JWT 토큰 디코딩 시도
                 payload = jwt.decode(
                     token, 
-                    self.settings.JWT_SECRET_KEY, 
-                    algorithms=[self.settings.JWT_ALGORITHM]
+                    jwt_secret, 
+                    algorithms=[ALGORITHM]
                 )
                 print(f"✅ JWT payload decoded successfully: {payload}")
                 
