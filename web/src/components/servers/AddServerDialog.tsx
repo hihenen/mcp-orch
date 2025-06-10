@@ -199,20 +199,42 @@ function JsonBulkAddForm({
   // JSON 예시 설정
   const exampleConfig = `{
   "mcpServers": {
+    "excel-proxy-test": {
+      "disabled": false,
+      "timeout": 30,
+      "url": "http://localhost:8000/servers/excel-mcp-server/sse",
+      "headers": {
+        "Authorization": "Bearer test1234"
+      },
+      "type": "sse"
+    },
+    "miro": {
+      "autoApprove": [
+        "create-card-item",
+        "create-connector",
+        "create-items-in-bulk",
+        "create-sticky-note-item",
+        "get-items-on-board",
+        "update-sticky-note-item"
+      ],
+      "timeout": 60,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@k-jarzyna/mcp-miro"
+      ],
+      "env": {
+        "MIRO_ACCESS_TOKEN": "eyJtaXJvLm9yaWdpbiI6ImV1MDEifQ_jAlLF8N2CoehqOm9zG_ghtm8lUw"
+      },
+      "type": "stdio"
+    },
     "github-server": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
         "GITHUB_TOKEN": "your-github-token"
       },
-      "transportType": "stdio",
-      "disabled": false
-    },
-    "filesystem-server": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/files"],
-      "env": {},
-      "transportType": "stdio",
+      "type": "stdio",
       "disabled": false
     }
   }
@@ -248,7 +270,7 @@ function JsonBulkAddForm({
             body: JSON.stringify({
               name: serverName,
               description: server.description || `${serverName} MCP 서버`,
-              transport_type: server.transportType === 'sse' ? 'sse' : 'stdio',
+              transport_type: server.type === 'sse' ? 'sse' : 'stdio',
               command: server.command,
               args: server.args || [],
               env: server.env || {},
@@ -268,7 +290,7 @@ function JsonBulkAddForm({
           onServerAdded({
             name: serverName,
             description: server.description || `${serverName} MCP 서버`,
-            transport: server.transportType === 'sse' ? 'sse' : 'stdio',
+            transport: server.type === 'sse' ? 'sse' : 'stdio',
             command: server.command,
             args: server.args || [],
             env: server.env || {},
