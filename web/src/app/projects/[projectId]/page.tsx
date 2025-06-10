@@ -53,9 +53,14 @@ export default function ProjectDetailPage() {
     selectedProject, 
     projectMembers, 
     projectServers,
+    projectApiKeys,
     loadProject, 
     loadProjectMembers,
     loadProjectServers,
+    loadProjectApiKeys,
+    createProjectApiKey,
+    deleteProjectApiKey,
+    getProjectClineConfig,
     addProjectMember,
     updateProjectMember,
     removeProjectMember,
@@ -75,15 +80,21 @@ export default function ProjectDetailPage() {
     message: ''
   });
   const [memberFilter, setMemberFilter] = useState('');
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [apiKeyData, setApiKeyData] = useState({
+    name: '',
+    description: ''
+  });
 
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
       loadProjectMembers(projectId);
       loadProjectServers(projectId);
+      loadProjectApiKeys(projectId);
       loadTools();
     }
-  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadTools]);
+  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadProjectApiKeys, loadTools]);
 
   // 멤버 초대 핸들러
   const handleInviteMember = async () => {
@@ -171,6 +182,82 @@ export default function ProjectDetailPage() {
     } catch (error) {
       console.error('멤버 제거 실패:', error);
       toast.error('멤버 제거에 실패했습니다.');
+    }
+  };
+
+  // API 키 생성 핸들러
+  const handleCreateApiKey = async () => {
+    if (!apiKeyData.name.trim()) {
+      toast.error('API 키 이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const newApiKey = await createProjectApiKey(projectId, {
+        name: apiKeyData.name.trim()
+      });
+
+      toast.success(`API 키 '${apiKeyData.name}'가 생성되었습니다.`);
+      
+      // 폼 리셋
+      setApiKeyData({
+        name: '',
+        description: ''
+      });
+      
+      // 다이얼로그 닫기
+      setIsApiKeyDialogOpen(false);
+      
+      // API 키 목록 새로고침
+      loadProjectApiKeys(projectId);
+      
+    } catch (error) {
+      console.error('API 키 생성 실패:', error);
+      toast.error('API 키 생성에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // API 키 삭제 핸들러
+  const handleDeleteApiKey = async (apiKeyId: string, apiKeyName: string) => {
+    if (!confirm(`정말로 API 키 '${apiKeyName}'를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      await deleteProjectApiKey(projectId, apiKeyId);
+      
+      toast.success(`API 키 '${apiKeyName}'가 삭제되었습니다.`);
+      
+      // API 키 목록 새로고침
+      loadProjectApiKeys(projectId);
+      
+    } catch (error) {
+      console.error('API 키 삭제 실패:', error);
+      toast.error('API 키 삭제에 실패했습니다.');
+    }
+  };
+
+  // Cline 설정 다운로드 핸들러
+  const handleDownloadClineConfig = async () => {
+    try {
+      const config = await getProjectClineConfig(projectId);
+      
+      // JSON 파일로 다운로드
+      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedProject?.slug || 'project'}-cline-config.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Cline 설정 파일이 다운로드되었습니다.');
+      
+    } catch (error) {
+      console.error('Cline 설정 다운로드 실패:', error);
+      toast.error('Cline 설정 다운로드에 실패했습니다.');
     }
   };
 
@@ -840,14 +927,55 @@ export default function ProjectDetailPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleDownloadClineConfig}>
                 <Download className="h-4 w-4 mr-2" />
                 Cline 설정 다운로드
               </Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                API 키 생성
-              </Button>
+              <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    API 키 생성
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>새 API 키 생성</DialogTitle>
+                    <DialogDescription>
+                      프로젝트의 MCP 서버에 접근하기 위한 새 API 키를 생성합니다.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="apiKeyName">API 키 이름</Label>
+                      <Input
+                        id="apiKeyName"
+                        placeholder="예: Production Key"
+                        value={apiKeyData.name}
+                        onChange={(e) => setApiKeyData(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="apiKeyDescription">설명 (선택사항)</Label>
+                      <Textarea
+                        id="apiKeyDescription"
+                        placeholder="이 API 키의 용도를 설명해주세요..."
+                        value={apiKeyData.description}
+                        onChange={(e) => setApiKeyData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>
+                      취소
+                    </Button>
+                    <Button onClick={handleCreateApiKey} disabled={!apiKeyData.name.trim()}>
+                      API 키 생성
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -871,10 +999,51 @@ export default function ProjectDetailPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     첫 번째 API 키를 생성하여 MCP 서버에 접근하세요
                   </p>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    첫 번째 API 키 생성
-                  </Button>
+                  <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        첫 번째 API 키 생성
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>새 API 키 생성</DialogTitle>
+                        <DialogDescription>
+                          프로젝트의 MCP 서버에 접근하기 위한 새 API 키를 생성합니다.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="apiKeyName2">API 키 이름</Label>
+                          <Input
+                            id="apiKeyName2"
+                            placeholder="예: Production Key"
+                            value={apiKeyData.name}
+                            onChange={(e) => setApiKeyData(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="apiKeyDescription2">설명 (선택사항)</Label>
+                          <Textarea
+                            id="apiKeyDescription2"
+                            placeholder="이 API 키의 용도를 설명해주세요..."
+                            value={apiKeyData.description}
+                            onChange={(e) => setApiKeyData(prev => ({ ...prev, description: e.target.value }))}
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>
+                          취소
+                        </Button>
+                        <Button onClick={handleCreateApiKey} disabled={!apiKeyData.name.trim()}>
+                          API 키 생성
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
 
                 {/* API 키 목록 테이블 (향후 구현) */}
