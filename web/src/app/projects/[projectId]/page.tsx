@@ -992,121 +992,128 @@ export default function ProjectDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* API 키가 없는 경우 */}
-                <div className="text-center py-8">
-                  <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">API 키가 없습니다</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    첫 번째 API 키를 생성하여 MCP 서버에 접근하세요
-                  </p>
-                  <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        첫 번째 API 키 생성
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>새 API 키 생성</DialogTitle>
-                        <DialogDescription>
-                          프로젝트의 MCP 서버에 접근하기 위한 새 API 키를 생성합니다.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="apiKeyName2">API 키 이름</Label>
-                          <Input
-                            id="apiKeyName2"
-                            placeholder="예: Production Key"
-                            value={apiKeyData.name}
-                            onChange={(e) => setApiKeyData(prev => ({ ...prev, name: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="apiKeyDescription2">설명 (선택사항)</Label>
-                          <Textarea
-                            id="apiKeyDescription2"
-                            placeholder="이 API 키의 용도를 설명해주세요..."
-                            value={apiKeyData.description}
-                            onChange={(e) => setApiKeyData(prev => ({ ...prev, description: e.target.value }))}
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>
-                          취소
+                {/* API 키 목록이 있는 경우 */}
+                {projectApiKeys && projectApiKeys.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left p-4 font-medium text-sm text-gray-700">이름</th>
+                          <th className="text-left p-4 font-medium text-sm text-gray-700">키 프리픽스</th>
+                          <th className="text-left p-4 font-medium text-sm text-gray-700">상태</th>
+                          <th className="text-left p-4 font-medium text-sm text-gray-700">마지막 사용</th>
+                          <th className="text-left p-4 font-medium text-sm text-gray-700">생성일</th>
+                          <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {projectApiKeys.map((apiKey) => (
+                          <tr key={apiKey.id} className="hover:bg-gray-50">
+                            <td className="p-4">
+                              <div className="font-medium">{apiKey.name}</div>
+                              <div className="text-sm text-muted-foreground">{apiKey.description || '설명 없음'}</div>
+                            </td>
+                            <td className="p-4">
+                              <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+                                {apiKey.key_prefix || `${apiKey.id.substring(0, 8)}...`}
+                              </code>
+                            </td>
+                            <td className="p-4">
+                              <Badge className="bg-green-100 text-green-800">활성</Badge>
+                            </td>
+                            <td className="p-4">
+                              <div className="text-sm">{apiKey.last_used_at ? new Date(apiKey.last_used_at).toLocaleDateString('ko-KR') : '사용 안함'}</div>
+                              <div className="text-xs text-muted-foreground">{apiKey.last_used_ip || '-'}</div>
+                            </td>
+                            <td className="p-4">
+                              <div className="text-sm">{apiKey.created_at ? new Date(apiKey.created_at).toLocaleDateString('ko-KR') : '-'}</div>
+                            </td>
+                            <td className="p-4 text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    키 복사
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    키 재생성
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => handleDeleteApiKey(apiKey.id, apiKey.name)}
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    키 삭제
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  /* API 키가 없는 경우 */
+                  <div className="text-center py-8">
+                    <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">API 키가 없습니다</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      첫 번째 API 키를 생성하여 MCP 서버에 접근하세요
+                    </p>
+                    <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          첫 번째 API 키 생성
                         </Button>
-                        <Button onClick={handleCreateApiKey} disabled={!apiKeyData.name.trim()}>
-                          API 키 생성
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-
-                {/* API 키 목록 테이블 (향후 구현) */}
-                {/* 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">이름</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">키 프리픽스</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">상태</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">마지막 사용</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">생성일</th>
-                        <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      <tr className="hover:bg-gray-50">
-                        <td className="p-4">
-                          <div className="font-medium">Production API Key</div>
-                          <div className="text-sm text-muted-foreground">프로덕션 환경용</div>
-                        </td>
-                        <td className="p-4">
-                          <code className="bg-gray-100 px-2 py-1 rounded text-sm">project_abc...</code>
-                        </td>
-                        <td className="p-4">
-                          <Badge className="bg-green-100 text-green-800">활성</Badge>
-                        </td>
-                        <td className="p-4">
-                          <div className="text-sm">2시간 전</div>
-                          <div className="text-xs text-muted-foreground">192.168.1.100</div>
-                        </td>
-                        <td className="p-4">
-                          <div className="text-sm">2025-06-10</div>
-                        </td>
-                        <td className="p-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Copy className="h-4 w-4 mr-2" />
-                                키 복사
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                키 재생성
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash className="h-4 w-4 mr-2" />
-                                키 삭제
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                */}
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>새 API 키 생성</DialogTitle>
+                          <DialogDescription>
+                            프로젝트의 MCP 서버에 접근하기 위한 새 API 키를 생성합니다.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="apiKeyName2">API 키 이름</Label>
+                            <Input
+                              id="apiKeyName2"
+                              placeholder="예: Production Key"
+                              value={apiKeyData.name}
+                              onChange={(e) => setApiKeyData(prev => ({ ...prev, name: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="apiKeyDescription2">설명 (선택사항)</Label>
+                            <Textarea
+                              id="apiKeyDescription2"
+                              placeholder="이 API 키의 용도를 설명해주세요..."
+                              value={apiKeyData.description}
+                              onChange={(e) => setApiKeyData(prev => ({ ...prev, description: e.target.value }))}
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>
+                            취소
+                          </Button>
+                          <Button onClick={handleCreateApiKey} disabled={!apiKeyData.name.trim()}>
+                            API 키 생성
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

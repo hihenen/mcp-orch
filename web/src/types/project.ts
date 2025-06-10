@@ -91,11 +91,13 @@ export interface ProjectServer {
 export interface ProjectApiKey {
   id: string;
   name: string;
+  description?: string;
   key_prefix: string;
   is_active: boolean;
   expires_at?: string;
   last_used_at?: string;
-  created_at?: string;
+  last_used_ip?: string;
+  created_at: string;
 }
 
 export interface CreateProjectApiKeyRequest {
