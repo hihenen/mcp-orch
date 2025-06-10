@@ -1007,7 +1007,6 @@ export default function ProjectDetailPage() {
                       <thead className="bg-gray-50 border-b">
                         <tr>
                           <th className="text-left p-4 font-medium text-sm text-gray-700">이름</th>
-                          <th className="text-left p-4 font-medium text-sm text-gray-700">키 프리픽스</th>
                           <th className="text-left p-4 font-medium text-sm text-gray-700">상태</th>
                           <th className="text-left p-4 font-medium text-sm text-gray-700">마지막 사용</th>
                           <th className="text-left p-4 font-medium text-sm text-gray-700">생성일</th>
@@ -1025,9 +1024,6 @@ export default function ProjectDetailPage() {
                                   : '만료 없음'
                                 }
                               </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="text-sm text-muted-foreground">사용 안함</div>
                             </td>
                             <td className="p-4">
                               <Badge className="bg-green-100 text-green-800">활성</Badge>
