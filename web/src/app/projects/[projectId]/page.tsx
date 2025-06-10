@@ -26,7 +26,11 @@ import {
   Shield,
   Crown,
   Code,
-  FileText
+  FileText,
+  Copy,
+  Trash,
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useServerStore } from '@/stores/serverStore';
@@ -245,7 +249,7 @@ export default function ProjectDetailPage() {
 
       {/* 탭 네비게이션 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview
@@ -261,6 +265,10 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Tools
+          </TabsTrigger>
+          <TabsTrigger value="api-keys" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            API Keys
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />

@@ -765,6 +765,373 @@ async def remove_project_favorite(
     return {"message": "Favorite removed successfully"}
 
 
+# 프로젝트별 서버 관리 API
+class ServerCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    transport: str = Field(default="stdio")
+    command: str = Field(..., min_length=1)
+    args: List[str] = Field(default_factory=list)
+    env: dict = Field(default_factory=dict)
+    cwd: Optional[str] = None
+
+
+class ServerUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    transport: Optional[str] = None
+    command: Optional[str] = None
+    args: Optional[List[str]] = None
+    env: Optional[dict] = None
+    cwd: Optional[str] = None
+
+
+class ServerResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str]
+    transport_type: str
+    command: str
+    args: List[str]
+    env: dict
+    cwd: Optional[str]
+    disabled: bool
+    status: str = "offline"
+    tools_count: int = 0
+    last_connected: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get("/projects/{project_id}/servers", response_model=List[ServerResponse])
+async def list_project_servers(
+    project_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트별 MCP 서버 목록 조회"""
+    
+    # 프로젝트 접근 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # 프로젝트별 서버 목록 조회
+    servers = db.query(McpServer).filter(
+        McpServer.project_id == project_id
+    ).all()
+    
+    result = []
+    for server in servers:
+        result.append(ServerResponse(
+            id=str(server.id),
+            name=server.name,
+            description=server.description,
+            transport_type=server.transport_type or "stdio",
+            command=server.command or "",
+            args=server.args or [],
+            env=server.env or {},
+            cwd=server.cwd,
+            disabled=server.disabled or False,
+            status="offline",  # 실제 상태는 향후 구현
+            tools_count=0,  # 실제 도구 개수는 향후 구현
+            last_connected=server.last_connected,
+            created_at=server.created_at,
+            updated_at=server.updated_at
+        ))
+    
+    return result
+
+
+@router.post("/projects/{project_id}/servers", response_model=ServerResponse)
+async def create_project_server(
+    project_id: UUID,
+    server_data: ServerCreate,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트에 새 MCP 서버 추가 (Owner/Developer만 가능)"""
+    
+    # 프로젝트 권한 확인 (Owner 또는 Developer)
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            or_(
+                ProjectMember.role == ProjectRole.OWNER,
+                ProjectMember.role == ProjectRole.DEVELOPER
+            )
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only project owners and developers can add servers"
+        )
+    
+    # 서버 이름 중복 확인 (프로젝트 내에서)
+    existing_server = db.query(McpServer).filter(
+        and_(
+            McpServer.project_id == project_id,
+            McpServer.name == server_data.name
+        )
+    ).first()
+    
+    if existing_server:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Server name already exists in this project"
+        )
+    
+    # 새 서버 생성
+    new_server = McpServer(
+        project_id=project_id,
+        name=server_data.name,
+        description=server_data.description,
+        transport_type=server_data.transport,
+        command=server_data.command,
+        args=server_data.args,
+        env=server_data.env,
+        cwd=server_data.cwd,
+        disabled=False
+    )
+    
+    db.add(new_server)
+    db.commit()
+    db.refresh(new_server)
+    
+    return ServerResponse(
+        id=str(new_server.id),
+        name=new_server.name,
+        description=new_server.description,
+        transport_type=new_server.transport_type or "stdio",
+        command=new_server.command or "",
+        args=new_server.args or [],
+        env=new_server.env or {},
+        cwd=new_server.cwd,
+        disabled=new_server.disabled or False,
+        status="offline",
+        tools_count=0,
+        last_connected=new_server.last_connected,
+        created_at=new_server.created_at,
+        updated_at=new_server.updated_at
+    )
+
+
+@router.put("/projects/{project_id}/servers/{server_id}", response_model=ServerResponse)
+async def update_project_server(
+    project_id: UUID,
+    server_id: UUID,
+    server_data: ServerUpdate,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트 서버 정보 수정 (Owner/Developer만 가능)"""
+    
+    # 프로젝트 권한 확인 (Owner 또는 Developer)
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            or_(
+                ProjectMember.role == ProjectRole.OWNER,
+                ProjectMember.role == ProjectRole.DEVELOPER
+            )
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only project owners and developers can update servers"
+        )
+    
+    # 서버 조회
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # 서버 이름 중복 확인 (다른 서버와)
+    if server_data.name and server_data.name != server.name:
+        existing_server = db.query(McpServer).filter(
+            and_(
+                McpServer.project_id == project_id,
+                McpServer.name == server_data.name,
+                McpServer.id != server_id
+            )
+        ).first()
+        
+        if existing_server:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Server name already exists in this project"
+            )
+    
+    # 서버 정보 업데이트
+    if server_data.name is not None:
+        server.name = server_data.name
+    if server_data.description is not None:
+        server.description = server_data.description
+    if server_data.transport is not None:
+        server.transport_type = server_data.transport
+    if server_data.command is not None:
+        server.command = server_data.command
+    if server_data.args is not None:
+        server.args = server_data.args
+    if server_data.env is not None:
+        server.env = server_data.env
+    if server_data.cwd is not None:
+        server.cwd = server_data.cwd
+    
+    server.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(server)
+    
+    return ServerResponse(
+        id=str(server.id),
+        name=server.name,
+        description=server.description,
+        transport_type=server.transport_type or "stdio",
+        command=server.command or "",
+        args=server.args or [],
+        env=server.env or {},
+        cwd=server.cwd,
+        disabled=server.disabled or False,
+        status="offline",
+        tools_count=0,
+        last_connected=server.last_connected,
+        created_at=server.created_at,
+        updated_at=server.updated_at
+    )
+
+
+@router.delete("/projects/{project_id}/servers/{server_id}")
+async def delete_project_server(
+    project_id: UUID,
+    server_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트에서 서버 삭제 (Owner/Developer만 가능)"""
+    
+    # 프로젝트 권한 확인 (Owner 또는 Developer)
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            or_(
+                ProjectMember.role == ProjectRole.OWNER,
+                ProjectMember.role == ProjectRole.DEVELOPER
+            )
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only project owners and developers can delete servers"
+        )
+    
+    # 서버 조회
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # 서버 삭제
+    server_name = server.name
+    db.delete(server)
+    db.commit()
+    
+    return {"message": f"Server '{server_name}' deleted successfully"}
+
+
+@router.post("/projects/{project_id}/servers/{server_id}/toggle")
+async def toggle_project_server(
+    project_id: UUID,
+    server_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트 서버 활성화/비활성화 토글 (Owner/Developer만 가능)"""
+    
+    # 프로젝트 권한 확인 (Owner 또는 Developer)
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            or_(
+                ProjectMember.role == ProjectRole.OWNER,
+                ProjectMember.role == ProjectRole.DEVELOPER
+            )
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only project owners and developers can toggle servers"
+        )
+    
+    # 서버 조회
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # 서버 상태 토글
+    server.disabled = not (server.disabled or False)
+    server.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(server)
+    
+    status_text = "비활성화" if server.disabled else "활성화"
+    return {
+        "message": f"서버 '{server.name}'가 {status_text}되었습니다.",
+        "disabled": server.disabled
+    }
+
+
 @router.delete("/projects/{project_id}/favorites")
 async def remove_project_favorite_by_target(
     project_id: UUID,
