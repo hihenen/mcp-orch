@@ -573,6 +573,52 @@ async def create_project_api_key(
     }
 
 
+@router.delete("/projects/{project_id}/api-keys/{key_id}")
+async def delete_project_api_key(
+    project_id: UUID,
+    key_id: UUID,
+    current_user: User = Depends(get_current_user_for_project_sse),
+    db: Session = Depends(get_db)
+):
+    """프로젝트 API 키 삭제 (Owner/Developer만 가능)"""
+    
+    # 프로젝트 권한 확인 (Owner 또는 Developer)
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            ProjectMember.role.in_(["owner", "developer"])
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only project owners and developers can delete API keys"
+        )
+    
+    # API 키 조회
+    api_key = db.query(ApiKey).filter(
+        and_(
+            ApiKey.id == key_id,
+            ApiKey.project_id == project_id
+        )
+    ).first()
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="API key not found"
+        )
+    
+    # API 키 삭제
+    key_name = api_key.name
+    db.delete(api_key)
+    db.commit()
+    
+    return {"message": f"API key '{key_name}' deleted successfully"}
+
+
 # 프로젝트별 Cline 설정 생성
 @router.get("/projects/{project_id}/cline-config")
 async def get_project_cline_config(
