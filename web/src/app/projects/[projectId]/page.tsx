@@ -85,6 +85,8 @@ export default function ProjectDetailPage() {
     name: '',
     description: ''
   });
+  const [newlyCreatedApiKey, setNewlyCreatedApiKey] = useState<string | null>(null);
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -193,9 +195,15 @@ export default function ProjectDetailPage() {
     }
 
     try {
-      const newApiKey = await createProjectApiKey(projectId, {
+      const response = await createProjectApiKey(projectId, {
         name: apiKeyData.name.trim()
       });
+
+      // 새로 생성된 API 키 저장 (전체 키)
+      if (response.api_key) {
+        setNewlyCreatedApiKey(response.api_key);
+        setShowApiKeyDialog(true);
+      }
 
       toast.success(`API 키 '${apiKeyData.name}'가 생성되었습니다.`);
       
@@ -1011,12 +1019,15 @@ export default function ProjectDetailPage() {
                           <tr key={apiKey.id} className="hover:bg-gray-50">
                             <td className="p-4">
                               <div className="font-medium">{apiKey.name}</div>
-                              <div className="text-sm text-muted-foreground">{apiKey.description || '설명 없음'}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {apiKey.expires_at 
+                                  ? `만료: ${new Date(apiKey.expires_at).toLocaleDateString('ko-KR')}`
+                                  : '만료 없음'
+                                }
+                              </div>
                             </td>
                             <td className="p-4">
-                              <code className="bg-gray-100 px-2 py-1 rounded text-sm">
-                                {apiKey.key_prefix || `${apiKey.id.substring(0, 8)}...`}
-                              </code>
+                              <div className="text-sm text-muted-foreground">사용 안함</div>
                             </td>
                             <td className="p-4">
                               <Badge className="bg-green-100 text-green-800">활성</Badge>
@@ -1214,6 +1225,83 @@ export default function ProjectDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* GitHub 스타일 API 키 복사 다이얼로그 */}
+      <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-green-600" />
+              API 키가 생성되었습니다!
+            </DialogTitle>
+            <DialogDescription>
+              보안상 이 키는 다시 표시되지 않습니다. 지금 복사해서 안전한 곳에 저장하세요.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* 경고 메시지 */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-blue-900">API 키를 안전하게 보관하세요</h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    이 키는 다시 표시되지 않습니다. 지금 복사해서 안전한 곳에 저장하세요.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* API 키 표시 */}
+            <div className="space-y-2">
+              <Label>생성된 API 키</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-green-50 border border-green-200 rounded-lg p-3">
+                  <code className="text-sm font-mono text-green-800 break-all">
+                    {newlyCreatedApiKey}
+                  </code>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (newlyCreatedApiKey) {
+                      navigator.clipboard.writeText(newlyCreatedApiKey);
+                      toast.success('API 키가 클립보드에 복사되었습니다!');
+                    }
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* 사용 방법 안내 */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-medium mb-2">사용 방법</h4>
+              <ol className="text-sm text-gray-600 space-y-1">
+                <li>1. 위의 API 키를 복사하세요</li>
+                <li>2. Cline MCP 설정에서 Authorization 헤더에 추가하세요</li>
+                <li>3. 형식: <code className="bg-white px-1 rounded">Bearer YOUR_API_KEY</code></li>
+                <li>4. Cline을 재시작하여 변경사항을 적용하세요</li>
+              </ol>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              onClick={() => {
+                setShowApiKeyDialog(false);
+                setNewlyCreatedApiKey(null);
+              }}
+              className="w-full"
+            >
+              확인했습니다
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
