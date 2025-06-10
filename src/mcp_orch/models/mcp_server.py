@@ -36,6 +36,7 @@ class McpServer(Base):
     command = Column(String(500), nullable=False)
     args = Column(JSON, default=list, nullable=False)  # Command arguments
     env = Column(JSON, default=dict, nullable=False)   # Environment variables
+    cwd = Column(String(500), nullable=True)  # Working directory
     
     # Server settings
     timeout = Column(Integer, default=60, nullable=False)
