@@ -58,23 +58,48 @@ def verify_jwt_token(token: str) -> Optional[JWTUser]:
             logger.warning(f"❌ Invalid JWT token format: expected 3 parts, got {len(parts)}")
             return None
         
-        # JWT 토큰 검증 (개발/프로덕션 환경 모두 지원)
+        # JWT 토큰 검증 (NextAuth.js alg: "none" 지원)
         try:
-            # 설정에서 JWT 시크릿 가져오기
-            jwt_secret = settings.security.jwt_secret if settings else NEXTAUTH_SECRET
+            # 토큰 헤더 확인하여 알고리즘 결정
+            import base64
+            import json
             
-            # JWT 토큰 디코딩 (서명 검증 포함)
-            payload = jwt.decode(
-                token,
-                key=jwt_secret,
-                algorithms=[ALGORITHM],
-                options={
-                    "verify_signature": True,   # 서명 검증 활성화
-                    "verify_exp": True,         # 만료 시간 검증 활성화
-                    "verify_aud": False,        # audience 검증 비활성화
-                    "verify_iss": False         # issuer 검증 비활성화
-                }
-            )
+            header_b64 = token.split('.')[0]
+            # Base64 패딩 추가
+            header_b64 += '=' * (4 - len(header_b64) % 4)
+            header = json.loads(base64.b64decode(header_b64))
+            
+            algorithm = header.get('alg', 'HS256')
+            logger.info(f"🔍 JWT algorithm detected: {algorithm}")
+            
+            if algorithm == 'none':
+                # NextAuth.js alg: "none" 토큰 처리 (개발 환경)
+                payload = jwt.decode(
+                    token,
+                    key="",  # 빈 키
+                    algorithms=["none"],
+                    options={
+                        "verify_signature": False,  # 서명 검증 비활성화
+                        "verify_exp": True,         # 만료 시간 검증 활성화
+                        "verify_aud": False,        # audience 검증 비활성화
+                        "verify_iss": False         # issuer 검증 비활성화
+                    }
+                )
+            else:
+                # 일반 JWT 토큰 처리 (프로덕션 환경)
+                jwt_secret = settings.security.jwt_secret if settings else NEXTAUTH_SECRET
+                payload = jwt.decode(
+                    token,
+                    key=jwt_secret,
+                    algorithms=[algorithm],
+                    options={
+                        "verify_signature": True,   # 서명 검증 활성화
+                        "verify_exp": True,         # 만료 시간 검증 활성화
+                        "verify_aud": False,        # audience 검증 비활성화
+                        "verify_iss": False         # issuer 검증 비활성화
+                    }
+                )
+            
             logger.info(f"✅ JWT payload decoded: {payload}")
             
         except jwt.ExpiredSignatureError:
@@ -227,17 +252,46 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             print(f"🔍 Extracted token (first 20 chars): {token[:20]}...")
             
             try:
-                # JWT 설정 확인
-                jwt_secret = self.settings.security.jwt_secret if self.settings else NEXTAUTH_SECRET
-                print(f"🔍 JWT secret exists: {bool(jwt_secret)}")
-                print(f"🔍 JWT_ALGORITHM: {ALGORITHM}")
+                # 토큰 헤더 확인하여 알고리즘 결정
+                import base64
+                import json
                 
-                # JWT 토큰 디코딩 시도
-                payload = jwt.decode(
-                    token, 
-                    jwt_secret, 
-                    algorithms=[ALGORITHM]
-                )
+                header_b64 = token.split('.')[0]
+                # Base64 패딩 추가
+                header_b64 += '=' * (4 - len(header_b64) % 4)
+                header = json.loads(base64.b64decode(header_b64))
+                
+                algorithm = header.get('alg', 'HS256')
+                print(f"🔍 JWT algorithm detected: {algorithm}")
+                
+                if algorithm == 'none':
+                    # NextAuth.js alg: "none" 토큰 처리 (개발 환경)
+                    payload = jwt.decode(
+                        token,
+                        key="",  # 빈 키
+                        algorithms=["none"],
+                        options={
+                            "verify_signature": False,  # 서명 검증 비활성화
+                            "verify_exp": True,         # 만료 시간 검증 활성화
+                            "verify_aud": False,        # audience 검증 비활성화
+                            "verify_iss": False         # issuer 검증 비활성화
+                        }
+                    )
+                else:
+                    # 일반 JWT 토큰 처리 (프로덕션 환경)
+                    jwt_secret = self.settings.security.jwt_secret if self.settings else NEXTAUTH_SECRET
+                    payload = jwt.decode(
+                        token,
+                        key=jwt_secret,
+                        algorithms=[algorithm],
+                        options={
+                            "verify_signature": True,   # 서명 검증 활성화
+                            "verify_exp": True,         # 만료 시간 검증 활성화
+                            "verify_aud": False,        # audience 검증 비활성화
+                            "verify_iss": False         # issuer 검증 비활성화
+                        }
+                    )
+                
                 print(f"✅ JWT payload decoded successfully: {payload}")
                 
                 user_id = payload.get("sub")
