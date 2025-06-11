@@ -1061,6 +1061,61 @@ async def list_project_servers(
     return result
 
 
+@router.get("/projects/{project_id}/servers/{server_id}", response_model=ServerResponse)
+async def get_project_server_detail(
+    project_id: UUID,
+    server_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트별 MCP 서버 상세 정보 조회"""
+    
+    # 프로젝트 접근 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # 서버 조회
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    return ServerResponse(
+        id=str(server.id),
+        name=server.name,
+        description=server.description,
+        transport_type=server.transport_type or "stdio",
+        command=server.command or "",
+        args=server.args or [],
+        env=server.env or {},
+        cwd=server.cwd,
+        disabled=not server.is_enabled,
+        status="offline",  # 실제 상태는 향후 구현
+        tools_count=0,  # 실제 도구 개수는 향후 구현
+        last_connected=server.last_used_at,
+        created_at=server.created_at,
+        updated_at=server.updated_at
+    )
+
+
 @router.post("/projects/{project_id}/servers", response_model=ServerResponse)
 async def create_project_server(
     project_id: UUID,
