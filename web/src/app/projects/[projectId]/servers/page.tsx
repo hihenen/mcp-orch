@@ -19,6 +19,7 @@ import {
 import { useServerStore } from '@/stores/serverStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
+import { ServerDetailModal } from '@/components/servers/ServerDetailModal';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -40,6 +41,8 @@ export default function ProjectServersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingServer, setEditingServer] = useState<any>(null);
+  const [selectedServer, setSelectedServer] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [projectServers, setProjectServers] = useState<any[]>([]);
   const [isLoadingProjectServers, setIsLoadingProjectServers] = useState(false);
 
@@ -161,6 +164,17 @@ export default function ProjectServersPage() {
     }
   };
 
+  // 서버 상세 보기 핸들러
+  const handleShowServerDetail = (server: any) => {
+    setSelectedServer(server);
+    setShowDetailModal(true);
+  };
+
+  // 서버 상세 모달에서 서버 업데이트 핸들러
+  const handleServerUpdatedFromModal = () => {
+    loadProjectServers();
+  };
+
   // 프로젝트별 서버 목록 필터링
   const filteredServers = projectServers.filter(server => 
     server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -244,7 +258,11 @@ export default function ProjectServersPage() {
       ) : (
         <div className="grid gap-4">
           {filteredServers.map((server) => (
-            <Card key={server.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={server.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleShowServerDetail(server)}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -267,7 +285,10 @@ export default function ProjectServersPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleToggleServer(server)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleServer(server);
+                      }}
                       className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
                       title={server.disabled ? '서버 활성화' : '서버 비활성화'}
                     >
@@ -276,7 +297,10 @@ export default function ProjectServersPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleEditServer(server)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditServer(server);
+                      }}
                       title="서버 편집"
                     >
                       <Edit className="h-4 w-4" />
@@ -284,13 +308,16 @@ export default function ProjectServersPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleDeleteServer(server)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteServer(server);
+                      }}
                       className="text-red-600 hover:text-red-700"
                       title="서버 삭제"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Link href={`/servers/${server.name}`}>
+                    <Link href={`/servers/${server.name}`} onClick={(e) => e.stopPropagation()}>
                       <Button variant="outline" size="sm" title="서버 상세보기">
                         <Settings className="h-4 w-4" />
                       </Button>
@@ -336,6 +363,23 @@ export default function ProjectServersPage() {
         onServerUpdated={handleServerUpdated}
         editServer={editingServer}
         projectId={projectId}
+      />
+
+      {/* 서버 상세 모달 */}
+      <ServerDetailModal
+        open={showDetailModal}
+        onOpenChange={setShowDetailModal}
+        server={selectedServer}
+        projectId={projectId}
+        onServerUpdated={handleServerUpdatedFromModal}
+        onEditServer={(server) => {
+          setShowDetailModal(false);
+          handleEditServer(server);
+        }}
+        onDeleteServer={(server) => {
+          setShowDetailModal(false);
+          handleDeleteServer(server);
+        }}
       />
     </div>
   );
