@@ -16,7 +16,6 @@ from ..database import get_db
 from ..models import Project, ProjectMember, User, McpServer, ApiKey, ProjectRole, InviteSource, UserFavorite
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
-from ..config_parser import load_mcp_config
 
 router = APIRouter(prefix="/api", tags=["projects"])
 
@@ -1041,30 +1040,23 @@ async def list_project_servers(
         McpServer.project_id == project_id
     ).all()
     
-    # MCP 설정 파일 로드
-    config = load_mcp_config()
-    
     result = []
     for server in servers:
-        # 실제 MCP 서버 상태 확인
+        # DB 기반으로 서버 상태 확인
         server_status = "offline"
         tools_count = 0
         
-        if config and 'servers' in config:
-            server_config = config['servers'].get(server.name)
-            if server_config:
-                if server_config.get('disabled', False):
-                    server_status = "disabled"
-                else:
-                    # 실제 연결 테스트는 비동기로 처리하므로 캐시된 상태 사용
-                    server_status = mcp_connection_service.get_cached_status(server.name)
-                    tools_count = mcp_connection_service.get_cached_tools_count(server.name)
-                    
-                    # 캐시된 상태가 없으면 기본값 사용
-                    if server_status == "unknown":
-                        server_status = "offline"
-            else:
-                server_status = "not_configured"
+        # 서버가 비활성화된 경우
+        if not server.is_enabled:
+            server_status = "disabled"
+        else:
+            # 캐시된 상태 사용
+            server_status = mcp_connection_service.get_cached_status(str(server.id))
+            tools_count = mcp_connection_service.get_cached_tools_count(str(server.id))
+            
+            # 캐시된 상태가 없으면 기본값 사용
+            if server_status == "unknown":
+                server_status = "offline"
         
         result.append(ServerResponse(
             id=str(server.id),
@@ -1123,26 +1115,21 @@ async def get_project_server_detail(
             detail="Server not found"
         )
     
-    # MCP 설정 파일 로드 및 실제 상태 확인
-    config = load_mcp_config()
+    # DB 기반으로 서버 상태 확인
     server_status = "offline"
     tools_count = 0
     
-    if config and 'servers' in config:
-        server_config = config['servers'].get(server.name)
-        if server_config:
-            if server_config.get('disabled', False):
-                server_status = "disabled"
-            else:
-                # 실제 연결 테스트는 비동기로 처리하므로 캐시된 상태 사용
-                server_status = mcp_connection_service.get_cached_status(server.name)
-                tools_count = mcp_connection_service.get_cached_tools_count(server.name)
-                
-                # 캐시된 상태가 없으면 기본값 사용
-                if server_status == "unknown":
-                    server_status = "offline"
-        else:
-            server_status = "not_configured"
+    # 서버가 비활성화된 경우
+    if not server.is_enabled:
+        server_status = "disabled"
+    else:
+        # 캐시된 상태 사용
+        server_status = mcp_connection_service.get_cached_status(str(server.id))
+        tools_count = mcp_connection_service.get_cached_tools_count(str(server.id))
+        
+        # 캐시된 상태가 없으면 기본값 사용
+        if server_status == "unknown":
+            server_status = "offline"
     
     return ServerResponse(
         id=str(server.id),
@@ -1588,20 +1575,11 @@ async def refresh_project_server_status(
         )
     
     try:
-        # MCP 설정 파일 로드
-        config = load_mcp_config()
-        if not config or 'servers' not in config:
-            return {
-                "message": "MCP configuration not found",
-                "status": "not_configured",
-                "tools_count": 0,
-                "tools": []
-            }
-        
-        server_config = config['servers'].get(server.name)
+        # 데이터베이스에서 서버 설정 구성
+        server_config = mcp_connection_service._build_server_config_from_db(server)
         if not server_config:
             return {
-                "message": f"Server '{server.name}' not found in MCP configuration",
+                "message": f"Server '{server.name}' configuration is incomplete",
                 "status": "not_configured",
                 "tools_count": 0,
                 "tools": []

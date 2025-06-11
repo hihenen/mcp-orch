@@ -69,7 +69,8 @@ class ToolRegistry:
         self._lock = asyncio.Lock()
         
     async def load_configuration(self) -> None:
-        """설정 파일에서 MCP 서버 목록 로드"""
+        """설정 파일과 데이터베이스에서 MCP 서버 목록 로드"""
+        # 1. JSON 파일에서 서버 로드
         from ..config_parser import ConfigParser
         
         config_parser = ConfigParser(str(self.config_path))
@@ -91,8 +92,53 @@ class ToolRegistry:
             
             if server_config.disabled:
                 logger.info(f"Loaded disabled server: {server_name}")
+        
+        # 2. 데이터베이스에서 서버 로드
+        await self._load_database_servers()
             
         logger.info(f"Loaded {len(self._servers)} MCP server configurations")
+        
+    async def _load_database_servers(self) -> None:
+        """데이터베이스에서 MCP 서버 목록 로드"""
+        try:
+            from ..database import get_db
+            from ..models import McpServer
+            from ..services.mcp_connection_service import mcp_connection_service
+            
+            db = next(get_db())
+            db_servers = db.query(McpServer).filter(McpServer.is_enabled == True).all()
+            
+            for db_server in db_servers:
+                # 데이터베이스 서버 설정을 ServerInfo로 변환
+                config = mcp_connection_service._build_server_config_from_db(db_server)
+                if not config:
+                    logger.warning(f"Failed to build config for database server: {db_server.name}")
+                    continue
+                
+                server_info = ServerInfo(
+                    name=db_server.name,
+                    command=config["command"],
+                    args=config["args"],
+                    env=config.get("env", {}),
+                    transport_type=config.get("transportType", "stdio"),
+                    timeout=config.get("timeout", 60),
+                    auto_approve=[],
+                    disabled=config.get("disabled", False)
+                )
+                
+                # JSON 서버가 비활성화되어 있으면 데이터베이스 서버를 우선
+                if db_server.name not in self._servers:
+                    self._servers[db_server.name] = server_info
+                    logger.info(f"Loaded database server: {db_server.name}")
+                elif self._servers[db_server.name].disabled:
+                    # JSON 서버가 비활성화되어 있으면 데이터베이스 서버로 교체
+                    self._servers[db_server.name] = server_info
+                    logger.info(f"Replaced disabled JSON server with database server: {db_server.name}")
+                else:
+                    logger.warning(f"Database server {db_server.name} conflicts with active JSON config, skipping")
+                    
+        except Exception as e:
+            logger.error(f"Error loading database servers: {e}", exc_info=True)
             
     async def connect_servers(self) -> None:
         """모든 설정된 MCP 서버에 연결"""

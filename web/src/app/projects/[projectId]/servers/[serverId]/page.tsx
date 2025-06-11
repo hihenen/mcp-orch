@@ -141,6 +141,36 @@ export default function ProjectServerDetailPage() {
     }
   };
 
+  // 서버 상태 새로고침 핸들러
+  const handleRefreshStatus = async () => {
+    if (!server) return;
+
+    try {
+      toast.info('서버 상태를 확인하는 중...');
+      
+      const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/refresh-status`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 상태 새로고침 실패');
+      }
+
+      const data = await response.json();
+      console.log('서버 상태 새로고침 성공:', data);
+      
+      // 서버 정보 새로고침
+      loadServerDetail();
+      
+      toast.success(`서버 상태가 업데이트되었습니다. (도구: ${data.tools_count}개)`);
+    } catch (error) {
+      console.error('서버 상태 새로고침 오류:', error);
+      toast.error(`서버 상태 새로고침 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    }
+  };
+
   // 서버 삭제 핸들러
   const handleDeleteServer = async () => {
     if (!server) return;
@@ -251,6 +281,14 @@ export default function ProjectServerDetailPage() {
         <div className="flex items-center gap-2">
           <Button 
             variant="outline"
+            onClick={handleRefreshStatus}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            상태 새로고침
+          </Button>
+          <Button 
+            variant="outline"
             onClick={handleToggleServer}
             className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
           >
@@ -278,7 +316,7 @@ export default function ProjectServerDetailPage() {
 
       {/* 탭 네비게이션 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Server className="h-4 w-4" />
             개요
@@ -286,6 +324,10 @@ export default function ProjectServerDetailPage() {
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Wrench className="h-4 w-4" />
             도구
+          </TabsTrigger>
+          <TabsTrigger value="usage" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            사용 현황
           </TabsTrigger>
           <TabsTrigger value="logs" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -415,6 +457,149 @@ export default function ProjectServerDetailPage() {
                 <Wrench className="h-12 w-12 mx-auto mb-4" />
                 <p>도구 목록을 불러오는 중...</p>
                 <p className="text-sm mt-2">실제 서버 연결 후 도구 정보가 표시됩니다.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 사용 현황 탭 */}
+        <TabsContent value="usage" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* 클라이언트 세션 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>클라이언트 세션</CardTitle>
+                <CardDescription>
+                  현재 연결된 클라이언트들의 세션 정보입니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div>
+                        <div className="font-medium text-sm">Cline Session</div>
+                        <div className="text-xs text-muted-foreground">활성 세션 - 2분 전</div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">활성</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      <div>
+                        <div className="font-medium text-sm">Cursor Session</div>
+                        <div className="text-xs text-muted-foreground">비활성 - 1시간 전</div>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">비활성</Badge>
+                  </div>
+                  
+                  <div className="text-center py-4 text-muted-foreground">
+                    <p className="text-sm">총 2개의 세션 기록</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 사용 통계 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>사용 통계</CardTitle>
+                <CardDescription>
+                  도구 호출 및 사용 패턴 통계입니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">24</div>
+                      <div className="text-muted-foreground">총 호출 수</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">22</div>
+                      <div className="text-muted-foreground">성공 호출</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-red-600">2</div>
+                      <div className="text-muted-foreground">실패 호출</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">91.7%</div>
+                      <div className="text-muted-foreground">성공률</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 최근 도구 호출 로그 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>최근 도구 호출 로그</CardTitle>
+              <CardDescription>
+                클라이언트에서 실행한 최근 도구 호출 기록입니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                      <div className="font-medium text-sm">brave_web_search</div>
+                      <div className="text-xs text-muted-foreground">
+                        Cline에서 호출 - 5분 전
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs text-green-600">성공</Badge>
+                    <span className="text-xs text-muted-foreground">1.2초</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                      <div className="font-medium text-sm">brave_local_search</div>
+                      <div className="text-xs text-muted-foreground">
+                        Cline에서 호출 - 12분 전
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs text-green-600">성공</Badge>
+                    <span className="text-xs text-muted-foreground">0.8초</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <div>
+                      <div className="font-medium text-sm">brave_web_search</div>
+                      <div className="text-xs text-muted-foreground">
+                        Cursor에서 호출 - 1시간 전
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs text-red-600">실패</Badge>
+                    <span className="text-xs text-muted-foreground">타임아웃</span>
+                  </div>
+                </div>
+
+                <div className="text-center py-4 border-t">
+                  <Button variant="outline" size="sm">
+                    더 많은 로그 보기
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

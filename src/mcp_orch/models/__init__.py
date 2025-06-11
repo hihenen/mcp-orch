@@ -9,6 +9,8 @@ from .usage import ApiUsage
 from .mcp_server import McpServer, McpServerStatus, McpTool
 from .server_log import ServerLog, LogLevel, LogCategory
 from .favorite import UserFavorite
+from .client_session import ClientSession
+from .tool_call_log import ToolCallLog, CallStatus
 
 __all__ = [
     "Base",
@@ -30,4 +32,7 @@ __all__ = [
     "LogLevel",
     "LogCategory",
     "UserFavorite",
+    "ClientSession",
+    "ToolCallLog",
+    "CallStatus",
 ]

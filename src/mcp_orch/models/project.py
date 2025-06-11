@@ -57,6 +57,8 @@ class Project(Base):
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     servers = relationship("McpServer", back_populates="project", cascade="all, delete-orphan")
     api_keys = relationship("ApiKey", back_populates="project", cascade="all, delete-orphan")
+    client_sessions = relationship("ClientSession", back_populates="project", cascade="all, delete-orphan")
+    tool_call_logs = relationship("ToolCallLog", back_populates="project", cascade="all, delete-orphan")
 
 
 class ProjectMember(Base):
