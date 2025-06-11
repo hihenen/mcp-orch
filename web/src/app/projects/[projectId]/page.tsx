@@ -305,7 +305,7 @@ export default function ProjectDetailPage() {
 
   // 서버 상세 페이지로 이동하는 핸들러
   const handleServerClick = (serverId: string) => {
-    router.push(`/servers/${serverId}`);
+    router.push(`/projects/${projectId}/servers/${serverId}`);
   };
 
   return (
