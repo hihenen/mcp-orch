@@ -45,7 +45,7 @@ export default function ProjectServerDetailPage() {
   const projectId = params.projectId as string;
   const serverId = params.serverId as string;
   
-  const { currentProject, loadProject } = useProjectStore();
+  const { selectedProject, loadProject } = useProjectStore();
   const [server, setServer] = useState<ServerDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -211,7 +211,7 @@ export default function ProjectServerDetailPage() {
         <Link href="/" className="hover:text-foreground">Home</Link>
         <span>/</span>
         <Link href={`/projects/${projectId}`} className="hover:text-foreground">
-          {currentProject?.name || 'Project'}
+          {selectedProject?.name || 'Project'}
         </Link>
         <span>/</span>
         <Link href={`/projects/${projectId}/servers`} className="hover:text-foreground">
