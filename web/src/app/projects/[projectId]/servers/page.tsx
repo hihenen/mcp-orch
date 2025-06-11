@@ -34,7 +34,7 @@ export default function ProjectServersPage() {
   } = useServerStore();
   
   const {
-    currentProject,
+    selectedProject,
     loadProject
   } = useProjectStore();
   
@@ -173,7 +173,7 @@ export default function ProjectServersPage() {
         <Link href="/" className="hover:text-foreground">Home</Link>
         <span>/</span>
         <Link href={`/projects/${projectId}`} className="hover:text-foreground">
-          {currentProject?.name || 'Project'}
+          {selectedProject?.name || 'Project'}
         </Link>
         <span>/</span>
         <span className="text-foreground">Servers</span>
@@ -184,7 +184,7 @@ export default function ProjectServersPage() {
         <div>
           <h1 className="text-3xl font-bold">Servers</h1>
           <p className="text-muted-foreground mt-1">
-            {currentProject?.name || 'Project'} 프로젝트의 MCP 서버를 관리하세요
+            {selectedProject?.name || 'Project'} 프로젝트의 MCP 서버를 관리하세요
           </p>
         </div>
         <Button onClick={() => setShowAddDialog(true)}>
