@@ -28,8 +28,8 @@ export default function ProjectServersPage() {
   const projectId = params.projectId as string;
   
   const { 
-    servers, 
-    loadServers, 
+    fetchProjectServers,
+    getProjectServers,
     isLoading 
   } = useServerStore();
   
@@ -43,54 +43,29 @@ export default function ProjectServersPage() {
   const [editingServer, setEditingServer] = useState<any>(null);
   const [selectedServer, setSelectedServer] = useState<any>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [projectServers, setProjectServers] = useState<any[]>([]);
-  const [isLoadingProjectServers, setIsLoadingProjectServers] = useState(false);
-
-  // 프로젝트별 서버 목록 로드
-  const loadProjectServers = async () => {
-    if (!projectId) return;
-    
-    setIsLoadingProjectServers(true);
-    try {
-      const response = await fetch(`/api/projects/${projectId}/servers`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setProjectServers(data);
-      } else {
-        console.error('프로젝트 서버 로드 실패:', response.status);
-        setProjectServers([]);
-      }
-    } catch (error) {
-      console.error('프로젝트 서버 로드 오류:', error);
-      setProjectServers([]);
-    } finally {
-      setIsLoadingProjectServers(false);
-    }
-  };
+  // 서버 스토어에서 프로젝트 서버 가져오기
+  const projectServers = getProjectServers(projectId);
 
   // 페이지 로드 시 프로젝트 정보와 서버 목록 로드
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
-      loadProjectServers();
+      fetchProjectServers(projectId);
     }
-  }, [projectId, loadProject]);
+  }, [projectId, loadProject, fetchProjectServers]);
 
   // 서버 추가 핸들러
   const handleServerAdded = (serverConfig: any) => {
     console.log('새 서버 추가:', serverConfig);
     // 프로젝트별 서버 목록 새로고침
-    loadProjectServers();
+    fetchProjectServers(projectId);
   };
 
   // 서버 수정 핸들러
   const handleServerUpdated = (serverConfig: any) => {
     console.log('서버 수정:', serverConfig);
     // 프로젝트별 서버 목록 새로고침
-    loadProjectServers();
+    fetchProjectServers(projectId);
     setEditingServer(null);
   };
 
@@ -129,7 +104,7 @@ export default function ProjectServersPage() {
       console.log('서버 삭제 성공:', data);
       
       // 프로젝트별 서버 목록 새로고침
-      loadProjectServers();
+      fetchProjectServers(projectId);
       
       toast.success(`서버 삭제 완료: ${server.name} 서버가 삭제되었습니다.`);
     } catch (error) {
@@ -155,7 +130,7 @@ export default function ProjectServersPage() {
       console.log('서버 토글 성공:', data);
       
       // 프로젝트별 서버 목록 새로고침
-      loadProjectServers();
+      fetchProjectServers(projectId);
       
       toast.success(data.message);
     } catch (error) {
@@ -164,15 +139,14 @@ export default function ProjectServersPage() {
     }
   };
 
-  // 서버 상세 보기 핸들러
+  // 서버 상세 보기 핸들러 (프로젝트 컨텍스트 유지)
   const handleShowServerDetail = (server: any) => {
-    setSelectedServer(server);
-    setShowDetailModal(true);
+    window.location.href = `/projects/${projectId}/servers/${server.id}`;
   };
 
   // 서버 상세 모달에서 서버 업데이트 핸들러
   const handleServerUpdatedFromModal = () => {
-    loadProjectServers();
+    fetchProjectServers(projectId);
   };
 
   // 프로젝트별 서버 목록 필터링
@@ -181,7 +155,7 @@ export default function ProjectServersPage() {
     server.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (isLoadingProjectServers) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -317,11 +291,17 @@ export default function ProjectServersPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Link href={`/servers/${server.name}`} onClick={(e) => e.stopPropagation()}>
-                      <Button variant="outline" size="sm" title="서버 상세보기">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShowServerDetail(server);
+                      }}
+                      title="서버 상세보기"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>

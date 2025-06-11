@@ -1,0 +1,491 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  ArrowLeft,
+  Server, 
+  Settings,
+  Activity,
+  Wrench,
+  FileText,
+  Play,
+  Pause,
+  RotateCcw,
+  Edit,
+  Trash2
+} from 'lucide-react';
+import { useProjectStore } from '@/stores/projectStore';
+import Link from 'next/link';
+import { toast } from 'sonner';
+
+interface ServerDetail {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'online' | 'offline' | 'connecting' | 'error';
+  disabled: boolean;
+  transportType: string;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+  tools_count?: number;
+  last_connected?: string;
+  lastError?: string;
+}
+
+export default function ProjectServerDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const projectId = params.projectId as string;
+  const serverId = params.serverId as string;
+  
+  const { currentProject, loadProject } = useProjectStore();
+  const [server, setServer] = useState<ServerDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // 서버 상세 정보 로드
+  const loadServerDetail = async () => {
+    if (!projectId || !serverId) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/${serverId}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setServer(data);
+      } else {
+        console.error('서버 상세 정보 로드 실패:', response.status);
+        toast.error('서버 정보를 불러올 수 없습니다.');
+        router.push(`/projects/${projectId}/servers`);
+      }
+    } catch (error) {
+      console.error('서버 상세 정보 로드 오류:', error);
+      toast.error('서버 정보를 불러오는 중 오류가 발생했습니다.');
+      router.push(`/projects/${projectId}/servers`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 페이지 로드 시 프로젝트 정보와 서버 상세 정보 로드
+  useEffect(() => {
+    if (projectId) {
+      loadProject(projectId);
+    }
+    loadServerDetail();
+  }, [projectId, serverId, loadProject]);
+
+  // 서버 토글 핸들러
+  const handleToggleServer = async () => {
+    if (!server) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/toggle`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 상태 변경 실패');
+      }
+
+      const data = await response.json();
+      console.log('서버 토글 성공:', data);
+      
+      // 서버 정보 새로고침
+      loadServerDetail();
+      
+      toast.success(data.message);
+    } catch (error) {
+      console.error('서버 토글 오류:', error);
+      toast.error(`서버 상태 변경 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    }
+  };
+
+  // 서버 재시작 핸들러
+  const handleRestartServer = async () => {
+    if (!server) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/restart`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 재시작 실패');
+      }
+
+      const data = await response.json();
+      console.log('서버 재시작 성공:', data);
+      
+      // 서버 정보 새로고침
+      loadServerDetail();
+      
+      toast.success('서버가 재시작되었습니다.');
+    } catch (error) {
+      console.error('서버 재시작 오류:', error);
+      toast.error(`서버 재시작 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    }
+  };
+
+  // 서버 삭제 핸들러
+  const handleDeleteServer = async () => {
+    if (!server) return;
+
+    if (!confirm(`정말로 "${server.name}" 서버를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers?serverId=${server.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 삭제 실패');
+      }
+
+      const data = await response.json();
+      console.log('서버 삭제 성공:', data);
+      
+      toast.success(`서버 삭제 완료: ${server.name} 서버가 삭제되었습니다.`);
+      
+      // 서버 목록 페이지로 이동
+      router.push(`/projects/${projectId}/servers`);
+    } catch (error) {
+      console.error('서버 삭제 오류:', error);
+      toast.error(`서버 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">서버 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!server) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Server className="h-12 w-12 text-muted-foreground mb-4 mx-auto" />
+          <h3 className="text-lg font-semibold mb-2">서버를 찾을 수 없습니다</h3>
+          <p className="text-muted-foreground mb-4">
+            요청하신 서버가 존재하지 않거나 접근 권한이 없습니다.
+          </p>
+          <Link href={`/projects/${projectId}/servers`}>
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              서버 목록으로 돌아가기
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 브레드크럼 */}
+      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">Home</Link>
+        <span>/</span>
+        <Link href={`/projects/${projectId}`} className="hover:text-foreground">
+          {currentProject?.name || 'Project'}
+        </Link>
+        <span>/</span>
+        <Link href={`/projects/${projectId}/servers`} className="hover:text-foreground">
+          Servers
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">{server.name}</span>
+      </div>
+
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href={`/projects/${projectId}/servers`}>
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              뒤로
+            </Button>
+          </Link>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">{server.name}</h1>
+              <Badge variant={server.status === 'online' ? 'default' : 'secondary'}>
+                {server.status === 'online' ? '온라인' : 
+                 server.status === 'offline' ? '오프라인' :
+                 server.status === 'connecting' ? '연결 중' : '에러'}
+              </Badge>
+              {server.disabled && (
+                <Badge variant="outline">비활성화</Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground mt-1">
+              {server.description || '설명 없음'}
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleToggleServer}
+            className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
+          >
+            {server.disabled ? <Play className="h-4 w-4 mr-2" /> : <Pause className="h-4 w-4 mr-2" />}
+            {server.disabled ? '활성화' : '비활성화'}
+          </Button>
+          <Button variant="outline" onClick={handleRestartServer}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            재시작
+          </Button>
+          <Button variant="outline">
+            <Edit className="h-4 w-4 mr-2" />
+            편집
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleDeleteServer}
+            className="text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            삭제
+          </Button>
+        </div>
+      </div>
+
+      {/* 탭 네비게이션 */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <Server className="h-4 w-4" />
+            개요
+          </TabsTrigger>
+          <TabsTrigger value="tools" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" />
+            도구
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            로그
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            설정
+          </TabsTrigger>
+        </TabsList>
+
+        {/* 개요 탭 */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* 서버 정보 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>서버 정보</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="font-medium text-muted-foreground">전송 타입</div>
+                    <div>{server.transportType || 'stdio'}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-muted-foreground">도구 개수</div>
+                    <div>{server.tools_count || 0}개</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-muted-foreground">상태</div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        server.status === 'online' ? 'bg-green-500' :
+                        server.status === 'offline' ? 'bg-gray-500' :
+                        server.status === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`} />
+                      {server.status === 'online' ? '온라인' : 
+                       server.status === 'offline' ? '오프라인' :
+                       server.status === 'connecting' ? '연결 중' : '에러'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-muted-foreground">마지막 연결</div>
+                    <div>
+                      {server.last_connected 
+                        ? new Date(server.last_connected).toLocaleString('ko-KR')
+                        : '연결 기록 없음'
+                      }
+                    </div>
+                  </div>
+                </div>
+                
+                {server.lastError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <div className="font-medium text-red-800 text-sm">최근 오류</div>
+                    <div className="text-red-700 text-sm mt-1">{server.lastError}</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 구성 정보 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>구성 정보</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3 text-sm">
+                  {server.command && (
+                    <div>
+                      <div className="font-medium text-muted-foreground">명령어</div>
+                      <div className="font-mono bg-muted p-2 rounded text-xs">
+                        {server.command}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {server.args && server.args.length > 0 && (
+                    <div>
+                      <div className="font-medium text-muted-foreground">인수</div>
+                      <div className="font-mono bg-muted p-2 rounded text-xs">
+                        {server.args.join(' ')}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {server.cwd && (
+                    <div>
+                      <div className="font-medium text-muted-foreground">작업 디렉토리</div>
+                      <div className="font-mono bg-muted p-2 rounded text-xs">
+                        {server.cwd}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {server.env && Object.keys(server.env).length > 0 && (
+                    <div>
+                      <div className="font-medium text-muted-foreground">환경 변수</div>
+                      <div className="font-mono bg-muted p-2 rounded text-xs space-y-1">
+                        {Object.entries(server.env).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="text-blue-600">{key}</span>=
+                            <span className="text-green-600">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* 도구 탭 */}
+        <TabsContent value="tools" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>사용 가능한 도구</CardTitle>
+              <CardDescription>
+                이 서버에서 제공하는 MCP 도구 목록입니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <Wrench className="h-12 w-12 mx-auto mb-4" />
+                <p>도구 목록을 불러오는 중...</p>
+                <p className="text-sm mt-2">실제 서버 연결 후 도구 정보가 표시됩니다.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 로그 탭 */}
+        <TabsContent value="logs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>서버 로그</CardTitle>
+              <CardDescription>
+                서버 실행 및 오류 로그를 확인할 수 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4" />
+                <p>로그를 불러오는 중...</p>
+                <p className="text-sm mt-2">서버 로그가 여기에 표시됩니다.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 설정 탭 */}
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>서버 설정</CardTitle>
+              <CardDescription>
+                서버 구성을 수정하고 관리할 수 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">서버 편집</h4>
+                    <p className="text-sm text-muted-foreground">
+                      서버 설정을 수정합니다.
+                    </p>
+                  </div>
+                  <Button variant="outline">
+                    <Edit className="h-4 w-4 mr-2" />
+                    편집
+                  </Button>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <h4 className="font-medium text-red-600 mb-2">위험 구역</h4>
+                  <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                    <div>
+                      <h5 className="font-medium">서버 삭제</h5>
+                      <p className="text-sm text-muted-foreground">
+                        이 서버를 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleDeleteServer}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      삭제
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

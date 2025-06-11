@@ -37,6 +37,7 @@ import { useServerStore } from '@/stores/serverStore';
 import { useToolStore } from '@/stores/toolStore';
 import { Project, ProjectMember, ProjectRole, InviteSource } from '@/types/project';
 import { MCPServer } from '@/types';
+import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ import { AddServerDialog } from '@/components/servers/AddServerDialog';
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.projectId as string;
   
   const { 
@@ -299,6 +301,11 @@ export default function ProjectDetailPage() {
       case 'reporter': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // 서버 상세 페이지로 이동하는 핸들러
+  const handleServerClick = (serverId: string) => {
+    router.push(`/servers/${serverId}`);
   };
 
   return (
@@ -816,7 +823,11 @@ export default function ProjectDetailPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projectServers.map((server) => (
-              <Card key={server.name} className="hover:shadow-md transition-shadow">
+              <Card 
+                key={server.id} 
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleServerClick(server.id)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div>
@@ -838,14 +849,14 @@ export default function ProjectDetailPage() {
                     <div className="text-sm text-muted-foreground">
                       도구: {tools.filter(t => t.serverId === server.name).length}개
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm">
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" title="상세 보기">
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" title={server.disabled ? '활성화' : '비활성화'}>
                         {server.disabled ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" title="재시작">
                         <RefreshCw className="h-4 w-4" />
                       </Button>
                     </div>

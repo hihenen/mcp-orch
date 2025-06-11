@@ -28,6 +28,7 @@ export default function ServerDetailPage() {
   const [serverTools, setServerTools] = useState<MCPTool[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -35,37 +36,63 @@ export default function ServerDetailPage() {
     const loadServerData = async () => {
       setIsLoading(true);
       try {
+        console.log('Loading server data for serverId:', serverId);
+        
         // Fetch servers if not already loaded
         if (servers.length === 0) {
-          await fetchServers();
+          console.log('Fetching servers...');
+          try {
+            await fetchServers();
+            console.log('Servers fetched successfully');
+          } catch (fetchError) {
+            console.error('Error fetching servers:', fetchError);
+            setError('Failed to fetch servers: ' + (fetchError as Error).message);
+            return;
+          }
         }
         
-        // Find the server
-        const foundServer = servers.find(s => s.name === serverId);
+        console.log('Available servers:', servers);
+        console.log('Looking for server with ID or name:', serverId);
+        
+        // Find the server by ID or name (serverId can be either)
+        const foundServer = servers.find(s => {
+          console.log('Checking server:', { id: s.id, name: s.name });
+          return s.id === serverId || s.name === serverId;
+        });
+        
+        console.log('Found server:', foundServer);
+        
         if (foundServer) {
           setServer(foundServer);
-        }
+          
+          // Fetch tools if not already loaded
+          if (tools.length === 0) {
+            await fetchTools();
+          }
 
-        // Fetch tools if not already loaded
-        if (tools.length === 0) {
-          await fetchTools();
+          // Get tools for this server (by ID or name)
+          const serverTools = getToolsByServerId(foundServer.id) || getToolsByServerId(foundServer.name);
+          setServerTools(serverTools);
+        } else {
+          console.log('Server not found in available servers');
         }
-
-        // Get tools for this server
-        const serverTools = getToolsByServerId(serverId);
-        setServerTools(serverTools);
+      } catch (error) {
+        console.error('Failed to load server data:', error);
+        setError('Failed to load server data');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadServerData();
-  }, [serverId, servers, tools, fetchServers, fetchTools, getToolsByServerId]);
+    if (serverId) {
+      loadServerData();
+    }
+  }, [serverId]); // 의존성 배열에서 함수들 제거
 
   // 서버 목록이 업데이트되면 현재 서버 정보도 업데이트
   useEffect(() => {
     if (servers.length > 0 && serverId) {
-      const updatedServer = servers.find(s => s.name === serverId);
+      const updatedServer = servers.find(s => s.id === serverId || s.name === serverId);
       if (updatedServer) {
         setServer(updatedServer);
       }
@@ -74,11 +101,11 @@ export default function ServerDetailPage() {
 
   // 도구 목록이 업데이트되면 서버별 도구도 업데이트
   useEffect(() => {
-    if (serverId) {
-      const updatedServerTools = getToolsByServerId(serverId);
+    if (serverId && server) {
+      const updatedServerTools = getToolsByServerId(server.id) || getToolsByServerId(server.name);
       setServerTools(updatedServerTools);
     }
-  }, [tools, serverId, getToolsByServerId]);
+  }, [tools, serverId, server]); // server 추가
 
   const filteredTools = serverTools.filter(tool =>
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
