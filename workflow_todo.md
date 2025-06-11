@@ -65,6 +65,40 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_027-SERVER-LOGS: 서버 로그 시스템 구현 ✅ 완료
+**핵심 목표**: 프로젝트별 MCP 서버 로그 수집, 저장, 조회 시스템 구현
+
+- [x] **서버 로그 데이터 모델 설계**
+  - ✅ ServerLog 모델 구현 (id, server_id, project_id, timestamp, level, category, message, details, source)
+  - ✅ LogLevel enum (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - ✅ LogCategory enum (CONNECTION, TOOL_EXECUTION, ERROR, STATUS_CHECK, CONFIGURATION)
+
+- [x] **서버 로그 서비스 레이어**
+  - ✅ ServerLogService 클래스 구현
+  - ✅ 서버별/프로젝트별 로그 조회 기능
+  - ✅ 로그 레벨/카테고리 필터링
+  - ✅ 에러 로그 전용 조회
+  - ✅ 로그 요약 정보 생성
+  - ✅ 오래된 로그 정리 기능
+
+- [x] **FastAPI 백엔드 API 엔드포인트**
+  - ✅ JWT 인증 기반 서버 로그 API 구현
+  - ✅ `/projects/{project_id}/servers/{server_id}/logs` - 서버별 로그 조회
+  - ✅ `/projects/{project_id}/logs` - 프로젝트 전체 로그 조회
+  - ✅ `/projects/{project_id}/servers/{server_id}/logs/errors` - 에러 로그 조회
+  - ✅ `/projects/{project_id}/servers/{server_id}/logs/summary` - 로그 요약
+  - ✅ `/logs/cleanup` - 오래된 로그 정리
+
+- [x] **Next.js API 라우트 구현**
+  - ✅ `/api/projects/[projectId]/servers/[serverId]/logs` 라우트 구현
+  - ✅ JWT 토큰 기반 백엔드 API 호출
+  - ✅ NextJS_FastAPI_JWT_인증_패턴_가이드.md 표준 준수
+
+- [x] **JWT 인증 시스템 통합**
+  - ✅ `get_current_user_for_api` 함수 추가
+  - ✅ 모든 로그 API 엔드포인트에 JWT 인증 적용
+  - ✅ 서버 정상 실행 및 인증 검증 완료
+
 ### TASK_026-PROJECT-FOCUS: 프로젝트 중심 아키텍처 강화 🔥 (HIGH 우선순위)
 **핵심 목표**: 전역 서버 관리를 관리자 전용으로 제한하고 모든 기능을 프로젝트 중심으로 통합
 

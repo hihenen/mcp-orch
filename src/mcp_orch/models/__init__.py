@@ -7,6 +7,7 @@ from .project import Project, ProjectMember, ProjectRole, InviteSource
 from .api_key import ApiKey, generate_api_key
 from .usage import ApiUsage
 from .mcp_server import McpServer, McpServerStatus, McpTool
+from .server_log import ServerLog, LogLevel, LogCategory
 from .favorite import UserFavorite
 
 __all__ = [
@@ -25,5 +26,8 @@ __all__ = [
     "McpServer",
     "McpServerStatus",
     "McpTool",
+    "ServerLog",
+    "LogLevel",
+    "LogCategory",
     "UserFavorite",
 ]

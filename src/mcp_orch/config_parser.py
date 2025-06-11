@@ -231,6 +231,28 @@ def load_config(config_path: Optional[str] = None) -> MCPConfig:
     return parser.load()
 
 
+def load_mcp_config(config_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """
+    Load MCP configuration as raw dictionary for backward compatibility.
+    
+    Args:
+        config_path: Optional path to configuration file
+        
+    Returns:
+        Dictionary containing the raw configuration or None if not found
+    """
+    try:
+        parser = ConfigParser(config_path)
+        if not parser.config_path.exists():
+            return None
+            
+        with open(parser.config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading MCP config: {e}")
+        return None
+
+
 def create_example_config(path: Optional[str] = None) -> None:
     """
     Create an example configuration file.

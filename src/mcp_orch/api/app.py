@@ -20,6 +20,7 @@ from .teams import router as teams_router
 from .projects import router as projects_router
 from .project_sse import router as project_sse_router
 from .servers import router as servers_router
+from .server_logs import router as server_logs_router
 from .tools import router as tools_router
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(projects_router)
     app.include_router(project_sse_router)
     app.include_router(servers_router)
+    app.include_router(server_logs_router)
     app.include_router(tools_router)
     
     # 전역 예외 핸들러

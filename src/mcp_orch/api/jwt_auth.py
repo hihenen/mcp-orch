@@ -408,3 +408,17 @@ async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[Use
     except Exception as e:
         logger.error(f"Error getting user from JWT token: {e}")
         return None
+
+
+async def get_current_user_for_api(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> User:
+    """API용 사용자 인증 함수"""
+    user = await get_user_from_jwt_token(request, db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    return user
