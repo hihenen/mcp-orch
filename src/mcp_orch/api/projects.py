@@ -15,6 +15,8 @@ from pydantic import BaseModel, Field
 from ..database import get_db
 from ..models import Project, ProjectMember, User, McpServer, ApiKey, ProjectRole, InviteSource, UserFavorite
 from .jwt_auth import get_user_from_jwt_token
+from ..services.mcp_connection_service import mcp_connection_service
+from ..config_parser import load_mcp_config
 
 router = APIRouter(prefix="/api", tags=["projects"])
 
@@ -1039,8 +1041,31 @@ async def list_project_servers(
         McpServer.project_id == project_id
     ).all()
     
+    # MCP 설정 파일 로드
+    config = load_mcp_config()
+    
     result = []
     for server in servers:
+        # 실제 MCP 서버 상태 확인
+        server_status = "offline"
+        tools_count = 0
+        
+        if config and 'servers' in config:
+            server_config = config['servers'].get(server.name)
+            if server_config:
+                if server_config.get('disabled', False):
+                    server_status = "disabled"
+                else:
+                    # 실제 연결 테스트는 비동기로 처리하므로 캐시된 상태 사용
+                    server_status = mcp_connection_service.get_cached_status(server.name)
+                    tools_count = mcp_connection_service.get_cached_tools_count(server.name)
+                    
+                    # 캐시된 상태가 없으면 기본값 사용
+                    if server_status == "unknown":
+                        server_status = "offline"
+            else:
+                server_status = "not_configured"
+        
         result.append(ServerResponse(
             id=str(server.id),
             name=server.name,
@@ -1051,8 +1076,8 @@ async def list_project_servers(
             env=server.env or {},
             cwd=server.cwd,
             disabled=not server.is_enabled,
-            status="offline",  # 실제 상태는 향후 구현
-            tools_count=0,  # 실제 도구 개수는 향후 구현
+            status=server_status,
+            tools_count=tools_count,
             last_connected=server.last_used_at,
             created_at=server.created_at,
             updated_at=server.updated_at
@@ -1098,6 +1123,27 @@ async def get_project_server_detail(
             detail="Server not found"
         )
     
+    # MCP 설정 파일 로드 및 실제 상태 확인
+    config = load_mcp_config()
+    server_status = "offline"
+    tools_count = 0
+    
+    if config and 'servers' in config:
+        server_config = config['servers'].get(server.name)
+        if server_config:
+            if server_config.get('disabled', False):
+                server_status = "disabled"
+            else:
+                # 실제 연결 테스트는 비동기로 처리하므로 캐시된 상태 사용
+                server_status = mcp_connection_service.get_cached_status(server.name)
+                tools_count = mcp_connection_service.get_cached_tools_count(server.name)
+                
+                # 캐시된 상태가 없으면 기본값 사용
+                if server_status == "unknown":
+                    server_status = "offline"
+        else:
+            server_status = "not_configured"
+    
     return ServerResponse(
         id=str(server.id),
         name=server.name,
@@ -1108,8 +1154,8 @@ async def get_project_server_detail(
         env=server.env or {},
         cwd=server.cwd,
         disabled=not server.is_enabled,
-        status="offline",  # 실제 상태는 향후 구현
-        tools_count=0,  # 실제 도구 개수는 향후 구현
+        status=server_status,
+        tools_count=tools_count,
         last_connected=server.last_used_at,
         created_at=server.created_at,
         updated_at=server.updated_at
@@ -1445,3 +1491,143 @@ async def remove_project_favorite_by_target(
     db.commit()
     
     return {"message": "Favorite removed successfully"}
+
+
+# MCP 서버 상태 관리 API
+@router.post("/projects/{project_id}/servers/refresh-status")
+async def refresh_project_servers_status(
+    project_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트 내 모든 MCP 서버 상태 새로고침"""
+    
+    # 프로젝트 접근 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    try:
+        # 모든 서버 상태 새로고침
+        server_results = await mcp_connection_service.refresh_all_servers(db)
+        
+        # 프로젝트별 서버만 필터링
+        project_servers = db.query(McpServer).filter(
+            McpServer.project_id == project_id
+        ).all()
+        
+        project_results = {}
+        for server in project_servers:
+            server_id = str(server.id)
+            if server_id in server_results:
+                project_results[server_id] = server_results[server_id]
+            else:
+                project_results[server_id] = {
+                    'status': 'not_configured',
+                    'tools_count': 0,
+                    'tools': []
+                }
+        
+        return {
+            "message": "Server status refreshed successfully",
+            "servers": project_results,
+            "refreshed_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to refresh server status: {str(e)}"
+        )
+
+
+@router.post("/projects/{project_id}/servers/{server_id}/refresh-status")
+async def refresh_project_server_status(
+    project_id: UUID,
+    server_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """특정 MCP 서버 상태 새로고침"""
+    
+    # 프로젝트 접근 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # 서버 조회
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    try:
+        # MCP 설정 파일 로드
+        config = load_mcp_config()
+        if not config or 'servers' not in config:
+            return {
+                "message": "MCP configuration not found",
+                "status": "not_configured",
+                "tools_count": 0,
+                "tools": []
+            }
+        
+        server_config = config['servers'].get(server.name)
+        if not server_config:
+            return {
+                "message": f"Server '{server.name}' not found in MCP configuration",
+                "status": "not_configured",
+                "tools_count": 0,
+                "tools": []
+            }
+        
+        # 서버 상태 확인
+        status_result = await mcp_connection_service.check_server_status(server.name, server_config)
+        
+        # 도구 목록 조회 (온라인인 경우에만)
+        tools = []
+        if status_result == "online":
+            tools = await mcp_connection_service.get_server_tools(server.name, server_config)
+            # 데이터베이스 업데이트
+            server.last_used_at = datetime.utcnow()
+            db.commit()
+        
+        return {
+            "message": f"Server '{server.name}' status refreshed successfully",
+            "status": status_result,
+            "tools_count": len(tools),
+            "tools": tools,
+            "refreshed_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to refresh server status: {str(e)}"
+        )
