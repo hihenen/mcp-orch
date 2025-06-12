@@ -1,6 +1,6 @@
 """
-프로젝트 중심 API 엔드포인트
-독립적인 프로젝트 단위 협업 시스템
+프로젝트 핵심 관리 API
+프로젝트 CRUD 및 기본 정보 관리
 """
 
 from typing import List, Optional
@@ -13,7 +13,8 @@ from sqlalchemy import and_, or_
 from pydantic import BaseModel, Field
 
 from ..database import get_db
-from ..models import Project, ProjectMember, User, McpServer, ApiKey, ProjectRole, InviteSource, UserFavorite
+from ..models import Project, ProjectMember, User, McpServer, ProjectRole, InviteSource, ApiKey
+from ..models.favorite import UserFavorite
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
 
@@ -1005,6 +1006,7 @@ class ServerResponse(BaseModel):
     disabled: bool
     status: str = "offline"
     tools_count: int = 0
+    tools: List[dict] = []
     last_connected: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
@@ -1123,30 +1125,39 @@ async def get_project_server_detail(
     if not server.is_enabled:
         server_status = "disabled"
     else:
-        # 캐시된 상태 사용
-        server_status = mcp_connection_service.get_cached_status(str(server.id))
-        tools_count = mcp_connection_service.get_cached_tools_count(str(server.id))
-        
-        # 캐시된 상태가 없으면 기본값 사용
-        if server_status == "unknown":
-            server_status = "offline"
+        # 실시간 상태 확인
+        tools = []
+        try:
+            server_config = mcp_connection_service._build_server_config_from_db(server)
+            if server_config:
+                # 프로젝트별 고유 서버 식별자 생성
+                unique_server_id = mcp_connection_service._generate_unique_server_id(server)
+                server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
+                if server_status == "online":
+                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
+                    tools_count = len(tools)
+                    print(f"✅ Retrieved {tools_count} tools for server {server.name}")
+        except Exception as e:
+            print(f"Error checking server status: {e}")
+            server_status = "error"
     
-    return ServerResponse(
-        id=str(server.id),
-        name=server.name,
-        description=server.description,
-        transport_type=server.transport_type or "stdio",
-        command=server.command or "",
-        args=server.args or [],
-        env=server.env or {},
-        cwd=server.cwd,
-        disabled=not server.is_enabled,
-        status=server_status,
-        tools_count=tools_count,
-        last_connected=server.last_used_at,
-        created_at=server.created_at,
-        updated_at=server.updated_at
-    )
+    return {
+        "id": str(server.id),
+        "name": server.name,
+        "description": server.description,
+        "transport_type": server.transport_type or "stdio",
+        "command": server.command or "",
+        "args": server.args or [],
+        "env": server.env or {},
+        "cwd": server.cwd,
+        "disabled": not server.is_enabled,
+        "status": server_status,
+        "tools_count": tools_count,
+        "tools": tools if server_status == "online" else [],
+        "last_connected": server.last_used_at,
+        "created_at": server.created_at,
+        "updated_at": server.updated_at
+    }
 
 
 @router.post("/projects/{project_id}/servers", response_model=ServerResponse)

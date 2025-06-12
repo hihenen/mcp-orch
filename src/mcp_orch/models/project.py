@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text, Boolean, JSON
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
@@ -51,6 +51,11 @@ class Project(Base):
     created_by: UUID = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at: datetime = Column(DateTime, default=datetime.utcnow)
     updated_at: datetime = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 보안 설정
+    sse_auth_required: bool = Column(Boolean, default=False, nullable=False)  # SSE 연결 인증 필수 여부
+    message_auth_required: bool = Column(Boolean, default=True, nullable=False)  # 메시지 호출 인증 필수 여부
+    allowed_ip_ranges: Optional[str] = Column(JSON, default=list)  # 허용된 IP 범위 목록
     
     # 관계
     creator = relationship("User", foreign_keys=[created_by])

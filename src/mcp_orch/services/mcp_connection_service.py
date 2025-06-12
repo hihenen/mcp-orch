@@ -222,6 +222,9 @@ class McpConnectionService:
             server_results = {}
             
             for db_server in db_servers:
+                # 프로젝트별 고유 서버 식별자 생성
+                unique_server_id = self._generate_unique_server_id(db_server)
+                
                 # 데이터베이스에서 서버 설정 구성
                 server_config = self._build_server_config_from_db(db_server)
                 
@@ -233,13 +236,13 @@ class McpConnectionService:
                     }
                     continue
                 
-                # 서버 상태 확인
-                status = await self.check_server_status(db_server.name, server_config)
+                # 서버 상태 확인 (고유 식별자 사용)
+                status = await self.check_server_status(unique_server_id, server_config)
                 
                 # 도구 목록 조회 (온라인인 경우에만)
                 tools = []
                 if status == "online":
-                    tools = await self.get_server_tools(db_server.name, server_config)
+                    tools = await self.get_server_tools(unique_server_id, server_config)
                 
                 server_results[str(db_server.id)] = {
                     'status': status,
@@ -257,6 +260,16 @@ class McpConnectionService:
         except Exception as e:
             logger.error(f"Error refreshing server status: {e}")
             return {}
+    
+    def _generate_unique_server_id(self, db_server) -> str:
+        """프로젝트별 고유 서버 식별자 생성: 프로젝트ID.서버이름"""
+        try:
+            project_id = str(db_server.project_id).replace('-', '')[:8]  # UUID 앞 8자리
+            server_name = db_server.name.replace(' ', '_').replace('.', '_')  # 공백과 점을 언더스코어로 변경
+            return f"{project_id}.{server_name}"
+        except Exception as e:
+            logger.error(f"Error generating unique server ID: {e}")
+            return str(db_server.id)  # 실패 시 기본 서버 ID 사용
     
     def _build_server_config_from_db(self, db_server) -> Dict:
         """데이터베이스 서버 정보로부터 MCP 설정 구성"""

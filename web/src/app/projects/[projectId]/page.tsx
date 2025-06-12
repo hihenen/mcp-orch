@@ -46,6 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
+import { SecuritySettingsSection } from '@/components/projects/SecuritySettingsSection';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -1220,6 +1221,9 @@ export default function ProjectDetailPage() {
               <Button>설정 저장</Button>
             </CardContent>
           </Card>
+
+          {/* 보안 설정 섹션 추가 */}
+          <SecuritySettingsSection projectId={projectId} />
 
           <Card>
             <CardHeader>

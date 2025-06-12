@@ -364,7 +364,7 @@ async def get_current_user(request: Request) -> Optional[User]:
 
 async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[User]:
     """
-    Request에서 JWT 토큰을 추출하고 검증한 후 데이터베이스 User 객체를 반환합니다.
+    Request에서 JWT 토큰 또는 프로젝트 API 키를 추출하고 검증한 후 데이터베이스 User 객체를 반환합니다.
     프로젝트 API에서 사용됩니다.
     
     Args:
@@ -375,15 +375,22 @@ async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[Use
         User 객체 또는 None
     """
     try:
-        # Authorization 헤더에서 JWT 토큰 추출
+        # Authorization 헤더에서 토큰 추출
         auth_header = request.headers.get("authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             logger.warning("No valid Authorization header found")
             return None
         
         token = auth_header.split(" ")[1]
+        logger.info(f"🔍 Processing token: {token[:20]}...")
         
-        # JWT 토큰 검증
+        # 프로젝트 API 키인지 확인 (project_ 접두사로 시작)
+        if token.startswith("project_"):
+            logger.info("🔍 Detected project API key")
+            return await _get_user_from_project_api_key(token, db)
+        
+        # JWT 토큰 처리
+        logger.info("🔍 Processing as JWT token")
         jwt_user = verify_jwt_token(token)
         if not jwt_user:
             logger.warning("JWT token verification failed")
@@ -406,7 +413,67 @@ async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[Use
         return user
         
     except Exception as e:
-        logger.error(f"Error getting user from JWT token: {e}")
+        logger.error(f"Error getting user from token: {e}")
+        return None
+
+
+async def _get_user_from_project_api_key(api_key: str, db: Session) -> Optional[User]:
+    """
+    프로젝트 API 키를 검증하고 해당 프로젝트의 소유자를 반환합니다.
+    
+    Args:
+        api_key: 프로젝트 API 키
+        db: 데이터베이스 세션
+        
+    Returns:
+        User 객체 또는 None
+    """
+    try:
+        from ..models.api_key import ApiKey
+        from ..models.project import Project
+        import hashlib
+        
+        # API 키 해시 생성
+        key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+        
+        logger.info(f"🔍 Looking for API key with hash: {key_hash[:20]}...")
+        
+        # 데이터베이스에서 API 키 조회
+        api_key_record = db.query(ApiKey).filter(
+            ApiKey.key_hash == key_hash,
+            ApiKey.is_active == True
+        ).first()
+        
+        if not api_key_record:
+            logger.warning("❌ API key not found or inactive")
+            return None
+        
+        logger.info(f"✅ Found API key: {api_key_record.name}")
+        
+        # API 키 사용 시간 업데이트
+        from datetime import datetime
+        api_key_record.last_used_at = datetime.utcnow()
+        db.commit()
+        
+        # 프로젝트 조회
+        project = db.query(Project).filter(Project.id == api_key_record.project_id).first()
+        if not project:
+            logger.warning("❌ Project not found for API key")
+            return None
+        
+        logger.info(f"✅ Found project: {project.name}")
+        
+        # 프로젝트 생성자 조회 (API 키로 인증된 사용자로 간주)
+        user = db.query(User).filter(User.id == api_key_record.created_by_id).first()
+        if not user:
+            logger.warning("❌ User not found for API key")
+            return None
+        
+        logger.info(f"✅ Authenticated user via API key: {user.email}")
+        return user
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing project API key: {e}")
         return None
 
 

@@ -245,3 +245,85 @@ class DualModeController:
                 "status": "error",
                 "error": str(e)
             }
+    
+    async def handle_message(self, body: bytes, server_name: str) -> Any:
+        """
+        MCP 메시지 처리 (SSE 트랜스포트용)
+        
+        Args:
+            body: 메시지 본문
+            server_name: 서버 이름
+            
+        Returns:
+            처리 결과
+        """
+        if not self.state.is_running:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail="Controller is not running")
+            
+        try:
+            if self.mode == OperationMode.PROXY:
+                if not self._proxy_handler:
+                    from fastapi import HTTPException
+                    raise HTTPException(status_code=500, detail="Proxy handler not initialized")
+                
+                # ProxyHandler를 통해 메시지 처리
+                # 메시지 본문을 JSON으로 파싱
+                import json
+                try:
+                    message_data = json.loads(body.decode('utf-8'))
+                except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                    from fastapi import HTTPException
+                    raise HTTPException(status_code=400, detail=f"Invalid message format: {str(e)}")
+                
+                # 메시지 타입에 따라 적절한 핸들러 호출
+                if message_data.get("method") == "tools/list":
+                    result = await self._proxy_handler._handle_list_tools({
+                        "server_name": server_name
+                    })
+                elif message_data.get("method") == "tools/call":
+                    params = message_data.get("params", {})
+                    namespace = f"{server_name}.{params.get('name', '')}"
+                    result = await self._proxy_handler._handle_call_tool({
+                        "namespace": namespace,
+                        "arguments": params.get("arguments", {})
+                    })
+                else:
+                    # 기본적으로 프록시 핸들러에 전달
+                    result = await self._proxy_handler.handle({
+                        "server_name": server_name,
+                        "message": message_data
+                    })
+                
+                # 응답을 JSON으로 직렬화하여 반환
+                from fastapi.responses import JSONResponse
+                return JSONResponse(content=result)
+                
+            else:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=501, detail="Message handling not implemented for batch mode")
+                
+        except Exception as e:
+            logger.error(f"Error handling message: {e}", exc_info=True)
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    async def handle_message_request(self, body: bytes, project_server_key: str) -> Any:
+        """
+        프로젝트별 메시지 처리 (확장된 버전)
+        
+        Args:
+            body: 메시지 본문
+            project_server_key: 프로젝트:서버 키 (예: "project:uuid:server_name")
+            
+        Returns:
+            처리 결과
+        """
+        # 프로젝트 서버 키에서 서버 이름 추출
+        parts = project_server_key.split(":")
+        if len(parts) >= 3:
+            server_name = parts[2]
+        else:
+            server_name = project_server_key
+            
+        return await self.handle_message(body, server_name)

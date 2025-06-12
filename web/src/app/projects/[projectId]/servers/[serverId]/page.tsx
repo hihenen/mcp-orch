@@ -23,6 +23,12 @@ import { useProjectStore } from '@/stores/projectStore';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+interface Tool {
+  name: string;
+  description: string;
+  schema: any;
+}
+
 interface ServerDetail {
   id: string;
   name: string;
@@ -35,6 +41,7 @@ interface ServerDetail {
   env?: Record<string, string>;
   cwd?: string;
   tools_count?: number;
+  tools?: Tool[];
   last_connected?: string;
   lastError?: string;
 }
@@ -49,6 +56,8 @@ export default function ProjectServerDetailPage() {
   const [server, setServer] = useState<ServerDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [toolsLoading, setToolsLoading] = useState(false);
 
   // 서버 상세 정보 로드
   const loadServerDetail = async () => {
@@ -62,7 +71,12 @@ export default function ProjectServerDetailPage() {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('서버 상세 정보 로드:', data);
         setServer(data);
+        // 서버 정보에 도구 목록이 포함되어 있으면 설정
+        if (data.tools && Array.isArray(data.tools)) {
+          setTools(data.tools);
+        }
       } else {
         console.error('서버 상세 정보 로드 실패:', response.status);
         toast.error('서버 정보를 불러올 수 없습니다.');
@@ -77,6 +91,32 @@ export default function ProjectServerDetailPage() {
     }
   };
 
+  // 도구 목록 로드 - 서버 상세 정보에서 도구 목록 가져오기
+  const loadTools = async () => {
+    if (!projectId || !serverId) return;
+    
+    setToolsLoading(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/${serverId}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('서버 상세 정보:', data);
+        setTools(data.tools || []);
+      } else {
+        console.error('서버 상세 정보 로드 실패:', response.status);
+        setTools([]);
+      }
+    } catch (error) {
+      console.error('서버 상세 정보 로드 오류:', error);
+      setTools([]);
+    } finally {
+      setToolsLoading(false);
+    }
+  };
+
   // 페이지 로드 시 프로젝트 정보와 서버 상세 정보 로드
   useEffect(() => {
     if (projectId) {
@@ -84,6 +124,13 @@ export default function ProjectServerDetailPage() {
     }
     loadServerDetail();
   }, [projectId, serverId, loadProject]);
+
+  // 도구 탭이 활성화될 때 도구 목록 로드
+  useEffect(() => {
+    if (activeTab === 'tools' && server && server.status === 'online') {
+      loadTools();
+    }
+  }, [activeTab, server?.status]);
 
   // 서버 토글 핸들러
   const handleToggleServer = async () => {
@@ -441,23 +488,241 @@ export default function ProjectServerDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Cline/Cursor 연결 정보 카드 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Cline/Cursor 연결 정보
+              </CardTitle>
+              <CardDescription>
+                이 서버를 Cline이나 Cursor에서 MCP Orch SSE 방식으로 연결하려면 아래 설정을 복사하세요.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-medium text-sm">SSE 엔드포인트</div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const endpoint = `http://localhost:8000/projects/${projectId}/servers/${server.name}/sse`;
+                        navigator.clipboard.writeText(endpoint);
+                        toast.success('엔드포인트가 클립보드에 복사되었습니다.');
+                      }}
+                    >
+                      복사
+                    </Button>
+                  </div>
+                  <div className="font-mono bg-muted p-3 rounded text-sm break-all">
+                    http://localhost:8000/projects/{projectId}/servers/{server.name}/sse
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-medium text-sm">MCP Proxy SSE 설정 JSON</div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const mcpConfig = {
+                          mcpServers: {
+                            [server.name]: {
+                              disabled: false,
+                              timeout: 30,
+                              url: `http://localhost:8000/projects/${projectId}/servers/${server.name}/sse`,
+                              headers: {
+                                Authorization: "Bearer YOUR_API_TOKEN"
+                              },
+                              type: "sse"
+                            }
+                          }
+                        };
+                        navigator.clipboard.writeText(JSON.stringify(mcpConfig, null, 2));
+                        toast.success('MCP Proxy SSE 설정이 클립보드에 복사되었습니다.');
+                      }}
+                    >
+                      복사
+                    </Button>
+                  </div>
+                  <div className="font-mono bg-muted p-3 rounded text-xs overflow-auto max-h-48">
+                    <pre>{JSON.stringify({
+                      mcpServers: {
+                        [server.name]: {
+                          disabled: false,
+                          timeout: 30,
+                          url: `http://localhost:8000/projects/${projectId}/servers/${server.name}/sse`,
+                          headers: {
+                            Authorization: "Bearer YOUR_API_TOKEN"
+                          },
+                          type: "sse"
+                        }
+                      }
+                    }, null, 2)}</pre>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-medium text-sm">로컬 직접 설치 JSON (선택사항)</div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const mcpConfig = {
+                          mcpServers: {
+                            [server.name]: {
+                              command: server.command,
+                              args: server.args || [],
+                              env: server.env || {}
+                            }
+                          }
+                        };
+                        navigator.clipboard.writeText(JSON.stringify(mcpConfig, null, 2));
+                        toast.success('로컬 설치 설정이 클립보드에 복사되었습니다.');
+                      }}
+                    >
+                      복사
+                    </Button>
+                  </div>
+                  <div className="font-mono bg-muted p-3 rounded text-xs overflow-auto max-h-32">
+                    <pre>{JSON.stringify({
+                      mcpServers: {
+                        [server.name]: {
+                          command: server.command,
+                          args: server.args || [],
+                          env: server.env || {}
+                        }
+                      }
+                    }, null, 2)}</pre>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="font-medium text-blue-800 text-sm mb-2">연결 방법</div>
+                  <div className="text-blue-700 text-sm space-y-1">
+                    <div><strong>권장: MCP Proxy SSE 방식</strong></div>
+                    <div>1. 위의 "MCP Proxy SSE 설정 JSON"을 복사</div>
+                    <div>2. Cline/Cursor의 MCP 설정 파일에 추가</div>
+                    <div>3. YOUR_API_TOKEN을 실제 API 토큰으로 교체</div>
+                    <div>4. 연결 후 {server.tools_count || 0}개의 도구를 사용할 수 있습니다</div>
+                    <div className="mt-2 pt-2 border-t border-blue-200">
+                      <div><strong>대안: 로컬 직접 설치</strong></div>
+                      <div>• 서버를 로컬에 직접 설치하여 사용하려는 경우</div>
+                      <div>• "로컬 직접 설치 JSON" 설정 사용</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* 도구 탭 */}
         <TabsContent value="tools" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>사용 가능한 도구</CardTitle>
-              <CardDescription>
-                이 서버에서 제공하는 MCP 도구 목록입니다.
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>사용 가능한 도구</CardTitle>
+                  <CardDescription>
+                    이 서버에서 제공하는 MCP 도구 목록입니다.
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={loadTools}
+                  disabled={toolsLoading || server?.status !== 'online'}
+                >
+                  <RotateCcw className={`h-4 w-4 mr-2 ${toolsLoading ? 'animate-spin' : ''}`} />
+                  새로고침
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Wrench className="h-12 w-12 mx-auto mb-4" />
-                <p>도구 목록을 불러오는 중...</p>
-                <p className="text-sm mt-2">실제 서버 연결 후 도구 정보가 표시됩니다.</p>
-              </div>
+              {server?.status !== 'online' ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Wrench className="h-12 w-12 mx-auto mb-4" />
+                  <p>서버가 오프라인 상태입니다</p>
+                  <p className="text-sm mt-2">서버를 온라인 상태로 만든 후 도구 목록을 확인할 수 있습니다.</p>
+                </div>
+              ) : toolsLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                  <p>도구 목록을 불러오는 중...</p>
+                </div>
+              ) : tools.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Wrench className="h-12 w-12 mx-auto mb-4" />
+                  <p>사용 가능한 도구가 없습니다</p>
+                  <p className="text-sm mt-2">이 서버에서 제공하는 도구가 없거나 도구 목록을 불러올 수 없습니다.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-muted-foreground">
+                      총 {tools.length}개의 도구가 사용 가능합니다.
+                    </p>
+                  </div>
+                  
+                  <div className="grid gap-4">
+                    {tools.map((tool, index) => (
+                      <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Wrench className="h-4 w-4 text-blue-600" />
+                              <h4 className="font-medium text-sm">{tool.name}</h4>
+                              <Badge variant="outline" className="text-xs">도구</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {tool.description || '설명이 제공되지 않았습니다.'}
+                            </p>
+                            
+                            {tool.schema && (
+                              <div className="space-y-2">
+                                <h5 className="text-xs font-medium text-muted-foreground">매개변수</h5>
+                                <div className="bg-muted p-3 rounded text-xs font-mono">
+                                  {tool.schema.properties ? (
+                                    <div className="space-y-1">
+                                      {Object.entries(tool.schema.properties).map(([key, prop]: [string, any]) => (
+                                        <div key={key} className="flex items-center gap-2">
+                                          <span className="text-blue-600">{key}</span>
+                                          <span className="text-muted-foreground">:</span>
+                                          <span className="text-green-600">{prop.type || 'any'}</span>
+                                          {tool.schema.required?.includes(key) && (
+                                            <Badge variant="destructive" className="text-xs px-1 py-0">필수</Badge>
+                                          )}
+                                          {prop.description && (
+                                            <span className="text-muted-foreground text-xs">- {prop.description}</span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground">매개변수 정보 없음</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button variant="outline" size="sm">
+                              <Play className="h-3 w-3 mr-1" />
+                              테스트
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
