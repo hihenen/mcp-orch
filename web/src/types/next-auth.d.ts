@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string
       teamId?: string
       teamName?: string
+      isAdmin?: boolean
       teams?: Array<{
         id: string
         name: string
@@ -22,6 +23,7 @@ declare module "next-auth" {
     image?: string | null
     teamId?: string
     teamName?: string
+    isAdmin?: boolean
   }
 }
 
@@ -30,6 +32,7 @@ declare module "next-auth/jwt" {
     id: string
     teamId?: string
     teamName?: string
+    isAdmin?: boolean
     teams?: Array<{
       id: string
       name: string

@@ -6,13 +6,15 @@ import { cn } from '@/lib/utils';
 import {
   Users,
   FolderOpen,
+  Server,
   Menu,
   X
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useAdminPermission } from '@/hooks/useAdminPermission';
 
-const navItems = [
+const baseNavItems = [
   {
     title: 'Teams',
     href: '/teams',
@@ -27,9 +29,26 @@ const navItems = [
   },
 ];
 
+const adminNavItems = [
+  {
+    title: 'Global Servers',
+    href: '/servers',
+    icon: Server,
+    description: '전역 서버 관리 (관리자 전용)',
+    adminOnly: true
+  },
+];
+
 export function Navigation() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAdmin } = useAdminPermission();
+  
+  // 관리자 권한에 따라 네비게이션 아이템 결정
+  const navItems = [
+    ...baseNavItems,
+    ...(isAdmin ? adminNavItems : [])
+  ];
 
   return (
     <>

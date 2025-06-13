@@ -1,4 +1,4 @@
-# MCP Proxy 방식 설정 가이드
+ㅇ# MCP Proxy 방식 설정 가이드
 
 ## 개요
 

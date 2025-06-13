@@ -181,6 +181,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             "id": str(user.id),
             "email": user.email,
             "name": user.name,
+            "is_admin": user.is_admin,  # 관리자 권한 정보 추가
             "exp": datetime.now(timezone.utc) + timedelta(hours=24),  # 24시간 만료
             "iat": datetime.now(timezone.utc)
         }

@@ -8,11 +8,12 @@ import logging
 import time
 from typing import Callable
 
-from fastapi import Request, Response
+from fastapi import Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from ..config import Settings
+from ..utils import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 클라이언트 IP 가져오기
         client_ip = request.client.host if request.client else "unknown"
         
-        # 현재 시간 (분 단위)
+        # 현재 분 가져오기
         current_minute = int(time.time() / 60)
         
         # 요청 카운트 키
@@ -114,3 +115,34 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ]
         for key in old_keys:
             del self.request_counts[key]
+
+
+class JWTAuthMiddleware(BaseHTTPMiddleware):
+    """
+    JWT 인증 미들웨어
+    
+    요청 헤더에서 JWT 토큰을 추출하고 검증합니다.
+    """
+    
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """요청 처리"""
+        # 인증 헤더 가져오기
+        auth_header = request.headers.get("Authorization")
+        
+        # 인증 헤더가 없으면 401 Unauthorized 반환
+        if not auth_header:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        
+        # Bearer 토큰 추출
+        token = auth_header.split(" ")[1]
+        
+        # 토큰 검증
+        user_info = verify_jwt_token(token)
+        
+        # 사용자 정보를 요청 객체에 추가
+        request.state.user = user_info
+        
+        # 요청 처리
+        response = await call_next(request)
+        
+        return response

@@ -21,6 +21,8 @@ from .auth import router as auth_router
 from .mcp_sse_server import router as mcp_sse_router
 from .cline_sse import router as cline_sse_router
 from .project_sse import router as project_sse_router
+from starlette.routing import Mount
+from mcp.server.sse import SseServerTransport
 from .mcp_proxy_mode import router as mcp_proxy_router
 
 # 메인 API 라우터

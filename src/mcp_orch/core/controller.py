@@ -248,14 +248,14 @@ class DualModeController:
     
     async def handle_message(self, body: bytes, server_name: str) -> Any:
         """
-        MCP 메시지 처리 (SSE 트랜스포트용)
+        MCP 메시지 처리 (SSE 트랜스포트용) - 표준 MCP JSON-RPC 2.0 프로토콜 지원
         
         Args:
             body: 메시지 본문
             server_name: 서버 이름
             
         Returns:
-            처리 결과
+            MCP JSON-RPC 2.0 형식의 처리 결과
         """
         if not self.state.is_running:
             from fastapi import HTTPException
@@ -267,37 +267,167 @@ class DualModeController:
                     from fastapi import HTTPException
                     raise HTTPException(status_code=500, detail="Proxy handler not initialized")
                 
-                # ProxyHandler를 통해 메시지 처리
                 # 메시지 본문을 JSON으로 파싱
                 import json
                 try:
                     message_data = json.loads(body.decode('utf-8'))
                 except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                    from fastapi import HTTPException
-                    raise HTTPException(status_code=400, detail=f"Invalid message format: {str(e)}")
+                    # MCP JSON-RPC 2.0 에러 응답
+                    error_response = {
+                        "jsonrpc": "2.0",
+                        "id": None,
+                        "error": {
+                            "code": -32700,  # Parse error
+                            "message": "Parse error",
+                            "data": str(e)
+                        }
+                    }
+                    from fastapi.responses import JSONResponse
+                    return JSONResponse(content=error_response, status_code=400)
+                
+                # MCP JSON-RPC 2.0 메시지 검증
+                if not isinstance(message_data, dict) or message_data.get("jsonrpc") != "2.0":
+                    error_response = {
+                        "jsonrpc": "2.0",
+                        "id": message_data.get("id") if isinstance(message_data, dict) else None,
+                        "error": {
+                            "code": -32600,  # Invalid Request
+                            "message": "Invalid Request",
+                            "data": "Missing or invalid jsonrpc field"
+                        }
+                    }
+                    from fastapi.responses import JSONResponse
+                    return JSONResponse(content=error_response, status_code=400)
+                
+                request_id = message_data.get("id")
+                method = message_data.get("method")
+                params = message_data.get("params", {})
                 
                 # 메시지 타입에 따라 적절한 핸들러 호출
-                if message_data.get("method") == "tools/list":
-                    result = await self._proxy_handler._handle_list_tools({
-                        "server_name": server_name
-                    })
-                elif message_data.get("method") == "tools/call":
-                    params = message_data.get("params", {})
-                    namespace = f"{server_name}.{params.get('name', '')}"
-                    result = await self._proxy_handler._handle_call_tool({
-                        "namespace": namespace,
-                        "arguments": params.get("arguments", {})
-                    })
-                else:
-                    # 기본적으로 프록시 핸들러에 전달
-                    result = await self._proxy_handler.handle({
-                        "server_name": server_name,
-                        "message": message_data
-                    })
+                try:
+                    if method == "initialize":
+                        # MCP 초기화 요청
+                        mcp_response = {
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "result": {
+                                "protocolVersion": "2024-11-05",
+                                "capabilities": {
+                                    "tools": {}
+                                },
+                                "serverInfo": {
+                                    "name": f"mcp-orch-{server_name}",
+                                    "version": "1.0.0"
+                                }
+                            }
+                        }
+                        
+                    elif method == "tools/list":
+                        # 도구 목록 조회
+                        result = await self._proxy_handler._handle_list_tools({
+                            "server_name": server_name
+                        })
+                        
+                        # MCP 표준 형식으로 변환
+                        tools = []
+                        if result.get("status") == "success" and "tools" in result:
+                            for tool in result["tools"]:
+                                # 네임스페이스에서 도구 이름 추출
+                                tool_name = tool["namespace"].split(".", 1)[1] if "." in tool["namespace"] else tool["namespace"]
+                                tools.append({
+                                    "name": tool_name,
+                                    "description": tool.get("description", ""),
+                                    "inputSchema": tool.get("input_schema", {})
+                                })
+                        
+                        mcp_response = {
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "result": {
+                                "tools": tools
+                            }
+                        }
+                        
+                    elif method == "tools/call":
+                        # 도구 호출
+                        tool_name = params.get("name")
+                        arguments = params.get("arguments", {})
+                        
+                        if not tool_name:
+                            raise ValueError("Tool name is required")
+                        
+                        namespace = f"{server_name}.{tool_name}"
+                        result = await self._proxy_handler._handle_call_tool({
+                            "namespace": namespace,
+                            "arguments": arguments
+                        })
+                        
+                        # MCP 표준 형식으로 변환
+                        if result.get("status") == "success":
+                            tool_result = result.get("result", {})
+                            content = []
+                            
+                            if isinstance(tool_result, dict):
+                                content.append({
+                                    "type": "text",
+                                    "text": json.dumps(tool_result, ensure_ascii=False, indent=2)
+                                })
+                            else:
+                                content.append({
+                                    "type": "text", 
+                                    "text": str(tool_result)
+                                })
+                            
+                            mcp_response = {
+                                "jsonrpc": "2.0",
+                                "id": request_id,
+                                "result": {
+                                    "content": content,
+                                    "isError": False
+                                }
+                            }
+                        else:
+                            # 도구 실행 에러
+                            error_msg = result.get("error", "Tool execution failed")
+                            mcp_response = {
+                                "jsonrpc": "2.0",
+                                "id": request_id,
+                                "result": {
+                                    "content": [{
+                                        "type": "text",
+                                        "text": f"Error: {error_msg}"
+                                    }],
+                                    "isError": True
+                                }
+                            }
+                            
+                    else:
+                        # 지원하지 않는 메서드
+                        mcp_response = {
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "error": {
+                                "code": -32601,  # Method not found
+                                "message": "Method not found",
+                                "data": f"Method '{method}' is not supported"
+                            }
+                        }
+                        
+                except Exception as handler_error:
+                    logger.error(f"Error in handler: {handler_error}", exc_info=True)
+                    mcp_response = {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "error": {
+                            "code": -32603,  # Internal error
+                            "message": "Internal error",
+                            "data": str(handler_error)
+                        }
+                    }
                 
-                # 응답을 JSON으로 직렬화하여 반환
+                # MCP JSON-RPC 2.0 응답 반환
                 from fastapi.responses import JSONResponse
-                return JSONResponse(content=result)
+                return JSONResponse(content=mcp_response)
                 
             else:
                 from fastapi import HTTPException
@@ -305,8 +435,18 @@ class DualModeController:
                 
         except Exception as e:
             logger.error(f"Error handling message: {e}", exc_info=True)
-            from fastapi import HTTPException
-            raise HTTPException(status_code=500, detail=str(e))
+            # MCP JSON-RPC 2.0 에러 응답
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {
+                    "code": -32603,  # Internal error
+                    "message": "Internal error",
+                    "data": str(e)
+                }
+            }
+            from fastapi.responses import JSONResponse
+            return JSONResponse(content=error_response, status_code=500)
     
     async def handle_message_request(self, body: bytes, project_server_key: str) -> Any:
         """

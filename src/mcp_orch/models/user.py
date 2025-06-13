@@ -28,6 +28,7 @@ class User(Base):
     
     # User status
     is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)  # Global admin privilege
     
     # Relationships
     team_memberships = relationship(

@@ -251,79 +251,97 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             token = auth_header.split(" ")[1]
             print(f"🔍 Extracted token (first 20 chars): {token[:20]}...")
             
-            try:
-                # 토큰 헤더 확인하여 알고리즘 결정
-                import base64
-                import json
+            # 프로젝트 API 키인지 확인 (project_ 접두사로 시작)
+            if token.startswith("project_"):
+                print("🔍 Detected project API key")
                 
-                header_b64 = token.split('.')[0]
-                # Base64 패딩 추가
-                header_b64 += '=' * (4 - len(header_b64) % 4)
-                header = json.loads(base64.b64decode(header_b64))
-                
-                algorithm = header.get('alg', 'HS256')
-                print(f"🔍 JWT algorithm detected: {algorithm}")
-                
-                if algorithm == 'none':
-                    # NextAuth.js alg: "none" 토큰 처리 (개발 환경)
-                    payload = jwt.decode(
-                        token,
-                        key="",  # 빈 키
-                        algorithms=["none"],
-                        options={
-                            "verify_signature": False,  # 서명 검증 비활성화
-                            "verify_exp": True,         # 만료 시간 검증 활성화
-                            "verify_aud": False,        # audience 검증 비활성화
-                            "verify_iss": False         # issuer 검증 비활성화
-                        }
-                    )
-                else:
-                    # 일반 JWT 토큰 처리 (프로덕션 환경)
-                    jwt_secret = self.settings.security.jwt_secret if self.settings else NEXTAUTH_SECRET
-                    payload = jwt.decode(
-                        token,
-                        key=jwt_secret,
-                        algorithms=[algorithm],
-                        options={
-                            "verify_signature": True,   # 서명 검증 활성화
-                            "verify_exp": True,         # 만료 시간 검증 활성화
-                            "verify_aud": False,        # audience 검증 비활성화
-                            "verify_iss": False         # issuer 검증 비활성화
-                        }
-                    )
-                
-                print(f"✅ JWT payload decoded successfully: {payload}")
-                
-                user_id = payload.get("sub")
-                if user_id:
-                    print(f"✅ User ID from token: {user_id}")
+                # 데이터베이스에서 API 키 검증
+                db = next(get_db())
+                try:
+                    user = await self._get_user_from_project_api_key(token, db)
+                    if user:
+                        print(f"✅ API key authentication successful: {user.email}")
+                        request.state.user = user
+                    else:
+                        print("❌ API key not found or inactive")
+                        request.state.user = None
+                finally:
+                    db.close()
+            else:
+                # JWT 토큰 처리
+                try:
+                    # 토큰 헤더 확인하여 알고리즘 결정
+                    import base64
+                    import json
                     
-                    # 데이터베이스에서 사용자 조회
-                    db = next(get_db())
-                    try:
-                        user = db.query(User).filter(User.id == user_id).first()
+                    header_b64 = token.split('.')[0]
+                    # Base64 패딩 추가
+                    header_b64 += '=' * (4 - len(header_b64) % 4)
+                    header = json.loads(base64.b64decode(header_b64))
+                    
+                    algorithm = header.get('alg', 'HS256')
+                    print(f"🔍 JWT algorithm detected: {algorithm}")
+                    
+                    if algorithm == 'none':
+                        # NextAuth.js alg: "none" 토큰 처리 (개발 환경)
+                        payload = jwt.decode(
+                            token,
+                            key="",  # 빈 키
+                            algorithms=["none"],
+                            options={
+                                "verify_signature": False,  # 서명 검증 비활성화
+                                "verify_exp": True,         # 만료 시간 검증 활성화
+                                "verify_aud": False,        # audience 검증 비활성화
+                                "verify_iss": False         # issuer 검증 비활성화
+                            }
+                        )
+                    else:
+                        # 일반 JWT 토큰 처리 (프로덕션 환경)
+                        jwt_secret = self.settings.security.jwt_secret if self.settings else NEXTAUTH_SECRET
+                        payload = jwt.decode(
+                            token,
+                            key=jwt_secret,
+                            algorithms=[algorithm],
+                            options={
+                                "verify_signature": True,   # 서명 검증 활성화
+                                "verify_exp": True,         # 만료 시간 검증 활성화
+                                "verify_aud": False,        # audience 검증 비활성화
+                                "verify_iss": False         # issuer 검증 비활성화
+                            }
+                        )
+                    
+                    print(f"✅ JWT payload decoded successfully: {payload}")
+                    
+                    user_id = payload.get("sub")
+                    if user_id:
+                        print(f"✅ User ID from token: {user_id}")
                         
-                        if user:
-                            print(f"✅ User found in database: {user.email}")
-                            request.state.user = user
-                        else:
-                            print(f"❌ User not found in database for ID: {user_id}")
-                            request.state.user = None
-                    finally:
-                        db.close()
-                else:
-                    print("❌ No user ID (sub) in JWT payload")
+                        # 데이터베이스에서 사용자 조회
+                        db = next(get_db())
+                        try:
+                            user = db.query(User).filter(User.id == user_id).first()
+                            
+                            if user:
+                                print(f"✅ User found in database: {user.email}")
+                                request.state.user = user
+                            else:
+                                print(f"❌ User not found in database for ID: {user_id}")
+                                request.state.user = None
+                        finally:
+                            db.close()
+                    else:
+                        print("❌ No user ID (sub) in JWT payload")
+                        request.state.user = None
+                        
+                except jwt.ExpiredSignatureError:
+                    print("❌ JWT token expired")
                     request.state.user = None
-                    
-            except jwt.ExpiredSignatureError:
-                print("❌ JWT token expired")
-                request.state.user = None
-            except JWTError as e:
-                print(f"❌ Invalid JWT token: {e}")
-                request.state.user = None
-            except Exception as e:
-                print(f"❌ Unexpected error processing JWT: {e}")
-                request.state.user = None
+                except JWTError as e:
+                    print(f"❌ Invalid JWT token: {e}")
+                    request.state.user = None
+                except Exception as e:
+                    print(f"❌ Unexpected error processing JWT: {e}")
+                    request.state.user = None
         else:
             print("❌ No valid Authorization header found")
             request.state.user = None
@@ -333,6 +351,65 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         print(f"🔍 Response status: {response.status_code}")
         return response
+
+    async def _get_user_from_project_api_key(self, api_key: str, db: Session) -> Optional[User]:
+        """
+        프로젝트 API 키를 검증하고 해당 프로젝트의 소유자를 반환합니다.
+        
+        Args:
+            api_key: 프로젝트 API 키
+            db: 데이터베이스 세션
+            
+        Returns:
+            User 객체 또는 None
+        """
+        try:
+            from ..models.api_key import ApiKey
+            from ..models.project import Project
+            import hashlib
+            
+            # API 키 해시 생성
+            key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+            
+            print(f"🔍 Looking for API key with hash: {key_hash[:20]}...")
+            
+            # 데이터베이스에서 API 키 조회
+            api_key_record = db.query(ApiKey).filter(
+                ApiKey.key_hash == key_hash,
+                ApiKey.is_active == True
+            ).first()
+            
+            if not api_key_record:
+                print("❌ API key not found or inactive")
+                return None
+            
+            print(f"✅ Found API key: {api_key_record.name}")
+            
+            # API 키 사용 시간 업데이트
+            from datetime import datetime
+            api_key_record.last_used_at = datetime.utcnow()
+            db.commit()
+            
+            # 프로젝트 조회
+            project = db.query(Project).filter(Project.id == api_key_record.project_id).first()
+            if not project:
+                print("❌ Project not found for API key")
+                return None
+            
+            print(f"✅ Found project: {project.name}")
+            
+            # 프로젝트 생성자 조회 (API 키로 인증된 사용자로 간주)
+            user = db.query(User).filter(User.id == api_key_record.created_by_id).first()
+            if not user:
+                print("❌ User not found for API key")
+                return None
+            
+            print(f"✅ Authenticated user via API key: {user.email}")
+            return user
+            
+        except Exception as e:
+            print(f"❌ Error processing project API key: {e}")
+            return None
 
 def get_current_user_from_request(request: Request) -> Optional[JWTUser]:
     """

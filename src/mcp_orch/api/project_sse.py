@@ -53,9 +53,16 @@ async def get_current_user_for_project_sse_flexible(
             logger.info(f"Message request allowed without auth for project {project_id}")
             return None  # 인증 없이 허용
     
-    # 인증이 필요한 경우
+    # 인증이 필요한 경우 - JWT 토큰 또는 API 키 확인
     user = await get_user_from_jwt_token(request, db)
     if not user:
+        # JWT 인증 실패 시 request.state.user 확인 (API 키 인증 결과)
+        if hasattr(request.state, 'user') and request.state.user:
+            user = request.state.user
+            auth_type = "SSE" if is_sse_request else "Message"
+            logger.info(f"Authenticated {auth_type} request via API key for project {project_id}, user={user.email}")
+            return user
+        
         auth_type = "SSE" if is_sse_request else "Message"
         logger.warning(f"{auth_type} authentication required but no valid token for project {project_id}")
         raise HTTPException(
@@ -142,7 +149,7 @@ async def _verify_project_server_access(
     return server
 
 
-# 프로젝트별 SSE 엔드포인트 (GET과 POST 모두 지원)
+# 표준 MCP SSE 엔드포인트로 리다이렉트 (기존 경로 유지)
 @router.get("/projects/{project_id}/servers/{server_name}/sse")
 @router.post("/projects/{project_id}/servers/{server_name}/sse")
 async def project_server_sse_endpoint(
@@ -151,161 +158,30 @@ async def project_server_sse_endpoint(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """프로젝트별 MCP 서버 SSE 엔드포인트 (GET/POST 지원, 유연한 인증)"""
+    """프로젝트별 표준 MCP SSE 엔드포인트 (표준 MCP로 리다이렉트)"""
     
-    try:
-        # 유연한 인증 적용
-        current_user = await get_current_user_for_project_sse_flexible(request, project_id, db)
-        
-        # 인증이 필요한 경우 서버 접근 권한 확인
-        if current_user:
-            server = await _verify_project_server_access(project_id, server_name, current_user, db)
-            logger.info(f"Project SSE connection: method={request.method}, project_id={project_id}, server={server_name}, user={current_user.email}")
-        else:
-            # 인증 없이 허용된 경우 - 서버 존재만 확인
-            server = db.query(McpServer).filter(
-                and_(
-                    McpServer.project_id == project_id,
-                    McpServer.name == server_name
-                )
-            ).first()
-            
-            if not server:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Server '{server_name}' not found in this project"
-                )
-            
-            logger.info(f"Project SSE connection (no auth): method={request.method}, project_id={project_id}, server={server_name}")
-        
-        # MCP 프로토콜 호환 SSE 구현
-        from mcp.server import Server as MCPServer
-        from mcp.server.sse import SseServerTransport
-        from mcp.types import Tool, TextContent
-        from ..core.controller import DualModeController
-        
-        # 프로젝트별 MCP 서버 생성
-        mcp_server = MCPServer(name=f"mcp-orch-project-{project_id}-{server_name}")
-        
-        # Controller 초기화
-        controller = DualModeController()
-        await controller.initialize()
-        proxy_handler = controller._proxy_handler
-        
-        # MCP 핸들러 등록
-        @mcp_server.list_tools()
-        async def list_tools() -> list[Tool]:
-            """도구 목록 반환"""
-            result = await proxy_handler._handle_list_tools({
-                "server_name": server_name
-            })
-            
-            tools = []
-            for tool in result.get("tools", []):
-                # 네임스페이스에서 도구 이름 추출
-                tool_name = tool["namespace"].split(".", 1)[1] if "." in tool["namespace"] else tool["namespace"]
-                
-                tools.append(Tool(
-                    name=tool_name,
-                    description=tool.get("description", ""),
-                    inputSchema=tool.get("input_schema", {})
-                ))
-            
-            return tools
-        
-        @mcp_server.call_tool()
-        async def call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent]:
-            """도구 호출"""
-            namespace = f"{server_name}.{name}"
-            
-            result = await proxy_handler._handle_call_tool({
-                "namespace": namespace,
-                "arguments": arguments
-            })
-            
-            if result.get("status") == "success":
-                tool_result = result.get("result", {})
-                text = json.dumps(tool_result) if isinstance(tool_result, dict) else str(tool_result)
-                return [TextContent(type="text", text=text)]
-            else:
-                error = result.get("error", "Tool call failed")
-                return [TextContent(type="text", text=f"Error: {error}")]
-        
-        # SSE 트랜스포트 생성 ("/messages/"로 시작해야 root_path와 올바르게 연결됨)
-        sse_transport = SseServerTransport(f"/projects/{project_id}/servers/{server_name}/messages/")
-        
-        # SSE 연결 처리
-        async with sse_transport.connect_sse(
-            request.scope,
-            request.receive,
-            request._send
-        ) as (read_stream, write_stream):
-            await mcp_server.run(
-                read_stream,
-                write_stream,
-                mcp_server.create_initialization_options()
-            )
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Project SSE error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+    # 표준 MCP 핸들러로 리다이렉트
+    from .standard_mcp import standard_mcp_sse_endpoint
+    return await standard_mcp_sse_endpoint(project_id, server_name, request, db)
 
 
-@router.post("/projects/{project_id}/servers/{server_name}/messages")
-async def project_server_messages_endpoint(
-    project_id: UUID,
-    server_name: str,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    """프로젝트별 MCP 서버 메시지 엔드포인트 (유연한 인증)"""
-    
-    try:
-        # 유연한 인증 적용
-        current_user = await get_current_user_for_project_sse_flexible(request, project_id, db)
-        
-        # 인증이 필요한 경우 서버 접근 권한 확인
-        if current_user:
-            server = await _verify_project_server_access(project_id, server_name, current_user, db)
-            logger.info(f"Project message: project_id={project_id}, server={server_name}, user={current_user.email}")
-        else:
-            # 인증 없이 허용된 경우 - 서버 존재만 확인
-            server = db.query(McpServer).filter(
-                and_(
-                    McpServer.project_id == project_id,
-                    McpServer.name == server_name
-                )
-            ).first()
-            
-            if not server:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Server '{server_name}' not found in this project"
-                )
-            
-            logger.info(f"Project message (no auth): project_id={project_id}, server={server_name}")
-        
-        # SSE 트랜스포트를 위한 메시지 처리
-        # 실제로는 SSE 트랜스포트가 직접 MCP 서버와 통신하므로
-        # 여기서는 단순히 성공 응답을 반환
-        return JSONResponse(content={
-            "status": "success",
-            "message": "Message processed via SSE transport"
-        })
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Project message error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+# 메시지 처리를 위한 헬퍼 함수
+async def send_message_to_sse_session(session_id: str, message: Dict[str, Any]):
+    """SSE 세션에 메시지 전송"""
+    if hasattr(project_server_sse_endpoint, 'sessions'):
+        session = project_server_sse_endpoint.sessions.get(session_id)
+        if session:
+            try:
+                await session['queue'].put(message)
+                logger.info(f"Message sent to SSE session {session_id}")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to send message to SSE session {session_id}: {e}")
+    return False
+
+
+# 프로젝트별 메시지 엔드포인트는 SSE 트랜스포트의 handle_post_message로 자동 처리됨
+# 별도 구현 불필요 - SseServerTransport가 /messages/ 경로를 자동으로 처리
 
 
 # 프로젝트별 서버 관리 API

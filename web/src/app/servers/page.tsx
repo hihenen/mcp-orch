@@ -17,11 +17,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Server, Plus, Edit, Trash2, Settings, Play, Square } from "lucide-react";
+import { Server, Plus, Edit, Trash2, Settings, Play, Square, Shield, ArrowLeft } from "lucide-react";
 import { useServerStore } from "@/stores/serverStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { MCPServer } from "@/types";
 import { AlertCircle } from "lucide-react";
+import { useAdminPermission } from "@/hooks/useAdminPermission";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface ServerFormData {
   name: string;
@@ -36,6 +39,8 @@ interface ServerFormData {
 export default function ServersPage() {
   const { servers, addServer, updateServer, removeServer } = useServerStore();
   const { currentProject, loadUserProjects } = useProjectStore();
+  const { isAdmin, canAccessGlobalServers } = useAdminPermission();
+  const router = useRouter();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<string | null>(null);
   const [formData, setFormData] = useState<ServerFormData>({
@@ -47,6 +52,34 @@ export default function ServersPage() {
     timeout: 60,
     autoApprove: "",
   });
+
+  // 관리자 권한 확인
+  if (!canAccessGlobalServers) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Shield className="w-16 h-16 text-red-400 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">접근 권한이 없습니다</h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
+                전역 서버 관리는 관리자만 접근할 수 있습니다. 
+                프로젝트별 서버 관리를 이용해주세요.
+              </p>
+              <div className="flex gap-3">
+                <Link href="/projects">
+                  <Button>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    프로젝트로 이동
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     // 사용자 프로젝트 목록을 로드합니다
@@ -167,19 +200,14 @@ export default function ServersPage() {
         <div className="mb-8 flex justify-between items-center">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold">Server Management</h1>
-              {currentProject && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
-                  <Server className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">{currentProject.name}</span>
-                </div>
-              )}
+              <h1 className="text-3xl font-bold">Global Server Management</h1>
+              <div className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-full">
+                <Shield className="w-4 h-4" />
+                <span className="text-sm font-medium">Admin Only</span>
+              </div>
             </div>
             <p className="text-gray-600 dark:text-gray-400">
-              {currentProject 
-                ? `${currentProject.name} 프로젝트의 MCP 서버를 설정하고 관리합니다`
-                : '프로젝트를 선택하여 MCP 서버를 관리하세요'
-              }
+              전역 MCP 서버를 설정하고 관리합니다. 관리자 권한이 필요합니다.
             </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
