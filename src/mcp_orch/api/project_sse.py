@@ -149,20 +149,8 @@ async def _verify_project_server_access(
     return server
 
 
-# 표준 MCP SSE 엔드포인트로 리다이렉트 (기존 경로 유지)
-@router.get("/projects/{project_id}/servers/{server_name}/sse")
-@router.post("/projects/{project_id}/servers/{server_name}/sse")
-async def project_server_sse_endpoint(
-    project_id: UUID,
-    server_name: str,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    """프로젝트별 표준 MCP SSE 엔드포인트 (표준 MCP로 리다이렉트)"""
-    
-    # 표준 MCP 핸들러로 리다이렉트
-    from .standard_mcp import standard_mcp_sse_endpoint
-    return await standard_mcp_sse_endpoint(project_id, server_name, request, db)
+# SSE 엔드포인트는 standard_mcp.py에서만 구현
+# 중복 제거를 위해 project_sse.py에서는 라우트 정의하지 않음
 
 
 # 메시지 처리를 위한 헬퍼 함수
@@ -209,7 +197,7 @@ async def list_project_servers(
             "command": server.command,
             "args": server.args,
             "env": server.env,
-            "disabled": server.disabled,
+            "disabled": not server.is_enabled,
             "status": server.status.value if server.status else "unknown",
             "created_at": server.created_at.isoformat() if server.created_at else None,
             "updated_at": server.updated_at.isoformat() if server.updated_at else None
@@ -263,7 +251,7 @@ async def add_project_server(
         command=server_data.get("command"),
         args=server_data.get("args", []),
         env=server_data.get("env", {}),
-        disabled=server_data.get("disabled", False),
+        is_enabled=not server_data.get("disabled", False),
         description=server_data.get("description"),
         cwd=server_data.get("cwd")
     )
@@ -350,7 +338,7 @@ async def update_project_server(
     if "env" in server_data:
         server.env = server_data["env"]
     if "disabled" in server_data:
-        server.disabled = server_data["disabled"]
+        server.is_enabled = not server_data["disabled"]
     
     from datetime import datetime
     server.updated_at = datetime.utcnow()
@@ -456,7 +444,7 @@ async def toggle_project_server(
         )
     
     # 서버 상태 토글
-    server.disabled = not server.disabled
+    server.is_enabled = not server.is_enabled
     
     from datetime import datetime
     server.updated_at = datetime.utcnow()
@@ -464,14 +452,14 @@ async def toggle_project_server(
     db.commit()
     db.refresh(server)
     
-    action = "disabled" if server.disabled else "enabled"
+    action = "disabled" if not server.is_enabled else "enabled"
     
     return {
         "message": f"Server '{server.name}' {action} successfully",
         "server": {
             "id": str(server.id),
             "name": server.name,
-            "disabled": server.disabled,
+            "disabled": not server.is_enabled,
             "status": server.status.value if server.status else "unknown",
             "updated_at": server.updated_at.isoformat() if server.updated_at else None
         }
@@ -641,7 +629,7 @@ async def get_project_cline_config(
     servers = db.query(McpServer).filter(
         and_(
             McpServer.project_id == project_id,
-            McpServer.disabled == False
+            McpServer.is_enabled == True
         )
     ).all()
     

@@ -86,12 +86,12 @@ def create_app(settings: Settings = None) -> FastAPI:
     # 통합 인증 미들웨어 (JWT + API 키 지원)
     app.add_middleware(JWTAuthMiddleware, settings=settings)
         
-    # 라우터 등록
+    # 라우터 등록 (순서 중요: 더 구체적인 라우터 먼저)
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(projects_router)
-    app.include_router(project_sse_router)
-    app.include_router(standard_mcp_router)
+    app.include_router(standard_mcp_router)  # SSE 엔드포인트 처리하므로 먼저 등록
+    app.include_router(project_sse_router)   # 프로젝트 관리 API
     app.include_router(fastmcp_router)
     app.include_router(servers_router)
     app.include_router(server_logs_router)
