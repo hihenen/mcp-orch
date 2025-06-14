@@ -45,7 +45,7 @@ class McpConnectionService:
             return "error"
     
     async def _test_mcp_connection(self, server_config: Dict) -> bool:
-        """MCP 서버 연결 테스트"""
+        """MCP 서버 연결 테스트 (449a99f 개선사항 적용)"""
         try:
             command = server_config.get('command', '')
             args = server_config.get('args', [])
@@ -75,7 +75,7 @@ class McpConnectionService:
                 }
             }
             
-            # 프로세스 실행 (PATH 환경변수 포함)
+            # 프로세스 실행 (PATH 환경변수 상속 - 449a99f 핵심 개선사항)
             import os
             full_env = os.environ.copy()
             full_env.update(env)
@@ -144,7 +144,7 @@ class McpConnectionService:
                 "params": {}
             }
             
-            # 프로세스 실행 (PATH 환경변수 포함)
+            # 프로세스 실행 (PATH 환경변수 상속 - 449a99f 핵심 개선사항)
             import os
             full_env = os.environ.copy()
             full_env.update(env)
@@ -215,7 +215,7 @@ class McpConnectionService:
             return []
     
     async def refresh_all_servers(self, db: Session) -> Dict[str, Dict]:
-        """모든 MCP 서버 상태 새로고침 (데이터베이스 기반)"""
+        """모든 MCP 서버 상태 새로고침 (449a99f DB 기반 전환)"""
         try:
             # 데이터베이스의 서버 목록 조회
             db_servers = db.query(McpServer).all()

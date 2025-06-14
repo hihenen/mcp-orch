@@ -69,37 +69,17 @@ class ToolRegistry:
         self._lock = asyncio.Lock()
         
     async def load_configuration(self) -> None:
-        """설정 파일과 데이터베이스에서 MCP 서버 목록 로드"""
-        # 1. JSON 파일에서 서버 로드
-        from ..config_parser import ConfigParser
+        """데이터베이스 기반 MCP 서버 목록 로드 (449a99f config_parser 의존성 제거)"""
+        # config_parser 의존성 제거하여 완전 DB 기반으로 전환
+        # 기존 JSON 파일 로딩 제거
         
-        config_parser = ConfigParser(str(self.config_path))
-        config = config_parser.load()
-        
-        for server_name, server_config in config.servers.items():
-            server_info = ServerInfo(
-                name=server_name,
-                command=server_config.command,
-                args=server_config.args,
-                env=server_config.env,
-                transport_type=server_config.transport_type,
-                timeout=server_config.timeout,
-                auto_approve=server_config.auto_approve,
-                disabled=server_config.disabled
-            )
-            
-            self._servers[server_name] = server_info
-            
-            if server_config.disabled:
-                logger.info(f"Loaded disabled server: {server_name}")
-        
-        # 2. 데이터베이스에서 서버 로드
+        # 데이터베이스에서 서버 로드
         await self._load_database_servers()
             
-        logger.info(f"Loaded {len(self._servers)} MCP server configurations")
+        logger.info(f"Loaded {len(self._servers)} MCP server configurations from database")
         
     async def _load_database_servers(self) -> None:
-        """데이터베이스에서 MCP 서버 목록 로드"""
+        """데이터베이스에서 MCP 서버 목록 로드 (449a99f 완전 DB 기반)"""
         try:
             from ..database import get_db
             from ..models import McpServer
@@ -126,16 +106,9 @@ class ToolRegistry:
                     disabled=config.get("disabled", False)
                 )
                 
-                # JSON 서버가 비활성화되어 있으면 데이터베이스 서버를 우선
-                if db_server.name not in self._servers:
-                    self._servers[db_server.name] = server_info
-                    logger.info(f"Loaded database server: {db_server.name}")
-                elif self._servers[db_server.name].disabled:
-                    # JSON 서버가 비활성화되어 있으면 데이터베이스 서버로 교체
-                    self._servers[db_server.name] = server_info
-                    logger.info(f"Replaced disabled JSON server with database server: {db_server.name}")
-                else:
-                    logger.warning(f"Database server {db_server.name} conflicts with active JSON config, skipping")
+                # 449a99f: config_parser 의존성 제거로 JSON 서버 충돌 없음
+                self._servers[db_server.name] = server_info
+                logger.info(f"Loaded database server: {db_server.name}")
                     
         except Exception as e:
             logger.error(f"Error loading database servers: {e}", exc_info=True)

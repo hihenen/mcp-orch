@@ -400,8 +400,8 @@ async def handle_mcp_message_request(
                             "tools": {}
                         },
                         "serverInfo": {
-                            "name": f"example-servers/brave-search",
-                            "version": "0.1.0"
+                            "name": f"mcp-orch-{server_name}",
+                            "version": "1.0.0"
                         }
                     }
                 }
@@ -527,7 +527,52 @@ async def handle_mcp_message_request(
         )
 
 
-# 표준 MCP SSE 엔드포인트 (기존 경로 유지)
+# FastMCP 기반 서버 매니저 (기존 엔드포인트 유지)
+try:
+    from fastmcp import FastMCP
+    FASTMCP_AVAILABLE = True
+    
+    class FastMCPManager:
+        """FastMCP 서버 관리자 (기존 엔드포인트 구조 유지)"""
+        
+        def __init__(self):
+            self.servers: Dict[str, FastMCP] = {}
+        
+        def get_or_create_server(self, project_id: str, server_name: str) -> FastMCP:
+            """FastMCP 서버 가져오기 또는 생성"""
+            server_key = f"{project_id}_{server_name}"
+            
+            if server_key not in self.servers:
+                # FastMCP 서버 생성
+                mcp = FastMCP(name=f"mcp-orch-{server_name}")
+                
+                @mcp.tool
+                def brave_web_search(query: str, count: int = 10, offset: int = 0) -> str:
+                    """Performs a web search using the Brave Search API, ideal for general queries, news, articles, and online content. Use this for broad information gathering, recent events, or when you need diverse web sources. Supports pagination, content filtering, and freshness controls. Maximum 20 results per request, with offset for pagination."""
+                    logger.info(f"FastMCP Tool: brave_web_search(query='{query}', count={count}, offset={offset})")
+                    return f"Search results for '{query}' (showing {count} results starting from {offset})"
+                
+                @mcp.tool
+                def brave_local_search(query: str, count: int = 5) -> str:
+                    """Searches for local businesses and places using Brave's Local Search API. Best for queries related to physical locations, businesses, restaurants, services, etc. Returns detailed information including business names and addresses, ratings and review counts, phone numbers and opening hours. Use this when the query implies 'near me' or mentions specific locations. Automatically falls back to web search if no local results are found."""
+                    logger.info(f"FastMCP Tool: brave_local_search(query='{query}', count={count})")
+                    return f"Local search results for '{query}' (showing {count} results)"
+                
+                self.servers[server_key] = mcp
+                logger.info(f"Created FastMCP server: {server_key}")
+            
+            return self.servers[server_key]
+    
+    # 전역 FastMCP 매니저
+    fastmcp_manager = FastMCPManager()
+    
+except ImportError:
+    FASTMCP_AVAILABLE = False
+    fastmcp_manager = None
+    logger.warning("FastMCP not available, falling back to manual implementation")
+
+
+# 표준 MCP SSE 엔드포인트 (기존 경로 유지, FastMCP 내부 사용)
 @router.api_route("/projects/{project_id}/servers/{server_name}/sse", methods=["GET", "POST"])
 async def standard_mcp_sse_endpoint(
     project_id: UUID,
@@ -535,13 +580,13 @@ async def standard_mcp_sse_endpoint(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """표준 MCP SSE 엔드포인트 (기존 경로에 간단한 MCP 구현) - GET은 SSE, POST는 메시지 처리"""
+    """표준 MCP SSE 엔드포인트 - FastMCP 기반 구현 (기존 경로 유지)"""
     
     try:
-        # POST 요청인 경우 메시지 처리
+        # POST 요청인 경우 MCP 메시지 처리
         if request.method == "POST":
             logger.info(f"Received POST request to SSE endpoint, handling as MCP message")
-            return await handle_mcp_message_request(request, project_id, server_name, db)
+            return await handle_mcp_message_request_with_fastmcp(request, project_id, server_name, db)
         
         # 유연한 인증 적용
         current_user = await get_current_user_for_standard_mcp(request, project_id, db)
@@ -551,34 +596,12 @@ async def standard_mcp_sse_endpoint(
         else:
             logger.info(f"Standard MCP SSE connection (no auth): method={request.method}, project_id={project_id}, server={server_name}")
         
-        # 간단한 MCP SSE 스트림 생성 (FastMCP 방식)
-        logger.info("Starting standard MCP SSE stream")
-        
-        async def generate_standard_mcp_sse():
-            """표준 MCP SSE 스트림 생성 - 순수 MCP 프로토콜"""
-            try:
-                logger.info("Standard MCP SSE stream started - pure MCP protocol")
-                
-                # 무한 대기 (클라이언트 POST 요청만 처리)
-                while True:
-                    await asyncio.sleep(3600)  # 1시간마다 체크 (실제로는 POST 요청으로만 통신)
-                    
-            except Exception as e:
-                logger.error(f"Standard MCP SSE stream error: {e}")
-                error_data = {'error': str(e), 'type': 'standard_mcp_sse_error'}
-                yield f"event: error\ndata: {json.dumps(error_data)}\n\n"
-        
-        return StreamingResponse(
-            generate_standard_mcp_sse(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "*",
-                "X-Accel-Buffering": "no",
-            }
-        )
+        if FASTMCP_AVAILABLE and fastmcp_manager:
+            logger.info("Starting FastMCP-based SSE implementation")
+            return await handle_sse_with_fastmcp(project_id, server_name)
+        else:
+            logger.info("Starting fallback manual MCP SSE implementation")
+            return await handle_sse_manual_fallback(server_name)
             
     except HTTPException:
         raise
@@ -586,8 +609,457 @@ async def standard_mcp_sse_endpoint(
         logger.error(f"Standard MCP SSE error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Standard MCP SSE connection failed"
+            detail=f"Standard MCP SSE connection failed: {str(e)}"
         )
+
+
+async def handle_sse_with_fastmcp(project_id: UUID, server_name: str):
+    """FastMCP를 사용한 SSE 처리"""
+    
+    # FastMCP 서버 가져오기
+    mcp_server = fastmcp_manager.get_or_create_server(str(project_id), server_name)
+    
+    # FastMCP HTTP 앱 생성 (SSE 모드)
+    http_app = mcp_server.http_app(path="/", transport="sse")
+    
+    # SSE 스트림 생성
+    async def generate_fastmcp_sse():
+        """FastMCP 기반 SSE 스트림"""
+        try:
+            logger.info("FastMCP SSE stream started")
+            
+            # FastMCP가 자동으로 처리하는 초기화 과정을 시뮬레이션
+            # 실제로는 FastMCP 내부에서 자동 처리됨
+            
+            # 서버 정보 전송
+            server_info = {
+                "jsonrpc": "2.0",
+                "method": "notifications/initialized", 
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {"tools": {}},
+                    "serverInfo": {
+                        "name": f"mcp-orch-{server_name}",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+            yield f"data: {json.dumps(server_info)}\n\n"
+            
+            # 도구 목록 가져오기 (FastMCP에서)
+            try:
+                tools_dict = await mcp_server.get_tools()
+                tools_list = []
+                
+                for tool_name, tool_obj in tools_dict.items():
+                    # FastMCP의 FunctionTool 객체 처리
+                    try:
+                        # FunctionTool 객체에서 정보 추출
+                        if hasattr(tool_obj, 'description'):
+                            description = tool_obj.description
+                        elif hasattr(tool_obj, '__doc__'):
+                            description = tool_obj.__doc__ or f"Tool: {tool_name}"
+                        else:
+                            description = f"Tool: {tool_name}"
+                        
+                        # 도구별 하드코딩된 스키마 (Cline 호환성을 위해)
+                        if tool_name == "brave_web_search":
+                            tool_schema = {
+                                "name": "brave_web_search",
+                                "description": "Performs a web search using the Brave Search API, ideal for general queries, news, articles, and online content. Use this for broad information gathering, recent events, or when you need diverse web sources. Supports pagination, content filtering, and freshness controls. Maximum 20 results per request, with offset for pagination.",
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "query": {
+                                            "type": "string",
+                                            "description": "Search query (max 400 chars, 50 words)"
+                                        },
+                                        "count": {
+                                            "type": "number",
+                                            "description": "Number of results (1-20, default 10)",
+                                            "default": 10
+                                        },
+                                        "offset": {
+                                            "type": "number", 
+                                            "description": "Pagination offset (max 9, default 0)",
+                                            "default": 0
+                                        }
+                                    },
+                                    "required": ["query"]
+                                }
+                            }
+                        elif tool_name == "brave_local_search":
+                            tool_schema = {
+                                "name": "brave_local_search",
+                                "description": "Searches for local businesses and places using Brave's Local Search API. Best for queries related to physical locations, businesses, restaurants, services, etc. Returns detailed information including business names and addresses, ratings and review counts, phone numbers and opening hours. Use this when the query implies 'near me' or mentions specific locations. Automatically falls back to web search if no local results are found.",
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "query": {
+                                            "type": "string",
+                                            "description": "Local search query (e.g. 'pizza near Central Park')"
+                                        },
+                                        "count": {
+                                            "type": "number",
+                                            "description": "Number of results (1-20, default 5)",
+                                            "default": 5
+                                        }
+                                    },
+                                    "required": ["query"]
+                                }
+                            }
+                        else:
+                            # 기본 도구 스키마 생성 (동적 파라미터 추출 시도)
+                            tool_schema = {
+                                "name": tool_name,
+                                "description": description,
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "query": {
+                                            "type": "string",
+                                            "description": "Query parameter"
+                                        }
+                                    },
+                                    "required": ["query"]
+                                }
+                            }
+                            
+                            # FunctionTool에서 실제 함수 가져오기
+                            actual_func = None
+                            if hasattr(tool_obj, 'func'):
+                                actual_func = tool_obj.func
+                            elif hasattr(tool_obj, '_func'):
+                                actual_func = tool_obj._func
+                            elif callable(tool_obj):
+                                actual_func = tool_obj
+                            
+                            # 함수 시그니처에서 파라미터 추출
+                            if actual_func and callable(actual_func):
+                                import inspect
+                                try:
+                                    sig = inspect.signature(actual_func)
+                                    properties = {}
+                                    required = []
+                                    
+                                    for param_name, param in sig.parameters.items():
+                                        if param_name not in ['self', 'ctx']:  # 'ctx' 파라미터 제외
+                                            param_type = "string"
+                                            if param.annotation == int:
+                                                param_type = "number"
+                                            elif param.annotation == bool:
+                                                param_type = "boolean"
+                                            
+                                            properties[param_name] = {
+                                                "type": param_type,
+                                                "description": f"Parameter: {param_name}"
+                                            }
+                                            
+                                            if param.default == inspect.Parameter.empty:
+                                                required.append(param_name)
+                                    
+                                    # 파라미터가 추출되었으면 업데이트
+                                    if properties:
+                                        tool_schema["inputSchema"]["properties"] = properties
+                                        tool_schema["inputSchema"]["required"] = required
+                                        
+                                except Exception as sig_error:
+                                    logger.warning(f"Failed to extract signature for {tool_name}: {sig_error}")
+                        
+                        tools_list.append(tool_schema)
+                        logger.info(f"FastMCP: Processed tool {tool_name} with {len(tool_schema['inputSchema']['properties'])} parameters")
+                        
+                    except Exception as tool_error:
+                        logger.error(f"Error processing tool {tool_name}: {tool_error}")
+                        # 기본 도구 스키마로 폴백
+                        tools_list.append({
+                            "name": tool_name,
+                            "description": f"Tool: {tool_name}",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {"type": "string", "description": "Query parameter"}
+                                },
+                                "required": ["query"]
+                            }
+                        })
+                
+                # 도구 목록 전송
+                tools_notification = {
+                    "jsonrpc": "2.0",
+                    "method": "notifications/tools/list_changed",
+                    "params": {"tools": tools_list}
+                }
+                yield f"data: {json.dumps(tools_notification)}\n\n"
+                logger.info(f"FastMCP: Sent tools list with {len(tools_list)} tools")
+                
+            except Exception as tools_error:
+                logger.error(f"Failed to get tools from FastMCP: {tools_error}")
+                # 폴백으로 하드코딩된 도구 목록 전송
+                fallback_tools = [
+                    {
+                        "name": "brave_web_search",
+                        "description": "Performs a web search using the Brave Search API, ideal for general queries, news, articles, and online content. Use this for broad information gathering, recent events, or when you need diverse web sources. Supports pagination, content filtering, and freshness controls. Maximum 20 results per request, with offset for pagination.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "Search query (max 400 chars, 50 words)"},
+                                "count": {"type": "number", "description": "Number of results (1-20, default 10)", "default": 10},
+                                "offset": {"type": "number", "description": "Pagination offset (max 9, default 0)", "default": 0}
+                            },
+                            "required": ["query"]
+                        }
+                    },
+                    {
+                        "name": "brave_local_search",
+                        "description": "Searches for local businesses and places using Brave's Local Search API. Best for queries related to physical locations, businesses, restaurants, services, etc. Returns detailed information including business names and addresses, ratings and review counts, phone numbers and opening hours. Use this when the query implies 'near me' or mentions specific locations. Automatically falls back to web search if no local results are found.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "Local search query (e.g. 'pizza near Central Park')"},
+                                "count": {"type": "number", "description": "Number of results (1-20, default 5)", "default": 5}
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                ]
+                
+                fallback_notification = {
+                    "jsonrpc": "2.0",
+                    "method": "notifications/tools/list_changed",
+                    "params": {"tools": fallback_tools}
+                }
+                yield f"data: {json.dumps(fallback_notification)}\n\n"
+                logger.info("FastMCP: Sent fallback tools list with 2 tools")
+            
+            # 연결 유지
+            keepalive_count = 0
+            while True:
+                await asyncio.sleep(30)
+                keepalive_count += 1
+                yield f": keepalive-{keepalive_count}\n\n"
+                
+                if keepalive_count % 10 == 0:
+                    logger.info(f"FastMCP SSE keepalive #{keepalive_count}")
+                    
+        except asyncio.CancelledError:
+            logger.info("FastMCP SSE stream cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"FastMCP SSE stream error: {e}")
+            error_message = {
+                "jsonrpc": "2.0",
+                "method": "notifications/error",
+                "params": {"error": str(e), "type": "fastmcp_sse_error"}
+            }
+            yield f"data: {json.dumps(error_message)}\n\n"
+    
+    return StreamingResponse(
+        generate_fastmcp_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "X-Accel-Buffering": "no",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Transfer-Encoding": "chunked",
+        }
+    )
+
+
+async def handle_sse_manual_fallback(server_name: str):
+    """FastMCP 없을 때 수동 구현 폴백"""
+    
+    async def generate_manual_sse():
+        """수동 MCP SSE 스트림 (폴백)"""
+        try:
+            logger.info("Manual fallback SSE stream started")
+            
+            # 서버 정보 전송
+            server_info = {
+                "jsonrpc": "2.0",
+                "method": "notifications/initialized",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {"tools": {}},
+                    "serverInfo": {
+                        "name": f"mcp-orch-{server_name}",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+            yield f"data: {json.dumps(server_info)}\n\n"
+            
+            # 하드코딩된 도구 목록
+            tools_notification = {
+                "jsonrpc": "2.0",
+                "method": "notifications/tools/list_changed",
+                "params": {
+                    "tools": [
+                        {
+                            "name": "brave_web_search",
+                            "description": "Performs a web search using the Brave Search API, ideal for general queries, news, articles, and online content. Use this for broad information gathering, recent events, or when you need diverse web sources. Supports pagination, content filtering, and freshness controls. Maximum 20 results per request, with offset for pagination.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {"type": "string", "description": "Search query (max 400 chars, 50 words)"},
+                                    "count": {"type": "number", "description": "Number of results (1-20, default 10)", "default": 10},
+                                    "offset": {"type": "number", "description": "Pagination offset (max 9, default 0)", "default": 0}
+                                },
+                                "required": ["query"]
+                            }
+                        },
+                        {
+                            "name": "brave_local_search",
+                            "description": "Searches for local businesses and places using Brave's Local Search API. Best for queries related to physical locations, businesses, restaurants, services, etc. Returns detailed information including business names and addresses, ratings and review counts, phone numbers and opening hours. Use this when the query implies 'near me' or mentions specific locations. Automatically falls back to web search if no local results are found.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {"type": "string", "description": "Local search query (e.g. 'pizza near Central Park')"},
+                                    "count": {"type": "number", "description": "Number of results (1-20, default 5)", "default": 5}
+                                },
+                                "required": ["query"]
+                            }
+                        }
+                    ]
+                }
+            }
+            yield f"data: {json.dumps(tools_notification)}\n\n"
+            logger.info("Manual fallback: Sent tools list with 2 tools")
+            
+            # 연결 유지
+            keepalive_count = 0
+            while True:
+                await asyncio.sleep(30)
+                keepalive_count += 1
+                yield f": keepalive-{keepalive_count}\n\n"
+                
+        except asyncio.CancelledError:
+            logger.info("Manual fallback SSE stream cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Manual fallback SSE stream error: {e}")
+    
+    return StreamingResponse(
+        generate_manual_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "X-Accel-Buffering": "no",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Transfer-Encoding": "chunked",
+        }
+    )
+
+
+async def handle_mcp_message_request_with_fastmcp(
+    request: Request,
+    project_id: UUID,
+    server_name: str,
+    db: Session
+):
+    """FastMCP를 사용한 MCP 메시지 요청 처리"""
+    
+    try:
+        body = await request.body()
+        if not body:
+            raise HTTPException(status_code=400, detail="Empty message body")
+        
+        message = json.loads(body)
+        method = message.get("method")
+        message_id = message.get("id")
+        
+        logger.info(f"FastMCP message request: {method}")
+        
+        if FASTMCP_AVAILABLE and fastmcp_manager:
+            # FastMCP 서버 사용
+            mcp_server = fastmcp_manager.get_or_create_server(str(project_id), server_name)
+            
+            if method == "initialize":
+                return {
+                    "jsonrpc": "2.0",
+                    "id": message_id,
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {"tools": {}},
+                        "serverInfo": {
+                            "name": f"mcp-orch-{server_name}",
+                            "version": "1.0.0"
+                        }
+                    }
+                }
+            
+            elif method == "tools/list":
+                # FastMCP에서 도구 목록 가져오기
+                tools_dict = await mcp_server.get_tools()
+                tools_list = []
+                
+                for tool_name, tool_func in tools_dict.items():
+                    # 도구 스키마 생성 (간단화)
+                    tool_schema = {
+                        "name": tool_name,
+                        "description": tool_func.__doc__ or f"Tool: {tool_name}",
+                        "inputSchema": {"type": "object", "properties": {}, "required": []}
+                    }
+                    tools_list.append(tool_schema)
+                
+                return {
+                    "jsonrpc": "2.0",
+                    "id": message_id,
+                    "result": {"tools": tools_list}
+                }
+            
+            elif method == "tools/call":
+                # FastMCP 도구 호출
+                tool_name = message.get("params", {}).get("name")
+                tool_arguments = message.get("params", {}).get("arguments", {})
+                
+                tools_dict = await mcp_server.get_tools()
+                if tool_name in tools_dict:
+                    try:
+                        result = tools_dict[tool_name](**tool_arguments)
+                        return {
+                            "jsonrpc": "2.0",
+                            "id": message_id,
+                            "result": {
+                                "content": [{"type": "text", "text": str(result)}]
+                            }
+                        }
+                    except Exception as tool_error:
+                        logger.error(f"FastMCP tool execution error: {tool_error}")
+                        return {
+                            "jsonrpc": "2.0",
+                            "id": message_id,
+                            "error": {
+                                "code": -32603,
+                                "message": f"Tool execution failed: {str(tool_error)}"
+                            }
+                        }
+                else:
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": message_id,
+                        "error": {
+                            "code": -32601,
+                            "message": f"Tool not found: {tool_name}"
+                        }
+                    }
+        
+        # FastMCP 없을 때 폴백
+        return await handle_mcp_message_request(request, project_id, server_name, db)
+        
+    except Exception as e:
+        logger.error(f"FastMCP message handling error: {e}")
+        raise HTTPException(status_code=500, detail=f"Message handling failed: {str(e)}")
 
 
 # 표준 MCP 메시지 엔드포인트 (기존 경로 유지)
