@@ -154,16 +154,18 @@ async def generate_mcp_sse_stream(
         
         logger.info(f"MCP SSE connection {connection_id} established")
         
-        # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜 - 상대 경로 사용)
+        # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜 - 절대 URI 필수)
+        # mcp-inspector 호환성을 위해 절대 URI 사용
+        endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
         endpoint_event = {
             "jsonrpc": "2.0",
             "method": "endpoint",
             "params": {
-                "uri": "/messages"
+                "uri": endpoint_uri
             }
         }
         yield f"data: {json.dumps(endpoint_event)}\n\n"
-        logger.debug(f"Sent endpoint event with relative URI: /messages")
+        logger.info(f"Sent endpoint event with absolute URI: {endpoint_uri}")
         
         # 2. initialized 알림 전송
         initialized_event = {
@@ -179,6 +181,7 @@ async def generate_mcp_sse_stream(
             }
         }
         yield f"data: {json.dumps(initialized_event)}\n\n"
+        logger.info(f"Sent initialized event for server {server_name}")
         
         # 3. 도구 목록 가져오기 및 전송
         try:
@@ -218,6 +221,7 @@ async def generate_mcp_sse_stream(
             logger.error(f"Error loading tools for server {server_name}: {e}")
         
         # 4. 메시지 큐 처리 루프
+        logger.info(f"Starting message queue loop for connection {connection_id}")
         connection_info = active_sse_connections[connection_id]
         message_queue = connection_info["message_queue"]
         keepalive_count = 0
@@ -311,18 +315,22 @@ async def mcp_messages_endpoint(
                 detail=f"Server '{server_name}' not found or disabled"
             )
         
-        # 메서드별 처리
-        if method == "tools/call":
-            return await handle_tool_call(message, server, project_id, server_name)
-        elif method == "tools/list":
-            return await handle_tools_list(server)
-        elif method == "initialize":
+        # 메서드별 처리 - initialize 최우선 처리
+        if method == "initialize":
+            # 초기화는 즉시 응답 (mcp-inspector 연결 상태 해결의 핵심)
+            logger.info(f"Handling initialize request for server {server_name}")
             return await handle_initialize(message)
+        elif method == "tools/list":
+            # 도구 목록도 즉시 응답
+            return await handle_tools_list(server)
+        elif method == "tools/call":
+            return await handle_tool_call(message, server, project_id, server_name)
         elif method.startswith("notifications/"):
             # 알림 메시지는 202 Accepted 반환
             return JSONResponse(content={"status": "accepted"}, status_code=202)
         else:
             # 알 수 없는 메서드
+            logger.warning(f"Unknown method received: {method}")
             error_response = {
                 "jsonrpc": "2.0",
                 "id": message.get("id"),
@@ -452,15 +460,21 @@ async def handle_tools_list(server: McpServer):
 
 
 async def handle_initialize(message: Dict[str, Any]):
-    """초기화 요청 처리"""
+    """초기화 요청 즉시 응답 처리 - mcp-inspector 연결 상태 해결"""
     
+    logger.info(f"Processing initialize request with id: {message.get('id')}")
+    
+    # MCP 표준 초기화 응답 - 모든 capabilities 포함
     response = {
         "jsonrpc": "2.0",
-        "id": message.get("id"),
+        "id": message.get("id"),  # 요청 ID 필수 포함
         "result": {
             "protocolVersion": "2024-11-05",
             "capabilities": {
-                "tools": {}
+                "tools": {}, 
+                "logging": {},
+                "prompts": {},
+                "resources": {}
             },
             "serverInfo": {
                 "name": "mcp-orch",
@@ -469,6 +483,7 @@ async def handle_initialize(message: Dict[str, Any]):
         }
     }
     
+    logger.info(f"Sending initialize response for id: {message.get('id')}")
     return JSONResponse(content=response)
 
 
