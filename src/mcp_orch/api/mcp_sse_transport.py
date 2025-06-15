@@ -139,6 +139,7 @@ class MCPSSETransport:
             request_id = message.get("id")
             
             logger.info(f"📥 Session {self.session_id} received: {method} (id={request_id})")
+            logger.info(f"🔍 Full message content: {json.dumps(message, indent=2)}")
             
             # JSON-RPC 2.0 검증
             if message.get("jsonrpc") != "2.0":
@@ -198,7 +199,10 @@ class MCPSSETransport:
         MCP 표준 초기화 응답으로 Transport 상태를 "연결됨"으로 설정
         """
         request_id = message.get("id")
+        params = message.get("params", {})
+        
         logger.info(f"🎯 Processing initialize request for session {self.session_id}, id={request_id}")
+        logger.info(f"🔍 Initialize params: {json.dumps(params, indent=2)}")
         
         # MCP 표준 초기화 응답
         response = {
@@ -220,6 +224,8 @@ class MCPSSETransport:
         }
         
         logger.info(f"✅ Initialize complete for session {self.session_id}")
+        logger.info(f"🔍 Initialize response: {json.dumps(response, indent=2)}")
+        logger.info(f"📋 Next step: Inspector Client should send 'notifications/initialized'")
         logger.info(f"✅ Inspector Transport should now be connected!")
         
         return JSONResponse(content=response)
@@ -329,7 +335,20 @@ class MCPSSETransport:
         method = message.get("method")
         logger.info(f"📢 Notification received in session {self.session_id}: {method}")
         
-        # 알림은 202 Accepted 반환
+        # notifications/initialized 특별 처리 - Inspector 연결 완료 핵심
+        if method == "notifications/initialized":
+            logger.info(f"🎯 CRITICAL: notifications/initialized received for session {self.session_id}")
+            logger.info(f"✅ Inspector MCP Client 초기화 핸드셰이크 완료!")
+            logger.info(f"✅ Inspector UI에서 'Connected' 상태 표시되어야 함")
+            
+            # Inspector Transport 상태를 완전히 "연결됨"으로 설정
+            # 이 시점에서 Inspector는 연결이 완료되었다고 인식해야 함
+        
+        # 기타 알림 처리
+        elif method.startswith("notifications/"):
+            logger.debug(f"📢 Standard notification: {method}")
+        
+        # 모든 알림은 202 Accepted 반환 (MCP 표준)
         return JSONResponse(content={"status": "accepted"}, status_code=202)
     
     def _build_server_config(self) -> Optional[Dict[str, Any]]:
