@@ -25,6 +25,47 @@ INFO: Sent 2 tools for server brave-search
 INFO: Starting message queue loop for connection 2421e83f-4ae3-4d40-9c5d-7ad4aea0cc40
 ```
 
+### 🚨 Inspector Transport 시작 타임아웃 문제 (새로 발견)
+
+#### 문제 현상
+**mcp-inspector Proxy 로그에서 발견되는 타임아웃**:
+```
+🔧 [PROXY DEBUG] SSE message received: {
+  jsonrpc: '2.0',
+  method: 'endpoint',
+  params: { uri: '/projects/.../messages' }
+}
+🔧 [PROXY DEBUG] Endpoint event received - transport is ready!
+🔧 [PROXY DEBUG] SSE transport start timeout - forcing completion
+🔧 [PROXY DEBUG] Transport start timed out, but continuing anyway...
+```
+
+#### 핵심 원인
+- **Inspector 코드 분석**: `SSEClientTransport.start()` 메서드가 **5초 내에 완료되지 않으면 타임아웃**
+- **문제 지점**: `endpoint` 이벤트는 수신하지만 **MCP 초기화 핸드셰이크가 완료되지 않음**
+- **Inspector 기대**: `transport.start()` Promise가 resolve되어야 연결 완료로 인식
+
+#### Inspector 코드 증거
+```typescript
+// /inspector/server/src/index.ts:248-267
+const startPromise = transport.start();
+const timeoutPromise = new Promise((_, reject) => {
+  setTimeout(() => {
+    console.log("🔧 [PROXY DEBUG] SSE transport start timeout - forcing completion");
+    reject(new Error("Transport start timeout"));
+  }, 5000); // 5초 timeout
+});
+
+try {
+  await Promise.race([startPromise, timeoutPromise]);
+} catch (error) {
+  if (error.message === "Transport start timeout") {
+    console.log("🔧 [PROXY DEBUG] Transport start timed out, but continuing anyway...");
+    // timeout이어도 계속 진행 - endpoint 이벤트는 이미 받았음
+  }
+}
+```
+
 ---
 
 ## 🏗️ MCP 프로토콜 표준 이해
@@ -45,6 +86,13 @@ MCP SSE Transport는 **이중 채널 통신** 방식을 사용합니다:
 
 ### 정확한 초기화 시퀀스
 
+#### 🎯 핵심: Inspector Transport의 초기화 완료 조건
+
+**Inspector `SSEClientTransport.start()` 완료 조건**:
+1. **SSE 연결 설정** 완료
+2. **`endpoint` 이벤트 수신** 완료
+3. **MCP 초기화 핸드셰이크** 완료 ← **현재 누락!**
+
 #### 1. SSE 연결 설정
 ```
 GET /projects/{project_id}/servers/{server_name}/sse
@@ -52,10 +100,10 @@ Accept: text/event-stream
 Authorization: Bearer {token}
 ```
 
-#### 2. 서버 → 클라이언트 이벤트 전송 순서
+#### 2. 서버 → 클라이언트: endpoint 이벤트 (필수)
 
 ```javascript
-// 1. endpoint 이벤트 (필수)
+// 1. endpoint 이벤트 - SSE Transport 시작을 위해 반드시 필요
 {
   "jsonrpc": "2.0", 
   "method": "endpoint",
@@ -63,31 +111,11 @@ Authorization: Bearer {token}
     "uri": "http://localhost:8000/projects/c41aa472.../messages"  // 절대 URI 필요!
   }
 }
-
-// 2. 서버 초기화 완료 알림 (선택)
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/initialized", 
-  "params": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {"tools": {}},
-    "serverInfo": {"name": "mcp-orch-brave-search", "version": "1.0.0"}
-  }
-}
-
-// 3. 도구 목록 알림 (선택)
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/tools/list_changed",
-  "params": {
-    "tools": [...]
-  }
-}
 ```
 
-#### 3. 클라이언트 → 서버 초기화 요청 (핵심!)
+#### 3. 클라이언트 → 서버: initialize 요청 (자동 실행)
 
-SSE 이벤트를 받은 후, MCP SDK 클라이언트는 **반드시** 다음 요청을 보냅니다:
+**endpoint 이벤트 수신 후**, Inspector SDK는 **자동으로** 다음 요청을 전송:
 
 ```javascript
 POST /projects/{project_id}/servers/{server_name}/messages
@@ -112,16 +140,54 @@ Authorization: Bearer {token}
 }
 ```
 
-#### 4. 서버 → 클라이언트 초기화 응답 (필수!)
+#### 4. 서버 → 클라이언트: initialize 응답 (핵심!)
+
+**⚠️ 이 응답이 없으면 `transport.start()` 타임아웃 발생!**
 
 ```javascript
 {
   "jsonrpc": "2.0",
-  "id": "same-request-id", 
+  "id": "same-request-id",  // 요청 ID와 반드시 일치
   "result": {
     "protocolVersion": "2024-11-05",
-    "capabilities": {"tools": {}},
-    "serverInfo": {"name": "mcp-orch", "version": "1.0.0"}
+    "capabilities": {
+      "tools": {},
+      "logging": {},
+      "prompts": {},
+      "resources": {}
+    },
+    "serverInfo": {
+      "name": "mcp-orch",
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+#### 5. 클라이언트 → 서버: initialized 알림
+
+```javascript
+POST /projects/{project_id}/servers/{server_name}/messages
+
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/initialized"
+}
+```
+
+#### 6. 🎉 Transport 초기화 완료
+
+이 시점에서 `transport.start()` Promise가 **resolve**되고 Inspector가 **"connected"** 상태로 변경됩니다.
+
+### 선택적 이벤트 (초기화 후)
+
+```javascript
+// 도구 목록 알림 (선택)
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/tools/list_changed",
+  "params": {
+    "tools": [...]
   }
 }
 ```
@@ -130,7 +196,32 @@ Authorization: Bearer {token}
 
 ## ❌ 현재 mcp-orch 구현의 문제점
 
-### 1. **endpoint 이벤트 URI 형식 오류**
+### 1. **🚨 핵심 문제: MCP 초기화 핸드셰이크 누락**
+
+**현재 상황**:
+- ✅ `endpoint` 이벤트 전송됨
+- ❌ `initialize` 요청에 대한 즉시 응답 없음
+- ❌ `transport.start()` 5초 타임아웃 발생
+
+**원인 분석**:
+```python
+# mcp_standard_sse.py의 현재 구현
+async def handle_initialize(message: Dict[str, Any]):
+    # 현재: 응답을 즉시 보내지만 클라이언트가 받지 못함
+    response = {...}
+    return JSONResponse(content=response)  # ❌ 지연 또는 실패
+```
+
+**Inspector 기대 vs 현실**:
+```
+Inspector 기대:
+endpoint 이벤트 → initialize 요청 → 즉시 응답 → transport.start() 완료
+
+현재 mcp-orch:
+endpoint 이벤트 → initialize 요청 → [응답 지연/실패] → 5초 타임아웃
+```
+
+### 2. **endpoint 이벤트 URI 형식 오류**
 
 **현재 (잘못됨):**
 ```javascript
@@ -138,7 +229,7 @@ Authorization: Bearer {token}
   "jsonrpc": "2.0",
   "method": "endpoint", 
   "params": {
-    "uri": "/messages"  // ❌ 상대 경로
+    "uri": "/projects/c41aa472.../messages"  // ❌ 상대 경로
   }
 }
 ```
@@ -154,48 +245,43 @@ Authorization: Bearer {token}
 }
 ```
 
-### 2. **초기화 핸드셰이크 누락**
+### 3. **비동기 응답 처리 문제**
 
-**문제**: 클라이언트가 `initialize` 요청을 보내도 서버가 즉시 응답하지 않음
-**원인**: `/messages` POST 엔드포인트가 `initialize` 메서드를 올바르게 처리하지 못함
+**문제**: Inspector SDK의 `transport.start()`는 **동기적 초기화 완료**를 기대
+**현재**: SSE 이벤트는 전송하지만 HTTP POST 응답이 제대로 처리되지 않음
 
-### 3. **비동기 응답 처리 부족**
+### 4. **Inspector 호환성 부족**
 
-**문제**: MCP SDK는 `client.connect()` 시 동기적으로 초기화 완료를 기대함
-**원인**: 현재 구현은 SSE 이벤트만 전송하고 HTTP 응답은 지연됨
+**Inspector 요구사항**:
+- `transport.start()` 메서드가 5초 내에 완료되어야 함
+- MCP 표준 초기화 핸드셰이크 완료가 필수
+
+**현재 mcp-orch**:
+- `endpoint` 이벤트만 전송
+- 초기화 핸드셰이크 미완료로 타임아웃 발생
 
 ---
 
 ## 🔧 해결 방안
 
-### 1. endpoint 이벤트 수정
+### 🎯 우선순위 1: Inspector Transport 타임아웃 해결
 
-```python
-# mcp_standard_sse.py 수정
-async def generate_mcp_sse_stream(...):
-    # 1. endpoint 이벤트 - 절대 URI 사용
-    endpoint_event = {
-        "jsonrpc": "2.0",
-        "method": "endpoint",
-        "params": {
-            "uri": f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
-        }
-    }
-    yield f"data: {json.dumps(endpoint_event)}\n\n"
-```
-
-### 2. initialize 핸들러 개선
+#### A. initialize 핸들러 즉시 응답 보장
 
 ```python
 async def handle_initialize(message: Dict[str, Any]):
-    """초기화 요청 즉시 응답"""
+    """초기화 요청 즉시 응답 - Inspector 타임아웃 방지"""
+    
+    logger.info(f"Processing initialize request with id: {message.get('id')}")
+    
+    # MCP 표준 초기화 응답 - 모든 capabilities 포함
     response = {
         "jsonrpc": "2.0",
-        "id": message.get("id"),  # 요청 ID 반드시 포함
+        "id": message.get("id"),  # 요청 ID 필수 포함
         "result": {
             "protocolVersion": "2024-11-05",
             "capabilities": {
-                "tools": {},
+                "tools": {}, 
                 "logging": {},
                 "prompts": {},
                 "resources": {}
@@ -206,50 +292,110 @@ async def handle_initialize(message: Dict[str, Any]):
             }
         }
     }
+    
+    logger.info(f"Sending initialize response for id: {message.get('id')}")
     return JSONResponse(content=response)
 ```
 
-### 3. 메시지 엔드포인트 개선
+#### B. 메시지 엔드포인트 우선순위 처리
 
 ```python
 @router.post("/projects/{project_id}/servers/{server_name}/messages")
 async def mcp_messages_endpoint(...):
-    """즉시 응답 보장"""
+    """Inspector 호환성을 위한 즉시 응답"""
     try:
         method = message.get("method")
         
+        # initialize 최우선 처리 - Inspector 타임아웃 방지
         if method == "initialize":
-            # 초기화는 즉시 응답 (지연 없음)
+            logger.info(f"Handling initialize request for server {server_name}")
             return await handle_initialize(message)
         elif method == "tools/list":
             # 도구 목록도 즉시 응답
             return await handle_tools_list(server)
         elif method == "tools/call":
-            # 도구 호출은 비동기 처리 가능
             return await handle_tool_call(message, server, project_id, server_name)
-        # ...
+        elif method.startswith("notifications/"):
+            # 알림 메시지는 202 Accepted 반환
+            return JSONResponse(content={"status": "accepted"}, status_code=202)
+        else:
+            # 알 수 없는 메서드
+            logger.warning(f"Unknown method received: {method}")
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not found: {method}"
+                }
+            }
+            return JSONResponse(content=error_response, status_code=200)
     except Exception as e:
         # 오류 시에도 즉시 JSON-RPC 오류 응답
         error_response = {
             "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "error": {"code": -32000, "message": str(e)}
+            "id": message.get("id") if 'message' in locals() else None,
+            "error": {
+                "code": -32000,
+                "message": f"Internal error: {str(e)}"
+            }
         }
-        return JSONResponse(content=error_response)
+        return JSONResponse(content=error_response, status_code=200)
 ```
 
-### 4. 클라이언트 연결 상태 로직 이해
+### 🎯 우선순위 2: endpoint 이벤트 절대 URI 수정
+
+```python
+# mcp_standard_sse.py 수정
+async def generate_mcp_sse_stream(...):
+    # 1. endpoint 이벤트 - 절대 URI 사용 (Inspector 요구사항)
+    endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
+    endpoint_event = {
+        "jsonrpc": "2.0",
+        "method": "endpoint",
+        "params": {
+            "uri": endpoint_uri
+        }
+    }
+    yield f"data: {json.dumps(endpoint_event)}\n\n"
+    logger.info(f"Sent endpoint event with URI: {endpoint_uri}")
+```
+
+### 🎯 우선순위 3: Inspector 호환성 검증
+
+#### A. Transport 초기화 완료 확인
 
 ```typescript
-// useConnection.ts - 연결 성공 조건
+// Inspector useConnection.ts의 연결 성공 조건 이해
 const connect = async () => {
   try {
-    await client.connect(transport);  // 여기서 initialize 핸드셰이크 완료되어야 함
-    setConnectionStatus("connected");  // 초기화 완료 후에만 실행됨
+    // 1. SSE Transport 생성
+    const transport = new SSEClientTransport(url, options);
+    
+    // 2. transport.start() 호출 - 여기서 5초 타임아웃 발생 가능
+    await transport.start();  // ← 이 단계에서 initialize 핸드셰이크 완료되어야 함
+    
+    // 3. Client 연결
+    await client.connect(transport);
+    
+    // 4. 연결 상태 업데이트
+    setConnectionStatus("connected");  // 모든 과정 완료 후에만 실행
   } catch (error) {
     setConnectionStatus("error");
   }
 }
+```
+
+#### B. 타임아웃 방지 검증
+
+```bash
+# 수정 후 확인해야 할 시퀀스
+1. SSE 연결 → OK
+2. endpoint 이벤트 수신 → OK  
+3. initialize POST 요청 → OK
+4. initialize 즉시 응답 → ✅ 이 단계에서 성공해야 함
+5. transport.start() 완료 → ✅ 5초 내 완료
+6. Inspector "connected" 상태 → ✅ 최종 성공
 ```
 
 ---
@@ -289,11 +435,23 @@ connectionStatus: → "connected"
 
 ## 📋 구현 체크리스트
 
+### 🚨 Critical Priority (Inspector 타임아웃 해결)
+- [ ] **`handle_initialize` 즉시 응답 보장** (최우선)
+  - [ ] 요청 ID 정확히 반환
+  - [ ] MCP 표준 capabilities 포함
+  - [ ] 응답 지연 없이 즉시 JSONResponse 반환
+- [ ] **`/messages` 엔드포인트 initialize 우선 처리**
+  - [ ] `method == "initialize"` 최우선 분기
+  - [ ] 다른 메서드보다 먼저 처리
+- [ ] **Inspector 타임아웃 검증**
+  - [ ] `transport.start()` 5초 내 완료 확인
+  - [ ] "connected" 상태 변경 확인
+
 ### High Priority (즉시 구현)
 - [ ] `endpoint` 이벤트 절대 URI 수정
-- [ ] `handle_initialize` 즉시 응답 보장  
 - [ ] `/messages` 엔드포인트 오류 처리 개선
 - [ ] 브라우저에서 연결 테스트
+- [ ] Inspector 로그에서 타임아웃 없음 확인
 
 ### Medium Priority (추가 개선)
 - [ ] Keep-alive 메커니즘 개선
@@ -319,10 +477,21 @@ connectionStatus: → "connected"
 
 ## 📝 주요 학습 내용
 
+### 🎯 핵심 발견사항
+1. **Inspector Transport 타임아웃 원인**: `SSEClientTransport.start()` 메서드가 MCP 초기화 핸드셰이크 완료를 기다림
+2. **5초 제한**: Inspector는 5초 내에 초기화가 완료되지 않으면 강제 타임아웃
+3. **endpoint vs initialize**: `endpoint` 이벤트만으로는 불충분, `initialize` 응답이 핵심
+
+### 🏗️ MCP 프로토콜 이해
 1. **MCP는 이중 채널 프로토콜**: SSE + HTTP POST 조합 필수
-2. **초기화 핸드셰이크 중요성**: `client.connect()` 성공의 핵심
+2. **초기화 핸드셰이크 중요성**: `transport.start()` 성공의 핵심
 3. **절대 URI 요구사항**: endpoint 이벤트의 필수 조건
-4. **즉시 응답 필요성**: 비동기라도 초기화는 동기적 처리
+4. **즉시 응답 필요성**: `initialize` 요청은 즉시 응답해야 함
 5. **JSON-RPC 2.0 표준 준수**: id, method, params 정확한 형식
 
-이러한 이해를 바탕으로 mcp-orch의 SSE 구현을 표준에 맞게 수정하면 mcp-inspector와의 완벽한 호환성을 달성할 수 있습니다.
+### 🔧 실용적 교훈
+1. **Inspector 호환성**: MCP 표준을 완전히 구현해야 Inspector와 호환
+2. **타임아웃 방지**: 초기화 단계에서 지연 없는 응답이 필수
+3. **디버깅 방법**: Inspector 로그와 mcp-orch 로그를 함께 분석해야 정확한 원인 파악 가능
+
+이러한 이해를 바탕으로 mcp-orch의 SSE 구현을 표준에 맞게 수정하면 Inspector Transport 타임아웃 문제를 해결하고 완벽한 호환성을 달성할 수 있습니다.

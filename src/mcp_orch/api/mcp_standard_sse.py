@@ -156,8 +156,8 @@ async def generate_mcp_sse_stream(
         logger.info(f"MCP SSE connection {connection_id} established")
         
         # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜)
-        # mcp-inspector 프록시 호환성을 위해 루트 상대 경로 사용
-        endpoint_uri = f"/projects/{project_id}/servers/{server_name}/messages"
+        # Inspector 호환성을 위해 절대 URI 필요 (Inspector Transport 타임아웃 방지)
+        endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
         endpoint_event = {
             "jsonrpc": "2.0",
             "method": "endpoint",
@@ -283,10 +283,10 @@ async def mcp_messages_endpoint(
                 detail=f"Server '{server_name}' not found or disabled"
             )
         
-        # 메서드별 처리 - initialize 최우선 처리
+        # 메서드별 처리 - initialize 최우선 처리 (Inspector 타임아웃 방지)
         if method == "initialize":
-            # 초기화는 즉시 응답 (mcp-inspector 연결 상태 해결의 핵심)
-            logger.info(f"Handling initialize request for server {server_name}")
+            # 초기화는 즉시 응답 (Inspector Transport.start() 완료의 핵심)
+            logger.info(f"🎯 Handling initialize request for server {server_name}, id={message.get('id')}")
             return await handle_initialize(message)
         elif method == "tools/list":
             # 도구 목록도 즉시 응답
@@ -428,14 +428,15 @@ async def handle_tools_list(server: McpServer):
 
 
 async def handle_initialize(message: Dict[str, Any]):
-    """초기화 요청 즉시 응답 처리 - mcp-inspector 연결 상태 해결"""
+    """초기화 요청 즉시 응답 처리 - Inspector Transport 타임아웃 방지"""
     
-    logger.info(f"Processing initialize request with id: {message.get('id')}")
+    request_id = message.get("id")
+    logger.info(f"🚀 Processing initialize request with id: {request_id}")
     
     # MCP 표준 초기화 응답 - 모든 capabilities 포함
     response = {
         "jsonrpc": "2.0",
-        "id": message.get("id"),  # 요청 ID 필수 포함
+        "id": request_id,  # 요청 ID 필수 포함
         "result": {
             "protocolVersion": "2024-11-05",
             "capabilities": {
@@ -451,7 +452,7 @@ async def handle_initialize(message: Dict[str, Any]):
         }
     }
     
-    logger.info(f"Sending initialize response for id: {message.get('id')}")
+    logger.info(f"✅ Sending initialize response for id: {request_id} (Inspector Transport.start() completion)")
     return JSONResponse(content=response)
 
 
