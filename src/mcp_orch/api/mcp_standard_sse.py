@@ -156,8 +156,7 @@ async def generate_mcp_sse_stream(
         logger.info(f"MCP SSE connection {connection_id} established")
         
         # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜)
-        # mcp-inspector 프록시 호환성을 위해 상대 경로 사용
-        # 프록시가 올바른 경로로 라우팅할 수 있도록 함
+        # mcp-inspector 프록시 호환성을 위해 루트 상대 경로 사용
         endpoint_uri = f"/projects/{project_id}/servers/{server_name}/messages"
         endpoint_event = {
             "jsonrpc": "2.0",
@@ -167,7 +166,7 @@ async def generate_mcp_sse_stream(
             }
         }
         yield f"data: {json.dumps(endpoint_event)}\n\n"
-        logger.info(f"Sent endpoint event with relative URI for proxy compatibility: {endpoint_uri}")
+        logger.info(f"Sent endpoint event with URI: {endpoint_uri}")
         
         # 2. initialized 알림 전송
         initialized_event = {
@@ -544,6 +543,17 @@ async def mcp_messages_endpoint_compat(
     db: Session = Depends(get_db)
 ):
     """호환성 메시지 엔드포인트 - 상대 경로 지원"""
+    
+    # 진단용 로그 - 호환성 엔드포인트 호출 기록
+    logger.info(f"🚀 COMPAT POST /messages received")
+    logger.info(f"🚀 Request headers: {dict(request.headers)}")
+    
+    try:
+        # 요청 본문 미리 확인
+        body = await request.body()
+        logger.info(f"🚀 Request body (raw): {body.decode()}")
+    except Exception as e:
+        logger.error(f"🚀 Failed to read request body: {e}")
     
     try:
         # Referer 헤더에서 SSE 연결 정보 추출
