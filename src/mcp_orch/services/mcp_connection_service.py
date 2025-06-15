@@ -300,6 +300,111 @@ class McpConnectionService:
         """캐시된 도구 개수 반환"""
         tools = self.server_tools.get(server_id, [])
         return len(tools)
+    
+    async def call_tool(self, server_id: str, server_config: Dict, tool_name: str, arguments: Dict) -> Any:
+        """MCP 서버의 도구 호출"""
+        try:
+            # 서버가 비활성화된 경우
+            if server_config.get('disabled', False):
+                raise ValueError(f"Server {server_id} is disabled")
+            
+            command = server_config.get('command', '')
+            args = server_config.get('args', [])
+            env = server_config.get('env', {})
+            timeout = server_config.get('timeout', 60)
+            
+            if not command:
+                raise ValueError("Server command not configured")
+            
+            # 환경 변수 설정
+            import os
+            full_env = os.environ.copy()
+            full_env.update(env)
+            
+            process = await asyncio.create_subprocess_exec(
+                command, *args,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=full_env
+            )
+            
+            # 초기화 메시지
+            init_message = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "mcp-orch", "version": "1.0.0"}
+                }
+            }
+            
+            # 도구 호출 메시지
+            tool_call_message = {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": tool_name,
+                    "arguments": arguments
+                }
+            }
+            
+            init_json = json.dumps(init_message) + '\n'
+            tool_call_json = json.dumps(tool_call_message) + '\n'
+            
+            process.stdin.write(init_json.encode())
+            process.stdin.write(tool_call_json.encode())
+            await process.stdin.drain()
+            process.stdin.close()
+            
+            # 응답 대기
+            try:
+                stdout_data, stderr_data = await asyncio.wait_for(
+                    process.communicate(), timeout=timeout
+                )
+                
+                response_lines = stdout_data.decode().strip().split('\n')
+                
+                for line in response_lines:
+                    if line.strip():
+                        try:
+                            response = json.loads(line)
+                            if response.get('id') == 2:
+                                if 'result' in response:
+                                    result = response['result']
+                                    # content 배열에서 텍스트 추출
+                                    if isinstance(result, dict) and 'content' in result:
+                                        content_list = result['content']
+                                        if content_list and isinstance(content_list, list):
+                                            first_content = content_list[0]
+                                            if isinstance(first_content, dict) and 'text' in first_content:
+                                                return first_content['text']
+                                    return result
+                                elif 'error' in response:
+                                    error = response['error']
+                                    raise ValueError(f"Tool error: {error.get('message', 'Unknown error')}")
+                        except json.JSONDecodeError:
+                            continue
+                
+                # stderr에서 오류 메시지 확인
+                if stderr_data:
+                    stderr_text = stderr_data.decode().strip()
+                    if stderr_text:
+                        logger.warning(f"Tool call stderr: {stderr_text}")
+                
+                raise ValueError(f"No valid response received for tool call {tool_name}")
+                
+            except asyncio.TimeoutError:
+                process.kill()
+                await process.wait()
+                raise ValueError(f"Tool call timeout for {tool_name}")
+                
+        except Exception as e:
+            logger.error(f"Error calling tool {tool_name} on server {server_id}: {e}")
+            raise
 
 
 # 전역 서비스 인스턴스

@@ -631,7 +631,17 @@ async def handle_sse_with_fastmcp(project_id: UUID, server_name: str):
             # FastMCP가 자동으로 처리하는 초기화 과정을 시뮬레이션
             # 실제로는 FastMCP 내부에서 자동 처리됨
             
-            # 서버 정보 전송
+            # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜)
+            endpoint_event = {
+                "jsonrpc": "2.0",
+                "method": "endpoint",
+                "params": {
+                    "uri": "/messages"
+                }
+            }
+            yield f"data: {json.dumps(endpoint_event)}\n\n"
+            
+            # 2. 서버 정보 전송
             server_info = {
                 "jsonrpc": "2.0",
                 "method": "notifications/initialized", 
@@ -879,7 +889,17 @@ async def handle_sse_manual_fallback(server_name: str):
         try:
             logger.info("Manual fallback SSE stream started")
             
-            # 서버 정보 전송
+            # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜)
+            endpoint_event = {
+                "jsonrpc": "2.0",
+                "method": "endpoint",
+                "params": {
+                    "uri": "/messages"
+                }
+            }
+            yield f"data: {json.dumps(endpoint_event)}\n\n"
+            
+            # 2. 서버 정보 전송
             server_info = {
                 "jsonrpc": "2.0",
                 "method": "notifications/initialized",

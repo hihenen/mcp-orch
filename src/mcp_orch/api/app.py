@@ -20,6 +20,7 @@ from .teams import router as teams_router
 from .projects import router as projects_router
 from .project_sse import router as project_sse_router
 from .standard_mcp import router as standard_mcp_router
+from .mcp_standard_sse import router as mcp_standard_sse_router
 from .fastmcp_impl import router as fastmcp_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router
@@ -90,7 +91,8 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(projects_router)
-    app.include_router(standard_mcp_router)  # SSE 엔드포인트 처리하므로 먼저 등록
+    app.include_router(mcp_standard_sse_router)  # 표준 MCP SSE 엔드포인트 (최우선)
+    app.include_router(standard_mcp_router)  # 기존 SSE 엔드포인트 (호환성)
     app.include_router(project_sse_router)   # 프로젝트 관리 API
     app.include_router(fastmcp_router)
     app.include_router(servers_router)
