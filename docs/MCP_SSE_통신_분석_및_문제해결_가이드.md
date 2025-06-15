@@ -4,6 +4,14 @@
 
 이 문서는 mcp-inspector에서 mcp-orch SSE 엔드포인트 연결 시 "disconnected" 상태로 표시되는 문제를 분석하고 해결 방안을 제시합니다.
 
+## 🚨 **MCP Inspector 표준 준수 절대 원칙**
+
+### **문제 해결 기본 방침**
+- **MCP Inspector는 MCP 구현의 공식 표준**이며 절대 수정하지 않음
+- **모든 연결 문제는 mcp-orch 측에서 해결** - Inspector 기준에 맞춰 mcp-orch 수정
+- **Inspector 동작 방식이 정답** - Inspector가 기대하는 프로토콜에 100% 맞춤
+- **Inspector 코드가 구현 기준** - Inspector 소스코드 분석 후 정확히 따름
+
 ---
 
 ## 🔍 문제 상황 분석

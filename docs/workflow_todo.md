@@ -65,6 +65,30 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_031-INSPECTOR-STANDARD: MCP Inspector 표준 준수 원칙 프로젝트 전체 적용 🔄 진행중
+**핵심 목표**: MCP Inspector를 공식 표준으로 명시하고 모든 개발이 Inspector 기준을 따르도록 프로젝트 지침 강화
+
+- [x] **CLAUDE.md 프로젝트 지침 최상단 추가**
+  - ✅ MCP Inspector 표준 준수 절대 원칙 섹션 생성
+  - ✅ 절대 금지 사항 명시 (Inspector 코드 수정 금지 등)
+  - ✅ 필수 준수 원칙 정의 (Inspector 동작 방식 완전 분석 후 구현)
+  - ✅ 디버깅 및 문제 해결 방법론 명시
+
+- [x] **MCP_SSE_통신_분석_및_문제해결_가이드.md 업데이트**
+  - ✅ Inspector 표준 준수 원칙을 문서 최상단에 명시
+  - ✅ 문제 해결 기본 방침 추가 (모든 문제는 mcp-orch 측 해결)
+
+- [x] **workflow_todo.md 현재 작업 섹션 업데이트**
+  - ✅ Inspector 표준 기준 개발 방향성 명시
+  - ✅ 향후 모든 MCP 관련 작업이 Inspector 호환성 우선 고려하도록 지침 추가
+
+- [ ] **세션 ID 불일치 문제 해결 계획**
+  - [ ] Inspector 세션 ID 생성 방식 완전 분석
+  - [ ] mcp-orch를 Inspector 세션 관리 방식에 맞춰 수정
+  - [ ] Inspector POST 요청 sessionId와 SSE 연결 정확히 매칭
+
+## 완료된 작업
+
 ### TASK_030-INSPECTOR-CONNECTION: Inspector와 mcp-orch 연결 문제 해결 - MCP 표준 준수 Transport 구현 ✅ 완료
 **핵심 목표**: MCP Inspector "Not connected" 오류 해결을 위한 완전한 MCP 표준 준수 양방향 SSE Transport 구현
 
@@ -206,13 +230,23 @@
 
 ## 향후 계획된 작업
 
-### 🎯 **핵심 기능 우선 구현** (HIGH 우선순위)
+### 🎯 **MCP Inspector 호환성 우선 구현** (CRITICAL 우선순위)
 
-- [ ] **프로젝트별 MCP 서버 등록 시스템** 🔥
-  - [ ] 새 MCP 서버 추가 폼 (이름, 명령어, 인자, 환경 변수)
-  - [ ] 서버 설정 편집 다이얼로그
-  - [ ] 서버 삭제 및 활성화/비활성화 토글
-  - [ ] 서버 상태 실시간 표시
+#### **🚨 Inspector 연결 문제 완전 해결 (최우선)**
+- [ ] **Inspector 세션 ID 불일치 문제 해결** 🔥🔥🔥
+  - [ ] Inspector 세션 생성/관리 방식 완전 분석
+  - [ ] mcp-orch SSE 엔드포인트를 Inspector 세션 방식에 맞춰 수정
+  - [ ] Inspector POST 요청 sessionId와 SSE 연결 정확히 매칭
+  - [ ] "Not connected" 오류 완전 해결 및 Inspector 연결 성공
+
+#### **🎯 Inspector 호환 MCP 서버 시스템 (HIGH 우선순위)**
+- [ ] **Inspector 테스트 가능한 MCP 서버 등록** 🔥
+  - [ ] Inspector에서 연결 테스트할 수 있는 MCP 서버 추가
+  - [ ] 프로젝트별 MCP 서버 등록 시스템 (Inspector 호환성 검증)
+  - [ ] 서버 설정 편집 및 활성화/비활성화
+  - [ ] Inspector에서 도구 목록 표시 및 실행 테스트
+
+### 🎯 **핵심 기능 구현** (HIGH 우선순위)
 
 - [ ] **GitHub 스타일 API 키 관리 시스템** 🔥
   - [ ] API 키 생성 후 전체 키 표시 다이얼로그
@@ -226,11 +260,11 @@
   - [ ] 클립보드 복사 기능
   - [ ] 설정 가이드 및 사용법 표시
 
-- [ ] **실제 MCP 서버 연동 테스트** 🔥
-  - [ ] 프로젝트에 실제 MCP 서버 추가 테스트
-  - [ ] API 키로 SSE 엔드포인트 접근 테스트
+- [ ] **Inspector + Cline 연동 테스트** 🔥
+  - [ ] Inspector에서 mcp-orch 연결 완전 검증
   - [ ] Cline에서 생성된 설정으로 연결 테스트
   - [ ] 도구 실행 및 결과 확인
+  - [ ] Inspector와 Cline 양쪽 모두에서 정상 작동 확인
 
 ### 추가 고급 기능 (MEDIUM/LOW 우선순위)
 
@@ -251,11 +285,11 @@
   - 예상 결과: Inspector SSEClientTransport가 정상적으로 연결 상태 인식, "Not connected" 오류 해결
   - 다음 단계: Inspector에서 mcp-orch 새로운 엔드포인트 연결 테스트 및 도구 실행 검증
 
-### 🎯 **즉시 진행 목표** (다음 4주간)
-**Week 1**: 프로젝트 서버 라우팅 수정 및 권한 제한
-**Week 2**: 프로젝트별 MCP 서버 등록 시스템
-**Week 3**: API 키 관리 및 Cline 설정 자동 생성
-**Week 4**: 실제 MCP 서버 연동 테스트
+### 🎯 **즉시 진행 목표** (다음 4주간) - Inspector 우선
+**Week 1**: Inspector 세션 ID 불일치 문제 완전 해결
+**Week 2**: Inspector 호환 MCP 서버 등록 시스템 구현
+**Week 3**: Inspector + API 키 관리 시스템 연동
+**Week 4**: Inspector + Cline 양방향 호환성 완전 검증
 
 ## 주요 기술 스택
 - **백엔드**: Python, FastAPI, MCP SDK, PostgreSQL + SQLAlchemy
@@ -265,8 +299,9 @@
 - **패키지 관리**: uv (백엔드), pnpm (프론트엔드)
 
 ## 핵심 인사이트
+- **MCP Inspector 표준 준수**: Inspector를 공식 표준으로 모든 MCP 구현의 기준점 설정
 - **프로젝트 중심 아키텍처**: 팀 경계를 넘나드는 유연한 협업 구조가 핵심
 - **JWT 토큰 인증**: NextAuth.js v5와 완전 호환되는 토큰 기반 인증 시스템
 - **권한 기반 UI**: Owner/Developer/Reporter 3단계 역할 시스템으로 세분화된 접근 제어
 - **사용자 경험**: 키보드 단축키, 즐겨찾기, 실시간 업데이트로 생산성 향상
-- **MCP 호환성**: Cline과 100% 호환되는 SSE 엔드포인트로 기존 도구와 완벽 연동
+- **MCP 호환성**: Inspector + Cline 양방향 100% 호환성으로 표준 도구와 완벽 연동
