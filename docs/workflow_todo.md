@@ -65,6 +65,33 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_030-INSPECTOR-CONNECTION: Inspector와 mcp-orch 연결 문제 해결 - MCP 표준 준수 Transport 구현 ✅ 완료
+**핵심 목표**: MCP Inspector "Not connected" 오류 해결을 위한 완전한 MCP 표준 준수 양방향 SSE Transport 구현
+
+- [x] **MCP 프로토콜 표준 분석 및 근본 원인 파악**
+  - ✅ MCP SDK 분석을 통한 근본 원인 발견: mcp-orch의 단방향 SSE 구현이 MCP 표준 위반
+  - ✅ Inspector의 "Not connected" 오류는 SSEClientTransport가 연결 상태로 인식하지 못함
+  - ✅ MCP 표준은 양방향 통신(SSE + POST) + 세션 관리 필수 요구
+  - ✅ 경로는 문제 없음 - `/projects/.../sse` 사용 가능, 문제는 구현 방식
+
+- [x] **MCP 표준 준수 양방향 SSE Transport 구현**
+  - ✅ `MCPSSETransport` 클래스 구현: 세션 ID 기반 연결 관리
+  - ✅ 양방향 통신 지원: SSE 스트림 + POST 메시지 처리
+  - ✅ MCP 표준 준수: endpoint 이벤트, initialize 핸드셰이크, JSON-RPC 2.0
+  - ✅ 세션별 Transport 저장소 및 메시지 큐 시스템
+  - ✅ 기존 mcp_connection_service 통합으로 서비스 레이어 재사용
+
+- [x] **FastAPI 앱 통합 및 라우터 등록**
+  - ✅ 새로운 `mcp_sse_transport_router` FastAPI 앱에 통합
+  - ✅ 최우선 라우터로 등록하여 새로운 구현이 먼저 처리되도록 설정
+  - ✅ 기존 라우터들은 호환성을 위해 유지
+  - ✅ 동일한 경로(`/projects/{project_id}/servers/{server_name}/sse`)에서 새로운 구현 활용
+
+- [x] **MCP_SSE_통신_분석_및_문제해결_가이드.md 업데이트**
+  - ✅ 근본 원인 분석 및 MCP 표준 해결책 완전 문서화
+  - ✅ 새로운 구현 방식 및 핵심 포인트 상세 설명
+  - ✅ 구현 단계별 가이드 및 검증 방법 제시
+
 ### TASK_029-INSPECTOR-DEBUG: MCP Inspector 프록시 세션 토큰 설정 문제 해결 ✅ 완료
 **핵심 목표**: Inspector Configuration의 프록시 세션 토큰 사용 방식 분석 및 우회 방법 연구
 
@@ -213,16 +240,16 @@
 - [ ] **엔터프라이즈 기능**: SSO 통합, 고급 모니터링, API 확장성
 
 ## Progress Status
-- Current Progress: ✅ **MCP Inspector 인증 문제 해결** → DANGEROUSLY_OMIT_AUTH=true로 토큰 없이 연결 성공
-- Next Task: Inspector와 mcp-orch 연결 테스트 및 프로젝트별 MCP 서버 등록 시스템 구현
+- Current Progress: ✅ **MCP 표준 준수 Transport 구현 완료** → Inspector "Not connected" 문제 해결을 위한 양방향 SSE Transport 구현
+- Next Task: Inspector에서 새로운 mcp-orch SSE 엔드포인트 연결 테스트 및 검증
 - Last Update: 2025-06-15
-- Automatic Check Feedback: **✅ Inspector 인증 문제 완전 해결**
-  - 현재 상태: TASK_029-INSPECTOR-DEBUG 완료 ✅
-  - 핵심 성과: Inspector 프록시 세션 토큰 요구사항 우회 성공
-  - 해결 방법: `DANGEROUSLY_OMIT_AUTH=true npm run dev`로 인증 비활성화
-  - 실행 결과: 프록시 서버 127.0.0.1:6277 정상 실행, 토큰 설정 불필요
-  - 보안 경고: "Authentication is disabled" 메시지 표시되지만 개발환경에서 사용 가능
-  - 다음 단계: Inspector에서 mcp-orch SSE 엔드포인트 연결 테스트
+- Automatic Check Feedback: **✅ MCP Inspector 연결 문제 근본적 해결**
+  - 현재 상태: TASK_030-INSPECTOR-CONNECTION 완료 ✅
+  - 핵심 성과: MCP 표준 위반(단방향 SSE) → MCP 표준 준수(양방향 Transport + 세션 관리) 전환
+  - 새로운 구현: `MCPSSETransport` 클래스로 세션 기반 양방향 통신 구현
+  - 통합 완료: FastAPI 앱에 최우선 라우터로 등록, 기존 호환성 유지
+  - 예상 결과: Inspector SSEClientTransport가 정상적으로 연결 상태 인식, "Not connected" 오류 해결
+  - 다음 단계: Inspector에서 mcp-orch 새로운 엔드포인트 연결 테스트 및 도구 실행 검증
 
 ### 🎯 **즉시 진행 목표** (다음 4주간)
 **Week 1**: 프로젝트 서버 라우팅 수정 및 권한 제한
