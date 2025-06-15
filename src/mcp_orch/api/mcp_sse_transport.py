@@ -67,16 +67,16 @@ class MCPSSETransport:
             # 상대 경로 사용 시 origin 검증 실패로 transport.start() timeout 발생
             from urllib.parse import urlparse, parse_qs
             
-            # Inspector proxy가 POST 요청을 전달할 절대 URL 생성
-            # Inspector proxy는 /message 엔드포인트로 POST 요청을 받음
-            # sessionId를 쿼리 파라미터로 포함하여 세션 매칭
-            inspector_message_endpoint = f"/message?sessionId={self.session_id}"
+            # Inspector proxy가 mcp-orch로 POST 요청을 보낼 실제 엔드포인트
+            # mcp-orch의 실제 messages 라우트를 사용해야 함
+            parsed = urlparse(self.message_endpoint)
+            actual_message_endpoint = f"{parsed.path}?sessionId={self.session_id}"
             
             # Inspector 표준 형식: event: endpoint\ndata: URL\n\n
-            yield f"event: endpoint\ndata: {inspector_message_endpoint}\n\n"
+            yield f"event: endpoint\ndata: {actual_message_endpoint}\n\n"
             self.is_connected = True
-            logger.info(f"✅ Sent Inspector-compatible endpoint event: {inspector_message_endpoint}")
-            logger.info(f"🎯 Inspector proxy will route POST requests with sessionId: {self.session_id}")
+            logger.info(f"✅ Sent Inspector-compatible endpoint event: {actual_message_endpoint}")
+            logger.info(f"🎯 Inspector proxy will send POST to: {actual_message_endpoint}")
             
             # 2. 연결 안정화 대기
             await asyncio.sleep(0.1)
