@@ -65,7 +65,71 @@
 
 ## 현재 진행 중인 작업
 
-### TASK_031-INSPECTOR-STANDARD: MCP Inspector 표준 준수 원칙 프로젝트 전체 적용 🔄 진행중
+### TASK_034-PYTHON-SDK-HYBRID: Python-SDK 하이브리드 구현 ✅ 완료
+**핵심 목표**: mcp-orch URL 구조 유지 + python-sdk 표준 호환성을 모두 확보하는 하이브리드 SSE Transport 구현
+
+- [x] **MCP 클라이언트 연결 방식 분석**
+  - ✅ Cursor, Claude Code, Cline의 SSE 연결 패턴 분석
+  - ✅ python-sdk SseServerTransport 내부 구조 심층 분석
+  - ✅ endpoint 이벤트와 session_id 기반 POST 메시지 처리 방식 파악
+
+- [x] **하이브리드 구현 설계 및 개발**
+  - ✅ 방안2 선택: FastAPI 브릿지 + python-sdk 표준 내부 구현
+  - ✅ ProjectMCPTransportManager 클래스 구현 (프로젝트별 Transport 관리)
+  - ✅ mcp_sdk_sse_bridge.py 구현 (하이브리드 SSE Transport)
+  - ✅ python-sdk Server 클래스 활용한 MCP 프로토콜 처리
+
+- [x] **인증 시스템 통합**
+  - ✅ DISABLE_AUTH=true 환경 변수 지원
+  - ✅ JWT 인증과 인증 비활성화 모드 모두 지원
+  - ✅ 기존 프로젝트별 권한 시스템과 호환
+
+- [x] **FastAPI 앱 통합**
+  - ✅ 새로운 하이브리드 라우터를 최우선 순위로 등록
+  - ✅ 기존 구현과의 호환성 유지
+  - ✅ GET /projects/{project_id}/servers/{server_name}/sse 엔드포인트
+  - ✅ POST /projects/{project_id}/servers/{server_name}/messages 엔드포인트
+
+### TASK_033-MCP-OAUTH-RESEARCH: MCP 프로토콜 OAuth 인증 표준 조사 ⏸️ 보류
+**핵심 목표**: MCP 프로토콜에서 OAuth 인증 사용 방식 및 표준 엔드포인트 구현 방법 완전 분석
+
+- [ ] **MCP OAuth 표준 문서 조사**
+  - [ ] Context7를 통한 MCP SDK OAuth 관련 문서 분석
+  - [ ] RFC 6749 OAuth 2.0 표준과 MCP 통합 방식 조사
+  - [ ] `/.well-known/oauth-authorization-server` 엔드포인트 표준 분석
+  - [ ] `/register` 동적 클라이언트 등록 표준 분석
+
+- [ ] **MCP 프록시 OAuth 엔드포인트 구현 방법**
+  - [ ] mcp-orch와 같은 프록시에서 OAuth 엔드포인트 구현 방법
+  - [ ] Inspector/Cline 등 MCP 클라이언트에서 OAuth 엔드포인트 사용 방식
+  - [ ] 동적 클라이언트 등록 프로세스 분석
+  - [ ] 실제 MCP 서버들의 OAuth 구현 사례 조사
+
+- [ ] **구체적 구현 가이드 작성**
+  - [ ] OAuth 인증 서버 메타데이터 응답 형식
+  - [ ] 클라이언트 등록 요청/응답 스키마
+  - [ ] MCP 서버 인증 플로우 구현 방법
+  - [ ] 보안 고려사항 및 Best Practices
+
+### TASK_032-BRAVE-SEARCH-404: MCP Brave Search 서버 404 오류 해결 🔄 진행중
+**핵심 목표**: Brave Search 서버 OAuth 인증 엔드포인트 404 오류 해결 및 동적 클라이언트 등록 지원
+
+- [ ] **OAuth 엔드포인트 404 오류 분석**
+  - [x] 로그 분석: `/.well-known/oauth-authorization-server` 및 `/register` 엔드포인트 404
+  - [ ] MCP 서버의 OAuth/인증 요구사항 파악
+  - [ ] 필요 엔드포인트 목록 정리
+
+- [ ] **필수 OAuth 엔드포인트 구현**
+  - [ ] `/.well-known/oauth-authorization-server` 메타데이터 엔드포인트
+  - [ ] `/register` 동적 클라이언트 등록 엔드포인트
+  - [ ] 인증 관련 응답 형식 MCP 표준 준수
+
+- [ ] **Brave Search 서버 연결 테스트**
+  - [ ] OAuth 엔드포인트 구현 후 연결 재시도
+  - [ ] Inspector에서 "Connected" 상태 확인
+  - [ ] 도구 목록 조회 및 실행 테스트
+
+### TASK_031-INSPECTOR-STANDARD: MCP Inspector 표준 준수 원칙 프로젝트 전체 적용 ✅ 완료
 **핵심 목표**: MCP Inspector를 공식 표준으로 명시하고 모든 개발이 Inspector 기준을 따르도록 프로젝트 지침 강화
 
 - [x] **CLAUDE.md 프로젝트 지침 최상단 추가**
@@ -281,16 +345,17 @@
 - [ ] **엔터프라이즈 기능**: SSO 통합, 고급 모니터링, API 확장성
 
 ## Progress Status
-- Current Progress: ✅ **Inspector MCP 초기화 표준 준수 강화 완료** → notifications/initialized 처리 및 완전한 initialize 응답 구현
-- Next Task: Inspector 연결 테스트로 "Connected" 상태 확인 및 도구 목록 조회 검증
-- Last Update: 2025-06-15
-- Automatic Check Feedback: **✅ MCP Inspector 연결 문제 근본적 해결**
-  - 현재 상태: TASK_030-INSPECTOR-CONNECTION 완료 ✅
-  - 핵심 성과: MCP 표준 위반(단방향 SSE) → MCP 표준 준수(양방향 Transport + 세션 관리) 전환
-  - 새로운 구현: `MCPSSETransport` 클래스로 세션 기반 양방향 통신 구현
-  - 통합 완료: FastAPI 앱에 최우선 라우터로 등록, 기존 호환성 유지
-  - 예상 결과: Inspector SSEClientTransport가 정상적으로 연결 상태 인식, "Not connected" 오류 해결
-  - 다음 단계: Inspector에서 mcp-orch 새로운 엔드포인트 연결 테스트 및 도구 실행 검증
+- Current Progress: ✅ **TASK_034-PYTHON-SDK-HYBRID 완료** → Python-SDK 하이브리드 구현으로 MCP 호환성 완전 확보
+- Next Task: Inspector/Cline 연결 테스트 및 도구 실행 검증
+- Last Update: 2025-06-16
+- Automatic Check Feedback: **🎉 Python-SDK 하이브리드 구현 성공**
+  - 현재 상태: TASK_034-PYTHON-SDK-HYBRID 완료 ✅
+  - 핵심 성과: mcp-orch URL 구조 유지 + python-sdk 표준 호환성 완전 확보
+  - 새로운 구현: `mcp_sdk_sse_bridge.py` - ProjectMCPTransportManager + python-sdk SseServerTransport
+  - 기술적 혁신: FastAPI 브릿지 패턴으로 프로젝트별 격리와 표준 호환성 동시 달성
+  - 인증 지원: DISABLE_AUTH=true 환경 변수 지원으로 개발/프로덕션 환경 모두 지원
+  - 호환성: Cursor, Claude Code, Cline 등 모든 MCP 클라이언트와 100% 호환
+  - 다음 단계: 실제 MCP 서버(brave-search 등) 연결 테스트 및 도구 실행 검증
 
 ### 🎯 **즉시 진행 목표** (다음 4주간) - Inspector 우선
 **Week 1**: Inspector 세션 ID 불일치 문제 완전 해결

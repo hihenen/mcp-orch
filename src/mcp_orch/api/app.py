@@ -22,6 +22,7 @@ from .project_sse import router as project_sse_router
 from .standard_mcp import router as standard_mcp_router
 from .mcp_standard_sse import router as mcp_standard_sse_router
 from .mcp_sse_transport import router as mcp_sse_transport_router
+from .mcp_sdk_sse_bridge import router as mcp_sdk_sse_bridge_router
 from .fastmcp_impl import router as fastmcp_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router
@@ -92,7 +93,8 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(projects_router)
-    app.include_router(mcp_sse_transport_router)  # 🚀 새로운 MCP 표준 준수 SSE Transport (최우선)
+    app.include_router(mcp_sdk_sse_bridge_router)  # 🚀 NEW: python-sdk 표준 + mcp-orch URL 하이브리드 (최우선)
+    app.include_router(mcp_sse_transport_router)  # 새로운 MCP 표준 준수 SSE Transport (호환성)
     app.include_router(mcp_standard_sse_router)  # 기존 표준 MCP SSE 엔드포인트 (호환성)
     app.include_router(standard_mcp_router)  # 기존 SSE 엔드포인트 (호환성)
     app.include_router(project_sse_router)   # 프로젝트 관리 API

@@ -235,6 +235,15 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         # 디버깅을 위한 로그 추가
         print(f"\n🔍 JWT Middleware - Processing request: {request.method} {request.url}")
         
+        # 인증 비활성화 옵션 확인
+        disable_auth = os.getenv("DISABLE_AUTH", "false").lower() == "true"
+        if disable_auth:
+            print("⚠️  WARNING: Authentication is DISABLED (DISABLE_AUTH=true)")
+            # 인증 없이 요청 통과
+            request.state.user = None
+            response = await call_next(request)
+            return response
+        
         # 모든 헤더 출력
         print(f"🔍 All request headers:")
         for key, value in request.headers.items():
