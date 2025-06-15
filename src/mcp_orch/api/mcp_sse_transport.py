@@ -54,24 +54,28 @@ class MCPSSETransport:
         
     async def start_sse_stream(self) -> AsyncGenerator[str, None]:
         """
-        SSE 스트림 시작 및 MCP 초기화 이벤트 전송
+        SSE 스트림 시작 및 Inspector 표준 호환 endpoint 이벤트 전송
         
-        MCP 표준 시퀀스:
-        1. endpoint 이벤트 전송 (절대 URI)
+        Inspector 표준 시퀀스 (MCP SDK 준수):
+        1. endpoint 이벤트 전송 (Inspector 형식: 단순 URL + sessionId)
         2. 메시지 큐 처리 루프 시작
         3. Keep-alive 관리
         """
         try:
-            # 1. endpoint 이벤트 전송 (MCP 표준 필수)
-            endpoint_event = {
-                "jsonrpc": "2.0",
-                "method": "endpoint",
-                "params": {"uri": self.message_endpoint}
-            }
+            # 1. Inspector 표준 endpoint 이벤트 전송
+            # Inspector는 JSON이 아닌 단순 URL 문자열을 기대함
+            # 형식: /projects/.../messages?sessionId=xxx
+            from urllib.parse import urlparse, parse_qs
             
-            yield f"data: {json.dumps(endpoint_event)}\n\n"
+            # 기존 message_endpoint에서 경로 추출
+            parsed = urlparse(self.message_endpoint)
+            endpoint_path_with_session = f"{parsed.path}?sessionId={self.session_id}"
+            
+            # Inspector 표준 형식: event: endpoint\ndata: URL\n\n
+            yield f"event: endpoint\ndata: {endpoint_path_with_session}\n\n"
             self.is_connected = True
-            logger.info(f"✅ Sent endpoint event: {self.message_endpoint}")
+            logger.info(f"✅ Sent Inspector-compatible endpoint event: {endpoint_path_with_session}")
+            logger.info(f"🎯 Inspector will use sessionId: {self.session_id} for POST requests")
             
             # 2. 연결 안정화 대기
             await asyncio.sleep(0.1)
