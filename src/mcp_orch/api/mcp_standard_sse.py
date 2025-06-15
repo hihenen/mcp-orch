@@ -112,12 +112,19 @@ async def mcp_standard_sse_endpoint(
             generate_mcp_sse_stream(connection_id, project_id, server_name, server, request),
             media_type="text/event-stream",
             headers={
+                # 표준 SSE 헤더 (Inspector 요구사항)
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Connection": "keep-alive",
+                "Content-Type": "text/event-stream; charset=utf-8",
+                
+                # CORS 헤더 강화 (Inspector proxy 호환)
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
                 "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                "X-Accel-Buffering": "no",
+                "Access-Control-Expose-Headers": "Content-Type",
+                
+                # SSE 최적화 헤더
+                "X-Accel-Buffering": "no",  # Nginx buffering 비활성화
                 "Pragma": "no-cache",
                 "Expires": "0",
                 "Transfer-Encoding": "chunked"
@@ -155,7 +162,10 @@ async def generate_mcp_sse_stream(
         
         logger.info(f"MCP SSE connection {connection_id} established")
         
-        # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜)
+        # 1. 연결 설정 완료 대기 (Inspector Transport 초기화 대기)
+        await asyncio.sleep(0.1)
+        
+        # 2. endpoint 이벤트 전송 (표준 MCP 프로토콜)
         # Inspector 호환성을 위해 절대 URI 필요 (Inspector Transport 타임아웃 방지)
         endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
         endpoint_event = {
@@ -165,10 +175,19 @@ async def generate_mcp_sse_stream(
                 "uri": endpoint_uri
             }
         }
-        yield f"data: {json.dumps(endpoint_event)}\n\n"
-        logger.info(f"Sent endpoint event with URI: {endpoint_uri}")
         
-        # 2. Inspector 호환성 모드: initialized 이벤트 자동 전송
+        # 3. SSE 형식으로 전송 (개행 중요!)
+        yield f"data: {json.dumps(endpoint_event)}\n\n"
+        logger.info(f"✅ Sent endpoint event: {endpoint_uri}")
+        
+        # 4. Transport 안정화 대기
+        await asyncio.sleep(0.2)
+        
+        # 5. 추가 이벤트 전송 전 연결 확인
+        yield f": connection-established\n\n"  # SSE 주석 이벤트
+        logger.info(f"✅ Connection established signal sent for {connection_id}")
+        
+        # 6. Inspector 호환성 모드: initialized 이벤트 자동 전송
         # MCP 표준과 다르지만 Inspector가 initialize 요청을 보내지 않으므로 필요
         # Inspector는 endpoint 이벤트 후 서버 정보를 즉시 기대함
         logger.info(f"🔧 [INSPECTOR MODE] Sending automatic initialized event for server {server_name}")
@@ -191,9 +210,9 @@ async def generate_mcp_sse_stream(
             }
         }
         yield f"data: {json.dumps(initialized_event)}\n\n"
-        logger.info(f"Sent initialized event for server {server_name}")
+        logger.info(f"✅ Sent initialized event for server {server_name}")
         
-        # 3. 도구 목록도 즉시 전송 (Inspector 호환성)
+        # 7. 도구 목록도 즉시 전송 (Inspector 호환성)
         try:
             server_config = _build_server_config_from_db(server)
             if server_config:
@@ -218,11 +237,11 @@ async def generate_mcp_sse_stream(
                         }
                     }
                     yield f"data: {json.dumps(tools_event)}\n\n"
-                    logger.info(f"Sent {len(tools)} tools for server {server_name}")
+                    logger.info(f"✅ Sent {len(tools)} tools for server {server_name}")
         except Exception as e:
             logger.error(f"Failed to send tools list: {e}")
         
-        # 4. 메시지 큐 처리 루프
+        # 8. 메시지 큐 처리 루프
         logger.info(f"Starting message queue loop for connection {connection_id}")
         connection_info = active_sse_connections[connection_id]
         message_queue = connection_info["message_queue"]
@@ -279,14 +298,15 @@ async def mcp_messages_endpoint(
 ):
     """표준 MCP 메시지 엔드포인트 - 도구 호출 처리"""
     
-    # 진단용 로그 - 모든 POST 요청 기록
+    # 진단용 로그 - Inspector "Not connected" 오류 추적
     logger.info(f"🚀 POST /messages received: project={project_id}, server={server_name}")
     logger.info(f"🚀 Request headers: {dict(request.headers)}")
     
     try:
-        # 요청 본문 미리 확인
+        # 요청 본문 미리 확인 (Inspector initialize 요청 추적)
         body = await request.body()
         logger.info(f"🚀 Request body (raw): {body.decode()}")
+        logger.info(f"✅ POST request successfully received by mcp-orch!")
     except Exception as e:
         logger.error(f"🚀 Failed to read request body: {e}")
         # body를 다시 읽기 위해 새 Request 객체 필요하므로 계속 진행
@@ -329,10 +349,11 @@ async def mcp_messages_endpoint(
                 detail=f"Server '{server_name}' not found or disabled"
             )
         
-        # 메서드별 처리 - initialize 최우선 처리 (Inspector 타임아웃 방지)
+        # 메서드별 처리 - initialize 최우선 처리 (Inspector "Not connected" 오류 방지)
         if method == "initialize":
             # 초기화는 즉시 응답 (Inspector Transport.start() 완료의 핵심)
             logger.info(f"🎯 Handling initialize request for server {server_name}, id={message.get('id')}")
+            logger.info(f"✅ Initialize request received - Inspector Transport will connect!")
             return await handle_initialize(message)
         elif method == "tools/list":
             # 도구 목록도 즉시 응답
@@ -474,7 +495,7 @@ async def handle_tools_list(server: McpServer):
 
 
 async def handle_initialize(message: Dict[str, Any]):
-    """초기화 요청 즉시 응답 처리 - Inspector Transport 타임아웃 방지"""
+    """초기화 요청 즉시 응답 처리 - Inspector Transport "Not connected" 오류 방지"""
     
     request_id = message.get("id")
     logger.info(f"🚀 Processing initialize request with id: {request_id}")
@@ -482,7 +503,7 @@ async def handle_initialize(message: Dict[str, Any]):
     # MCP 표준 초기화 응답 - 모든 capabilities 포함
     response = {
         "jsonrpc": "2.0",
-        "id": request_id,  # 요청 ID 필수 포함
+        "id": request_id,  # 요청 ID 필수 매칭
         "result": {
             "protocolVersion": "2024-11-05",
             "capabilities": {
@@ -498,7 +519,8 @@ async def handle_initialize(message: Dict[str, Any]):
         }
     }
     
-    logger.info(f"✅ Sending initialize response for id: {request_id} (Inspector Transport.start() completion)")
+    logger.info(f"✅ Sending initialize response for id: {request_id}")
+    logger.info(f"✅ Inspector Transport connection should complete now!")
     return JSONResponse(content=response)
 
 
@@ -546,7 +568,7 @@ async def mcp_messages_endpoint_compat(
 ):
     """호환성 메시지 엔드포인트 - 상대 경로 지원"""
     
-    # 진단용 로그 - 호환성 엔드포인트 호출 기록
+    # 진단용 로그 - 호환성 엔드포인트 호출 기록 (Inspector 상대 경로 지원)
     logger.info(f"🚀 COMPAT POST /messages received")
     logger.info(f"🚀 Request headers: {dict(request.headers)}")
     
@@ -554,6 +576,7 @@ async def mcp_messages_endpoint_compat(
         # 요청 본문 미리 확인
         body = await request.body()
         logger.info(f"🚀 Request body (raw): {body.decode()}")
+        logger.info(f"✅ Compatibility POST request successfully received!")
     except Exception as e:
         logger.error(f"🚀 Failed to read request body: {e}")
     
