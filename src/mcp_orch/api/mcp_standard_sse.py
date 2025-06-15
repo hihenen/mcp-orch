@@ -109,7 +109,7 @@ async def mcp_standard_sse_endpoint(
         logger.info(f"Starting MCP SSE stream for server {server_name}, connection {connection_id}")
         
         return StreamingResponse(
-            generate_mcp_sse_stream(connection_id, project_id, server_name, server),
+            generate_mcp_sse_stream(connection_id, project_id, server_name, server, request),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -138,7 +138,8 @@ async def generate_mcp_sse_stream(
     connection_id: str, 
     project_id: UUID, 
     server_name: str, 
-    server: McpServer
+    server: McpServer,
+    request: Request = None
 ) -> AsyncGenerator[str, None]:
     """표준 MCP SSE 스트림 생성"""
     
@@ -154,9 +155,10 @@ async def generate_mcp_sse_stream(
         
         logger.info(f"MCP SSE connection {connection_id} established")
         
-        # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜 - 절대 URI 필수)
-        # mcp-inspector 호환성을 위해 절대 URI 사용
-        endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
+        # 1. endpoint 이벤트 전송 (표준 MCP 프로토콜)
+        # mcp-inspector 프록시 호환성을 위해 상대 경로 사용
+        # 프록시가 올바른 경로로 라우팅할 수 있도록 함
+        endpoint_uri = f"/projects/{project_id}/servers/{server_name}/messages"
         endpoint_event = {
             "jsonrpc": "2.0",
             "method": "endpoint",
@@ -165,7 +167,7 @@ async def generate_mcp_sse_stream(
             }
         }
         yield f"data: {json.dumps(endpoint_event)}\n\n"
-        logger.info(f"Sent endpoint event with absolute URI: {endpoint_uri}")
+        logger.info(f"Sent endpoint event with relative URI for proxy compatibility: {endpoint_uri}")
         
         # 2. initialized 알림 전송
         initialized_event = {
@@ -276,6 +278,18 @@ async def mcp_messages_endpoint(
     db: Session = Depends(get_db)
 ):
     """표준 MCP 메시지 엔드포인트 - 도구 호출 처리"""
+    
+    # 진단용 로그 - 모든 POST 요청 기록
+    logger.info(f"🚀 POST /messages received: project={project_id}, server={server_name}")
+    logger.info(f"🚀 Request headers: {dict(request.headers)}")
+    
+    try:
+        # 요청 본문 미리 확인
+        body = await request.body()
+        logger.info(f"🚀 Request body (raw): {body.decode()}")
+    except Exception as e:
+        logger.error(f"🚀 Failed to read request body: {e}")
+        # body를 다시 읽기 위해 새 Request 객체 필요하므로 계속 진행
     
     try:
         # 사용자 인증
