@@ -25,47 +25,57 @@ INFO: Sent 2 tools for server brave-search
 INFO: Starting message queue loop for connection 2421e83f-4ae3-4d40-9c5d-7ad4aea0cc40
 ```
 
-### 🚨 Inspector Transport 시작 타임아웃 문제 (CRITICAL - Context7 분석으로 해결됨)
+### 🚨 Inspector Transport 시작 타임아웃 문제 (CRITICAL - 최신 분석 결과)
 
-#### 문제 현상
-**mcp-inspector Proxy 로그에서 발견되는 타임아웃**:
+#### 최신 문제 현상 (2025-06-15)
+**Inspector Proxy 로그에서 발견되는 "Not connected" 오류**:
 ```
-🔧 [PROXY DEBUG] SSE message received: {
-  jsonrpc: '2.0',
-  method: 'endpoint',
-  params: { uri: '/projects/.../messages' }
+🔧 [PROXY DEBUG] Client → Server message: {
+  "jsonrpc": "2.0",
+  "id": "unique-request-id",
+  "method": "initialize",
+  "params": {...}
 }
-🔧 [PROXY DEBUG] Endpoint event received - transport is ready!
-🔧 [PROXY DEBUG] SSE transport start timeout - forcing completion
-🔧 [PROXY DEBUG] Transport start timed out, but continuing anyway...
-```
-
-#### 핵심 원인 (Context7 분석 결과)
-- **Inspector 코드 분석**: `SSEClientTransport.start()` 메서드가 **5초 내에 완료되지 않으면 타임아웃**
-- **문제 지점**: `endpoint` 이벤트는 수신하지만 **MCP 초기화 핸드셰이크가 완료되지 않음**
-- **Inspector 기대**: `transport.start()` Promise가 resolve되어야 연결 완료로 인식
-- **MCP SDK 요구사항**: 단순히 endpoint 이벤트 수신만으로는 transport start 완료 불가
-- **실제 문제**: mcp-orch가 initialize 요청에 즉시 응답하지 않아 타임아웃 발생
-
-#### Inspector 코드 증거
-```typescript
-// /inspector/server/src/index.ts:248-267
-const startPromise = transport.start();
-const timeoutPromise = new Promise((_, reject) => {
-  setTimeout(() => {
-    console.log("🔧 [PROXY DEBUG] SSE transport start timeout - forcing completion");
-    reject(new Error("Transport start timeout"));
-  }, 5000); // 5초 timeout
-});
-
-try {
-  await Promise.race([startPromise, timeoutPromise]);
-} catch (error) {
-  if (error.message === "Transport start timeout") {
-    console.log("🔧 [PROXY DEBUG] Transport start timed out, but continuing anyway...");
-    // timeout이어도 계속 진행 - endpoint 이벤트는 이미 받았음
+🔧 [PROXY DEBUG] Error sending message to server: Error: Not connected
+🔧 [PROXY DEBUG] Sending error response to client: {
+  "jsonrpc": "2.0",
+  "id": "unique-request-id", 
+  "error": {
+    "code": -32001,
+    "message": "Error: Not connected"
   }
 }
+```
+
+#### 핵심 원인 (최신 Inspector 코드 분석)
+- **Inspector SSE Transport 연결 시퀀스 문제**: 
+  - SSE 연결은 성공하고 `endpoint` 이벤트도 수신
+  - 하지만 Transport가 실제로 "연결됨" 상태가 되지 않음
+  - `transportToServer.send(message)` 호출 시 "Not connected" 오류 발생
+
+- **타이밍 문제**: 
+  - `SSEClientTransport.start()` 5초 타임아웃은 우회됨
+  - 하지만 Transport 내부 상태가 연결 완료로 설정되지 않음
+  - POST 메시지 전송 시점에 연결 상태 불일치 발생
+
+#### Inspector Transport 연결 상태 흐름
+```typescript
+// Inspector의 기대 흐름
+1. SSEClientTransport 생성
+2. transport.start() 호출
+3. endpoint 이벤트 수신 → endpointReceived = true
+4. initialize 요청 자동 전송 → 이 단계에서 "Not connected" 발생!
+5. initialize 응답 수신 → transport 연결 완료
+6. transport.start() Promise resolve
+```
+
+#### 실제 발생하는 문제
+```
+✅ SSE 연결 성공
+✅ endpoint 이벤트 수신  
+❌ initialize 요청 전송 실패 ("Not connected")
+❌ transport.start() 타임아웃 또는 실패
+❌ Inspector "disconnected" 상태 유지
 ```
 
 ---
@@ -115,7 +125,7 @@ Authorization: Bearer {token}
 }
 ```
 
-#### 3. 클라이언트 → 서버: initialize 요청 (자동 실행)
+#### 3. 클라이언트 → 서버: initialize 요청 (자동 실행) - ⚠️ 현재 실패 지점
 
 **endpoint 이벤트 수신 후**, Inspector SDK는 **자동으로** 다음 요청을 전송:
 
@@ -141,6 +151,8 @@ Authorization: Bearer {token}
   }
 }
 ```
+
+**⚠️ 현재 문제**: 이 요청이 **"Not connected" 오류**로 전송되지 않음!
 
 #### 4. 서버 → 클라이언트: initialize 응답 (핵심!)
 
@@ -198,29 +210,35 @@ POST /projects/{project_id}/servers/{server_name}/messages
 
 ## ❌ 현재 mcp-orch 구현의 문제점
 
-### 1. **🚨 핵심 문제: MCP 초기화 핸드셰이크 누락**
+### 1. **🚨 핵심 문제: Inspector Transport "Not connected" 오류**
 
-**현재 상황**:
+**현재 상황 (2025-06-15 최신)**:
+- ✅ SSE 연결 성공
 - ✅ `endpoint` 이벤트 전송됨
-- ❌ `initialize` 요청에 대한 즉시 응답 없음
-- ❌ `transport.start()` 5초 타임아웃 발생
+- ❌ **`initialize` POST 요청 자체가 전송되지 않음** ("Not connected" 오류)
+- ❌ Inspector Transport 내부 상태 불일치
 
 **원인 분석**:
-```python
-# mcp_standard_sse.py의 현재 구현
-async def handle_initialize(message: Dict[str, Any]):
-    # 현재: 응답을 즉시 보내지만 클라이언트가 받지 못함
-    response = {...}
-    return JSONResponse(content=response)  # ❌ 지연 또는 실패
+```javascript
+// Inspector Transport 상태 흐름 문제
+1. SSEClientTransport 생성 ✅
+2. endpoint 이벤트 수신 ✅  
+3. endpointReceived = true ✅
+4. transportToServer.send(initialize) → "Error: Not connected" ❌
 ```
+
+**실제 문제 지점**:
+- mcp-orch는 `endpoint` 이벤트를 보내지만 Transport가 연결 상태로 인식하지 않음
+- Inspector SDK의 `SSEClientTransport`가 메시지 전송 가능 상태가 되지 않음
+- 따라서 `initialize` 요청 자체가 mcp-orch로 도달하지 않음
 
 **Inspector 기대 vs 현실**:
 ```
 Inspector 기대:
-endpoint 이벤트 → initialize 요청 → 즉시 응답 → transport.start() 완료
+endpoint 이벤트 → Transport 연결 완료 → initialize 요청 → 응답 → 성공
 
-현재 mcp-orch:
-endpoint 이벤트 → initialize 요청 → [응답 지연/실패] → 5초 타임아웃
+현재 실제:
+endpoint 이벤트 → Transport 상태 불일치 → initialize 요청 실패 ("Not connected")
 ```
 
 ### 2. **endpoint 이벤트 URI 형식 오류**
@@ -266,20 +284,86 @@ endpoint 이벤트 → initialize 요청 → [응답 지연/실패] → 5초 타
 
 ## 🔧 해결 방안
 
-### 🎯 우선순위 1: Inspector Transport 타임아웃 해결
+### 🎯 우선순위 1: Inspector Transport "Not connected" 오류 해결
 
-#### A. initialize 핸들러 즉시 응답 보장
+#### A. SSE 헤더 및 CORS 정책 강화
+
+**문제**: Inspector Transport가 연결 상태로 인식하지 않음
+**해결**: SSE 표준 헤더 강화 및 CORS 설정 개선
+
+```python
+# mcp_standard_sse.py - SSE 엔드포인트 헤더 개선
+@router.get("/projects/{project_id}/servers/{server_name}/sse")
+async def mcp_standard_sse_endpoint(...):
+    return StreamingResponse(
+        generate_mcp_sse_stream(...),
+        media_type="text/event-stream",
+        headers={
+            # 표준 SSE 헤더 (Inspector 요구사항)
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "Content-Type": "text/event-stream; charset=utf-8",
+            
+            # CORS 헤더 강화 (Inspector proxy 호환)
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Expose-Headers": "Content-Type",
+            
+            # SSE 최적화 헤더
+            "X-Accel-Buffering": "no",  # Nginx buffering 비활성화
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Transfer-Encoding": "chunked"
+        }
+    )
+```
+
+#### B. endpoint 이벤트 형식 개선
+
+**문제**: Inspector Transport가 endpoint 이벤트를 올바르게 처리하지 못함
+**해결**: MCP 표준에 맞는 정확한 endpoint 이벤트 형식
+
+```python
+# generate_mcp_sse_stream 함수 개선
+async def generate_mcp_sse_stream(...):
+    # 1. 연결 설정 완료 대기 (중요!)
+    await asyncio.sleep(0.1)  # Transport 초기화 대기
+    
+    # 2. 표준 MCP endpoint 이벤트 (절대 URI 필수)
+    endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
+    endpoint_event = {
+        "jsonrpc": "2.0",
+        "method": "endpoint",
+        "params": {
+            "uri": endpoint_uri
+        }
+    }
+    
+    # 3. SSE 형식으로 전송 (개행 중요!)
+    yield f"data: {json.dumps(endpoint_event)}\n\n"
+    logger.info(f"✅ Sent endpoint event: {endpoint_uri}")
+    
+    # 4. Transport 안정화 대기
+    await asyncio.sleep(0.2)
+    
+    # 5. 추가 이벤트 전송 전 연결 확인
+    yield f": connection-established\n\n"  # SSE 주석 이벤트
+```
+
+#### C. initialize 핸들러 즉시 응답 보장 (여전히 중요)
 
 ```python
 async def handle_initialize(message: Dict[str, Any]):
-    """초기화 요청 즉시 응답 - Inspector 타임아웃 방지"""
+    """초기화 요청 즉시 응답 - Inspector Transport 연결 완료"""
     
-    logger.info(f"Processing initialize request with id: {message.get('id')}")
+    request_id = message.get("id")
+    logger.info(f"🚀 Processing initialize request with id: {request_id}")
     
-    # MCP 표준 초기화 응답 - 모든 capabilities 포함
+    # MCP 표준 초기화 응답
     response = {
         "jsonrpc": "2.0",
-        "id": message.get("id"),  # 요청 ID 필수 포함
+        "id": request_id,  # 요청 ID 필수 매칭
         "result": {
             "protocolVersion": "2024-11-05",
             "capabilities": {
@@ -295,7 +379,7 @@ async def handle_initialize(message: Dict[str, Any]):
         }
     }
     
-    logger.info(f"Sending initialize response for id: {message.get('id')}")
+    logger.info(f"✅ Sending initialize response for id: {request_id}")
     return JSONResponse(content=response)
 ```
 
@@ -435,36 +519,53 @@ connectionStatus: → "connected"
 
 ---
 
-## 📋 구현 체크리스트
+## 📋 구현 체크리스트 (2025-06-15 업데이트)
 
-### 🚨 Critical Priority (Inspector 타임아웃 해결)
-- [ ] **`handle_initialize` 즉시 응답 보장** (최우선)
+### 🚨 Critical Priority (Inspector "Not connected" 오류 해결)
+- [ ] **SSE 헤더 강화** (최우선)
+  - [ ] Content-Type: "text/event-stream; charset=utf-8" 정확한 형식
+  - [ ] CORS 헤더 완전 설정 (Access-Control-*)
+  - [ ] X-Accel-Buffering: no (버퍼링 비활성화)
+  - [ ] Transfer-Encoding: chunked 명시
+- [ ] **endpoint 이벤트 개선**
+  - [ ] 절대 URI 사용 (http://localhost:8000/...)
+  - [ ] 연결 초기화 대기 시간 추가 (0.1초)
+  - [ ] 정확한 SSE 형식 (data: {...}\n\n)
+  - [ ] connection-established 주석 이벤트 추가
+- [ ] **Transport 연결 상태 확인**
+  - [ ] Inspector proxy 로그에서 "Not connected" 오류 제거 확인
+  - [ ] initialize 요청이 실제 mcp-orch에 도달하는지 검증
+  - [ ] "connected" 상태 변경 확인
+
+### High Priority (즉시 구현)
+- [ ] **`handle_initialize` 즉시 응답 보장**
   - [ ] 요청 ID 정확히 반환
   - [ ] MCP 표준 capabilities 포함
   - [ ] 응답 지연 없이 즉시 JSONResponse 반환
 - [ ] **`/messages` 엔드포인트 initialize 우선 처리**
   - [ ] `method == "initialize"` 최우선 분기
   - [ ] 다른 메서드보다 먼저 처리
-- [ ] **Inspector 타임아웃 검증**
-  - [ ] `transport.start()` 5초 내 완료 확인
-  - [ ] "connected" 상태 변경 확인
-
-### High Priority (즉시 구현)
-- [ ] `endpoint` 이벤트 절대 URI 수정
-- [ ] `/messages` 엔드포인트 오류 처리 개선
-- [ ] 브라우저에서 연결 테스트
-- [ ] Inspector 로그에서 타임아웃 없음 확인
+- [ ] **POST 요청 수신 검증**
+  - [ ] mcp-orch 로그에서 POST 요청 확인
+  - [ ] Inspector proxy → mcp-orch 통신 성공 확인
 
 ### Medium Priority (추가 개선)
-- [ ] Keep-alive 메커니즘 개선
-- [ ] 연결 복구 로직 강화
-- [ ] 상세 디버깅 로그 추가
-- [ ] MCP 프로토콜 호환성 테스트
+- [ ] **연결 안정성 개선**
+  - [ ] Keep-alive 메커니즘 강화
+  - [ ] 연결 복구 로직 구현
+  - [ ] Transport 타임아웃 처리 개선
+- [ ] **디버깅 로그 강화**
+  - [ ] Inspector Transport 상태 추적
+  - [ ] SSE 이벤트 전송 로그 상세화
+  - [ ] POST 요청 처리 과정 로깅
 
 ### Low Priority (장기 개선)
-- [ ] 성능 최적화
-- [ ] 다중 클라이언트 연결 지원
-- [ ] 고급 MCP 기능 구현
+- [ ] **성능 최적화**
+  - [ ] 다중 클라이언트 연결 지원
+  - [ ] 메모리 효율성 개선
+- [ ] **고급 MCP 기능**
+  - [ ] 추가 MCP 프로토콜 구현
+  - [ ] Inspector 고급 기능 지원
 
 ---
 
