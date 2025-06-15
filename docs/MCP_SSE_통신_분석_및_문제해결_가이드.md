@@ -25,7 +25,7 @@ INFO: Sent 2 tools for server brave-search
 INFO: Starting message queue loop for connection 2421e83f-4ae3-4d40-9c5d-7ad4aea0cc40
 ```
 
-### 🚨 Inspector Transport 시작 타임아웃 문제 (새로 발견)
+### 🚨 Inspector Transport 시작 타임아웃 문제 (CRITICAL - Context7 분석으로 해결됨)
 
 #### 문제 현상
 **mcp-inspector Proxy 로그에서 발견되는 타임아웃**:
@@ -40,10 +40,12 @@ INFO: Starting message queue loop for connection 2421e83f-4ae3-4d40-9c5d-7ad4aea
 🔧 [PROXY DEBUG] Transport start timed out, but continuing anyway...
 ```
 
-#### 핵심 원인
+#### 핵심 원인 (Context7 분석 결과)
 - **Inspector 코드 분석**: `SSEClientTransport.start()` 메서드가 **5초 내에 완료되지 않으면 타임아웃**
 - **문제 지점**: `endpoint` 이벤트는 수신하지만 **MCP 초기화 핸드셰이크가 완료되지 않음**
 - **Inspector 기대**: `transport.start()` Promise가 resolve되어야 연결 완료로 인식
+- **MCP SDK 요구사항**: 단순히 endpoint 이벤트 수신만으로는 transport start 완료 불가
+- **실제 문제**: mcp-orch가 initialize 요청에 즉시 응답하지 않아 타임아웃 발생
 
 #### Inspector 코드 증거
 ```typescript
