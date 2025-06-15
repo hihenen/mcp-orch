@@ -168,58 +168,13 @@ async def generate_mcp_sse_stream(
         yield f"data: {json.dumps(endpoint_event)}\n\n"
         logger.info(f"Sent endpoint event with URI: {endpoint_uri}")
         
-        # 2. initialized 알림 전송
-        initialized_event = {
-            "jsonrpc": "2.0",
-            "method": "notifications/initialized",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {"tools": {}},
-                "serverInfo": {
-                    "name": f"mcp-orch-{server_name}",
-                    "version": "1.0.0"
-                }
-            }
-        }
-        yield f"data: {json.dumps(initialized_event)}\n\n"
-        logger.info(f"Sent initialized event for server {server_name}")
+        # 2. MCP 표준: initialized 알림을 보내지 않고 클라이언트가 initialize 요청을 보내기를 기다림
+        # 클라이언트는 endpoint 이벤트를 받은 후 자동으로 initialize 요청을 보내야 함
+        logger.info(f"Waiting for client to send initialize request for server {server_name}")
         
-        # 3. 도구 목록 가져오기 및 전송
-        try:
-            server_config = _build_server_config_from_db(server)
-            if server_config:
-                tools = await mcp_connection_service.get_server_tools(str(server.id), server_config)
-                
-                if tools:
-                    # tools/list_changed 알림 전송 (표준 MCP 프로토콜)
-                    tools_event = {
-                        "jsonrpc": "2.0",
-                        "method": "notifications/tools/list_changed",
-                        "params": {
-                            "tools": [
-                                {
-                                    "name": tool.get("name"),
-                                    "description": tool.get("description", ""),
-                                    "inputSchema": tool.get("inputSchema", {
-                                        "type": "object",
-                                        "properties": {},
-                                        "required": []
-                                    })
-                                }
-                                for tool in tools
-                            ]
-                        }
-                    }
-                    yield f"data: {json.dumps(tools_event)}\n\n"
-                    
-                    logger.info(f"Sent {len(tools)} tools for server {server_name}")
-                else:
-                    logger.warning(f"No tools found for server {server_name}")
-            else:
-                logger.error(f"Failed to build server config for {server_name}")
-                
-        except Exception as e:
-            logger.error(f"Error loading tools for server {server_name}: {e}")
+        # 3. MCP 표준: 도구 목록도 클라이언트가 초기화 후 요청할 때까지 기다림
+        # 너무 이른 tools/list_changed 알림은 클라이언트를 혼란스럽게 할 수 있음
+        logger.info(f"Ready to serve tools for server {server_name} after initialization")
         
         # 4. 메시지 큐 처리 루프
         logger.info(f"Starting message queue loop for connection {connection_id}")
