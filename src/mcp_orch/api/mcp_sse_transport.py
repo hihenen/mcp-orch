@@ -63,19 +63,20 @@ class MCPSSETransport:
         """
         try:
             # 1. Inspector 표준 endpoint 이벤트 전송
-            # Inspector는 JSON이 아닌 단순 URL 문자열을 기대함
-            # 형식: /projects/.../messages?sessionId=xxx
+            # Inspector proxy SSEClientTransport는 절대 URL을 기대함
+            # 상대 경로 사용 시 origin 검증 실패로 transport.start() timeout 발생
             from urllib.parse import urlparse, parse_qs
             
-            # 기존 message_endpoint에서 경로 추출
-            parsed = urlparse(self.message_endpoint)
-            endpoint_path_with_session = f"{parsed.path}?sessionId={self.session_id}"
+            # Inspector proxy가 POST 요청을 전달할 절대 URL 생성
+            # Inspector proxy는 /message 엔드포인트로 POST 요청을 받음
+            # sessionId를 쿼리 파라미터로 포함하여 세션 매칭
+            inspector_message_endpoint = f"/message?sessionId={self.session_id}"
             
             # Inspector 표준 형식: event: endpoint\ndata: URL\n\n
-            yield f"event: endpoint\ndata: {endpoint_path_with_session}\n\n"
+            yield f"event: endpoint\ndata: {inspector_message_endpoint}\n\n"
             self.is_connected = True
-            logger.info(f"✅ Sent Inspector-compatible endpoint event: {endpoint_path_with_session}")
-            logger.info(f"🎯 Inspector will use sessionId: {self.session_id} for POST requests")
+            logger.info(f"✅ Sent Inspector-compatible endpoint event: {inspector_message_endpoint}")
+            logger.info(f"🎯 Inspector proxy will route POST requests with sessionId: {self.session_id}")
             
             # 2. 연결 안정화 대기
             await asyncio.sleep(0.1)
@@ -204,22 +205,30 @@ class MCPSSETransport:
         logger.info(f"🎯 Processing initialize request for session {self.session_id}, id={request_id}")
         logger.info(f"🔍 Initialize params: {json.dumps(params, indent=2)}")
         
-        # MCP 표준 초기화 응답
+        # 실제 서버 기능 확인 - Inspector에서 의미 있는 정보 표시
+        try:
+            server_config = self._build_server_config()
+            has_tools = server_config and not server_config.get('disabled', False)
+        except Exception:
+            has_tools = False
+            
+        # MCP 표준 초기화 응답 (Inspector 완전 호환)
         response = {
             "jsonrpc": "2.0",
             "id": request_id,
             "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {
-                    "tools": {},
+                    "tools": {} if has_tools else None,
                     "logging": {},
-                    "prompts": {},
-                    "resources": {}
+                    "prompts": None,
+                    "resources": None
                 },
                 "serverInfo": {
-                    "name": "mcp-orch",
+                    "name": f"mcp-orch-{self.server.name}",
                     "version": "1.0.0"
-                }
+                },
+                "instructions": f"MCP Orchestrator proxy for '{self.server.name}' in project {self.project_id}. Use tools/list to see available tools."
             }
         }
         

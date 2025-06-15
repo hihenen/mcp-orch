@@ -82,10 +82,17 @@
   - ✅ Inspector 표준 기준 개발 방향성 명시
   - ✅ 향후 모든 MCP 관련 작업이 Inspector 호환성 우선 고려하도록 지침 추가
 
-- [ ] **세션 ID 불일치 문제 해결 계획**
-  - [ ] Inspector 세션 ID 생성 방식 완전 분석
-  - [ ] mcp-orch를 Inspector 세션 관리 방식에 맞춰 수정
-  - [ ] Inspector POST 요청 sessionId와 SSE 연결 정확히 매칭
+- [x] **Inspector MCP 초기화 표준 준수 강화**
+  - [x] `notifications/initialized` 알림 특별 처리 추가
+  - [x] `instructions` 필드 포함한 완전한 initialize 응답
+  - [x] 실제 서버 capabilities 기반 응답 구성
+  - [x] 상세 디버깅 로그로 전체 통신 플로우 추적
+
+- [ ] **Inspector 연결 테스트 및 검증**
+  - [ ] Inspector에서 mcp-orch 연결 재시도
+  - [ ] `notifications/initialized` 수신 확인
+  - [ ] Inspector UI "Connected" 상태 확인
+  - [ ] tools/list 요청 테스트
 
 ## 완료된 작업
 
@@ -274,8 +281,8 @@
 - [ ] **엔터프라이즈 기능**: SSO 통합, 고급 모니터링, API 확장성
 
 ## Progress Status
-- Current Progress: ✅ **MCP 표준 준수 Transport 구현 완료** → Inspector "Not connected" 문제 해결을 위한 양방향 SSE Transport 구현
-- Next Task: Inspector에서 새로운 mcp-orch SSE 엔드포인트 연결 테스트 및 검증
+- Current Progress: ✅ **Inspector MCP 초기화 표준 준수 강화 완료** → notifications/initialized 처리 및 완전한 initialize 응답 구현
+- Next Task: Inspector 연결 테스트로 "Connected" 상태 확인 및 도구 목록 조회 검증
 - Last Update: 2025-06-15
 - Automatic Check Feedback: **✅ MCP Inspector 연결 문제 근본적 해결**
   - 현재 상태: TASK_030-INSPECTOR-CONNECTION 완료 ✅
