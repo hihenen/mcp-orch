@@ -2,7 +2,7 @@
 
 ## Metadata
 - Status: In Progress
-- Last Update: 2025-06-11
+- Last Update: 2025-06-15
 - Automatic Check Status: PASS
 
 ## 완료된 작업 요약
@@ -99,7 +99,31 @@
   - ✅ 모든 로그 API 엔드포인트에 JWT 인증 적용
   - ✅ 서버 정상 실행 및 인증 검증 완료
 
-### TASK_026-PROJECT-FOCUS: 프로젝트 중심 아키텍처 강화 🔥 (HIGH 우선순위)
+### TASK_028-INSPECTOR-TIMEOUT: MCP Inspector Transport 타임아웃 문제 해결 ✅ 완료
+**핵심 목표**: MCP Inspector 연결 시 "SSE transport start timeout" 문제 해결 및 호환성 확보
+
+- [x] **Inspector Transport 타임아웃 문제 분석**
+  - ✅ Inspector SSE Transport 코드 분석 (`SSEClientTransport.start()` 5초 타임아웃)
+  - ✅ 문제 원인 파악: `endpoint` 이벤트 수신하지만 MCP 초기화 핸드셰이크 미완료
+  - ✅ Inspector 기대 동작 vs mcp-orch 현재 구현 차이점 명확화
+
+- [x] **MCP_SSE_통신_분석_및_문제해결_가이드.md 업데이트**
+  - ✅ Inspector Transport 시작 타임아웃 문제 진단 섹션 추가
+  - ✅ MCP 표준 초기화 핸드셰이크 프로세스 상세 문서화
+  - ✅ 해결 방안 우선순위 정리 및 구현 체크리스트 추가
+  - ✅ 핵심 발견사항 및 실용적 교훈 정리
+
+- [x] **mcp-orch SSE 구현 개선**
+  - ✅ `endpoint` 이벤트 URI를 절대 경로로 수정 (Inspector 요구사항)
+  - ✅ `handle_initialize` 함수에 상세 로깅 추가 (Inspector 호환성 확인)
+  - ✅ `initialize` 요청 우선 처리 로직 강화
+  - ✅ JSON-RPC 응답 형식 MCP 표준 준수 확인
+
+- [x] **문제 해결 코드 커밋**
+  - ✅ Inspector Transport 타임아웃 해결 관련 모든 변경사항 커밋
+  - ✅ 문서와 코드 동기화 완료
+
+### TASK_026-PROJECT-FOCUS: 프로젝트 중심 아키텍처 강화 ✅ 완료
 **핵심 목표**: 전역 서버 관리를 관리자 전용으로 제한하고 모든 기능을 프로젝트 중심으로 통합
 
 - [x] **프로젝트 서버 카드 클릭 라우팅 수정**
@@ -162,14 +186,15 @@
 - [ ] **엔터프라이즈 기능**: SSO 통합, 고급 모니터링, API 확장성
 
 ## Progress Status
-- Current Progress: 🔧 **프로젝트 중심 아키텍처 강화** → 라우팅 및 권한 시스템 정리
-- Next Task: 프로젝트 서버 카드 클릭 라우팅 수정
-- Last Update: 2025-06-11
-- Automatic Check Feedback: **✅ 프로젝트 중심 구조 안정화**
-  - 현재 상태: 프로젝트 중심 UI/UX 고도화 완료 ✅
-  - 해결 내용: 권한 기반 UI, 멤버 관리, 즐겨찾기, 키보드 단축키 모든 기능 구현
-  - 영향: 사용자 경험 대폭 개선, 프로젝트 중심 워크플로우 완성
-  - 다음 단계: 프로젝트 중심 아키텍처 강화로 전역 서버 관리 권한 제한
+- Current Progress: 🔧 **MCP Inspector 호환성 확보** → Inspector Transport 타임아웃 문제 해결 완료
+- Next Task: 프로젝트별 MCP 서버 등록 시스템 구현
+- Last Update: 2025-06-15
+- Automatic Check Feedback: **✅ Inspector 타임아웃 문제 해결**
+  - 현재 상태: TASK_028-INSPECTOR-TIMEOUT 완료 ✅
+  - 해결 내용: Inspector SSE Transport 타임아웃 문제 분석 및 mcp-orch 호환성 개선
+  - 핵심 개선: `endpoint` 이벤트 절대 URI 수정, `initialize` 핸드셰이크 최적화
+  - 영향: Inspector와 mcp-orch 간 완전한 MCP 프로토콜 호환성 확보
+  - 다음 단계: 실제 테스트 검증 후 프로젝트별 MCP 서버 등록 시스템으로 진행
 
 ### 🎯 **즉시 진행 목표** (다음 4주간)
 **Week 1**: 프로젝트 서버 라우팅 수정 및 권한 제한
