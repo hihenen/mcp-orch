@@ -210,36 +210,67 @@ POST /projects/{project_id}/servers/{server_name}/messages
 
 ## ❌ 현재 mcp-orch 구현의 문제점
 
-### 1. **🚨 핵심 문제: Inspector Transport "Not connected" 오류**
+### 1. **🚨 핵심 문제: MCP 표준 위반 - 단방향 SSE 구현**
 
-**현재 상황 (2025-06-15 최신)**:
+**MCP SDK 분석을 통한 근본 원인 발견 (2025-06-15)**:
+
+#### **잘못된 현재 구현**:
+```python
+# ❌ mcp-orch 현재 구현 (MCP 표준 위반)
+@router.get("/projects/{project_id}/servers/{server_name}/sse")
+async def mcp_standard_sse_endpoint():
+    # 문제: 단방향 SSE 스트림만 제공
+    return StreamingResponse(generate_mcp_sse_stream(...))
+
+@router.post("/projects/{project_id}/servers/{server_name}/messages") 
+async def mcp_messages_endpoint():
+    # 문제: 별도 독립 처리, 세션 연결 없음
+    message = await request.json()
+    return handle_message(message)  # 세션 정보 없음
+```
+
+#### **MCP 표준 구현 (TypeScript SDK 기준)**:
+```typescript
+// ✅ MCP 표준 구현
+app.get('/sse', async (req, res) => {
+  // 양방향 SSEServerTransport 생성
+  const transport = new SSEServerTransport('/messages', res);
+  transports[transport.sessionId] = transport;  // 세션 저장
+  await server.connect(transport);  // MCP 서버 연결
+});
+
+app.post('/messages', async (req, res) => {
+  // 세션 기반 메시지 처리
+  const sessionId = req.query.sessionId;
+  const transport = transports[sessionId];
+  await transport.handlePostMessage(req, res, req.body);
+});
+```
+
+#### **핵심 차이점**:
+1. **양방향 통신**: mcp-orch는 단방향 SSE만 제공, MCP는 양방향 필요
+2. **세션 관리**: mcp-orch는 세션 없음, MCP는 세션 기반 상태 관리
+3. **Transport 연결**: mcp-orch는 독립 처리, MCP는 Transport 객체 기반
+
+### 2. **Inspector "Not connected" 오류의 진짜 원인**
+
+**현재 상황**:
 - ✅ SSE 연결 성공
-- ✅ `endpoint` 이벤트 전송됨
-- ❌ **`initialize` POST 요청 자체가 전송되지 않음** ("Not connected" 오류)
-- ❌ Inspector Transport 내부 상태 불일치
+- ✅ `endpoint` 이벤트 전송됨  
+- ❌ **SSEClientTransport가 연결 상태로 인식하지 않음**
+- ❌ `initialize` POST 요청 전송 실패 ("Not connected")
 
-**원인 분석**:
-```javascript
-// Inspector Transport 상태 흐름 문제
-1. SSEClientTransport 생성 ✅
-2. endpoint 이벤트 수신 ✅  
-3. endpointReceived = true ✅
-4. transportToServer.send(initialize) → "Error: Not connected" ❌
+**근본 원인**:
+```
+MCP SDK의 SSEClientTransport는 양방향 통신을 기대하지만,
+mcp-orch는 단방향 StreamingResponse만 제공하여 
+Transport 내부 상태가 "연결됨"으로 설정되지 않음
 ```
 
-**실제 문제 지점**:
-- mcp-orch는 `endpoint` 이벤트를 보내지만 Transport가 연결 상태로 인식하지 않음
-- Inspector SDK의 `SSEClientTransport`가 메시지 전송 가능 상태가 되지 않음
-- 따라서 `initialize` 요청 자체가 mcp-orch로 도달하지 않음
-
-**Inspector 기대 vs 현실**:
-```
-Inspector 기대:
-endpoint 이벤트 → Transport 연결 완료 → initialize 요청 → 응답 → 성공
-
-현재 실제:
-endpoint 이벤트 → Transport 상태 불일치 → initialize 요청 실패 ("Not connected")
-```
+#### **경로는 문제 없음**:
+- MCP SDK는 경로를 자유롭게 설정 가능
+- `/projects/.../sse` 경로 사용 가능
+- 문제는 **구현 방식**이지 경로가 아님
 
 ### 2. **endpoint 이벤트 URI 형식 오류**
 
@@ -578,23 +609,207 @@ connectionStatus: → "connected"
 
 ---
 
+---
+
+## 🔧 **최종 해결 방안 (2025-06-15 MCP SDK 분석 기반)**
+
+### 🎯 **근본 해결책: MCP 표준 준수 구현**
+
+**결론**: mcp-orch를 MCP SDK 표준에 맞게 **완전 재구현** 필요
+
+#### **A. 양방향 SSE Transport 구현**
+
+**문제**: 현재 단방향 StreamingResponse 사용
+**해결**: MCP SDK 스타일의 양방향 SSE Transport 구현
+
+```python
+# 새로운 구현 - MCP 표준 준수
+from typing import Dict, Optional
+import uuid
+import asyncio
+from fastapi import Request, Response, Query
+
+# 세션별 Transport 저장소
+sse_transports: Dict[str, 'MCPSSETransport'] = {}
+
+class MCPSSETransport:
+    """MCP 표준 SSE Transport 구현"""
+    
+    def __init__(self, session_id: str, message_endpoint: str, server: McpServer):
+        self.session_id = session_id
+        self.message_endpoint = message_endpoint
+        self.server = server
+        self.is_connected = False
+        self.message_queue = asyncio.Queue()
+        
+    async def start_sse_stream(self):
+        """SSE 스트림 시작 및 endpoint 이벤트 전송"""
+        # 1. endpoint 이벤트 전송 (절대 URI)
+        endpoint_event = {
+            "jsonrpc": "2.0",
+            "method": "endpoint",
+            "params": {"uri": self.message_endpoint}
+        }
+        
+        yield f"data: {json.dumps(endpoint_event)}\n\n"
+        self.is_connected = True
+        logger.info(f"✅ Sent endpoint event: {self.message_endpoint}")
+        
+        # 2. 메시지 큐 처리 루프
+        while self.is_connected:
+            try:
+                message = await asyncio.wait_for(self.message_queue.get(), timeout=30.0)
+                if message is None:  # 종료 신호
+                    break
+                yield f"data: {json.dumps(message)}\n\n"
+            except asyncio.TimeoutError:
+                yield f": keepalive\n\n"  # Keep-alive
+        
+    async def handle_post_message(self, request: Request):
+        """POST 메시지 처리 (세션 기반)"""
+        message = await request.json()
+        logger.info(f"✅ Session {self.session_id} received message: {message.get('method')}")
+        
+        # MCP 메시지 처리
+        if message.get("method") == "initialize":
+            return await self.handle_initialize(message)
+        elif message.get("method") == "tools/list":
+            return await self.handle_tools_list(message)
+        elif message.get("method") == "tools/call":
+            return await self.handle_tool_call(message)
+        # ... 기타 메서드 처리
+        
+    async def handle_initialize(self, message):
+        """초기화 처리"""
+        response = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {"tools": {}, "logging": {}, "prompts": {}, "resources": {}},
+                "serverInfo": {"name": "mcp-orch", "version": "1.0.0"}
+            }
+        }
+        logger.info(f"✅ Initialize complete for session {self.session_id}")
+        return JSONResponse(content=response)
+        
+    async def close(self):
+        """Transport 종료"""
+        self.is_connected = False
+        await self.message_queue.put(None)
+
+@router.get("/projects/{project_id}/servers/{server_name}/sse")
+async def mcp_sse_endpoint(project_id: UUID, server_name: str, request: Request, db: Session = Depends(get_db)):
+    """MCP 표준 SSE 엔드포인트"""
+    
+    # 1. 인증 및 서버 확인
+    current_user = await get_current_user_for_mcp_sse(request, project_id, db)
+    server = db.query(McpServer).filter(...).first()
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    
+    # 2. 세션 ID 생성
+    session_id = str(uuid.uuid4())
+    
+    # 3. 메시지 엔드포인트 경로 생성
+    message_endpoint = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
+    
+    # 4. SSE Transport 생성 및 저장
+    transport = MCPSSETransport(session_id, message_endpoint, server)
+    sse_transports[session_id] = transport
+    
+    # 5. SSE 스트림 시작
+    async def sse_generator():
+        try:
+            async for chunk in transport.start_sse_stream():
+                yield chunk
+        finally:
+            await transport.close()
+            if session_id in sse_transports:
+                del sse_transports[session_id]
+    
+    return StreamingResponse(
+        sse_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Session-ID": session_id  # 세션 ID 전달
+        }
+    )
+
+@router.post("/projects/{project_id}/servers/{server_name}/messages")
+async def mcp_messages_endpoint(
+    project_id: UUID, 
+    server_name: str, 
+    request: Request,
+    sessionId: str = Query(...)  # 세션 ID 필수 (쿼리 파라미터)
+):
+    """MCP 표준 메시지 엔드포인트 (세션 기반)"""
+    
+    logger.info(f"🚀 POST message for session: {sessionId}")
+    
+    # 1. 세션별 Transport 조회
+    transport = sse_transports.get(sessionId)
+    if not transport:
+        logger.error(f"❌ Session {sessionId} not found")
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # 2. Transport를 통한 메시지 처리
+    return await transport.handle_post_message(request)
+```
+
+#### **B. 핵심 구현 포인트**
+
+1. **세션 관리**: SSE 연결과 POST 요청을 세션 ID로 연결
+2. **양방향 통신**: SSE 스트림 + POST 메시지 처리  
+3. **Transport 객체**: 상태 관리 및 메시지 큐
+4. **표준 준수**: MCP SDK와 동일한 패턴
+5. **경로 유지**: 기존 `/projects/.../sse` 경로 그대로 사용
+
+#### **C. 기존 코드 활용**
+
+```python
+# 기존 mcp_connection_service 계속 활용
+async def handle_tools_list(self, message):
+    server_config = _build_server_config_from_db(self.server)
+    tools = await mcp_connection_service.get_server_tools(str(self.server.id), server_config)
+    # ... MCP 응답 형식으로 변환
+
+async def handle_tool_call(self, message):
+    params = message.get("params", {})
+    result = await mcp_connection_service.call_tool(
+        str(self.server.id), server_config, params.get("name"), params.get("arguments", {})
+    )
+    # ... MCP 응답 형식으로 변환
+```
+
+### 📋 **구현 단계**
+
+1. **Phase 1**: MCPSSETransport 클래스 구현
+2. **Phase 2**: 세션 관리 시스템 구현 
+3. **Phase 3**: 기존 서비스 레이어 통합
+4. **Phase 4**: Inspector 테스트 및 검증
+
+---
+
 ## 📝 주요 학습 내용
 
 ### 🎯 핵심 발견사항
-1. **Inspector Transport 타임아웃 원인**: `SSEClientTransport.start()` 메서드가 MCP 초기화 핸드셰이크 완료를 기다림
-2. **5초 제한**: Inspector는 5초 내에 초기화가 완료되지 않으면 강제 타임아웃
-3. **endpoint vs initialize**: `endpoint` 이벤트만으로는 불충분, `initialize` 응답이 핵심
+1. **MCP 표준 위반**: mcp-orch의 단방향 SSE 구현이 근본 원인
+2. **양방향 통신 필수**: SSE + POST를 세션으로 연결해야 함
+3. **경로 자유도**: MCP SDK는 경로를 자유롭게 설정 가능
+4. **Transport 객체**: 상태 관리 및 메시지 처리의 핵심
 
 ### 🏗️ MCP 프로토콜 이해
 1. **MCP는 이중 채널 프로토콜**: SSE + HTTP POST 조합 필수
-2. **초기화 핸드셰이크 중요성**: `transport.start()` 성공의 핵심
-3. **절대 URI 요구사항**: endpoint 이벤트의 필수 조건
-4. **즉시 응답 필요성**: `initialize` 요청은 즉시 응답해야 함
-5. **JSON-RPC 2.0 표준 준수**: id, method, params 정확한 형식
+2. **세션 기반 통신**: 연결과 메시지를 세션 ID로 연결
+3. **Transport 추상화**: 연결 상태 및 메시지 큐 관리
+4. **표준 준수 중요성**: SDK 호환성을 위한 필수 조건
 
 ### 🔧 실용적 교훈
-1. **Inspector 호환성**: MCP 표준을 완전히 구현해야 Inspector와 호환
-2. **타임아웃 방지**: 초기화 단계에서 지연 없는 응답이 필수
-3. **디버깅 방법**: Inspector 로그와 mcp-orch 로그를 함께 분석해야 정확한 원인 파악 가능
+1. **근본 원인 파악**: 표면적 증상이 아닌 구조적 문제 해결
+2. **표준 준수**: MCP SDK 분석을 통한 정확한 구현 방향
+3. **단계적 접근**: 기존 코드 활용하면서 점진적 개선
 
-이러한 이해를 바탕으로 mcp-orch의 SSE 구현을 표준에 맞게 수정하면 Inspector Transport 타임아웃 문제를 해결하고 완벽한 호환성을 달성할 수 있습니다.
+이제 MCP 표준에 맞는 올바른 구현으로 Inspector "Not connected" 문제를 완전히 해결할 수 있습니다.
