@@ -65,6 +65,34 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_035-REAL-MCP-TOOLS: 실제 MCP 서버 도구 로드 구현 🔄 진행중
+**핵심 목표**: 테스트용 echo/hello 도구를 실제 brave-search MCP 서버의 도구로 교체하여 완전한 MCP 프록시 기능 구현
+
+- [x] **문제 상황 파악**
+  - ✅ 현재 하이브리드 구현에서 테스트용 도구만 표시
+  - ✅ 실제 brave-search 도구(web_search, brave_search 등) 로드 필요
+  - ✅ 해결 방안: 하이브리드 도구 로드 시스템 설계
+
+- [ ] **동적 도구 목록 로드 구현**
+  - [ ] mcp_connection_service.get_server_tools() 활용
+  - [ ] 데이터베이스 서버 설정을 python-sdk 형식으로 변환
+  - [ ] 실제 MCP 서버에서 도구 목록 동적 로드
+
+- [ ] **도구 실행 프록시 시스템**
+  - [ ] mcp_connection_service.call_tool()로 실제 서버 호출
+  - [ ] python-sdk Server 클래스 구조 유지하며 내부 프록시
+  - [ ] 에러 핸들링 및 응답 형식 표준화
+
+- [ ] **mcp_sdk_sse_bridge.py 수정**
+  - [ ] 하드코딩된 테스트 도구 제거
+  - [ ] 서버별 동적 도구 로드 로직 구현
+  - [ ] server_record와 mcp_connection_service 통합
+
+- [ ] **연결 테스트 및 검증**
+  - [ ] Inspector에서 brave-search 도구 목록 확인
+  - [ ] 실제 도구 실행 테스트 (web_search 등)
+  - [ ] 프로젝트별 격리 및 권한 시스템 동작 확인
+
 ### TASK_034-PYTHON-SDK-HYBRID: Python-SDK 하이브리드 구현 ✅ 완료
 **핵심 목표**: mcp-orch URL 구조 유지 + python-sdk 표준 호환성을 모두 확보하는 하이브리드 SSE Transport 구현
 

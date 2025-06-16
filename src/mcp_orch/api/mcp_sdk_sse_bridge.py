@@ -26,7 +26,7 @@ import mcp.types as types
 from ..database import get_db
 from ..models import Project, McpServer, User
 from .jwt_auth import get_user_from_jwt_token
-# mcp_connection_service는 더 이상 사용하지 않음 (python-sdk Server 클래스 사용)
+from ..services.mcp_connection_service import mcp_connection_service
 
 logger = logging.getLogger(__name__)
 
@@ -297,71 +297,101 @@ async def run_mcp_bridge_session(
     """
     MCP Bridge 세션 실행
     
-    python-sdk Server 클래스를 사용한 간단한 MCP 서버 구현
+    실제 MCP 서버의 도구를 로드하고 python-sdk Server 클래스로 프록시
     """
     
     logger.info(f"Starting MCP bridge session for {server_name}")
     
     try:
+        # 서버 설정 구성
+        server_config = _build_server_config_from_db(server_record)
+        if not server_config:
+            raise ValueError("Failed to build server configuration")
+        
         # MCP Server 인스턴스 생성
         mcp_server = Server(f"mcp-orch-{server_name}")
         
-        # 간단한 테스트 도구 등록
+        # 실제 MCP 서버에서 도구 목록 동적 로드
         @mcp_server.list_tools()
         async def list_tools():
-            return [
-                types.Tool(
-                    name="echo",
-                    description="Echo the input text",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "text": {
-                                "type": "string",
-                                "description": "Text to echo"
-                            }
-                        },
-                        "required": ["text"]
-                    }
-                ),
-                types.Tool(
-                    name="hello",
-                    description="Say hello with project info",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "description": "Name to greet"
-                            }
-                        },
-                        "required": ["name"]
-                    }
+            try:
+                logger.info(f"Loading tools from actual MCP server: {server_name}")
+                
+                # 실제 MCP 서버에서 도구 목록 가져오기
+                tools = await mcp_connection_service.get_server_tools(
+                    str(server_record.id), 
+                    server_config
                 )
-            ]
+                
+                if not tools:
+                    logger.warning(f"No tools found for server {server_name}")
+                    return []
+                
+                # python-sdk 형식으로 변환
+                tool_list = []
+                for tool in tools:
+                    tool_obj = types.Tool(
+                        name=tool.get("name", ""),
+                        description=tool.get("description", ""),
+                        inputSchema=tool.get("inputSchema", {
+                            "type": "object",
+                            "properties": {},
+                            "required": []
+                        })
+                    )
+                    tool_list.append(tool_obj)
+                    logger.info(f"  - Loaded tool: {tool.get('name')}")
+                
+                logger.info(f"Successfully loaded {len(tool_list)} tools from {server_name}")
+                return tool_list
+                
+            except Exception as e:
+                logger.error(f"Error loading tools from {server_name}: {e}")
+                # 에러 시 빈 도구 목록 반환
+                return []
         
+        # 도구 실행을 실제 서버로 프록시
         @mcp_server.call_tool()
         async def call_tool(name: str, arguments: dict):
-            logger.info(f"Tool called: {name} with arguments: {arguments}")
-            
-            if name == "echo":
-                text = arguments.get("text", "")
-                result_text = f"Echo from {server_name}: {text}"
-            elif name == "hello":
-                user_name = arguments.get("name", "World")
-                result_text = f"Hello {user_name}! You're connected to {server_name} in project {project_id}"
-            else:
-                raise ValueError(f"Unknown tool: {name}")
-            
-            return [
-                types.TextContent(
-                    type="text",
-                    text=result_text
+            try:
+                logger.info(f"Proxying tool call to {server_name}: {name} with arguments: {arguments}")
+                
+                # 실제 MCP 서버로 도구 호출 전달
+                result = await mcp_connection_service.call_tool(
+                    str(server_record.id),
+                    server_config,
+                    name,
+                    arguments
                 )
-            ]
+                
+                logger.info(f"Tool call result from {server_name}: {result}")
+                
+                # 결과를 TextContent 형식으로 변환
+                if result:
+                    result_text = str(result) if not isinstance(result, str) else result
+                else:
+                    result_text = f"Tool '{name}' executed successfully"
+                
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=result_text
+                    )
+                ]
+                
+            except Exception as e:
+                logger.error(f"Error calling tool {name} on {server_name}: {e}")
+                
+                # 에러 시 에러 메시지 반환
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=f"Error executing tool '{name}': {str(e)}"
+                    )
+                ]
         
         # MCP 서버 실행
-        logger.info(f"Running MCP server for {server_name}")
+        logger.info(f"Running MCP server for {server_name} with dynamic tool loading")
         await mcp_server.run(
             read_stream,
             write_stream,
