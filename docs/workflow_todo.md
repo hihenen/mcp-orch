@@ -481,7 +481,40 @@
 
 ## 현재 진행 중인 작업
 
-### TASK_043-SERVER-EDIT-FEATURE: 서버 설정 편집 기능 구현 🔄 진행중
+### TASK_044-SERVER-COMPONENT-REFACTOR: 서버 상세 페이지 컴포넌트 분리 (1046줄 → 200줄) 🔄 진행중
+**핵심 목표**: CLAUDE.md 컴포넌트 분리 지침에 따라 1046줄의 거대한 서버 상세 페이지를 관리 가능한 작은 단위로 분리하여 유지보수성과 개발 효율성 향상
+
+- [ ] **Phase 1: 폴더 구조 생성 및 탭 컴포넌트 분리**
+  - [ ] `/components/servers/detail/` 폴더 구조 생성
+  - [ ] ServerOverviewTab.tsx (~200줄) - 서버 정보, 실행 설정, MCP 설정
+  - [ ] ServerToolsTab.tsx (~150줄) - 도구 목록 및 테스트 기능
+  - [ ] ServerUsageTab.tsx (~150줄) - 클라이언트 세션, 사용 통계
+  - [ ] ServerLogsTab.tsx (~50줄) - 서버 로그 표시
+  - [ ] ServerSettingsTab.tsx (~100줄) - 서버 편집, 삭제 기능
+
+- [ ] **Phase 2: 공통 컴포넌트 추출**
+  - [ ] ServerHeader.tsx (~100줄) - 페이지 헤더와 액션 버튼들
+  - [ ] components/ServerStatusBadge.tsx - 재사용 가능한 상태 뱃지
+  - [ ] components/ServerControlButtons.tsx - 활성화/재시작/삭제 버튼 그룹
+  - [ ] components/ServerConfigDisplay.tsx - JSON 설정 표시 컴포넌트
+
+- [ ] **Phase 3: 커스텀 훅 분리**
+  - [ ] hooks/useServerDetail.ts - 서버 정보 로드/업데이트 로직
+  - [ ] hooks/useServerActions.ts - 토글/재시작/삭제 핸들러
+  - [ ] hooks/useServerTools.ts - 도구 로드/실행 로직
+
+- [ ] **Phase 4: 메인 페이지 리팩토링**
+  - [ ] 기존 1046줄 페이지를 200줄 이하로 축소
+  - [ ] 분리된 컴포넌트들 import 및 조합
+  - [ ] 타입 정의 및 Props 인터페이스 최적화
+
+- [ ] **Phase 5: 검증 및 최적화**
+  - [ ] 각 컴포넌트 300줄 이하 확인
+  - [ ] TypeScript 타입 안정성 검증
+  - [ ] 재사용 가능한 컴포넌트 식별
+  - [ ] 성능 최적화 (React.memo 등)
+
+### TASK_043-SERVER-EDIT-FEATURE: 서버 설정 편집 기능 구현 ✅ 완료
 **핵심 목표**: 프로젝트 서버 상세 페이지에서 설정 탭의 편집 버튼을 통해 서버 설정을 수정할 수 있는 완전한 편집 기능 구현
 
 - [x] **EditServerDialog 컴포넌트 구현**
