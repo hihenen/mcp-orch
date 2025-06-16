@@ -521,7 +521,7 @@ export function AddServerDialog({
     try {
       if (isEditMode && editServer) {
         // 서버 수정 API 호출
-        const response = await fetch(`/api/projects/${projectId}/servers?serverId=${editServer.id}`, {
+        const response = await fetch(`/api/projects/${projectId}/servers/${editServer.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

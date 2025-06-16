@@ -4,27 +4,31 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
-export const GET = auth(async function GET(req, ctx) {
+export const GET = auth(async function GET(req) {
   try {
-    // NextAuth.js v5 방식: req.auth에서 세션 정보 가져오기
+    // 1. NextAuth.js v5 세션 확인
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId, serverId } = await ctx.params;
-
-    // JWT 토큰 생성 (필수)
+    // 2. JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
-      console.error('❌ Failed to generate JWT token for server detail');
+      console.error('❌ Failed to generate JWT token');
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    console.log(`✅ Using JWT token for server detail: project ${projectId}, server ${serverId}`);
+    // 3. URL에서 파라미터 추출
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split('/');
+    const projectId = pathSegments[3]; // /api/projects/[projectId]/servers/[serverId]
+    const serverId = pathSegments[5];
 
+    console.log('✅ GET 서버 상세 정보:', { projectId, serverId });
+
+    // 4. 백엔드 API 호출
     const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/servers/${serverId}`, {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
@@ -39,7 +43,7 @@ export const GET = auth(async function GET(req, ctx) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Server detail API error:', error);
+    console.error('GET 서버 상세 정보 API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -47,26 +51,33 @@ export const GET = auth(async function GET(req, ctx) {
   }
 });
 
-export const PUT = auth(async function PUT(req, ctx) {
+export const PUT = auth(async function PUT(req) {
   try {
-    // NextAuth.js v5 방식: req.auth에서 세션 정보 가져오기
+    // 1. NextAuth.js v5 세션 확인
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId, serverId } = await ctx.params;
-    const body = await req.json();
-
-    // JWT 토큰 생성 (필수)
+    // 2. JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
-      console.error('❌ Failed to generate JWT token for server update');
+      console.error('❌ Failed to generate JWT token for PUT');
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    console.log(`✅ Using JWT token for server update: project ${projectId}, server ${serverId}`);
+    // 3. URL에서 파라미터 추출
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split('/');
+    const projectId = pathSegments[3]; // /api/projects/[projectId]/servers/[serverId]
+    const serverId = pathSegments[5];
 
+    // 4. 요청 바디 파싱
+    const body = await req.json();
+
+    console.log('✅ PUT 서버 업데이트:', { projectId, serverId, body });
+
+    // 5. 백엔드 API 호출
     const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/servers/${serverId}`, {
       method: 'PUT',
       headers: {
@@ -84,7 +95,7 @@ export const PUT = auth(async function PUT(req, ctx) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Server update API error:', error);
+    console.error('PUT 서버 업데이트 API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -92,25 +103,30 @@ export const PUT = auth(async function PUT(req, ctx) {
   }
 });
 
-export const DELETE = auth(async function DELETE(req, ctx) {
+export const DELETE = auth(async function DELETE(req) {
   try {
-    // NextAuth.js v5 방식: req.auth에서 세션 정보 가져오기
+    // 1. NextAuth.js v5 세션 확인
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId, serverId } = await ctx.params;
-
-    // JWT 토큰 생성 (필수)
+    // 2. JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
-      console.error('❌ Failed to generate JWT token for server delete');
+      console.error('❌ Failed to generate JWT token for DELETE');
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    console.log(`✅ Using JWT token for server delete: project ${projectId}, server ${serverId}`);
+    // 3. URL에서 파라미터 추출
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split('/');
+    const projectId = pathSegments[3]; // /api/projects/[projectId]/servers/[serverId]
+    const serverId = pathSegments[5];
 
+    console.log('✅ DELETE 서버 삭제:', { projectId, serverId });
+
+    // 4. 백엔드 API 호출
     const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/servers/${serverId}`, {
       method: 'DELETE',
       headers: {
@@ -124,9 +140,10 @@ export const DELETE = auth(async function DELETE(req, ctx) {
       return NextResponse.json({ error }, { status: response.status });
     }
 
-    return NextResponse.json({ message: '서버가 성공적으로 삭제되었습니다.' });
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Server delete API error:', error);
+    console.error('DELETE 서버 삭제 API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

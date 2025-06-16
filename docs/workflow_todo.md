@@ -481,6 +481,38 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_043-SERVER-EDIT-FEATURE: 서버 설정 편집 기능 구현 🔄 진행중
+**핵심 목표**: 프로젝트 서버 상세 페이지에서 설정 탭의 편집 버튼을 통해 서버 설정을 수정할 수 있는 완전한 편집 기능 구현
+
+- [x] **EditServerDialog 컴포넌트 구현**
+  - [x] 기존 AddServerDialog 기반으로 편집용 UI 제작 (기존 컴포넌트가 이미 편집 모드 지원)
+  - [x] 서버 정보 미리 로드 및 폼 초기화 (useEffect로 editServer 전달 시 자동 초기화)
+  - [x] 실시간 유효성 검증 시스템 (기존 컴포넌트 내장)
+  - [x] 환경 변수 키-값 쌍 동적 편집 (기존 UI 지원)
+
+- [x] **백엔드 API 연동**
+  - [x] PUT /api/projects/{projectId}/servers/{serverId} 엔드포인트 연결
+  - [x] JWT 토큰 기반 인증으로 서버 설정 업데이트
+  - [x] 편집 완료 후 서버 상태 새로고침
+  - [x] 에러 처리 및 사용자 피드백
+
+- [x] **UI/UX 완성**
+  - [x] 설정 탭의 편집 버튼에 다이얼로그 연결
+  - [x] 변경사항 추적 및 저장 확인 기능 (기존 컴포넌트 내장)
+  - [x] 성공/실패 토스트 메시지 (toast.success/error 구현)
+  - [x] 접근성 및 키보드 네비게이션 (shadcn/ui 기본 지원)
+
+- [x] **권한 기반 접근 제어**
+  - [x] Owner/Developer만 편집 가능하도록 UI 제어 (canEditServer 변수)
+  - [x] Reporter는 조회만 가능 (편집/삭제/제어 버튼 비활성화)
+  - [x] 권한 없는 사용자 접근 시 적절한 메시지 표시 (title 속성으로 툴팁)
+
+- [ ] **테스트 및 검증**
+  - [ ] 모든 필드 편집 및 저장 테스트
+  - [ ] 권한별 편집 접근 제어 확인
+  - [ ] 에지 케이스 처리 (중복 이름, 빈 값 등)
+  - [ ] 실제 사용자 시나리오 검증
+
 ### TASK_040-SERVER-TOOLS-COUNT-FIX: 프로젝트 서버 탭 도구 개수 표시 문제 해결 ✅ 완료
 **핵심 목표**: 프로젝트 페이지 서버 탭에서 도구 개수가 0으로 잘못 표시되는 문제 분석 및 해결
 
@@ -586,9 +618,42 @@
   - ✅ namespace 설정: `${projectId}.${serverId}` 형식
   - ✅ ToolExecutionModal 모달 표시 (라인 979-983)
 
+### TASK_043-SERVER-SETTINGS-EDIT: 프로젝트 서버 설정 편집 기능 구현 🔄 진행중
+**핵심 목표**: 프로젝트 서버 상세 페이지의 설정 탭에서 서버 설정을 편집할 수 있는 UI 및 기능 구현
+
+- [ ] **현재 서버 상세 페이지 분석 완료**
+  - [x] `/projects/[projectId]/servers/[serverId]` 페이지 구조 파악
+  - [x] 설정 탭의 편집 버튼 위치 확인 (383-385라인, 948-951라인)
+  - [x] 백엔드 PUT API 엔드포인트 존재 확인 (`/api/projects/{project_id}/servers/{server_id}`)
+  - [x] ServerUpdate 모델 및 권한 시스템 분석 완료
+
+- [ ] **서버 편집 다이얼로그 컴포넌트 구현**
+  - [ ] EditServerDialog.tsx 컴포넌트 생성
+  - [ ] AddServerDialog.tsx 기반으로 편집용 폼 구조 구현
+  - [ ] 기존 서버 설정값 로드 및 초기화
+  - [ ] 서버 설정 폼 유효성 검증 로직
+
+- [ ] **편집 기능 백엔드 연동**
+  - [ ] PUT `/api/projects/{projectId}/servers/{serverId}` API 호출
+  - [ ] JWT 토큰 기반 인증 처리
+  - [ ] 에러 처리 및 성공 메시지 표시
+  - [ ] 서버 정보 실시간 업데이트
+
+- [ ] **UI/UX 개선**
+  - [ ] 편집 버튼 클릭 시 다이얼로그 표시
+  - [ ] 저장/취소 버튼 기능 구현
+  - [ ] 변경사항 감지 및 확인 다이얼로그
+  - [ ] 편집 완료 후 서버 상세 정보 새로고침
+
+- [ ] **테스트 및 검증**
+  - [ ] 서버 설정 편집 기능 테스트
+  - [ ] 권한 기반 편집 제한 테스트 (Owner/Developer만)
+  - [ ] 서버 이름 중복 검증 테스트
+  - [ ] 편집 후 서버 상태 정상 동작 확인
+
 ## Progress Status
-- Current Progress: **✅ TASK_042-BACKEND-TOOL-EXECUTION-API-SEARCH 완료** - 백엔드 도구 실행 API 엔드포인트 조사 또는 수정 완료
-- Next Task: 사용자 테스트 대기 - 프론트엔드에서 도구 실행 테스트
+- Current Progress: **🔄 TASK_043-SERVER-EDIT-FEATURE 거의 완료** - 서버 편집 기능 구현 완료, 사용자 테스트 대기
+- Next Task: 사용자 테스트 - 서버 설정 편집 기능 동작 확인
 - Last Update: 2025-06-16  
 - Automatic Check Feedback: **✅ TASK_041 구현 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**

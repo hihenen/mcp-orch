@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { ToolExecutionModal } from '@/components/tools/ToolExecutionModal';
+import { AddServerDialog } from '@/components/servers/AddServerDialog';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -62,7 +63,7 @@ export default function ProjectServerDetailPage() {
   const projectId = params.projectId as string;
   const serverId = params.serverId as string;
   
-  const { selectedProject, loadProject } = useProjectStore();
+  const { selectedProject, loadProject, currentUserRole } = useProjectStore();
   const [server, setServer] = useState<ServerDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -70,6 +71,10 @@ export default function ProjectServerDetailPage() {
   const [toolsLoading, setToolsLoading] = useState(false);
   const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // 편집 권한 확인 (Owner/Developer만 편집 가능)
+  const canEditServer = currentUserRole === 'Owner' || currentUserRole === 'Developer';
 
   // 서버 상세 정보 로드
   const loadServerDetail = async () => {
@@ -230,6 +235,19 @@ export default function ProjectServerDetailPage() {
     }
   };
 
+  // 서버 업데이트 핸들러
+  const handleServerUpdated = async (updatedServerData: any) => {
+    try {
+      toast.success('서버 설정이 업데이트되었습니다.');
+      // 서버 정보 새로고침
+      await loadServerDetail();
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('서버 업데이트 후 새로고침 오류:', error);
+      toast.error('서버 정보를 새로고침하는 중 오류가 발생했습니다.');
+    }
+  };
+
   // 서버 삭제 핸들러
   const handleDeleteServer = async () => {
     if (!server) return;
@@ -239,7 +257,7 @@ export default function ProjectServerDetailPage() {
     }
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/servers?serverId=${server.id}`, {
+      const response = await fetch(`/api/projects/${projectId}/servers/${server.id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -371,23 +389,37 @@ export default function ProjectServerDetailPage() {
           <Button 
             variant="outline"
             onClick={handleToggleServer}
+            disabled={!canEditServer}
             className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
+            title={!canEditServer ? "서버를 제어할 권한이 없습니다. (Owner 또는 Developer만 가능)" : undefined}
           >
             {server.disabled ? <Play className="h-4 w-4 mr-2" /> : <Pause className="h-4 w-4 mr-2" />}
             {server.disabled ? '활성화' : '비활성화'}
           </Button>
-          <Button variant="outline" onClick={handleRestartServer}>
+          <Button 
+            variant="outline" 
+            onClick={handleRestartServer}
+            disabled={!canEditServer}
+            title={!canEditServer ? "서버를 재시작할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 재시작"}
+          >
             <RotateCcw className="h-4 w-4 mr-2" />
             재시작
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => setIsEditDialogOpen(true)}
+            disabled={!canEditServer}
+            title={!canEditServer ? "이 서버를 편집할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 설정 편집"}
+          >
             <Edit className="h-4 w-4 mr-2" />
             편집
           </Button>
           <Button 
             variant="outline" 
             onClick={handleDeleteServer}
+            disabled={!canEditServer}
             className="text-red-600 hover:text-red-700"
+            title={!canEditServer ? "이 서버를 삭제할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 삭제"}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             삭제
@@ -945,7 +977,12 @@ export default function ProjectServerDetailPage() {
                       서버 설정을 수정합니다.
                     </p>
                   </div>
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsEditDialogOpen(true)}
+                    disabled={!canEditServer}
+                    title={!canEditServer ? "이 서버를 편집할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 설정 편집"}
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     편집
                   </Button>
@@ -963,6 +1000,8 @@ export default function ProjectServerDetailPage() {
                     <Button 
                       variant="destructive" 
                       onClick={handleDeleteServer}
+                      disabled={!canEditServer}
+                      title={!canEditServer ? "이 서버를 삭제할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 삭제"}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       삭제
@@ -981,6 +1020,27 @@ export default function ProjectServerDetailPage() {
         isOpen={isToolModalOpen}
         onClose={handleCloseToolModal}
       />
+
+      {/* 서버 편집 다이얼로그 */}
+      {server && (
+        <AddServerDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onServerAdded={() => {}} // 편집 모드에서는 사용되지 않음
+          onServerUpdated={handleServerUpdated}
+          projectId={projectId}
+          editServer={{
+            id: server.id,
+            name: server.name,
+            description: server.description || '',
+            transport: (server.transportType as 'stdio' | 'sse') || 'stdio',
+            command: server.command || '',
+            args: server.args || [],
+            env: server.env || {},
+            cwd: server.cwd || ''
+          }}
+        />
+      )}
     </div>
   );
 }
