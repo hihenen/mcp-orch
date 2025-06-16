@@ -528,11 +528,43 @@
   - [x] get-library-docs 도구 테스트 (예: 특정 라이브러리 문서 조회)
   - [x] 실행 결과 표시 및 사용자 경험 검증
 
+### TASK_041-FRONTEND-TOOL-EXECUTION-ANALYSIS: 프론트엔드 도구 실행 API 호출 코드 분석 ✅ 완료
+**핵심 목표**: mcp-orch 프로젝트에서 프론트엔드가 도구 실행을 위해 사용하는 API 호출 코드를 체계적으로 분석하여 완전한 데이터 흐름 파악
+
+- [x] **도구 실행 모달 컴포넌트 분석**
+  - ✅ `ToolExecutionModal.tsx` (라인 29-397) - 도구 실행 UI 및 파라미터 입력 처리
+  - ✅ 실행 버튼 클릭 시 `executeTool` 함수 호출 (라인 106)
+  - ✅ JWT 토큰 기반 백엔드 API 호출 구조 확인
+  - ✅ 실행 결과 표시 및 에러 처리 로직 분석
+
+- [x] **ToolStore 도구 실행 함수 분석**
+  - ✅ `toolStore.ts` (라인 98-106) - `executeTool` 함수 구현
+  - ✅ `getApiClient().executeTool()` 호출로 API 클라이언트 활용
+  - ✅ namespace, toolName, parameters 전달 구조
+
+- [x] **API 클라이언트 도구 실행 로직 분석**
+  - ✅ `api.ts` (라인 182-212) - `executeTool` 메서드 구현
+  - ✅ namespace 형식에 따른 경로 분기: `projectId.serverId` vs 전역 도구
+  - ✅ 프로젝트별 실행: `/api/projects/${projectId}/servers/${serverId}/tools/${toolName}`
+  - ✅ 전역 실행: `/api/tools/${namespace}/${toolName}`
+
+- [x] **Next.js API 라우트 분석**
+  - ✅ `/api/projects/[projectId]/servers/[serverId]/tools/[toolName]/route.ts` (라인 1-75)
+  - ✅ NextAuth.js v5 세션 인증 (라인 10-12)
+  - ✅ JWT 토큰 생성 및 Authorization Bearer 헤더 전송 (라인 34-50)
+  - ✅ 백엔드 API 호출: `${BACKEND_URL}/api/projects/${projectId}/servers/${serverId}/tools/${toolName}/execute`
+
+- [x] **프로젝트 서버 상세 페이지 통합 분석**
+  - ✅ `page.tsx` (라인 265-285) - `handleTestTool` 함수
+  - ✅ Tool → MCPTool 변환 로직 (라인 268-275)
+  - ✅ namespace 설정: `${projectId}.${serverId}` 형식
+  - ✅ ToolExecutionModal 모달 표시 (라인 979-983)
+
 ## Progress Status
-- Current Progress: **✅ TASK_040-SERVER-TOOLS-COUNT-FIX 완료** - 프로젝트 서버 탭 도구 개수 표시 문제 해결 완료
+- Current Progress: **✅ TASK_041-FRONTEND-TOOL-EXECUTION-ANALYSIS 완료** - 프론트엔드 도구 실행 API 호출 코드 완전 분석 완료
 - Next Task: 사용자 테스트 및 피드백 대기
 - Last Update: 2025-06-16  
-- Automatic Check Feedback: **✅ TASK_040 구현 완료**
+- Automatic Check Feedback: **✅ TASK_041 구현 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
