@@ -33,7 +33,7 @@ export default function ProjectServerDetailPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // 편집 권한 확인 (Owner/Developer만 편집 가능)
-  const canEditServer = currentUserRole === 'Owner' || currentUserRole === 'Developer';
+  const canEditServer = currentUserRole === 'owner' || currentUserRole === 'developer';
   
   // 디버깅: 권한 상태 로깅
   console.log('🔍 권한 디버깅:', {
