@@ -89,19 +89,24 @@ def create_app(settings: Settings = None) -> FastAPI:
     # 통합 인증 미들웨어 (JWT + API 키 지원)
     app.add_middleware(JWTAuthMiddleware, settings=settings)
         
-    # 라우터 등록 (순서 중요: 더 구체적인 라우터 먼저)
+    # 라우터 등록 (순서 중요: 일반 API 라우터 먼저, SSE 라우터 나중에)
+    # 1. 일반 REST API 라우터들 (/api/* 경로) - 프론트엔드용
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(projects_router)
+    app.include_router(servers_router)
+    app.include_router(server_logs_router)
+    app.include_router(tools_router)
+    app.include_router(fastmcp_router)
+    
+    # 2. 프로젝트 관리 API (일반 API 라우터)
+    app.include_router(project_sse_router)   # 프로젝트 관리 API
+    
+    # 3. SSE 전용 라우터들 (/projects/*/sse 경로) - MCP 클라이언트용 (Cline, Cursor 등)
     app.include_router(mcp_sdk_sse_bridge_router)  # 🚀 NEW: python-sdk 표준 + mcp-orch URL 하이브리드 (최우선)
     app.include_router(mcp_sse_transport_router)  # 새로운 MCP 표준 준수 SSE Transport (호환성)
     app.include_router(mcp_standard_sse_router)  # 기존 표준 MCP SSE 엔드포인트 (호환성)
     app.include_router(standard_mcp_router)  # 기존 SSE 엔드포인트 (호환성)
-    app.include_router(project_sse_router)   # 프로젝트 관리 API
-    app.include_router(fastmcp_router)
-    app.include_router(servers_router)
-    app.include_router(server_logs_router)
-    app.include_router(tools_router)
     
     
     # 전역 예외 핸들러

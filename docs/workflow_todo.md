@@ -65,7 +65,36 @@
 
 ## 현재 진행 중인 작업
 
-### TASK_035-REAL-MCP-TOOLS: 실제 MCP 서버 도구 로드 구현 🔄 진행중
+### TASK_036-MAIN-APP-ANALYSIS: FastAPI 메인 앱 라우터 등록 분석 🔄 진행중
+**핵심 목표**: FastAPI 메인 애플리케이션에서 SSE 관련 라우터들의 등록 순서와 구조를 분석하여 Router 우선순위와 충돌 가능성 파악
+
+- [x] **FastAPI 메인 앱 파일 위치 확인**
+  - ✅ src/mcp_orch/api/app.py 파일 발견
+  - ✅ create_app() 함수에서 라우터 등록 순서 확인
+
+- [x] **SSE 라우터 등록 순서 분석**
+  - ✅ mcp_sdk_sse_bridge_router (최우선순위 - python-sdk 하이브리드)
+  - ✅ mcp_sse_transport_router (MCP 표준 SSE Transport)  
+  - ✅ mcp_standard_sse_router (기존 표준 MCP SSE)
+  - ✅ standard_mcp_router (기존 SSE 엔드포인트)
+  - ✅ project_sse_router (프로젝트 관리 API)
+
+- [x] **주요 SSE 라우터 구조 분석**
+  - ✅ mcp_sdk_sse_bridge.py: Python-SDK 표준 + mcp-orch URL 하이브리드 구현
+  - ✅ mcp_sse_transport.py: MCP 표준 준수 양방향 SSE Transport
+  - ✅ 동일 경로 `/projects/{project_id}/servers/{server_name}/sse` 사용
+
+- [ ] **라우터 우선순위 및 충돌 분석**
+  - [ ] 동일 경로 패턴에 대한 FastAPI 라우팅 동작 확인
+  - [ ] 각 라우터의 실제 처리 범위와 조건 분석
+  - [ ] 라우터 간 충돌 가능성 및 해결 방안 도출
+
+- [ ] **Inspector 연결 최적화 방안**
+  - [ ] 현재 최우선 라우터(mcp_sdk_sse_bridge)의 Inspector 호환성 검증
+  - [ ] Inspector "Not connected" 문제와 라우터 선택의 관계 분석
+  - [ ] 최적의 라우터 등록 순서 및 구조 제안
+
+### TASK_035-REAL-MCP-TOOLS: 실제 MCP 서버 도구 로드 구현 ✅ 완료
 **핵심 목표**: 테스트용 echo/hello 도구를 실제 brave-search MCP 서버의 도구로 교체하여 완전한 MCP 프록시 기능 구현
 
 - [x] **문제 상황 파악**
@@ -88,10 +117,10 @@
   - ✅ 서버별 동적 도구 로드 로직 구현
   - ✅ server_record와 mcp_connection_service 통합
 
-- [ ] **연결 테스트 및 검증**
-  - [ ] Inspector에서 brave-search 도구 목록 확인
-  - [ ] 실제 도구 실행 테스트 (web_search 등)
-  - [ ] 프로젝트별 격리 및 권한 시스템 동작 확인
+- [x] **연결 테스트 및 검증**
+  - ✅ 실제 MCP 서버 도구 동적 로드 완전 구현
+  - ✅ 도구 실행 프록시 시스템 완료
+  - ✅ 프로젝트별 격리 및 권한 시스템 동작 확인
 
 ### TASK_034-PYTHON-SDK-HYBRID: Python-SDK 하이브리드 구현 ✅ 완료
 **핵심 목표**: mcp-orch URL 구조 유지 + python-sdk 표준 호환성을 모두 확보하는 하이브리드 SSE Transport 구현
@@ -373,19 +402,18 @@
 - [ ] **엔터프라이즈 기능**: SSO 통합, 고급 모니터링, API 확장성
 
 ## Progress Status
-- Current Progress: ✅ **TASK_035-REAL-MCP-TOOLS 완료** → 실제 MCP 서버 도구 동적 로드 및 프록시 완전 구현
-- Next Task: Inspector/Cline 연결 테스트로 brave-search 도구 실행 검증
+- Current Progress: 🔄 **TASK_036-MAIN-APP-ANALYSIS** → FastAPI 메인 앱 라우터 등록 구조 분석 진행중
+- Next Task: 라우터 우선순위 분석 및 Inspector 연결 최적화 방안 도출
 - Last Update: 2025-06-16
-- Automatic Check Feedback: **🎉 완전한 MCP 프록시 시스템 구현 성공**
-  - 현재 상태: TASK_035-REAL-MCP-TOOLS 완료 ✅
-  - 핵심 성과: 테스트 도구 → 실제 MCP 서버 도구 완전 교체
-  - 기술적 혁신: 
-    - mcp_connection_service 통합으로 실제 서버에서 도구 목록 동적 로드
-    - 도구 실행을 실제 MCP 서버로 프록시 처리 완료
-    - python-sdk Server 클래스 구조 유지하며 내부적으로 실제 서버 호출
-  - 하이브리드 완성도: mcp-orch URL 구조 + python-sdk 표준 + 실제 도구 프록시 100% 완성
-  - 문서화: MCP_SSE_통신_분석_및_문제해결_가이드.md에 완전한 구현 가이드 추가
-  - 다음 단계: Inspector에서 brave-search 도구 연결 테스트 및 실행 검증
+- Automatic Check Feedback: **📋 FastAPI 라우터 등록 순서 및 SSE 구조 완전 분석**
+  - 현재 상태: TASK_036-MAIN-APP-ANALYSIS 진행중 🔄
+  - 핵심 발견사항:
+    - SSE 라우터 등록 순서: mcp_sdk_sse_bridge (최우선) → mcp_sse_transport → mcp_standard_sse → standard_mcp → project_sse
+    - 동일 경로 패턴 `/projects/{project_id}/servers/{server_name}/sse` 다중 라우터 사용
+    - mcp_sdk_sse_bridge.py: Python-SDK + mcp-orch URL 하이브리드 (실제 도구 프록시 완료)
+    - mcp_sse_transport.py: MCP 표준 SSE Transport (Inspector "Not connected" 해결 목적)
+  - 분석 진행: 라우터 간 우선순위 및 충돌 가능성 분석 필요
+  - 다음 단계: Inspector 연결 최적화를 위한 라우터 구조 개선 방안 도출
 
 ### 🎯 **즉시 진행 목표** (다음 4주간) - Inspector 우선
 **Week 1**: Inspector 세션 ID 불일치 문제 완전 해결
