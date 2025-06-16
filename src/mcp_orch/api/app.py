@@ -18,6 +18,7 @@ from .jwt_auth import JWTAuthMiddleware
 from .users import router as users_router
 from .teams import router as teams_router
 from .projects import router as projects_router
+from .project_servers import router as project_servers_router
 from .project_sse import router as project_sse_router
 from .standard_mcp import router as standard_mcp_router
 from .mcp_standard_sse import router as mcp_standard_sse_router
@@ -94,6 +95,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(projects_router)
+    app.include_router(project_servers_router)  # 🔧 프로젝트 서버 관리 API (도구 실행 포함)
     app.include_router(servers_router)
     app.include_router(server_logs_router)
     app.include_router(tools_router)
