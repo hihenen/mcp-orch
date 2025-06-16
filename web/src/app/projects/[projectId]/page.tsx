@@ -848,7 +848,7 @@ export default function ProjectDetailPage() {
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      도구: {tools.filter(t => t.serverId === server.name).length}개
+                      도구: {server.tools_count || 0}개
                     </div>
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="sm" title="상세 보기">

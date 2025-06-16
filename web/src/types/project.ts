@@ -84,6 +84,7 @@ export interface ProjectServer {
   env: Record<string, string>;
   disabled: boolean;
   status: string;
+  tools_count?: number;
   created_at?: string;
   updated_at?: string;
 }

@@ -130,11 +130,14 @@ async def list_project_servers(
             # 실시간 상태 및 도구 개수 조회
             try:
                 unique_server_id = f"{str(server.project_id).replace('-', '')[:8]}.{server.name.replace(' ', '_').replace('.', '_')}"
+                logger.info(f"Checking status for server {server.name} with unique_id: {unique_server_id}")
                 server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
+                logger.info(f"Server {server.name} status: {server_status}")
                 if server_status == "online":
                     tools_count = await mcp_connection_service.get_server_tools_count(unique_server_id, server_config)
+                    logger.info(f"Server {server.name} tools count: {tools_count}")
             except Exception as e:
-                logger.error(f"Error checking server {server.id} status: {e}")
+                logger.error(f"Error checking server {server.id} ({server.name}) status: {e}")
                 server_status = "error"
         
         result.append(ServerResponse(

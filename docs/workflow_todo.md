@@ -481,6 +481,29 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_040-SERVER-TOOLS-COUNT-FIX: 프로젝트 서버 탭 도구 개수 표시 문제 해결 ✅ 완료
+**핵심 목표**: 프로젝트 페이지 서버 탭에서 도구 개수가 0으로 잘못 표시되는 문제 분석 및 해결
+
+- [x] **문제 원인 분석**
+  - [x] 프로젝트 페이지 서버 탭 UI 컴포넌트 분석
+  - [x] 서버 데이터 로드 및 도구 개수 계산 로직 확인
+  - [x] 백엔드 API에서 도구 개수 반환 방식 검증
+
+- [x] **데이터 흐름 추적**
+  - [x] 프로젝트 서버 목록 API 응답 데이터 구조 확인
+  - [x] 프론트엔드에서 도구 개수 표시 로직 분석
+  - [x] 서버 상태 새로고침과 도구 개수 업데이트 연관성 확인
+
+- [x] **문제 해결 구현**
+  - [x] 올바른 도구 개수 표시 로직 수정
+  - [x] 서버 상태 변경 시 도구 개수 실시간 업데이트
+  - [x] UI 컴포넌트에서 도구 개수 올바른 표시
+
+- [x] **테스트 및 검증**
+  - [x] Context7 서버 도구 개수 정확한 표시 확인
+  - [x] 서버 활성화/비활성화 시 도구 개수 업데이트 테스트
+  - [x] 여러 서버에서 도구 개수 표시 일관성 검증
+
 ### TASK_039-CONTEXT7-TOOLS-TEST: Context7 MCP 서버 도구 테스트 기능 구현 ✅ 완료
 **핵심 목표**: Context7 MCP 서버에서 사용 가능한 도구들(resolve-library-id, get-library-docs)의 테스트 기능을 구현하여 사용자가 직접 테스트할 수 있도록 함
 
@@ -506,10 +529,10 @@
   - [x] 실행 결과 표시 및 사용자 경험 검증
 
 ## Progress Status
-- Current Progress: **✅ TASK_039-CONTEXT7-TOOLS-TEST 완료** - Context7 도구 테스트 기능 구현 완료
+- Current Progress: **✅ TASK_040-SERVER-TOOLS-COUNT-FIX 완료** - 프로젝트 서버 탭 도구 개수 표시 문제 해결 완료
 - Next Task: 사용자 테스트 및 피드백 대기
 - Last Update: 2025-06-16  
-- Automatic Check Feedback: **✅ TASK_039 구현 완료**
+- Automatic Check Feedback: **✅ TASK_040 구현 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
