@@ -740,6 +740,162 @@ JWT_ALGORITHM=HS256
 
 이 패턴을 따라 새로운 API 엔드포인트를 구현하면 일관된 인증 시스템을 유지할 수 있습니다.
 
+# 프론트엔드 개발 지침
+
+## 컴포넌트 분리 및 구조화 원칙
+
+### 분리 기준
+- **500줄 이상**: 분리 검토 필요
+- **1000줄 이상**: 반드시 분리 실행
+- **단일 책임 원칙**: 각 컴포넌트는 하나의 역할만 담당
+
+### 실용적 분리 패턴
+
+#### 1. 탭 기반 페이지 분리 구조
+```
+/components/[feature]/[page]/
+  ├── [Feature]Header.tsx          (헤더 및 액션 버튼들)
+  ├── [Feature][Tab]Tab.tsx        (각 탭별 독립 컴포넌트)
+  ├── components/                  (하위 공통 컴포넌트)
+  │   ├── [Feature]StatusBadge.tsx
+  │   ├── [Feature]ControlButtons.tsx
+  │   └── [Feature]ConfigDisplay.tsx
+  ├── hooks/                       (커스텀 훅)
+  │   ├── use[Feature]Data.ts      (데이터 로드/상태 관리)
+  │   ├── use[Feature]Actions.ts   (액션 핸들러)
+  │   └── use[Feature]Tools.ts     (도구 관련 로직)
+  └── index.ts                     (export 통합)
+```
+
+#### 2. 예시: 서버 상세 페이지 (1046줄 → 분리)
+```
+/components/servers/detail/
+  ├── ServerHeader.tsx             (~100줄 - 헤더, 상태, 액션 버튼)
+  ├── ServerOverviewTab.tsx        (~200줄 - 서버 정보, 설정 표시)
+  ├── ServerToolsTab.tsx           (~150줄 - 도구 목록, 테스트 기능)
+  ├── ServerUsageTab.tsx           (~150줄 - 사용 통계, 세션 정보)
+  ├── ServerLogsTab.tsx            (~50줄 - 로그 표시)
+  ├── ServerSettingsTab.tsx        (~100줄 - 편집, 삭제 기능)
+  ├── components/
+  │   ├── ServerStatusBadge.tsx    (재사용 가능한 상태 뱃지)
+  │   ├── ServerControlButtons.tsx (활성화/재시작/삭제 버튼 그룹)
+  │   └── ServerConfigDisplay.tsx  (JSON 설정 표시 컴포넌트)
+  └── hooks/
+      ├── useServerDetail.ts       (서버 정보 로드/업데이트)
+      ├── useServerActions.ts      (토글/재시작/삭제 핸들러)
+      └── useServerTools.ts        (도구 로드/실행 로직)
+```
+
+### 바이브 코딩 최적화 원칙
+
+#### 1. 명확한 인터페이스 정의
+```typescript
+interface ServerTabProps {
+  server: ServerDetail;
+  projectId: string;
+  canEdit: boolean;
+  onServerUpdate: (server: ServerDetail) => void;
+}
+```
+
+#### 2. 로직과 UI 분리
+- **커스텀 훅**: 비즈니스 로직, API 호출, 상태 관리
+- **컴포넌트**: UI 렌더링, 사용자 상호작용에만 집중
+
+#### 3. 재사용 가능한 작은 단위
+- `StatusBadge`, `ControlButtons` 같은 컴포넌트는 프로젝트 전반에서 활용
+- 공통 패턴을 별도 컴포넌트로 추출
+
+#### 4. 병렬 개발 지원
+- 각 탭은 독립적으로 개발/수정 가능
+- Props 인터페이스만 맞추면 다른 개발자와 충돌 없음
+
+### 컴포넌트 분리 체크리스트
+
+#### 분리 전 분석
+- [ ] 현재 파일 라인 수 확인 (500줄+ 시 분리 검토)
+- [ ] 주요 섹션별 기능 분석 (탭, 헤더, 사이드바 등)
+- [ ] 반복되는 UI 패턴 식별
+- [ ] 공통 로직과 상태 파악
+
+#### 분리 실행
+- [ ] 각 탭/섹션을 독립 컴포넌트로 생성
+- [ ] 공통 UI 요소는 별도 컴포넌트로 추출
+- [ ] 비즈니스 로직은 커스텀 훅으로 분리
+- [ ] Props 인터페이스 명확히 정의
+- [ ] 메인 페이지는 200줄 이하로 축소
+
+#### 분리 후 검증
+- [ ] 각 컴포넌트는 300줄 이하 권장
+- [ ] 단일 책임 원칙 준수 확인
+- [ ] 재사용 가능한 컴포넌트 식별
+- [ ] TypeScript 타입 안정성 확인
+- [ ] 테스트 작성 용이성 검토
+
+### 실제 적용 예시
+
+#### Before (1046줄 - 비추천)
+```typescript
+export default function ProjectServerDetailPage() {
+  // 수많은 상태와 핸들러들... (300줄)
+  // 헤더 렌더링... (100줄)
+  // 탭 1 렌더링... (200줄)
+  // 탭 2 렌더링... (150줄)
+  // 탭 3 렌더링... (150줄)
+  // 탭 4 렌더링... (50줄)
+  // 탭 5 렌더링... (100줄)
+  // 모달들... (30줄)
+}
+```
+
+#### After (200줄 - 추천)
+```typescript
+export default function ProjectServerDetailPage() {
+  const { server, isLoading } = useServerDetail(projectId, serverId);
+  const { canEdit } = useProjectPermissions(projectId);
+  
+  if (isLoading) return <LoadingSpinner />;
+  if (!server) return <NotFound />;
+
+  return (
+    <div className="container mx-auto p-6">
+      <ServerHeader 
+        server={server} 
+        projectId={projectId}
+        canEdit={canEdit}
+        onServerUpdate={handleServerUpdate}
+      />
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>...</TabsList>
+        
+        <TabsContent value="overview">
+          <ServerOverviewTab server={server} />
+        </TabsContent>
+        
+        <TabsContent value="tools">
+          <ServerToolsTab 
+            server={server}
+            projectId={projectId}
+          />
+        </TabsContent>
+        
+        {/* 기타 탭들... */}
+      </Tabs>
+    </div>
+  );
+}
+```
+
+### 추가 고려사항
+
+- **점진적 적용**: 기존 큰 컴포넌트는 단계적으로 분리
+- **일관성 유지**: 프로젝트 전반에서 동일한 패턴 적용
+- **문서화**: 각 컴포넌트의 역할과 Props를 명확히 문서화
+- **성능 최적화**: React.memo, useMemo 등을 적절히 활용
+
+이 지침을 따르면 유지보수하기 쉽고 확장 가능한 컴포넌트 구조를 만들 수 있습니다.
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
