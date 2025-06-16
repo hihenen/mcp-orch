@@ -362,7 +362,7 @@ function JsonBulkAddForm({
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• 기존 MCP 설정 또는 서버 설정만 붙여넣으세요</li>
             <li>• "예시 불러오기" 버튼으로 간단한 형식을 확인하세요</li>
-            <li>• "서버명": {"disabled": false, "command": "npx", ...} 형식 지원</li>
+            <li>• "서버명": {`{"disabled": false, "command": "npx", ...}`} 형식 지원</li>
             <li>• mcpServers 래퍼가 있어도 자동으로 처리됩니다</li>
             <li>• 여러 서버를 한 번에 추가할 수 있습니다</li>
           </ul>
