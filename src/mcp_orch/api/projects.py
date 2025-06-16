@@ -36,7 +36,7 @@ class ProjectUpdate(BaseModel):
 
 
 class ProjectMemberCreate(BaseModel):
-    user_id: UUID
+    email: str = Field(..., description="초대할 사용자의 이메일 주소")
     role: ProjectRole = ProjectRole.DEVELOPER
     invited_as: InviteSource = InviteSource.INDIVIDUAL
 
@@ -428,19 +428,30 @@ async def add_project_member(
             detail="Only project owners and developers can add members"
         )
     
-    # 사용자 존재 확인
-    user = db.query(User).filter(User.id == member_data.user_id).first()
+    # 이메일로 사용자 찾기
+    user = db.query(User).filter(User.email == member_data.email).first()
+    
+    # 사용자가 없으면 새로 생성
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+        # 임시 사용자 생성 (초대된 상태)
+        from uuid import uuid4
+        user = User(
+            id=uuid4(),
+            email=member_data.email,
+            name=member_data.email.split('@')[0],  # 이메일 앞부분을 임시 이름으로 사용
+            password="",  # 비밀번호는 나중에 설정
+            is_active=False  # 초대된 상태로 표시
         )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"Created new invited user: {user.email}")
     
     # 이미 멤버인지 확인
     existing_member = db.query(ProjectMember).filter(
         and_(
             ProjectMember.project_id == project_id,
-            ProjectMember.user_id == member_data.user_id
+            ProjectMember.user_id == user.id
         )
     ).first()
     
@@ -453,7 +464,7 @@ async def add_project_member(
     # 멤버 추가
     new_member = ProjectMember(
         project_id=project_id,
-        user_id=member_data.user_id,
+        user_id=user.id,
         role=member_data.role,
         invited_as=member_data.invited_as,
         invited_by=current_user.id
