@@ -921,7 +921,7 @@ async def create_project_api_key(
         key_hash=key_hash,
         key_prefix=key_prefix,
         expires_at=api_key_data.expires_at,
-        created_by=current_user.id
+        created_by_id=current_user.id
     )
     
     db.add(new_api_key)

@@ -824,10 +824,10 @@
   - [ ] JWT 인증 연동 확인
 
 ## Progress Status
-- Current Progress: **✅ API 키 중복 다이얼로그 문제 해결 완료** - 2개의 다이얼로그에서 두 번째에 만료일 설정 기능 추가
+- Current Progress: **✅ ApiKey 모델 필드 오류 수정 완료** - description 필드 추가 및 created_by_id 필드명 수정
 - Next Task: 사용자 테스트 및 기능 검증
-- Last Update: 2025-06-16  
-- Automatic Check Feedback: **🎯 API 키 중복 팝업 문제 해결됨 - 모든 다이얼로그에 만료일 설정 기능 통일**
+- Last Update: 2025-06-17  
+- Automatic Check Feedback: **🎯 ApiKey 백엔드 오류 해결됨 - 모델과 API 코드 동기화 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
