@@ -4,6 +4,7 @@ export { ServerToolsTab } from './ServerToolsTab';
 export { ServerUsageTab } from './ServerUsageTab';
 export { ServerLogsTab } from './ServerLogsTab';
 export { ServerSettingsTab } from './ServerSettingsTab';
+export { useServerDetail, useServerActions, useServerTools } from './hooks';
 export type { 
   ServerDetail, 
   ServerTabProps, 
