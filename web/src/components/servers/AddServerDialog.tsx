@@ -199,43 +199,58 @@ function JsonBulkAddForm({
   // JSON 예시 설정
   const exampleConfig = `{
   "mcpServers": {
-    "excel-proxy-test": {
-      "disabled": false,
-      "timeout": 30,
-      "url": "http://localhost:8000/servers/excel-mcp-server/sse",
-      "headers": {
-        "Authorization": "Bearer test1234"
-      },
-      "type": "sse"
-    },
-    "miro": {
+    "excel-mcp-server": {
       "autoApprove": [
-        "create-card-item",
-        "create-connector",
-        "create-items-in-bulk",
-        "create-sticky-note-item",
-        "get-items-on-board",
-        "update-sticky-note-item"
+        "write_sheet_data",
+        "read_sheet_data"
       ],
-      "timeout": 60,
+      "disabled": false,
+      "timeout": 300,
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
-        "@k-jarzyna/mcp-miro"
+        "@smithery/cli@latest",
+        "run",
+        "@negokaz/excel-mcp-server",
+        "--key",
+        "78f3339f-b944-49c3-bbcb-57e6aa079e2b"
+      ]
+    },
+    "brave-search": {
+      "autoApprove": [
+        "web_search",
+        "brave_search"
+      ],
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
       ],
       "env": {
-        "MIRO_ACCESS_TOKEN": "eyJtaXJvLm9yaWdpbiI6ImV1MDEifQ_jAlLF8N2CoehqOm9zG_ghtm8lUw"
-      },
-      "type": "stdio"
+        "BRAVE_API_KEY": "your-brave-api-key-here"
+      }
     },
     "github-server": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "your-github-token"
-      },
+      "autoApprove": [
+        "create_issue",
+        "search_repositories",
+        "get_repository"
+      ],
+      "disabled": false,
+      "timeout": 30,
       "type": "stdio",
-      "disabled": false
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "your-github-token-here"
+      }
     }
   }
 }`;
@@ -599,7 +614,7 @@ export function AddServerDialog({
               </TabsTrigger>
               <TabsTrigger value="json" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                JSON 일괄 추가
+                추가
               </TabsTrigger>
             </TabsList>
 
