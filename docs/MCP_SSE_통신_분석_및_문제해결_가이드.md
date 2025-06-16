@@ -80,6 +80,175 @@ async def run_mcp_bridge_session(read_stream, write_stream, ...):
 - ✅ `DISABLE_AUTH=true` 환경에서 인증 문제 해결
 - ✅ SSE 연결 성공 (401 Unauthorized → 200 OK)
 - ✅ Inspector 연결 준비 완료
+- ✅ **실제 MCP 서버 도구 동적 로드 성공** (2025-06-16)
+  - 테스트용 echo/hello 도구 → 실제 brave-search 도구로 교체
+  - mcp_connection_service 통합으로 실제 서버에서 도구 목록 동적 로드
+  - 도구 실행을 실제 MCP 서버로 프록시 처리 완료
+
+---
+
+## 🎯 **최종 구현 가이드: 완전한 하이브리드 MCP SSE Bridge** (2025-06-16)
+
+> **⚠️ 중요**: 이 섹션은 현재 작동하는 완전한 구현에 대한 가이드입니다. 이후 해깔릴 때 이 문서를 기준으로 참조하여 구현하시기 바랍니다.
+
+### **구현된 최종 솔루션**
+
+**파일**: `src/mcp_orch/api/mcp_sdk_sse_bridge.py`
+
+#### **1. 핵심 아키텍처 구성요소**
+
+```python
+# 프로젝트별 Transport 관리자
+class ProjectMCPTransportManager:
+    def __init__(self):
+        self.transports: Dict[str, SseServerTransport] = {}
+        self.mcp_servers: Dict[str, Server] = {}
+    
+    def get_transport(self, project_id: str, server_name: str) -> SseServerTransport:
+        key = self.get_transport_key(project_id, server_name)
+        if key not in self.transports:
+            # mcp-orch URL 구조 유지
+            endpoint = f"/projects/{project_id}/servers/{server_name}/messages"
+            self.transports[key] = SseServerTransport(endpoint)
+        return self.transports[key]
+```
+
+#### **2. SSE 브릿지 엔드포인트**
+
+```python
+@router.get("/projects/{project_id}/servers/{server_name}/sse")
+async def mcp_sse_bridge_endpoint(project_id: UUID, server_name: str, request: Request, db: Session = Depends(get_db)):
+    # 1. 인증 처리 (DISABLE_AUTH 지원)
+    current_user = await get_current_user_for_mcp_sse_bridge(request, project_id, db)
+    
+    # 2. 서버 존재 확인
+    server_record = db.query(McpServer).filter(...).first()
+    
+    # 3. python-sdk SseServerTransport 사용
+    transport = transport_manager.get_transport(str(project_id), server_name)
+    async with transport.connect_sse(request.scope, request.receive, request._send) as streams:
+        await run_mcp_bridge_session(streams, project_id, server_name, server_record)
+```
+
+#### **3. 실제 MCP 서버 도구 동적 로드**
+
+```python
+async def run_mcp_bridge_session(read_stream, write_stream, project_id, server_name, server_record):
+    # 서버 설정 구성
+    server_config = _build_server_config_from_db(server_record)
+    
+    # python-sdk Server 인스턴스 생성
+    mcp_server = Server(f"mcp-orch-{server_name}")
+    
+    # 실제 MCP 서버에서 도구 목록 동적 로드
+    @mcp_server.list_tools()
+    async def list_tools():
+        tools = await mcp_connection_service.get_server_tools(str(server_record.id), server_config)
+        tool_list = []
+        for tool in tools:
+            tool_obj = types.Tool(
+                name=tool.get("name", ""),
+                description=tool.get("description", ""),
+                inputSchema=tool.get("inputSchema", {"type": "object", "properties": {}, "required": []})
+            )
+            tool_list.append(tool_obj)
+        return tool_list
+    
+    # 도구 실행을 실제 서버로 프록시
+    @mcp_server.call_tool()
+    async def call_tool(name: str, arguments: dict):
+        result = await mcp_connection_service.call_tool(str(server_record.id), server_config, name, arguments)
+        return [types.TextContent(type="text", text=str(result) if result else f"Tool '{name}' executed successfully")]
+    
+    # MCP 서버 실행
+    await mcp_server.run(read_stream, write_stream, mcp_server.create_initialization_options())
+```
+
+#### **4. POST 메시지 엔드포인트**
+
+```python
+@router.post("/projects/{project_id}/servers/{server_name}/messages")
+async def mcp_bridge_post_messages(project_id: UUID, server_name: str, request: Request, db: Session = Depends(get_db)):
+    # 인증 및 서버 확인
+    current_user = await get_current_user_for_mcp_sse_bridge(request, project_id, db)
+    server_record = db.query(McpServer).filter(...).first()
+    
+    # python-sdk 표준 POST 메시지 처리
+    transport = transport_manager.get_transport(str(project_id), server_name)
+    await transport.handle_post_message(request.scope, request.receive, request._send)
+```
+
+#### **5. 인증 시스템 (DISABLE_AUTH 지원)**
+
+```python
+async def get_current_user_for_mcp_sse_bridge(request: Request, project_id: UUID, db: Session = Depends(get_db)) -> Optional[User]:
+    import os
+    
+    # DISABLE_AUTH 환경 변수 확인
+    disable_auth = os.getenv("DISABLE_AUTH", "").lower() == "true"
+    if disable_auth:
+        logger.info(f"⚠️ Authentication disabled for SSE bridge request to project {project_id}")
+        return None
+    
+    # JWT 인증 처리
+    user = await get_user_from_jwt_token(request, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    return user
+```
+
+### **FastAPI 앱 통합**
+
+**파일**: `src/mcp_orch/api/app.py`
+
+```python
+def create_app(settings: Settings = None) -> FastAPI:
+    # ...
+    
+    # 라우터 등록 (순서 중요: 더 구체적인 라우터 먼저)
+    app.include_router(mcp_sdk_sse_bridge_router)  # 🚀 NEW: python-sdk 표준 + mcp-orch URL 하이브리드 (최우선)
+    app.include_router(mcp_sse_transport_router)   # 기존 구현들 (호환성)
+    # ...
+```
+
+### **핵심 장점 및 성과**
+
+✅ **완전한 호환성**: Cursor, Claude Code, Cline, Inspector 모든 MCP 클라이언트 지원  
+✅ **URL 구조 유지**: `/projects/{project_id}/servers/{server_name}/sse` 프로젝트별 격리  
+✅ **실제 도구 프록시**: brave-search 등 실제 MCP 서버의 도구 동적 로드 및 실행  
+✅ **python-sdk 표준**: SseServerTransport + Server 클래스로 표준 준수  
+✅ **인증 유연성**: JWT 토큰 + DISABLE_AUTH=true 개발 지원  
+✅ **자동 유지보수**: python-sdk 업데이트 시 자동 호환성 유지  
+
+### **테스트 방법**
+
+1. **환경 설정**:
+   ```bash
+   export DISABLE_AUTH=true  # 개발 환경에서
+   ```
+
+2. **mcp-orch 서버 시작**:
+   ```bash
+   cd /Users/yun/work/ai/mcp/mcp-orch
+   uv run mcp-orch server
+   ```
+
+3. **Inspector 연결 테스트**:
+   ```bash
+   cd /Users/yun/work/ai/mcp/inspector
+   DANGEROUSLY_OMIT_AUTH=true npm run dev
+   # URL: http://localhost:8000/projects/{project_id}/servers/{server_name}/sse
+   ```
+
+4. **도구 확인**: Inspector에서 brave-search 도구들(web_search, brave_search 등) 목록 확인
+
+### **문제 해결 체크리스트**
+
+- [ ] `DISABLE_AUTH=true` 환경 변수 설정 확인
+- [ ] 프로젝트 ID와 서버명이 데이터베이스에 존재하는지 확인
+- [ ] brave-search 서버가 활성화(is_enabled=true) 상태인지 확인
+- [ ] mcp-orch 서버 로그에서 도구 로드 성공 메시지 확인
+- [ ] Inspector/클라이언트에서 실제 도구 목록이 표시되는지 확인
 
 ---
 
