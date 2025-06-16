@@ -176,14 +176,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       );
       const currentUserRole = currentUserMember?.role || null;
       
-      console.log('🔍 loadProject 디버깅:', {
-        projectId,
-        projectName: project.name,
-        members: project.members,
-        currentUserMember,
-        currentUserRole
-      });
-      
       set({ 
         selectedProject: project, 
         currentUserRole, 

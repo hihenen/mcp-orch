@@ -180,21 +180,20 @@ function IndividualServerForm({
   );
 }
 
-// JSON 일괄 추가 폼 컴포넌트
+// JSON 편집/추가 폼 컴포넌트
 function JsonBulkAddForm({ 
   jsonConfig, 
   setJsonConfig, 
-  projectId, 
-  onServerAdded, 
-  onOpenChange 
+  onJsonSubmit,
+  isLoading,
+  isEditMode = false
 }: {
   jsonConfig: string;
   setJsonConfig: (value: string) => void;
-  projectId: string;
-  onServerAdded: (server: ServerConfig) => void;
-  onOpenChange: (open: boolean) => void;
+  onJsonSubmit: () => void;
+  isLoading: boolean;
+  isEditMode?: boolean;
 }) {
-  const [isLoading, setIsLoading] = useState(false);
 
   // JSON 예시 설정 (간단한 형식)
   const exampleConfig = `{
@@ -240,109 +239,23 @@ function JsonBulkAddForm({
   }
 }`;
 
-  // JSON 일괄 추가 처리
-  const handleJsonSubmit = async () => {
-    if (!jsonConfig.trim()) {
-      alert('JSON 설정을 입력해주세요.');
-      return;
-    }
-
-    try {
-      const config = JSON.parse(jsonConfig);
-      
-      // 입력된 JSON이 이미 mcpServers 래퍼를 가지고 있는지 확인
-      let mcpServers;
-      if (config.mcpServers && typeof config.mcpServers === 'object') {
-        // 기존 형식: mcpServers 래퍼가 있음
-        mcpServers = config.mcpServers;
-      } else if (typeof config === 'object' && config !== null) {
-        // 새로운 형식: 서버 설정만 있음 - 자동으로 래퍼 추가
-        mcpServers = config;
-      } else {
-        throw new Error('올바른 MCP 설정 형식이 아닙니다.');
-      }
-
-      setIsLoading(true);
-      const servers = Object.entries(mcpServers);
-      let successCount = 0;
-      let errorCount = 0;
-      const errors: string[] = [];
-
-      for (const [serverName, serverConfig] of servers) {
-        try {
-          const server = serverConfig as any;
-          
-          const response = await fetch(`/api/projects/${projectId}/servers`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: serverName,
-              description: server.description || `${serverName} MCP 서버`,
-              transport_type: server.type === 'sse' ? 'sse' : 'stdio',
-              command: server.command,
-              args: server.args || [],
-              env: server.env || {},
-              cwd: server.cwd || null
-            }),
-            credentials: 'include'
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || '서버 추가 실패');
-          }
-
-          successCount++;
-          
-          // 콜백 호출 (UI 업데이트용)
-          onServerAdded({
-            name: serverName,
-            description: server.description || `${serverName} MCP 서버`,
-            transport: server.type === 'sse' ? 'sse' : 'stdio',
-            command: server.command,
-            args: server.args || [],
-            env: server.env || {},
-            cwd: server.cwd
-          });
-
-        } catch (error) {
-          errorCount++;
-          errors.push(`${serverName}: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
-        }
-      }
-
-      // 결과 메시지
-      if (successCount > 0 && errorCount === 0) {
-        alert(`성공: ${successCount}개 서버가 모두 추가되었습니다.`);
-        setJsonConfig('');
-        onOpenChange(false);
-      } else if (successCount > 0 && errorCount > 0) {
-        alert(`부분 성공: ${successCount}개 서버 추가 성공, ${errorCount}개 실패\n\n실패 목록:\n${errors.join('\n')}`);
-      } else {
-        alert(`실패: 모든 서버 추가에 실패했습니다.\n\n오류 목록:\n${errors.join('\n')}`);
-      }
-
-    } catch (error) {
-      console.error('JSON 파싱 오류:', error);
-      alert(`JSON 형식 오류: ${error instanceof Error ? error.message : '올바른 JSON 형식이 아닙니다.'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">MCP 설정 JSON</h3>
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm"
-            onClick={() => setJsonConfig(exampleConfig)}
-          >
-            예시 불러오기
-          </Button>
+          <h3 className="text-sm font-medium">
+            {isEditMode ? '서버 설정 JSON 편집' : 'MCP 설정 JSON'}
+          </h3>
+          {!isEditMode && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={() => setJsonConfig(exampleConfig)}
+            >
+              예시 불러오기
+            </Button>
+          )}
         </div>
         
         <div className="space-y-2">
@@ -351,7 +264,10 @@ function JsonBulkAddForm({
             id="jsonConfig"
             value={jsonConfig}
             onChange={(e) => setJsonConfig(e.target.value)}
-            placeholder="서버 설정 JSON을 붙여넣으세요..."
+            placeholder={isEditMode ? 
+              "현재 서버 설정이 JSON 형식으로 표시됩니다. 필요한 부분을 수정하세요..." : 
+              "서버 설정 JSON을 붙여넣으세요..."
+            }
             rows={15}
             className="font-mono text-sm"
           />
@@ -360,20 +276,34 @@ function JsonBulkAddForm({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-medium text-blue-900 mb-2">사용 방법</h4>
           <ul className="text-sm text-blue-700 space-y-1">
-            <li>• 기존 MCP 설정 또는 서버 설정만 붙여넣으세요</li>
-            <li>• "예시 불러오기" 버튼으로 간단한 형식을 확인하세요</li>
-            <li>• "서버명": {`{"disabled": false, "command": "npx", ...}`} 형식 지원</li>
-            <li>• mcpServers 래퍼가 있어도 자동으로 처리됩니다</li>
-            <li>• 여러 서버를 한 번에 추가할 수 있습니다</li>
+            {isEditMode ? (
+              <>
+                <li>• 현재 서버 설정이 JSON 형식으로 표시됩니다</li>
+                <li>• 필요한 부분을 직접 수정하고 저장하세요</li>
+                <li>• 서버 이름, 명령어, 환경변수 등을 편집할 수 있습니다</li>
+                <li>• JSON 형식이 유효한지 확인해주세요</li>
+              </>
+            ) : (
+              <>
+                <li>• 기존 MCP 설정 또는 서버 설정만 붙여넣으세요</li>
+                <li>• "예시 불러오기" 버튼으로 간단한 형식을 확인하세요</li>
+                <li>• "서버명": {`{"disabled": false, "command": "npx", ...}`} 형식 지원</li>
+                <li>• mcpServers 래퍼가 있어도 자동으로 처리됩니다</li>
+                <li>• 여러 서버를 한 번에 추가할 수 있습니다</li>
+              </>
+            )}
           </ul>
         </div>
 
         <Button 
-          onClick={handleJsonSubmit} 
+          onClick={onJsonSubmit} 
           disabled={isLoading || !jsonConfig.trim()}
           className="w-full"
         >
-          {isLoading ? '서버 추가 중...' : 'JSON에서 서버 일괄 추가'}
+          {isLoading ? 
+            (isEditMode ? '서버 수정 중...' : '서버 추가 중...') : 
+            (isEditMode ? 'JSON 설정으로 서버 수정' : 'JSON에서 서버 일괄 추가')
+          }
         </Button>
       </div>
     </div>
@@ -474,10 +404,28 @@ export function AddServerDialog({
     updateField('env', newEnv);
   };
 
+  // 서버 설정을 JSON으로 변환 (편집 모드용)
+  const convertServerToJson = (serverConfig: ServerConfig) => {
+    const mcpServerConfig = {
+      [serverConfig.name]: {
+        disabled: false,
+        timeout: 30,
+        type: serverConfig.transport === 'sse' ? 'sse' : 'stdio',
+        command: serverConfig.command,
+        args: serverConfig.args || [],
+        ...(Object.keys(serverConfig.env || {}).length > 0 && { env: serverConfig.env }),
+        ...(serverConfig.cwd && { cwd: serverConfig.cwd }),
+        ...(serverConfig.description && { description: serverConfig.description })
+      }
+    };
+    
+    return JSON.stringify({ mcpServers: mcpServerConfig }, null, 2);
+  };
+
   // 편집 모드일 때 폼 데이터 초기화
   useEffect(() => {
     if (editServer) {
-      setFormData({
+      const serverConfig = {
         name: editServer.name,
         description: editServer.description || '',
         transport: editServer.transport || 'stdio',
@@ -485,9 +433,15 @@ export function AddServerDialog({
         args: editServer.args || [],
         env: editServer.env || {},
         cwd: editServer.cwd || ''
-      });
+      };
+      
+      setFormData(serverConfig);
+      
+      // 편집 모드일 때 JSON 탭을 현재 서버 설정으로 초기화
+      setJsonConfig(convertServerToJson(serverConfig));
     } else {
       resetForm();
+      setJsonConfig('');
     }
   }, [editServer, open]);
 
@@ -598,19 +552,18 @@ export function AddServerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* 편집 모드가 아닐 때만 탭 표시 */}
-        {!isEditMode ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="individual" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                개별 추가
-              </TabsTrigger>
-              <TabsTrigger value="json" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                추가
-              </TabsTrigger>
-            </TabsList>
+        {/* 편집 모드와 추가 모드 모두 탭 표시 */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="individual" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              {isEditMode ? '개별 편집' : '개별 추가'}
+            </TabsTrigger>
+            <TabsTrigger value="json" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {isEditMode ? 'JSON 편집' : 'JSON 추가'}
+            </TabsTrigger>
+          </TabsList>
 
             {/* 개별 추가 탭 */}
             <TabsContent value="individual" className="space-y-6">
@@ -632,36 +585,17 @@ export function AddServerDialog({
               </form>
             </TabsContent>
 
-            {/* JSON 일괄 추가 탭 */}
+            {/* JSON 편집/추가 탭 */}
             <TabsContent value="json" className="space-y-6">
               <JsonBulkAddForm 
                 jsonConfig={jsonConfig}
                 setJsonConfig={setJsonConfig}
-                projectId={projectId}
-                onServerAdded={onServerAdded}
-                onOpenChange={onOpenChange}
+                onJsonSubmit={handleJsonSubmit}
+                isLoading={isLoading}
+                isEditMode={isEditMode}
               />
             </TabsContent>
-          </Tabs>
-        ) : (
-          /* 편집 모드일 때는 기존 폼만 표시 */
-          <form onSubmit={handleSubmit}>
-            <IndividualServerForm 
-              formData={formData}
-              updateField={updateField}
-              newArg={newArg}
-              setNewArg={setNewArg}
-              addArg={addArg}
-              removeArg={removeArg}
-              newEnvKey={newEnvKey}
-              setNewEnvKey={setNewEnvKey}
-              newEnvValue={newEnvValue}
-              setNewEnvValue={setNewEnvValue}
-              addEnvVar={addEnvVar}
-              removeEnvVar={removeEnvVar}
-            />
-          </form>
-        )}
+        </Tabs>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
