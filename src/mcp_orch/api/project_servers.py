@@ -3,7 +3,7 @@
 MCP 서버 CRUD, 상태 관리, 토글 기능
 """
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 from datetime import datetime
 import logging
@@ -654,7 +654,7 @@ class ToolExecuteRequest(BaseModel):
 
 class ToolExecuteResponse(BaseModel):
     success: bool
-    result: Optional[dict] = None
+    result: Optional[Union[dict, str]] = None
     error: Optional[str] = None
     executed_at: str
 
