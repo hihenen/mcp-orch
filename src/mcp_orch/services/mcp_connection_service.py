@@ -20,28 +20,23 @@ class McpConnectionService:
     
     def __init__(self):
         self.active_connections: Dict[str, Any] = {}
-        self.server_status: Dict[str, str] = {}
-        self.server_tools: Dict[str, List[Dict]] = {}
     
     async def check_server_status(self, server_id: str, server_config: Dict) -> str:
-        """개별 MCP 서버 상태 확인"""
+        """개별 MCP 서버 상태 확인 (실시간)"""
         try:
             # 서버가 비활성화된 경우
             if server_config.get('disabled', False):
                 return "disabled"
             
-            # MCP 서버 연결 테스트
+            # MCP 서버 연결 테스트 (캐시 없이 실시간 확인)
             result = await self._test_mcp_connection(server_config)
             if result:
-                self.server_status[server_id] = "online"
                 return "online"
             else:
-                self.server_status[server_id] = "offline"
                 return "offline"
                 
         except Exception as e:
             logger.error(f"Error checking server {server_id} status: {e}")
-            self.server_status[server_id] = "error"
             return "error"
     
     async def _test_mcp_connection(self, server_config: Dict) -> bool:
@@ -50,7 +45,7 @@ class McpConnectionService:
             command = server_config.get('command', '')
             args = server_config.get('args', [])
             env = server_config.get('env', {})
-            timeout = server_config.get('timeout', 30)
+            timeout = server_config.get('timeout', 10)  # 실시간 조회를 위해 더 짧은 타임아웃
             
             if not command:
                 return False
@@ -131,7 +126,7 @@ class McpConnectionService:
             command = server_config.get('command', '')
             args = server_config.get('args', [])
             env = server_config.get('env', {})
-            timeout = server_config.get('timeout', 30)
+            timeout = server_config.get('timeout', 10)  # 실시간 조회를 위해 더 짧은 타임아웃
             
             if not command:
                 return []
@@ -292,14 +287,14 @@ class McpConnectionService:
             logger.error(f"Error building server config from DB: {e}")
             return None
     
-    def get_cached_status(self, server_id: str) -> str:
-        """캐시된 서버 상태 반환"""
-        return self.server_status.get(server_id, "unknown")
-    
-    def get_cached_tools_count(self, server_id: str) -> int:
-        """캐시된 도구 개수 반환"""
-        tools = self.server_tools.get(server_id, [])
-        return len(tools)
+    async def get_server_tools_count(self, server_id: str, server_config: Dict) -> int:
+        """서버 도구 개수 실시간 조회"""
+        try:
+            tools = await self.get_server_tools(server_id, server_config)
+            return len(tools)
+        except Exception as e:
+            logger.error(f"Error getting tools count for server {server_id}: {e}")
+            return 0
     
     async def call_tool(self, server_id: str, server_config: Dict, tool_name: str, arguments: Dict) -> Any:
         """MCP 서버의 도구 호출"""
