@@ -643,3 +643,98 @@ async def refresh_project_server_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to refresh server status: {str(e)}"
         )
+
+
+class ToolExecuteRequest(BaseModel):
+    arguments: dict = Field(default_factory=dict, description="Tool arguments")
+
+
+class ToolExecuteResponse(BaseModel):
+    success: bool
+    result: Optional[dict] = None
+    error: Optional[str] = None
+    executed_at: str
+
+
+@router.post("/projects/{project_id}/servers/{server_id}/tools/{tool_name}/execute", 
+             response_model=ToolExecuteResponse)
+async def execute_project_server_tool(
+    project_id: UUID,
+    server_id: UUID,
+    tool_name: str,
+    request: ToolExecuteRequest,
+    current_user: User = Depends(get_current_user_for_project_servers),
+    db: Session = Depends(get_db)
+):
+    """프로젝트 서버의 특정 도구 실행"""
+    
+    # 프로젝트 접근 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # 서버 조회
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    if not server.is_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Server is disabled"
+        )
+    
+    try:
+        # 서버 설정 구성
+        server_config = mcp_connection_service._build_server_config_from_db(server)
+        if not server_config:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Server configuration is incomplete"
+            )
+        
+        # 도구 실행
+        logger.info(f"Executing tool '{tool_name}' on server '{server.name}' with arguments: {request.arguments}")
+        
+        result = await mcp_connection_service.call_tool(
+            server.name, 
+            server_config, 
+            tool_name, 
+            request.arguments
+        )
+        
+        # 서버 사용 시간 업데이트
+        server.last_used_at = datetime.utcnow()
+        db.commit()
+        
+        return ToolExecuteResponse(
+            success=True,
+            result=result,
+            executed_at=datetime.utcnow().isoformat()
+        )
+        
+    except Exception as e:
+        logger.error(f"Tool execution failed: {str(e)}")
+        return ToolExecuteResponse(
+            success=False,
+            error=str(e),
+            executed_at=datetime.utcnow().isoformat()
+        )

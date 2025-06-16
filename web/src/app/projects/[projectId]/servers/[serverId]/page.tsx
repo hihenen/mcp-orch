@@ -20,6 +20,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
+import { ToolExecutionModal } from '@/components/tools/ToolExecutionModal';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -27,6 +28,15 @@ interface Tool {
   name: string;
   description: string;
   schema: any;
+}
+
+interface MCPTool {
+  id: string;
+  name: string;
+  description: string;
+  namespace: string;
+  serverId: string;
+  inputSchema?: any;
 }
 
 interface ServerDetail {
@@ -58,6 +68,8 @@ export default function ProjectServerDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [tools, setTools] = useState<Tool[]>([]);
   const [toolsLoading, setToolsLoading] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
+  const [isToolModalOpen, setIsToolModalOpen] = useState(false);
 
   // 서버 상세 정보 로드
   const loadServerDetail = async () => {
@@ -248,6 +260,28 @@ export default function ProjectServerDetailPage() {
       console.error('서버 삭제 오류:', error);
       toast.error(`서버 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
     }
+  };
+
+  // 도구 테스트 핸들러
+  const handleTestTool = (tool: Tool) => {
+    // Tool을 MCPTool 형식으로 변환
+    const mcpTool: MCPTool = {
+      id: `${server?.name}.${tool.name}`,
+      name: tool.name,
+      description: tool.description,
+      namespace: `${projectId}.${serverId}`, // projectId와 serverId를 포함
+      serverId: server?.id || '',
+      inputSchema: tool.schema
+    };
+    
+    setSelectedTool(mcpTool);
+    setIsToolModalOpen(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleCloseToolModal = () => {
+    setIsToolModalOpen(false);
+    setSelectedTool(null);
   };
 
   if (isLoading) {
@@ -712,7 +746,11 @@ export default function ProjectServerDetailPage() {
                           </div>
                           
                           <div className="flex items-center gap-2 ml-4">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleTestTool(tool)}
+                            >
                               <Play className="h-3 w-3 mr-1" />
                               테스트
                             </Button>
@@ -936,6 +974,13 @@ export default function ProjectServerDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 도구 실행 모달 */}
+      <ToolExecutionModal
+        tool={selectedTool}
+        isOpen={isToolModalOpen}
+        onClose={handleCloseToolModal}
+      />
     </div>
   );
 }
