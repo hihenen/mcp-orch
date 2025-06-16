@@ -26,7 +26,7 @@ export const DELETE = auth(async function DELETE(req, { params }) {
     const { projectId, keyId } = await params;
 
     // 4. 백엔드 API 호출
-    const response = await fetch(`${BACKEND_URL}/projects/${projectId}/api-keys/${keyId}`, {
+    const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/api-keys/${keyId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -782,11 +782,52 @@
   - [x] Git commit으로 변경사항 저장
   - [x] CLAUDE.md 컴포넌트 분리 가이드라인 문서화
 
+### TASK_050: mcp-orch 프로젝트 API 키 관리 시스템 라우터 등록 및 통합 완료 🔄 진행중
+**핵심 목표**: 기존에 구현된 API 키 관리 백엔드 파일들을 FastAPI 앱에 등록하고 프론트엔드와 완전히 연동하여 GitHub 스타일 API 키 관리 시스템 완성
+
+- [x] **기존 API 키 백엔드 파일 분석**
+  - [x] `/src/mcp_orch/api/project_api_keys.py` 완전 구현 확인
+  - [x] JWT 인증 기반 프로젝트별 API 키 CRUD 완료
+  - [x] Owner/Developer 권한 제한 시스템 구현됨
+  - [x] 보안 해시 및 프리픽스 시스템 완료
+
+- [x] **누락된 라우터 등록 발견**
+  - [x] `project_api_keys` 라우터가 app.py에 등록되지 않음 확인
+  - [x] `project_members` 라우터도 미등록 상태 확인
+  - [x] `project_favorites` 라우터도 미등록 상태 확인
+
+- [ ] **FastAPI 앱 라우터 등록**
+  - [ ] app.py에 project_api_keys_router import 추가
+  - [ ] app.py에 project_members_router import 추가
+  - [ ] app.py에 project_favorites_router import 추가
+  - [ ] 일반 REST API 라우터 섹션에 등록
+
+- [ ] **프론트엔드 API 라우트 생성**
+  - [ ] `/api/projects/[projectId]/api-keys` Next.js API 라우트
+  - [ ] JWT 토큰 기반 백엔드 호출 패턴 적용
+  - [ ] GET (목록), POST (생성), DELETE (삭제) 지원
+
+- [ ] **API 키 관리 UI 컴포넌트**
+  - [ ] GitHub 스타일 API 키 목록 테이블
+  - [ ] API 키 생성 다이얼로그 (이름, 설명, 만료일)
+  - [ ] 생성 후 전체 키 표시 및 클립보드 복사
+  - [ ] 보안 경고 메시지 및 키 저장 안내
+
+- [ ] **프로젝트 상세 페이지 통합**
+  - [ ] API Keys 탭 추가
+  - [ ] 권한 기반 접근 제어 (Owner/Developer만)
+  - [ ] API 키 목록 표시 및 관리 기능
+
+- [ ] **테스트 및 검증**
+  - [ ] API 키 생성/삭제 기능 테스트
+  - [ ] 권한 시스템 검증
+  - [ ] JWT 인증 연동 확인
+
 ## Progress Status
-- Current Progress: **✅ TASK_049 완료** - 멤버 역할 변경 API 라우트 구현 완료
-- Next Task: 테스트 및 검증
-- Last Update: 2025-06-17  
-- Automatic Check Feedback: **✅ TASK_043, TASK_044 모두 완료**
+- Current Progress: **✅ API 키 React 컴포넌트 분석 완료** - 프로젝트 상세 페이지에서 완전한 GitHub 스타일 API 키 관리 UI 발견
+- Next Task: FastAPI 라우터 등록 확인
+- Last Update: 2025-06-16  
+- Automatic Check Feedback: **🎯 API 키 프론트엔드 컴포넌트 완전 구현됨**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용

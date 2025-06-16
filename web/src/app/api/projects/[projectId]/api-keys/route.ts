@@ -28,7 +28,7 @@ export const GET = auth(async function GET(req) {
     const projectId = pathSegments[pathSegments.indexOf('projects') + 1];
 
     // 4. 백엔드 API 호출
-    const response = await fetch(`${BACKEND_URL}/projects/${projectId}/api-keys`, {
+    const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/api-keys`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
@@ -71,7 +71,7 @@ export const POST = auth(async function POST(req) {
     const pathSegments = url.pathname.split('/');
     const projectId = pathSegments[pathSegments.indexOf('projects') + 1];
 
-    const response = await fetch(`${BACKEND_URL}/projects/${projectId}/api-keys`, {
+    const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/api-keys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

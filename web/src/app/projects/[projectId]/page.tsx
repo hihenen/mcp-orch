@@ -87,7 +87,8 @@ export default function ProjectDetailPage() {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [apiKeyData, setApiKeyData] = useState({
     name: '',
-    description: ''
+    description: '',
+    expires_at: null as string | null
   });
   const [newlyCreatedApiKey, setNewlyCreatedApiKey] = useState<string | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
@@ -200,8 +201,15 @@ export default function ProjectDetailPage() {
     }
 
     try {
+      // 만료일 처리 - YYYY-MM-DD 형식을 ISO 형식으로 변환
+      const expires_at = apiKeyData.expires_at ? 
+        new Date(apiKeyData.expires_at + 'T23:59:59.999Z').toISOString() : 
+        null;
+
       const response = await createProjectApiKey(projectId, {
-        name: apiKeyData.name.trim()
+        name: apiKeyData.name.trim(),
+        description: apiKeyData.description.trim() || null,
+        expires_at
       });
 
       // 새로 생성된 API 키 저장 (전체 키)
@@ -215,7 +223,8 @@ export default function ProjectDetailPage() {
       // 폼 리셋
       setApiKeyData({
         name: '',
-        description: ''
+        description: '',
+        expires_at: null
       });
       
       // 다이얼로그 닫기
@@ -986,6 +995,35 @@ export default function ProjectDetailPage() {
                         onChange={(e) => setApiKeyData(prev => ({ ...prev, description: e.target.value }))}
                         rows={3}
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="apiKeyExpiration">만료일</Label>
+                      <Select 
+                        value={apiKeyData.expires_at || "never"} 
+                        onValueChange={(value) => {
+                          const expires_at = value === "never" ? null : value;
+                          setApiKeyData(prev => ({ ...prev, expires_at }));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="만료일을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="never">만료 안함 (Never expires)</SelectItem>
+                          <SelectItem value={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                            7일 후
+                          </SelectItem>
+                          <SelectItem value={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                            30일 후
+                          </SelectItem>
+                          <SelectItem value={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                            90일 후
+                          </SelectItem>
+                          <SelectItem value={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                            1년 후
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <DialogFooter>
