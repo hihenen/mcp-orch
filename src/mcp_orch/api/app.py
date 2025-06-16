@@ -28,6 +28,7 @@ from .fastmcp_impl import router as fastmcp_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router
 from .tools import router as tools_router
+from .profile import router as profile_router
 from starlette.routing import Mount
 from mcp.server.sse import SseServerTransport
 
@@ -99,6 +100,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(servers_router)
     app.include_router(server_logs_router)
     app.include_router(tools_router)
+    app.include_router(profile_router)  # 🔧 프로필 관리 API
     app.include_router(fastmcp_router)
     
     # 2. 프로젝트 관리 API (일반 API 라우터)

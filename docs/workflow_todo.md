@@ -481,7 +481,47 @@
 
 ## 현재 진행 중인 작업
 
-### TASK_044-SERVER-COMPONENT-REFACTOR: 서버 상세 페이지 컴포넌트 분리 (1046줄 → 200줄) 🔄 진행중
+### TASK_047: 프로필 변경 기능 개발 🔄 진행중
+**핵심 목표**: 사용자 프로필 정보(이름, 이메일, 비밀번호 등)를 변경할 수 있는 완전한 프로필 관리 시스템 구현
+
+- [x] **프로필 페이지 구조 설계**
+  - [x] /app/profile/page.tsx 생성
+  - [x] 프로필 정보 표시 섹션 (이름, 이메일, 가입일 등)
+  - [x] 정보 편집 폼 섹션 (이름, 비밀번호 변경)
+  - [x] 계정 설정 섹션 (계정 삭제 등)
+
+- [x] **백엔드 API 설계 및 구현**
+  - [x] 프로필 조회 API: GET /api/profile
+  - [x] 프로필 수정 API: PUT /api/profile
+  - [x] 비밀번호 변경 API: PUT /api/profile/password
+  - [x] 계정 삭제 API: DELETE /api/profile (구현 예정 상태)
+  - [x] User 모델에 created_at, updated_at 필드 추가
+  - [x] 데이터베이스 마이그레이션 실행
+
+- [x] **프론트엔드 UI 컴포넌트**
+  - [x] ProfileForm 컴포넌트 (이름, 이메일 편집)
+  - [x] PasswordChangeForm 컴포넌트 (기존/새 비밀번호)
+  - [x] AccountDangerZone 컴포넌트 (계정 삭제)
+  - [x] 유효성 검증 및 에러 처리
+
+- [x] **JWT 인증 기반 API 연동**
+  - [x] NextAuth.js 세션 기반 프로필 정보 로드
+  - [x] JWT 토큰을 통한 백엔드 API 호출
+  - [x] 프로필 변경 후 세션 정보 업데이트
+
+- [x] **보안 및 검증**
+  - [x] 비밀번호 강도 검증
+  - [x] 이메일 중복 확인 (백엔드 수준)
+  - [x] 계정 삭제 확인 다이얼로그
+  - [x] 변경 후 확인 메시지
+
+- [ ] **테스트 및 검증**
+  - [ ] 프로필 페이지 접근 테스트
+  - [ ] 프로필 정보 수정 테스트
+  - [ ] 비밀번호 변경 테스트
+  - [ ] 권한 및 인증 검증
+
+### TASK_044-SERVER-COMPONENT-REFACTOR: 서버 상세 페이지 컴포넌트 분리 (1046줄 → 200줄) ✅ 완료
 **핵심 목표**: CLAUDE.md 컴포넌트 분리 지침에 따라 1046줄의 거대한 서버 상세 페이지를 관리 가능한 작은 단위로 분리하여 유지보수성과 개발 효율성 향상
 
 - [x] **Phase 1: 폴더 구조 생성 및 탭 컴포넌트 분리**
@@ -721,8 +761,8 @@
   - [x] CLAUDE.md 컴포넌트 분리 가이드라인 문서화
 
 ## Progress Status
-- Current Progress: **✅ TASK_044 완료** - 서버 상세 페이지 컴포넌트 분리 완료 (1046줄 → 213줄)
-- Next Task: 추가 컴포넌트 최적화 작업 또는 새로운 기능 개발
+- Current Progress: **🔄 TASK_047 진행중** - 프로필 변경 기능 개발
+- Next Task: 프로필 페이지 구조 설계 및 백엔드 API 구현
 - Last Update: 2025-06-16  
 - Automatic Check Feedback: **✅ TASK_043, TASK_044 모두 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
