@@ -196,61 +196,46 @@ function JsonBulkAddForm({
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
-  // JSON 예시 설정
+  // JSON 예시 설정 (간단한 형식)
   const exampleConfig = `{
-  "mcpServers": {
-    "excel-mcp-server": {
-      "autoApprove": [
-        "write_sheet_data",
-        "read_sheet_data"
-      ],
-      "disabled": false,
-      "timeout": 300,
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@smithery/cli@latest",
-        "run",
-        "@negokaz/excel-mcp-server",
-        "--key",
-        "78f3339f-b944-49c3-bbcb-57e6aa079e2b"
-      ]
-    },
-    "brave-search": {
-      "autoApprove": [
-        "web_search",
-        "brave_search"
-      ],
-      "disabled": false,
-      "timeout": 60,
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
-      "env": {
-        "BRAVE_API_KEY": "your-brave-api-key-here"
-      }
-    },
-    "github-server": {
-      "autoApprove": [
-        "create_issue",
-        "search_repositories",
-        "get_repository"
-      ],
-      "disabled": false,
-      "timeout": 30,
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "env": {
-        "GITHUB_TOKEN": "your-github-token-here"
-      }
+  "excel-mcp-server": {
+    "disabled": false,
+    "timeout": 300,
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@smithery/cli@latest",
+      "run",
+      "@negokaz/excel-mcp-server",
+      "--key",
+      "78f3339f-b944-49c3-bbcb-57e6aa079e2b"
+    ]
+  },
+  "brave-search": {
+    "disabled": false,
+    "timeout": 60,
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-brave-search"
+    ],
+    "env": {
+      "BRAVE_API_KEY": "your-brave-api-key-here"
+    }
+  },
+  "github-server": {
+    "disabled": false,
+    "timeout": 30,
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-github"
+    ],
+    "env": {
+      "GITHUB_TOKEN": "your-github-token-here"
     }
   }
 }`;
@@ -265,12 +250,20 @@ function JsonBulkAddForm({
     try {
       const config = JSON.parse(jsonConfig);
       
-      if (!config.mcpServers || typeof config.mcpServers !== 'object') {
-        throw new Error('올바른 MCP 설정 형식이 아닙니다. mcpServers 객체가 필요합니다.');
+      // 입력된 JSON이 이미 mcpServers 래퍼를 가지고 있는지 확인
+      let mcpServers;
+      if (config.mcpServers && typeof config.mcpServers === 'object') {
+        // 기존 형식: mcpServers 래퍼가 있음
+        mcpServers = config.mcpServers;
+      } else if (typeof config === 'object' && config !== null) {
+        // 새로운 형식: 서버 설정만 있음 - 자동으로 래퍼 추가
+        mcpServers = config;
+      } else {
+        throw new Error('올바른 MCP 설정 형식이 아닙니다.');
       }
 
       setIsLoading(true);
-      const servers = Object.entries(config.mcpServers);
+      const servers = Object.entries(mcpServers);
       let successCount = 0;
       let errorCount = 0;
       const errors: string[] = [];
@@ -358,7 +351,7 @@ function JsonBulkAddForm({
             id="jsonConfig"
             value={jsonConfig}
             onChange={(e) => setJsonConfig(e.target.value)}
-            placeholder="MCP 설정 JSON을 붙여넣으세요..."
+            placeholder="서버 설정 JSON을 붙여넣으세요..."
             rows={15}
             className="font-mono text-sm"
           />
@@ -367,10 +360,11 @@ function JsonBulkAddForm({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-medium text-blue-900 mb-2">사용 방법</h4>
           <ul className="text-sm text-blue-700 space-y-1">
-            <li>• 기존 MCP 설정 파일의 내용을 붙여넣으세요</li>
+            <li>• 기존 MCP 설정 또는 서버 설정만 붙여넣으세요</li>
+            <li>• "예시 불러오기" 버튼으로 간단한 형식을 확인하세요</li>
+            <li>• "서버명": {"disabled": false, "command": "npx", ...} 형식 지원</li>
+            <li>• mcpServers 래퍼가 있어도 자동으로 처리됩니다</li>
             <li>• 여러 서버를 한 번에 추가할 수 있습니다</li>
-            <li>• "예시 불러오기" 버튼으로 형식을 확인하세요</li>
-            <li>• 각 서버는 개별적으로 검증되어 추가됩니다</li>
           </ul>
         </div>
 

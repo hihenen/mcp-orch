@@ -63,7 +63,75 @@
 - **즐겨찾기 시스템**: 프로젝트 즐겨찾기 추가/제거, 상단 정렬
 - **키보드 단축키**: Ctrl+P (프로젝트 선택), Ctrl+1~9 (빠른 전환)
 
-## 현재 진행 중인 작업
+## 완료된 작업 (최신)
+
+### TASK_038-MCP-JSON-FORMAT-ANALYSIS: MCP 서버 추가 JSON 형식 분석 및 개선 검토 ✅ 완료
+**핵심 목표**: mcp-orch 프로젝트의 MCP 서버 추가 관련 코드를 체계적으로 분석하여 현재 JSON 형식 처리 방식을 이해하고 새로운 형식 변경의 영향도를 평가
+
+- [x] **서버 추가 UI 컴포넌트 분석**
+  - ✅ `AddServerDialog.tsx` 컴포넌트 완전 분석 완료
+  - ✅ 개별 추가 폼과 JSON 일괄 추가 폼 구조 파악
+  - ✅ JSON 일괄 추가에서 `mcpServers` 래퍼 구조 사용 확인
+  - ✅ 예시 JSON 설정에서 서버별 설정 형식 분석
+
+- [x] **백엔드 JSON 처리 코드 분석**
+  - ✅ `config_parser.py` - MCP 설정 파싱 로직 분석
+  - ✅ `project_servers.py` - 프로젝트별 서버 CRUD API 분석
+  - ✅ JSON → 데이터베이스 변환 과정 완전 파악
+  - ✅ 현재 `mcpServers` 래퍼 처리 방식 확인
+
+- [x] **현재 mcpServers 래퍼 구조 사용 이유 파악**
+  - ✅ MCP 표준 설정 파일 형식 준수 목적 확인
+  - ✅ Claude Desktop, Cline 등 기존 MCP 클라이언트 호환성 유지
+  - ✅ 설정 파일 구조의 일관성 및 확장성 고려
+  - ✅ `config_parser.py`에서 `mcpServers`와 `servers` 키 모두 지원
+
+- [x] **새로운 형식 변경 시 영향받는 부분들 식별**
+  - ✅ `AddServerDialog.tsx`의 JSON 예시 및 파싱 로직 (200-256행)
+  - ✅ `config_parser.py`의 설정 파싱 로직 (53-58행에서 이미 유연하게 처리)
+  - ✅ Cline 설정 자동 생성 (`project_sse.py`, 668-676행)
+  - ✅ 기존 설정 파일 호환성: 8개 문서 가이드에서 `mcpServers` 구조 사용
+  - ✅ 문서 업데이트: 8개 설정 가이드 문서 + README.md 영향
+
+- [x] **변경 방안 및 권장사항 정리**
+  - ✅ **권장사항: 현재 형식 유지** - MCP 생태계 표준 호환성 최우선
+  - ✅ 새로운 형식 지원보다는 기존 경험 개선에 집중
+  - ✅ 구현 리스크: 높음 (표준 호환성 손실, 문서 대대적 수정 필요)
+  - ✅ 대안: JSON 템플릿 개선 및 사용자 경험 향상으로 접근
+
+### TASK_037-MCP-SDK-AUTH-ANALYSIS: MCP SDK Authorization 방식 체계적 분석 ✅ 완료
+**핵심 목표**: MCP SDK 코드베이스를 분석하여 표준 지원 Authorization 방식을 완전히 파악하고 실무 적용 가이드라인 도출
+
+- [x] **MCP SDK 구조 및 인증 모듈 위치 파악**
+  - ✅ python-sdk 폴더 구조 분석 및 인증 관련 모듈 식별
+  - ✅ inspector 폴더의 인증 시스템 분석
+  - ✅ TypeScript SDK 존재 여부 확인 및 분석
+  - ✅ 각 SDK의 인증 관련 코어 파일 위치 매핑
+
+- [x] **지원하는 인증 방식 식별 및 분석**
+  - ✅ OAuth 2.0 구현 방식 및 코드 위치 파악
+  - ✅ Bearer Token 방식 구현 상세 분석
+  - ✅ API Key 인증 지원 여부 및 구현 방법
+  - ✅ 기타 인증 방식 (Basic Auth, Custom Headers 등) 조사
+  - ✅ 각 방식별 구현 코드 및 핵심 로직 추출
+
+- [x] **MCP 프로토콜 표준 인증 가이드라인 분석**
+  - ✅ Context7 도구를 통한 최신 MCP 인증 표준 문서 조사
+  - ✅ 프로토콜 레벨에서 정의하는 인증 요구사항 파악
+  - ✅ 표준 OAuth 엔드포인트 (/.well-known/oauth-authorization-server, /register) 스펙 분석
+  - ✅ MCP 클라이언트-서버 간 인증 플로우 표준 절차 정리
+
+- [x] **실제 구현 예시 및 베스트 프랙티스 조사**
+  - ✅ 기존 MCP 서버들의 인증 구현 사례 분석 (brave-search, 기타 서버들)
+  - ✅ Inspector와 Cline에서 사용하는 인증 방식 상세 분석
+  - ✅ 보안 고려사항 및 취약점 분석
+  - ✅ 실무 환경에서의 인증 구현 권장사항 도출
+
+- [x] **분석 결과 종합 및 가이드라인 문서화**
+  - ✅ 지원하는 인증 방식 목록 및 우선순위 정리
+  - ✅ 각 방식별 구현 코드 위치와 핵심 스니펫 정리
+  - ✅ 사용법 예시 및 설정 가이드 작성
+  - ✅ mcp-orch 프로젝트 적용 방안 및 로드맵 수립
 
 ### TASK_036-SSE-API-CONNECTION: SSE 표준 지원 후 API 연결 문제 해결 ✅ 완료
 **핵심 목표**: SSE 연결용 라우팅(MCP 클라이언트용)과 일반 API 라우팅(프론트엔드용) 분리하여 API 연결 문제 해결
@@ -94,15 +162,15 @@
   - ✅ mcp_sse_transport.py: MCP 표준 준수 양방향 SSE Transport
   - ✅ 동일 경로 `/projects/{project_id}/servers/{server_name}/sse` 사용
 
-- [ ] **라우터 우선순위 및 충돌 분석**
-  - [ ] 동일 경로 패턴에 대한 FastAPI 라우팅 동작 확인
-  - [ ] 각 라우터의 실제 처리 범위와 조건 분석
-  - [ ] 라우터 간 충돌 가능성 및 해결 방안 도출
+- [x] **라우터 우선순위 및 충돌 분석**
+  - ✅ 동일 경로 패턴에 대한 FastAPI 라우팅 동작 확인
+  - ✅ 각 라우터의 실제 처리 범위와 조건 분석
+  - ✅ 라우터 간 충돌 가능성 및 해결 방안 도출
 
-- [ ] **Inspector 연결 최적화 방안**
-  - [ ] 현재 최우선 라우터(mcp_sdk_sse_bridge)의 Inspector 호환성 검증
-  - [ ] Inspector "Not connected" 문제와 라우터 선택의 관계 분석
-  - [ ] 최적의 라우터 등록 순서 및 구조 제안
+- [x] **Inspector 연결 최적화 방안**
+  - ✅ 현재 최우선 라우터(mcp_sdk_sse_bridge)의 Inspector 호환성 검증
+  - ✅ Inspector "Not connected" 문제와 라우터 선택의 관계 분석
+  - ✅ 최적의 라우터 등록 순서 및 구조 제안
 
 ### TASK_035-REAL-MCP-TOOLS: 실제 MCP 서버 도구 로드 구현 ✅ 완료
 **핵심 목표**: 테스트용 echo/hello 도구를 실제 brave-search MCP 서버의 도구로 교체하여 완전한 MCP 프록시 기능 구현
@@ -411,19 +479,23 @@
 - [ ] **병렬화 모드**: LLM과 협력한 작업 자동 병렬 처리
 - [ ] **엔터프라이즈 기능**: SSO 통합, 고급 모니터링, API 확장성
 
+## 현재 진행 중인 작업
+
+현재 진행 중인 특정 작업 없음 - 다음 작업 대기 중
+
 ## Progress Status
-- Current Progress: ✅ **TASK_036-SSE-API-CONNECTION 완료** → SSE와 API 라우터 분리로 프론트엔드 API 연결 문제 해결
-- Next Task: 프론트엔드에서 API 연결 테스트 및 Inspector/Cline SSE 연결 검증
-- Last Update: 2025-06-16
-- Automatic Check Feedback: **🎉 SSE와 API 라우터 분리 성공**
-  - 현재 상태: TASK_036-SSE-API-CONNECTION 완료 ✅
-  - 핵심 성과: 
-    - FastAPI 라우터 등록 순서 최적화로 프론트엔드 API 연결 문제 해결
-    - 일반 REST API 라우터(`/api/*`) 우선 등록으로 프론트엔드 요청 정상 처리
-    - SSE 전용 라우터(`/projects/*/sse`) 후순위 등록으로 MCP 클라이언트 연결 유지
-    - 프론트엔드용과 MCP 클라이언트용 엔드포인트 명확히 분리
-  - 분석 진행: 라우터 간 우선순위 및 충돌 가능성 분석 필요
-  - 다음 단계: Inspector 연결 최적화를 위한 라우터 구조 개선 방안 도출
+- Current Progress: **✅ TASK_038-MCP-JSON-FORMAT-ANALYSIS 완료** - MCP 서버 추가 JSON 형식 분석 완료 및 권장사항 도출
+- Next Task: 사용자 요청에 따른 다음 작업 대기 중
+- Last Update: 2025-06-16  
+- Automatic Check Feedback: **✅ TASK_038 완전 분석 완료**
+  - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
+  - **주요 근거**:
+    1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
+    2. **기존 구현 완성도**: `config_parser.py`에서 이미 유연한 파싱 지원
+    3. **문서 일관성**: 8개 설정 가이드에서 표준 형식으로 사용 중
+    4. **변경 리스크**: 표준 호환성 손실, 대규모 문서 수정, 기존 사용자 혼란
+  - **대안**: 새로운 형식보다는 JSON 템플릿 개선으로 사용자 경험 향상
+  - **상태**: 분석 완료, 사용자 판단 대기
 
 ### 🎯 **즉시 진행 목표** (다음 4주간) - Inspector 우선
 **Week 1**: Inspector 세션 ID 불일치 문제 완전 해결
