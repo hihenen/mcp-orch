@@ -528,7 +528,7 @@
   - [x] get-library-docs 도구 테스트 (예: 특정 라이브러리 문서 조회)
   - [x] 실행 결과 표시 및 사용자 경험 검증
 
-### TASK_042-BACKEND-TOOL-EXECUTION-API-SEARCH: 백엔드 도구 실행 API 엔드포인트 조사 🔄 진행중
+### TASK_042-BACKEND-TOOL-EXECUTION-API-SEARCH: 백엔드 도구 실행 API 엔드포인트 조사 ✅ 완료
 **핵심 목표**: mcp-orch 백엔드에서 실제로 지원하는 도구 실행 API 엔드포인트를 찾고 프론트엔드가 호출하는 경로와 일치하는지 확인
 
 - [x] **FastAPI 라우터 파일 검색**
@@ -541,11 +541,18 @@
   - [x] `mcp_connection_service.py` - MCP 서버 연결 서비스 (call_tool 메서드 사용)
   - [x] `tools.py` - 전역 도구 API (127-204라인: execute_tool, mock 구현)
 
-- [x] **실제 작동하는 도구 실행 경로 확인**
+- [x] **실제 작동하는 도구 실행 경로 확인 및 수정**
   - [x] **발견된 문제**: `project_servers.py` 라우터가 `app.py`에 등록되지 않음
   - [x] **프론트엔드 경로**: `POST /api/projects/{projectId}/servers/{serverId}/tools/{toolName}/execute`
   - [x] **백엔드 구현**: `project_servers.py:662-743` `execute_project_server_tool` 함수 존재
-  - [x] **문제 원인**: app.py에서 project_servers 라우터 import 및 등록 누락
+  - [x] **문제 해결**: app.py에 project_servers_router import 및 등록 완료
+
+- [x] **최종 결과 정리**
+  - [x] **올바른 API 경로**: `/api/projects/{project_id}/servers/{server_id}/tools/{tool_name}/execute`
+  - [x] **프론트엔드**: Next.js API 라우트에서 JWT 토큰으로 백엔드 호출
+  - [x] **백엔드**: project_servers.py의 execute_project_server_tool 함수로 처리
+  - [x] **도구 실행**: mcp_connection_service.call_tool()로 실제 MCP 서버 호출
+  - [x] **누락 문제 해결**: app.py에 project_servers_router 등록 완료
 
 ### TASK_041-FRONTEND-TOOL-EXECUTION-ANALYSIS: 프론트엔드 도구 실행 API 호출 코드 분석 ✅ 완료
 **핵심 목표**: mcp-orch 프로젝트에서 프론트엔드가 도구 실행을 위해 사용하는 API 호출 코드를 체계적으로 분석하여 완전한 데이터 흐름 파악
@@ -580,8 +587,8 @@
   - ✅ ToolExecutionModal 모달 표시 (라인 979-983)
 
 ## Progress Status
-- Current Progress: **🔄 TASK_042-BACKEND-TOOL-EXECUTION-API-SEARCH 진행중** - 백엔드 도구 실행 API 엔드포인트 조사 중
-- Next Task: 백엔드 API 구조 완전 분석 및 누락된 엔드포인트 식별
+- Current Progress: **✅ TASK_042-BACKEND-TOOL-EXECUTION-API-SEARCH 완료** - 백엔드 도구 실행 API 엔드포인트 조사 또는 수정 완료
+- Next Task: 사용자 테스트 대기 - 프론트엔드에서 도구 실행 테스트
 - Last Update: 2025-06-16  
 - Automatic Check Feedback: **✅ TASK_041 구현 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
