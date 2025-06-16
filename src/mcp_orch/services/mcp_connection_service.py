@@ -47,7 +47,10 @@ class McpConnectionService:
             env = server_config.get('env', {})
             timeout = server_config.get('timeout', 10)  # 실시간 조회를 위해 더 짧은 타임아웃
             
+            logger.info(f"🔍 Testing MCP connection: {command} {' '.join(args)}")
+            
             if not command:
+                logger.warning("❌ No command specified for MCP server")
                 return False
             
             # MCP 초기화 메시지 전송
@@ -97,15 +100,20 @@ class McpConnectionService:
                 if process.returncode == 0:
                     # 응답 파싱 시도
                     response_lines = stdout_data.decode().strip().split('\n')
+                    logger.info(f"📥 MCP server response lines: {len(response_lines)}")
                     for line in response_lines:
                         if line.strip():
                             try:
                                 response = json.loads(line)
+                                logger.info(f"📋 Parsed response: {response}")
                                 if response.get('id') == 1 and 'result' in response:
+                                    logger.info("✅ MCP connection test successful")
                                     return True
                             except json.JSONDecodeError:
+                                logger.warning(f"⚠️ Failed to parse JSON: {line[:100]}")
                                 continue
                 
+                logger.warning("❌ MCP connection test failed - no valid response")
                 return False
                 
             except asyncio.TimeoutError:
@@ -120,7 +128,10 @@ class McpConnectionService:
     async def get_server_tools(self, server_id: str, server_config: Dict) -> List[Dict]:
         """MCP 서버의 도구 목록 조회"""
         try:
+            logger.info(f"🔧 Getting tools for server {server_id}")
+            
             if server_config.get('disabled', False):
+                logger.info("⚠️ Server is disabled, returning empty tools")
                 return []
             
             command = server_config.get('command', '')
@@ -128,7 +139,10 @@ class McpConnectionService:
             env = server_config.get('env', {})
             timeout = server_config.get('timeout', 10)  # 실시간 조회를 위해 더 짧은 타임아웃
             
+            logger.info(f"🔍 Tools command: {command} {' '.join(args)}")
+            
             if not command:
+                logger.warning("❌ No command specified for tools query")
                 return []
             
             # tools/list 메시지 전송
@@ -180,13 +194,16 @@ class McpConnectionService:
                 
                 tools = []
                 response_lines = stdout_data.decode().strip().split('\n')
+                logger.info(f"📥 Tools response lines: {len(response_lines)}")
                 
                 for line in response_lines:
                     if line.strip():
                         try:
                             response = json.loads(line)
+                            logger.info(f"📋 Tools response: {response}")
                             if response.get('id') == 2 and 'result' in response:
                                 tools_data = response['result'].get('tools', [])
+                                logger.info(f"🔧 Found {len(tools_data)} tools in response")
                                 for tool in tools_data:
                                     tools.append({
                                         'name': tool.get('name', ''),
@@ -195,18 +212,20 @@ class McpConnectionService:
                                     })
                                 break
                         except json.JSONDecodeError:
+                            logger.warning(f"⚠️ Failed to parse tools JSON: {line[:100]}")
                             continue
                 
-                self.server_tools[server_id] = tools
+                logger.info(f"✅ Returning {len(tools)} tools for server {server_id}")
                 return tools
                 
             except asyncio.TimeoutError:
+                logger.warning(f"⏰ Timeout getting tools for server {server_id}")
                 process.kill()
                 await process.wait()
                 return []
                 
         except Exception as e:
-            logger.error(f"Error getting tools for server {server_id}: {e}")
+            logger.error(f"❌ Error getting tools for server {server_id}: {e}")
             return []
     
     async def refresh_all_servers(self, db: Session) -> Dict[str, Dict]:
