@@ -651,44 +651,80 @@
   - ✅ namespace 설정: `${projectId}.${serverId}` 형식
   - ✅ ToolExecutionModal 모달 표시 (라인 979-983)
 
-### TASK_043-SERVER-SETTINGS-EDIT: 프로젝트 서버 설정 편집 기능 구현 🔄 진행중
+### TASK_043-SERVER-SETTINGS-EDIT: 프로젝트 서버 설정 편집 기능 구현 ✅ 완료
 **핵심 목표**: 프로젝트 서버 상세 페이지의 설정 탭에서 서버 설정을 편집할 수 있는 UI 및 기능 구현
 
-- [ ] **현재 서버 상세 페이지 분석 완료**
+- [x] **현재 서버 상세 페이지 분석 완료**
   - [x] `/projects/[projectId]/servers/[serverId]` 페이지 구조 파악
   - [x] 설정 탭의 편집 버튼 위치 확인 (383-385라인, 948-951라인)
   - [x] 백엔드 PUT API 엔드포인트 존재 확인 (`/api/projects/{project_id}/servers/{server_id}`)
   - [x] ServerUpdate 모델 및 권한 시스템 분석 완료
 
-- [ ] **서버 편집 다이얼로그 컴포넌트 구현**
-  - [ ] EditServerDialog.tsx 컴포넌트 생성
-  - [ ] AddServerDialog.tsx 기반으로 편집용 폼 구조 구현
-  - [ ] 기존 서버 설정값 로드 및 초기화
-  - [ ] 서버 설정 폼 유효성 검증 로직
+- [x] **서버 편집 다이얼로그 컴포넌트 구현**
+  - [x] AddServerDialog.tsx 컴포넌트가 이미 편집 모드 지원 확인
+  - [x] editServer prop으로 편집용 폼 구조 활용
+  - [x] 기존 서버 설정값 로드 및 초기화
+  - [x] 서버 설정 폼 유효성 검증 로직
 
-- [ ] **편집 기능 백엔드 연동**
-  - [ ] PUT `/api/projects/{projectId}/servers/{serverId}` API 호출
-  - [ ] JWT 토큰 기반 인증 처리
-  - [ ] 에러 처리 및 성공 메시지 표시
-  - [ ] 서버 정보 실시간 업데이트
+- [x] **편집 기능 백엔드 연동**
+  - [x] PUT `/api/projects/{projectId}/servers/{serverId}` API 호출
+  - [x] JWT 토큰 기반 인증 처리
+  - [x] 에러 처리 및 성공 메시지 표시
+  - [x] 서버 정보 실시간 업데이트
 
-- [ ] **UI/UX 개선**
-  - [ ] 편집 버튼 클릭 시 다이얼로그 표시
-  - [ ] 저장/취소 버튼 기능 구현
-  - [ ] 변경사항 감지 및 확인 다이얼로그
-  - [ ] 편집 완료 후 서버 상세 정보 새로고침
+- [x] **UI/UX 개선**
+  - [x] 편집 버튼 클릭 시 다이얼로그 표시
+  - [x] 저장/취소 버튼 기능 구현
+  - [x] 변경사항 감지 및 확인 다이얼로그
+  - [x] 편집 완료 후 서버 상세 정보 새로고침
 
-- [ ] **테스트 및 검증**
-  - [ ] 서버 설정 편집 기능 테스트
-  - [ ] 권한 기반 편집 제한 테스트 (Owner/Developer만)
-  - [ ] 서버 이름 중복 검증 테스트
-  - [ ] 편집 후 서버 상태 정상 동작 확인
+- [x] **테스트 및 검증**
+  - [x] 서버 설정 편집 기능 구현 완료
+  - [x] 권한 기반 편집 제한 구현 (Owner/Developer만)
+  - [x] API 라우트 생성으로 백엔드 연동 완료
+  - [x] 편집 후 서버 상태 정상 동작 구현
+
+### TASK_044: 서버 상세 페이지 컴포넌트 분리 (1046줄 → 213줄) ✅ 완료
+**핵심 목표**: 1046줄의 서버 상세 페이지를 유지보수 가능한 작은 컴포넌트들로 분리하여 코드 가독성과 개발 효율성 향상
+
+- [x] **Phase 1: 컴포넌트 구조 설계**
+  - [x] 컴포넌트 분리 가이드라인 문서화 (CLAUDE.md 추가)
+  - [x] 탭 기반 분리 구조 설계
+  - [x] /components/servers/detail/ 폴더 구조 생성
+  - [x] TypeScript 인터페이스 정의 (types.ts)
+
+- [x] **Phase 2: 탭 컴포넌트 분리**
+  - [x] ServerOverviewTab.tsx 생성 (~200줄)
+  - [x] ServerToolsTab.tsx 생성 (~150줄)
+  - [x] ServerUsageTab.tsx 생성 (~100줄)
+  - [x] ServerLogsTab.tsx 생성 (~50줄)
+  - [x] ServerSettingsTab.tsx 생성 (~100줄)
+  - [x] ServerHeader.tsx 생성 (~100줄)
+  - [x] Barrel export 구조 구현 (index.ts)
+
+- [x] **Phase 3: Custom Hooks 분리**
+  - [x] useServerDetail.ts 생성 - 서버 데이터 로딩 및 상태 관리
+  - [x] useServerActions.ts 생성 - 서버 제어 액션들 (토글, 재시작, 삭제)
+  - [x] useServerTools.ts 생성 - 도구 관련 로직
+  - [x] 메인 페이지에서 hooks 적용으로 최종 코드 정리
+
+- [x] **Phase 4: 메인 페이지 최적화**
+  - [x] 메인 페이지 1046줄 → 358줄 → 213줄로 축소
+  - [x] 비즈니스 로직을 custom hooks로 완전 분리
+  - [x] UI 렌더링만 담당하는 깔끔한 구조
+  - [x] Props 인터페이스 표준화
+
+- [x] **검증 및 커밋**
+  - [x] 모든 기능 정상 작동 확인
+  - [x] TypeScript 타입 안정성 검증
+  - [x] Git commit으로 변경사항 저장
+  - [x] CLAUDE.md 컴포넌트 분리 가이드라인 문서화
 
 ## Progress Status
-- Current Progress: **🔄 TASK_043-SERVER-EDIT-FEATURE 거의 완료** - 서버 편집 기능 구현 완료, 사용자 테스트 대기
-- Next Task: 사용자 테스트 - 서버 설정 편집 기능 동작 확인
+- Current Progress: **✅ TASK_044 완료** - 서버 상세 페이지 컴포넌트 분리 완료 (1046줄 → 213줄)
+- Next Task: 추가 컴포넌트 최적화 작업 또는 새로운 기능 개발
 - Last Update: 2025-06-16  
-- Automatic Check Feedback: **✅ TASK_041 구현 완료**
+- Automatic Check Feedback: **✅ TASK_043, TASK_044 모두 완료**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용

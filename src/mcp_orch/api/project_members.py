@@ -38,6 +38,7 @@ class ProjectMemberResponse(BaseModel):
     invited_as: InviteSource
     invited_by: str
     joined_at: str
+    is_current_user: bool = False
     
     class Config:
         from_attributes = True
@@ -96,7 +97,8 @@ async def list_project_members(
             role=member.role,
             invited_as=member.invited_as,
             invited_by=str(member.invited_by),
-            joined_at=member.joined_at.isoformat() if member.joined_at else ""
+            joined_at=member.joined_at.isoformat() if member.joined_at else "",
+            is_current_user=(member.user_id == current_user.id)
         ))
     
     return members

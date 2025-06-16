@@ -169,7 +169,26 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
       
       const project = await response.json();
-      set({ selectedProject: project, isLoading: false });
+      
+      // 현재 사용자의 역할 계산
+      const currentUserMember = project.members?.find(
+        (member: any) => member.is_current_user
+      );
+      const currentUserRole = currentUserMember?.role || null;
+      
+      console.log('🔍 loadProject 디버깅:', {
+        projectId,
+        projectName: project.name,
+        members: project.members,
+        currentUserMember,
+        currentUserRole
+      });
+      
+      set({ 
+        selectedProject: project, 
+        currentUserRole, 
+        isLoading: false 
+      });
       return project;
     } catch (error) {
       set({ 

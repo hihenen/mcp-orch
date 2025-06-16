@@ -69,6 +69,7 @@ class ProjectMemberResponse(BaseModel):
     invited_as: InviteSource
     invited_by: str
     joined_at: datetime
+    is_current_user: bool = False
     
     class Config:
         from_attributes = True
@@ -231,7 +232,8 @@ async def get_project_detail(
             role=member.role,
             invited_as=member.invited_as,
             invited_by=str(member.invited_by),
-            joined_at=member.joined_at
+            joined_at=member.joined_at,
+            is_current_user=(member.user_id == current_user.id)
         ))
     
     # 서버 개수 조회
