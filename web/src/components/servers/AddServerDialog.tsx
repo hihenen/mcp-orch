@@ -539,6 +539,145 @@ export function AddServerDialog({
     }
   };
 
+  // JSON 추가/수정 처리
+  const handleJsonSubmit = async () => {
+    if (!jsonConfig.trim()) {
+      alert('JSON 설정을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const config = JSON.parse(jsonConfig);
+      
+      // 입력된 JSON이 이미 mcpServers 래퍼를 가지고 있는지 확인
+      let mcpServers;
+      if (config.mcpServers && typeof config.mcpServers === 'object') {
+        // 기존 형식: mcpServers 래퍼가 있음
+        mcpServers = config.mcpServers;
+      } else if (typeof config === 'object' && config !== null) {
+        // 새로운 형식: 서버 설정만 있음 - 자동으로 래퍼 추가
+        mcpServers = config;
+      } else {
+        throw new Error('올바른 MCP 설정 형식이 아닙니다.');
+      }
+
+      setIsLoading(true);
+
+      // 편집 모드일 때
+      if (isEditMode && editServer) {
+        const servers = Object.entries(mcpServers);
+        if (servers.length !== 1) {
+          throw new Error('편집 모드에서는 하나의 서버 설정만 입력해주세요.');
+        }
+
+        const [serverName, serverConfig] = servers[0];
+        const server = serverConfig as any;
+
+        const response = await fetch(`/api/projects/${projectId}/servers/${editServer.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: serverName,
+            description: server.description || '',
+            command: server.command,
+            args: server.args || [],
+            env: server.env || {},
+            cwd: server.cwd || null
+          }),
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '서버 수정 실패');
+        }
+
+        const result = await response.json();
+        console.log('서버 수정 성공:', result);
+        
+        onServerUpdated?.({
+          name: serverName,
+          description: server.description || '',
+          transport: server.type === 'sse' ? 'sse' : 'stdio',
+          command: server.command,
+          args: server.args || [],
+          env: server.env || {},
+          cwd: server.cwd || ''
+        });
+        
+        alert(`서버 수정 완료: ${serverName} 서버가 성공적으로 수정되었습니다.`);
+        onOpenChange(false);
+        return;
+      }
+
+      // 추가 모드일 때 (기존 로직)
+      const servers = Object.entries(mcpServers);
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const [serverName, serverConfig] of servers) {
+        try {
+          const server = serverConfig as any;
+          
+          const response = await fetch(`/api/projects/${projectId}/servers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: serverName,
+              description: server.description || `${serverName} MCP 서버`,
+              transport_type: server.type === 'sse' ? 'sse' : 'stdio',
+              command: server.command,
+              args: server.args || [],
+              env: server.env || {},
+              cwd: server.cwd || null
+            }),
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '서버 추가 실패');
+          }
+
+          successCount++;
+          
+          // 콜백 호출 (UI 업데이트용)
+          onServerAdded({
+            name: serverName,
+            description: server.description || `${serverName} MCP 서버`,
+            transport: server.type === 'sse' ? 'sse' : 'stdio',
+            command: server.command,
+            args: server.args || [],
+            env: server.env || {},
+            cwd: server.cwd
+          });
+
+        } catch (error) {
+          errorCount++;
+          errors.push(`${serverName}: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        }
+      }
+
+      // 결과 메시지
+      if (successCount > 0 && errorCount === 0) {
+        alert(`성공: ${successCount}개 서버가 모두 추가되었습니다.`);
+        setJsonConfig('');
+        onOpenChange(false);
+      } else if (successCount > 0 && errorCount > 0) {
+        alert(`부분 성공: ${successCount}개 서버 추가 성공, ${errorCount}개 실패\n\n실패 목록:\n${errors.join('\n')}`);
+      } else {
+        alert(`실패: 모든 서버 추가에 실패했습니다.\n\n오류 목록:\n${errors.join('\n')}`);
+      }
+
+    } catch (error) {
+      console.error('JSON 파싱 오류:', error);
+      alert(`JSON 형식 오류: ${error instanceof Error ? error.message : '올바른 JSON 형식이 아닙니다.'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
