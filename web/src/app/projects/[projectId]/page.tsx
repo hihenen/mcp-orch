@@ -1160,6 +1160,35 @@ export default function ProjectDetailPage() {
                               rows={3}
                             />
                           </div>
+                          <div>
+                            <Label htmlFor="apiKeyExpiration2">만료일</Label>
+                            <Select 
+                              value={apiKeyData.expires_at || "never"} 
+                              onValueChange={(value) => {
+                                const expires_at = value === "never" ? null : value;
+                                setApiKeyData(prev => ({ ...prev, expires_at }));
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="만료일을 선택하세요" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="never">만료 안함 (Never expires)</SelectItem>
+                                <SelectItem value={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                                  7일 후
+                                </SelectItem>
+                                <SelectItem value={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                                  30일 후
+                                </SelectItem>
+                                <SelectItem value={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                                  90일 후
+                                </SelectItem>
+                                <SelectItem value={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}>
+                                  1년 후
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setIsApiKeyDialogOpen(false)}>

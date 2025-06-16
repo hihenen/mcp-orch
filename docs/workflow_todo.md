@@ -824,10 +824,10 @@
   - [ ] JWT 인증 연동 확인
 
 ## Progress Status
-- Current Progress: **✅ API 키 React 컴포넌트 분석 완료** - 프로젝트 상세 페이지에서 완전한 GitHub 스타일 API 키 관리 UI 발견
-- Next Task: FastAPI 라우터 등록 확인
+- Current Progress: **✅ API 키 중복 다이얼로그 문제 해결 완료** - 2개의 다이얼로그에서 두 번째에 만료일 설정 기능 추가
+- Next Task: 사용자 테스트 및 기능 검증
 - Last Update: 2025-06-16  
-- Automatic Check Feedback: **🎯 API 키 프론트엔드 컴포넌트 완전 구현됨**
+- Automatic Check Feedback: **🎯 API 키 중복 팝업 문제 해결됨 - 모든 다이얼로그에 만료일 설정 기능 통일**
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
