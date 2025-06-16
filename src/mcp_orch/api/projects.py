@@ -6,6 +6,7 @@
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
@@ -19,6 +20,7 @@ from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
 
 router = APIRouter(prefix="/api", tags=["projects"])
+logger = logging.getLogger(__name__)
 
 
 # Pydantic 모델들
@@ -1052,13 +1054,25 @@ async def list_project_servers(
         if not server.is_enabled:
             server_status = "disabled"
         else:
-            # 캐시된 상태 사용
-            server_status = mcp_connection_service.get_cached_status(str(server.id))
-            tools_count = mcp_connection_service.get_cached_tools_count(str(server.id))
+            # 서버 설정 구성
+            server_config = {
+                'command': server.command,
+                'args': server.args or [],
+                'env': server.env or {},
+                'timeout': 10,  # 빠른 응답을 위한 짧은 타임아웃
+                'transportType': server.transport_type or 'stdio',
+                'disabled': not server.is_enabled
+            }
             
-            # 캐시된 상태가 없으면 기본값 사용
-            if server_status == "unknown":
-                server_status = "offline"
+            # 실시간 상태 및 도구 개수 조회
+            try:
+                unique_server_id = f"{str(server.project_id).replace('-', '')[:8]}.{server.name.replace(' ', '_').replace('.', '_')}"
+                server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
+                if server_status == "online":
+                    tools_count = await mcp_connection_service.get_server_tools_count(unique_server_id, server_config)
+            except Exception as e:
+                logger.error(f"Error checking server {server.id} status: {e}")
+                server_status = "error"
         
         result.append(ServerResponse(
             id=str(server.id),
