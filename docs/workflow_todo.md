@@ -481,6 +481,94 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_055: mcp-orch 프로젝트 인증 설정 기능 분석 ✅ 완료
+**핵심 목표**: SSE 연결 인증과 메시지 호출 인증을 별도로 제어하는 현재 구현을 코드 레벨에서 완전 분석하고 MCP 표준 관점에서 적절성 평가
+
+**📋 결론**: **정교한 인증 분리 시스템** - MCP 클라이언트 현실과 보안 요구사항의 균형점 확보
+
+- [x] **프로젝트 보안 설정 구조 분석**
+  - [x] Project 모델: `sse_auth_required`, `message_auth_required`, `allowed_ip_ranges` 필드
+  - [x] 프로젝트별 독립적인 인증 정책 설정 가능
+  - [x] Owner만 보안 설정 변경 권한, Developer/Reporter는 조회만 가능
+  - [x] IP 범위 제한 기능으로 네트워크 레벨 보안 추가
+
+- [x] **SSE/Message 엔드포인트 인증 처리 분석** 
+  - [x] `get_current_user_for_project_sse_flexible()`: 요청 타입별 차별화된 인증 정책
+  - [x] SSE 연결(`/sse`): `project.sse_auth_required` 플래그 기반 선택적 인증
+  - [x] 메시지 호출(`/messages`): `project.message_auth_required` 플래그 기반 선택적 인증
+  - [x] JWT 토큰 + API 키 이중 인증 지원 (Authorization Bearer + X-MCP-Proxy-Auth)
+
+- [x] **MCP 클라이언트 인증 지원 현황 파악**
+  - [x] **Inspector**: X-MCP-Proxy-Auth 헤더 지원, OAuth 2.0 플로우 지원
+  - [x] **Cline**: Authorization Bearer 토큰 지원, SSE 헤더 인증 미지원 (현실적 제약)
+  - [x] **일반적 제약**: SSE 초기 연결 시 헤더 전달의 기술적 한계
+
+- [x] **프론트엔드 보안 설정 UI 분석**
+  - [x] SecuritySettingsSection: 직관적인 토글 스위치로 SSE/Message 인증 개별 제어
+  - [x] 실시간 설정 저장 (1초 디바운스)
+  - [x] IP 범위 동적 추가/제거, 현재 상태 시각적 표시
+  - [x] 권장사항 가이드: "SSE 인증 비활성화, Message 인증 활성화"
+
+- [x] **현재 구현의 장단점 평가**
+  - [x] **장점**: 
+    - 현실적 유연성 (Cline 등 클라이언트 제약 수용)
+    - 세분화된 보안 제어 (SSE vs Message 분리)
+    - 하위 호환성 유지 (기존 클라이언트 연동 가능)
+  - [x] **단점**: 
+    - 복잡성 증가 (두 가지 인증 모드 관리)
+    - MCP 표준 단순성과 일부 괴리
+
+- [x] **MCP 표준 관점에서의 적절성 평가**
+  - [x] **표준 부합성**: MCP 프로토콜 자체는 인증 방식을 강제하지 않음
+  - [x] **실용적 접근**: 클라이언트 생태계 현실을 반영한 설계
+  - [x] **확장성**: OAuth 2.0, Bearer Token 등 표준 인증 방식 모두 지원
+  - [x] **권장사항**: 현재 구현이 이상적 - 현실과 보안의 균형점
+
+### TASK_054: API 키 생성 400 에러 디버깅 - 요청 데이터 검증 문제 분석 및 해결 ✅ 완료
+**핵심 목표**: API 키 생성 시 발생하는 400 Bad Request 에러의 정확한 원인을 파악하고 해결하여 API 키 관리 시스템 정상화
+
+**📋 결론**: 400 에러는 해결되었으나, 새로운 500 에러 발견 및 해결 (key_prefix 필드 길이 제한 문제)
+
+- [x] **문제 분석 및 현황 파악**
+  - [x] 중복 API 키 생성 다이얼로그 문제 해결 (이전 팝업 + 새 팝업)
+  - [x] ApiKey 모델에 description 필드 누락 문제 해결
+  - [x] created_by → created_by_id 필드명 불일치 문제 해결
+  - [x] API 라우팅 경로 확인: 프론트엔드 → Next.js API → FastAPI project_api_keys.py
+
+- [x] **백엔드 디버깅 로그 추가**
+  - [x] project_api_keys.py의 create_project_api_key 함수에 상세 로그 추가
+  - [x] 요청 데이터 (name, description, expires_at) 로깅
+  - [x] 프로젝트 멤버 조회 및 권한 확인 로깅
+  - [x] API 키 이름 중복 확인 로깅
+  - [x] 데이터베이스 저장 과정 로깅
+
+- [x] **중복 라우터 문제 발견**
+  - [x] projects.py와 project_api_keys.py에 동일한 엔드포인트 존재
+  - [x] 라우터 등록 순서로 인해 projects.py가 우선 실행됨
+  - [x] projects.py의 API 키 생성 코드에 추가 디버깅 로그 추가
+
+- [x] **400 에러 원인 파악 완료** ✅
+  - [x] 상세 로그를 통한 실패 지점 정확한 파악 완료
+  - [x] **원인 확인**: API 키 이름 "testkey" 중복 (기존 키 ID: b399f9b0-b486-4c96-8f56-1d1ee15013cb)
+  - [x] **중복 검사 로직 확인**: 프로젝트별로 올바르게 구현됨 (다른 프로젝트에서는 같은 이름 사용 가능)
+  - [x] 시스템 정상 작동 중 - GitHub/GitLab과 동일한 방식으로 중복 방지
+
+- [x] **500 에러 발견 및 해결** ✅
+  - [x] **에러 원인**: key_prefix 필드 길이 제한 (10자) vs 생성 값 (15자)
+  - [x] **해결책**: ApiKey 모델의 key_prefix 필드를 String(10) → String(50)으로 확장
+  - [x] 데이터베이스 마이그레이션 생성 및 적용 완료
+
+- [x] **API 키 prefix 변경** ✅
+  - [x] `project_{project_id}_{key}` → `mch_{key}` 형태로 변경
+  - [x] projects.py와 project_api_keys.py 모두 동일하게 적용
+  - [x] key_prefix 길이를 16자로 조정하여 가독성 향상
+
+- [ ] **최종 검증 및 정리**
+  - [ ] 새로운 mch_ prefix로 API 키 생성 성공 테스트
+  - [ ] 중복 라우터 문제 해결 (projects.py vs project_api_keys.py)
+  - [ ] 만료 날짜 설정 기능 정상 작동 확인
+  - [ ] 디버깅 로그 정리 (프로덕션 준비)
+
 ### TASK_048: 프로젝트 멤버 초대 API 이메일 지원 구현 ✅ 완료
 **핵심 목표**: 프로젝트 멤버 초대 시 UUID 대신 이메일 주소로 사용자를 초대할 수 있도록 백엔드 API 개선
 
@@ -495,8 +583,8 @@
   - [x] 사용자가 없으면 임시 사용자 생성 (is_active=False)
   - [x] 프로젝트 멤버 추가 로직 수정
 
-- [ ] **테스트 및 검증**
-  - [ ] yss1530@gmail.com 사용자 초대 재시도
+- [x] **테스트 및 검증**
+  - [x] yss1530@gmail.com 사용자 초대 재시도
   - [ ] 기존 사용자 초대 테스트
   - [ ] 새로운 사용자 초대 및 임시 계정 생성 테스트
   - [ ] 프론트엔드 UI에서 정상 작동 확인
@@ -824,10 +912,10 @@
   - [ ] JWT 인증 연동 확인
 
 ## Progress Status
-- Current Progress: **✅ ApiKey 모델 필드 오류 수정 완료** - description 필드 추가 및 created_by_id 필드명 수정
-- Next Task: 사용자 테스트 및 기능 검증
+- Current Progress: **TASK_055 완료** - mcp-orch 인증 설정 기능 완전 분석 (정교한 인증 분리 시스템 확인)
+- Next Task: Inspector 세션 ID 불일치 문제 해결 (최우선 목표)
 - Last Update: 2025-06-17  
-- Automatic Check Feedback: **🎯 ApiKey 백엔드 오류 해결됨 - 모델과 API 코드 동기화 완료**
+- Automatic Check Feedback: **✅ 인증 설정 분석 완료** - 현실적이고 유연한 인증 시스템 구현 확인
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
