@@ -158,7 +158,7 @@
   - [x] 중복 멤버 안내 및 처리 (백엔드에서 자동 처리 후 결과 표시)
   - [x] 일괄 초대 진행 상황 표시 (성공/스킵 멤버 수 토스트로 표시)
 
-### TASK_062: 팀 Members UI를 프로젝트 Members 테이블 스타일로 변경
+### TASK_062: 팀 Members UI를 프로젝트 Members 테이블 스타일로 변경 ✅ 완료
 
 **목표**: 팀 멤버 관리 UI를 프로젝트 멤버 관리와 동일한 테이블 형태로 변경하여 일관된 사용자 경험 제공
 
@@ -176,7 +176,7 @@
 - [x] **TASK_062_03: 멤버 검색 및 정렬 기능 추가**
   - [x] 멤버 검색 입력창 추가
   - [x] 이름/이메일 기반 필터링 구현
-  - [ ] 정렬 옵션 추가 (이름, 역할, 가입일)
+  - [x] 정렬 옵션 추가 (이름, 역할, 가입일)
 
 - [x] **TASK_062_04: 역할 변경 드롭다운 기능 추가**
   - [x] Select 컴포넌트로 역할 선택기 구현
@@ -188,11 +188,41 @@
   - [x] 멤버 제거 기능 구현
   - [x] 마지막 Owner 제거 방지 로직
 
+### TASK_063: 프로젝트 available-teams API에서 fnfea 팀이 안 보이는 문제 디버깅 및 해결
+
+**목표**: "/api/projects/{project_id}/available-teams" 엔드포인트에서 사용자가 Owner인 fnfea 팀이 조회되지 않는 문제 해결
+
+**문제 분석**:
+- 사용자는 fnfea 팀의 Owner라고 주장
+- available teams API는 "현재 사용자가 멤버인 팀들"만 반환 
+- 쿼리: `db.query(TeamMember, Team).join(Team, TeamMember.team_id == Team.id).filter(TeamMember.user_id == current_user.id)`
+
+- [ ] **TASK_063_01: 디버깅 로그 추가 및 문제 분석**
+  - [ ] JWT 토큰 인증 과정에 디버깅 로그 추가
+  - [ ] 현재 사용자 ID 확인 로그 추가  
+  - [ ] TeamMember 테이블 쿼리 결과 로그 추가
+  - [ ] available-teams API 호출 시 전체 프로세스 추적
+
+- [ ] **TASK_063_02: 데이터베이스 상태 확인**
+  - [ ] TeamMember 테이블에서 fnfea 팀과 현재 사용자 관계 확인
+  - [ ] Team 테이블에서 fnfea 팀 존재 여부 확인
+  - [ ] User 테이블에서 현재 사용자 정보 확인
+
+- [ ] **TASK_063_03: API 호출 과정 검증**
+  - [ ] 프론트엔드에서 JWT 토큰 생성 과정 확인
+  - [ ] 백엔드에서 JWT 토큰 검증 과정 확인
+  - [ ] HTTP 요청/응답 헤더 및 바디 확인
+
+- [ ] **TASK_063_04: 문제점 식별 및 해결**
+  - [ ] 식별된 문제점에 따른 수정 작업
+  - [ ] 수정 후 테스트 및 검증
+  - [ ] 추가 디버깅 로그 정리
+
 ## Progress Status
-- Current Progress: TASK_062 - 팀 Members UI를 프로젝트 Members 테이블 스타일로 변경 완료 ✅
-- Next Task: 사용자 요청 대기 중
+- Current Progress: TASK_063 - 프로젝트 available-teams API에서 fnfea 팀이 안 보이는 문제 디버깅 및 해결
+- Next Task: TASK_063_01 - 디버깅 로그 추가 및 문제 분석
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 팀 멤버 관리 UI가 프로젝트 멤버 관리와 동일한 테이블 형태로 완전히 변경 완료
+- Automatic Check Feedback: fnfea 팀이 available-teams API에서 조회되지 않는 문제 분석을 위한 디버깅 계획 수립 완료
 
 ## Lessons Learned and Insights
 

@@ -1848,6 +1848,9 @@ async def get_available_teams_for_project(
 ):
     """프로젝트에 초대 가능한 팀 목록 조회 (현재 사용자가 멤버인 팀들)"""
     
+    print(f"🔍 [AVAILABLE_TEAMS] Called for project_id={project_id}")
+    print(f"🔍 [AVAILABLE_TEAMS] Current user: id={current_user.id}, email={current_user.email}")
+    
     # 프로젝트 접근 권한 확인
     project_member = db.query(ProjectMember).filter(
         and_(
@@ -1857,28 +1860,42 @@ async def get_available_teams_for_project(
     ).first()
     
     if not project_member:
+        print(f"❌ [AVAILABLE_TEAMS] User {current_user.id} is not a member of project {project_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found or access denied"
         )
+    
+    print(f"✅ [AVAILABLE_TEAMS] User has access to project, role: {project_member.role}")
     
     # 현재 사용자가 멤버인 팀들 조회
     user_teams_query = db.query(TeamMember, Team).join(
         Team, TeamMember.team_id == Team.id
     ).filter(TeamMember.user_id == current_user.id)
     
+    print(f"🔍 [AVAILABLE_TEAMS] Querying teams for user_id: {current_user.id}")
+    
+    # 디버깅: 실제 쿼리 결과 확인
+    team_memberships = user_teams_query.all()
+    print(f"🔍 [AVAILABLE_TEAMS] Found {len(team_memberships)} team memberships:")
+    for team_member, team in team_memberships:
+        print(f"  - Team: {team.name} (id={team.id}), Role: {team_member.role}")
+    
     teams = []
-    for team_member, team in user_teams_query:
+    for team_member, team in team_memberships:
         # 각 팀의 멤버 수 조회
         member_count = db.query(TeamMember).filter(
             TeamMember.team_id == team.id
         ).count()
         
-        teams.append(TeamForInviteResponse(
+        team_response = TeamForInviteResponse(
             id=str(team.id),
             name=team.name,
             member_count=member_count,
             user_role=team_member.role.value
-        ))
+        )
+        teams.append(team_response)
+        print(f"✅ [AVAILABLE_TEAMS] Added team: {team.name} with role {team_member.role.value}")
     
+    print(f"✅ [AVAILABLE_TEAMS] Returning {len(teams)} teams")
     return teams
