@@ -27,6 +27,7 @@ import { useServerStore } from '@/stores/serverStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
 import { ServerDetailModal } from '@/components/servers/ServerDetailModal';
+import { DeleteServerDialog } from '@/components/servers/DeleteServerDialog';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -50,6 +51,9 @@ export default function ProjectServersPage() {
   const [editingServer, setEditingServer] = useState<any>(null);
   const [selectedServer, setSelectedServer] = useState<any>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [deletingServer, setDeletingServer] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   // 서버 스토어에서 프로젝트 서버 가져오기
   const projectServers = getProjectServers(projectId);
 
@@ -90,14 +94,19 @@ export default function ProjectServersPage() {
     });
   };
 
-  // 서버 삭제 핸들러
-  const handleDeleteServer = async (server: any) => {
-    if (!confirm(`정말로 "${server.name}" 서버를 삭제하시겠습니까?`)) {
-      return;
-    }
+  // 서버 삭제 다이얼로그 열기
+  const handleDeleteServer = (server: any) => {
+    setDeletingServer(server);
+    setShowDeleteDialog(true);
+  };
 
+  // 실제 서버 삭제 실행
+  const confirmDeleteServer = async () => {
+    if (!deletingServer) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/servers?serverId=${server.id}`, {
+      const response = await fetch(`/api/projects/${projectId}/servers?serverId=${deletingServer.id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -113,10 +122,16 @@ export default function ProjectServersPage() {
       // 프로젝트별 서버 목록 새로고침
       fetchProjectServers(projectId);
       
-      toast.success(`서버 삭제 완료: ${server.name} 서버가 삭제되었습니다.`);
+      toast.success(`서버 삭제 완료: ${deletingServer.name} 서버가 삭제되었습니다.`);
+      
+      // 상태 초기화
+      setDeletingServer(null);
+      setShowDeleteDialog(false);
     } catch (error) {
       console.error('서버 삭제 오류:', error);
       toast.error(`서버 삭제 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -375,6 +390,15 @@ export default function ProjectServersPage() {
           setShowDetailModal(false);
           handleDeleteServer(server);
         }}
+      />
+
+      {/* 서버 삭제 확인 다이얼로그 */}
+      <DeleteServerDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        server={deletingServer}
+        onConfirm={confirmDeleteServer}
+        isDeleting={isDeleting}
       />
     </div>
   );
