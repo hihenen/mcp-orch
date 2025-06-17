@@ -118,3 +118,31 @@ export interface ProjectClineConfig {
   };
   instructions: Record<string, string>;
 }
+
+// 팀 관련 타입
+export interface TeamForInvite {
+  id: string;
+  name: string;
+  member_count: number;
+  user_role: string;
+}
+
+export interface TeamInviteRequest {
+  team_id: string;
+  role: ProjectRole;
+  invite_message?: string;
+}
+
+export interface TeamInviteResponse {
+  team_id: string;
+  team_name: string;
+  added_members: ProjectMember[];
+  skipped_members: Array<{
+    user_id: string;
+    user_name: string;
+    user_email: string;
+    reason: string;
+    current_role: string;
+  }>;
+  total_invited: number;
+}

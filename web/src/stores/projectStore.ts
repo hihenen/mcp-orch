@@ -15,7 +15,10 @@ import {
   UpdateProjectMemberRequest,
   CreateProjectApiKeyRequest,
   ProjectClineConfig,
-  ProjectRole
+  ProjectRole,
+  TeamForInvite,
+  TeamInviteRequest,
+  TeamInviteResponse
 } from '@/types/project';
 
 interface ProjectStore {
@@ -25,6 +28,7 @@ interface ProjectStore {
   projectServers: ProjectServer[];
   projectMembers: ProjectMember[];
   projectApiKeys: ProjectApiKey[];
+  availableTeams: TeamForInvite[];
   isLoading: boolean;
   error: string | null;
 
@@ -52,6 +56,10 @@ interface ProjectStore {
   addProjectMember: (projectId: string, data: AddProjectMemberRequest) => Promise<ProjectMember>;
   updateProjectMember: (projectId: string, memberId: string, data: UpdateProjectMemberRequest) => Promise<ProjectMember>;
   removeProjectMember: (projectId: string, memberId: string) => Promise<void>;
+
+  // 팀 관련 관리
+  loadAvailableTeams: (projectId: string) => Promise<void>;
+  inviteTeamToProject: (projectId: string, data: TeamInviteRequest) => Promise<TeamInviteResponse>;
 
   // 프로젝트 서버 관리
   loadProjectServers: (projectId: string) => Promise<void>;
@@ -87,6 +95,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   projectServers: [],
   projectMembers: [],
   projectApiKeys: [],
+  availableTeams: [],
   isLoading: false,
   error: null,
 
@@ -749,7 +758,71 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     projectServers: [],
     projectMembers: [],
     projectApiKeys: [],
+    availableTeams: [],
     isLoading: false,
     error: null,
   }),
+
+  // 팀 관련 함수들
+  loadAvailableTeams: async (projectId: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      const response = await fetch(`/api/projects/${projectId}/available-teams`);
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Failed to load available teams');
+      }
+      
+      const availableTeams = await response.json();
+      
+      set({ 
+        availableTeams,
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error('Error loading available teams:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to load available teams',
+        isLoading: false 
+      });
+    }
+  },
+
+  inviteTeamToProject: async (projectId: string, data: TeamInviteRequest): Promise<TeamInviteResponse> => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      const response = await fetch(`/api/projects/${projectId}/teams`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Failed to invite team');
+      }
+      
+      const result = await response.json();
+      
+      // 멤버 목록 새로고침
+      const { loadProjectMembers } = get();
+      await loadProjectMembers(projectId);
+      
+      set({ isLoading: false });
+      
+      return result;
+    } catch (error) {
+      console.error('Error inviting team:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to invite team',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
 }));
