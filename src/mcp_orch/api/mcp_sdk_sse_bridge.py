@@ -122,10 +122,28 @@ async def get_current_user_for_mcp_sse_bridge(
     # SSE 연결인지 확인
     is_sse_request = request.url.path.endswith('/sse')
     
+    # SSE 연결 시 프로젝트 인증 정책 확인
+    if is_sse_request and not project.sse_auth_required:
+        logger.info(f"SSE connection allowed without auth for project {project_id}")
+        return None  # 인증 없이 허용
+    
+    # 메시지 요청 시 프로젝트 인증 정책 확인
+    if not is_sse_request and not project.message_auth_required:
+        logger.info(f"Message request allowed without auth for project {project_id}")
+        return None  # 인증 없이 허용
+    
     # JWT 인증 시도
     user = await get_user_from_jwt_token(request, db)
     if not user:
-        logger.warning(f"SSE authentication required but no valid token for project {project_id}")
+        # API 키 인증 확인
+        if hasattr(request.state, 'user') and request.state.user:
+            user = request.state.user
+            auth_type = "SSE" if is_sse_request else "Message"
+            logger.info(f"Authenticated {auth_type} request via API key for project {project_id}, user={user.email}")
+            return user
+        
+        auth_type = "SSE" if is_sse_request else "Message"
+        logger.warning(f"{auth_type} authentication required but no valid token for project {project_id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required"

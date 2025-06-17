@@ -481,6 +481,55 @@
 
 ## 현재 진행 중인 작업
 
+### TASK_057: mcp_sdk_sse_bridge.py 인증 로직 수정 시 영향도 완전 분석 🔄 진행중
+**핵심 목표**: Cline SSE 연결 시 401 에러 해결을 위한 mcp_sdk_sse_bridge.py 인증 수정 시 전체 시스템에 미치는 영향도를 완전 분석하여 안전한 수정 방안 도출
+
+**📋 분석 현황**:
+- [x] **현재 mcp_sdk_sse_bridge.py 사용 현황 파악**
+  - [x] mcp_sdk_sse_bridge_router가 app.py에서 최우선 라우터로 등록 (112행)
+  - [x] 다른 SSE 라우터들보다 먼저 처리: mcp_sse_transport, mcp_standard_sse, standard_mcp 순
+  - [x] 동일 경로 `/projects/{project_id}/servers/{server_name}/sse` 사용
+  - [x] python-sdk 하이브리드 구현으로 Inspector/Cline 표준 호환성 목표
+
+- [x] **인증 함수 수정 시 영향받는 부분들**
+  - [x] `get_current_user_for_mcp_sse_bridge()`: 현재 DISABLE_AUTH만 지원, 프로젝트 보안 설정 미지원
+  - [x] 기존 동작: DISABLE_AUTH=true일 때만 인증 우회, 그 외 모든 경우 JWT 필수
+  - [x] 다른 SSE 라우터들과 다른 인증 정책 (project.sse_auth_required 무시)
+
+- [x] **프로젝트 보안 설정 연동 확인**
+  - [x] sse_auth_required=false 시 동작 방식: 다른 SSE 라우터들은 모두 지원하여 인증 우회
+  - [x] message_auth_required 설정: POST 메시지 요청 시 인증 제어 (mcp_sdk_sse_bridge는 미지원)
+  - [x] DISABLE_AUTH 환경변수: 전역 인증 비활성화, mcp_sdk_sse_bridge만 지원
+
+- [x] **다른 SSE 라우터들과의 일관성 검토**
+  - [x] **일관성 문제 발견**: mcp_sdk_sse_bridge만 project.sse_auth_required 설정 무시
+  - [x] **6개 SSE 라우터 비교**: project_sse, mcp_sse_transport, mcp_standard_sse, standard_mcp, fastmcp_impl, fastmcp_proper 모두 프로젝트 보안 설정 지원
+  - [x] **mcp_sdk_sse_bridge 고립**: 유일하게 DISABLE_AUTH만 확인하고 프로젝트 설정 무시
+  - [x] **인증 방식 차이**: 
+    - 다른 라우터들: `project.sse_auth_required` → 인증 우회 가능
+    - mcp_sdk_sse_bridge: `DISABLE_AUTH=true` → 전역 설정으로만 우회 가능
+
+- [x] **위험도 평가 및 테스트 시나리오**
+  - [x] **수정 후 예상되는 부작용**:
+    - ✅ **낮은 위험**: mcp_sdk_sse_bridge만 수정하므로 다른 라우터에 영향 없음
+    - ✅ **호환성 개선**: 다른 SSE 라우터와 동일한 인증 정책으로 일관성 확보
+    - ✅ **DISABLE_AUTH 유지**: 기존 전역 비활성화 기능은 그대로 유지
+  - [x] **롤백 대응 방안**: 단순 함수 수정이므로 git revert로 즉시 롤백 가능
+  - [x] **필수 테스트 케이스**:
+    - Cline SSE 연결 (project.sse_auth_required=false)
+    - Inspector 연결 유지 확인
+    - DISABLE_AUTH=true 시 전역 우회 동작 확인
+
+- [x] **안전한 수정 방법 제안**
+  - [x] **최소 변경 방안**: `get_current_user_for_mcp_sse_bridge()` 함수만 수정
+  - [x] **수정 내용**: 다른 SSE 라우터의 인증 로직 복사 (project_sse.py 기준)
+  - [x] **단계별 적용**:
+    1. 기존 DISABLE_AUTH 로직 유지
+    2. project.sse_auth_required 체크 추가
+    3. 메시지 요청 시 project.message_auth_required 체크 추가
+    4. JWT + API 키 이중 인증 지원 추가
+  - [x] **검증 계획**: Cline 401 에러 해결 → Inspector 연결 유지 → 기존 기능 정상 동작
+
 ### TASK_055: mcp-orch 프로젝트 인증 설정 기능 분석 ✅ 완료
 **핵심 목표**: SSE 연결 인증과 메시지 호출 인증을 별도로 제어하는 현재 구현을 코드 레벨에서 완전 분석하고 MCP 표준 관점에서 적절성 평가
 
@@ -900,9 +949,9 @@
   - [ ] JWT 인증 연동 확인
 
 ## Progress Status
-- Current Progress: **TASK_056 완료** - 불필요한 라우터 정리 및 project_security_router 등록
-- Next Task: Inspector 세션 ID 불일치 문제 해결 (최우선 목표)
-- Last Update: 2025-01-18  
+- Current Progress: **TASK_057 완료** - mcp_sdk_sse_bridge.py 인증 로직 수정 시 영향도 완전 분석 완료
+- Next Task: 안전한 인증 로직 수정 구현 (Cline 401 에러 해결)
+- Last Update: 2025-06-17  
 - Automatic Check Feedback: **✅ 인증 설정 분석 완료** - 현실적이고 유연한 인증 시스템 구현 확인
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
