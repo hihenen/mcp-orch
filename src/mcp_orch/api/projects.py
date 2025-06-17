@@ -408,6 +408,31 @@ async def list_project_members(
     
     members = []
     for member, user in members_query:
+        team_id = None
+        team_name = None
+        
+        # team_member로 초대된 경우 팀 정보 조회
+        if member.invited_as == InviteSource.TEAM_MEMBER:
+            # 초대한 사용자와 초대받은 사용자가 공통으로 속한 팀을 찾기
+            # 초대 시점 주변에서 가장 가능성이 높은 팀을 추정
+            common_teams_query = db.query(TeamMember.team_id, Team.name).join(
+                Team, TeamMember.team_id == Team.id
+            ).filter(
+                and_(
+                    TeamMember.user_id == member.user_id,  # 초대받은 사용자
+                    TeamMember.team_id.in_(
+                        # 초대한 사용자가 속한 팀들
+                        db.query(TeamMember.team_id).filter(
+                            TeamMember.user_id == member.invited_by
+                        )
+                    )
+                )
+            ).first()
+            
+            if common_teams_query:
+                team_id = str(common_teams_query[0])
+                team_name = common_teams_query[1]
+
         member_response = ProjectMemberResponse(
             id=str(member.id),
             user_id=str(member.user_id),
@@ -417,17 +442,10 @@ async def list_project_members(
             invited_as=member.invited_as,
             invited_by=str(member.invited_by),
             joined_at=member.joined_at,
-            is_current_user=(user.id == current_user.id)
+            is_current_user=(user.id == current_user.id),
+            team_id=team_id,
+            team_name=team_name
         )
-        
-        # team_member로 초대된 경우 팀 정보 추가
-        if member.invited_as == InviteSource.TEAM_MEMBER:
-            # 초대한 사용자가 속한 팀을 찾아서 팀 정보 추가
-            # ProjectMember에 team_id를 저장하지 않으므로, 
-            # 초대한 시점의 팀 정보를 추적하기 위해 추가 로직이 필요
-            # 현재는 팀 정보를 저장하지 않으므로 None으로 둠
-            # TODO: ProjectMember 모델에 team_id 필드 추가 고려
-            pass
         
         members.append(member_response)
     
@@ -1827,7 +1845,9 @@ async def invite_team_to_project(
             role=new_project_member.role,
             invited_as=new_project_member.invited_as,
             invited_by=str(new_project_member.invited_by),
-            joined_at=new_project_member.joined_at
+            joined_at=new_project_member.joined_at,
+            team_id=str(team.id),
+            team_name=team.name
         ))
     
     db.commit()
