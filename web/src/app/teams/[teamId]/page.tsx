@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useProjectStore } from '@/stores/projectStore';
 import { Project } from '@/types/project';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,6 +90,7 @@ interface ActivityItem {
 export default function TeamDetailPage() {
   const params = useParams();
   const teamId = params.teamId as string;
+  const { data: session } = useSession();
   
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -225,6 +227,15 @@ export default function TeamDetailPage() {
         const memberData = await response.json();
         setMembers(memberData);
         console.log('✅ Successfully loaded team members:', memberData);
+        
+        // 현재 사용자의 역할을 멤버 목록에서 찾아서 설정
+        const currentUserMember = memberData.find((member: Member) => 
+          member.email === session?.user?.email
+        );
+        if (currentUserMember) {
+          setCurrentUserRole(currentUserMember.role);
+          console.log('✅ Set current user role:', currentUserMember.role);
+        }
       } else {
         console.error('Failed to load members:', response.status, response.statusText);
         const errorText = await response.text();
