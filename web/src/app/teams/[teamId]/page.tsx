@@ -51,6 +51,7 @@ interface Member {
   role: 'owner' | 'developer' | 'reporter';
   joined_at: string;
   avatar_url?: string;
+  is_current_user?: boolean;
 }
 
 interface TeamServer {
@@ -229,12 +230,28 @@ export default function TeamDetailPage() {
         console.log('✅ Successfully loaded team members:', memberData);
         
         // 현재 사용자의 역할을 멤버 목록에서 찾아서 설정
-        const currentUserMember = memberData.find((member: Member) => 
-          member.email === session?.user?.email
+        console.log('🔍 Session user email:', session?.user?.email);
+        console.log('🔍 Member data:', memberData);
+        
+        // is_current_user 플래그를 사용해서 현재 사용자 찾기
+        const currentUserMember = memberData.find((member: any) => 
+          member.is_current_user === true
         );
+        console.log('🔍 Found current user member:', currentUserMember);
+        
         if (currentUserMember) {
           setCurrentUserRole(currentUserMember.role);
           console.log('✅ Set current user role:', currentUserMember.role);
+        } else {
+          console.log('❌ Current user not found in member list');
+          // 이메일로 다시 시도
+          const fallbackCurrentUser = memberData.find((member: Member) => 
+            member.email === session?.user?.email
+          );
+          if (fallbackCurrentUser) {
+            setCurrentUserRole(fallbackCurrentUser.role);
+            console.log('✅ Set current user role (fallback):', fallbackCurrentUser.role);
+          }
         }
       } else {
         console.error('Failed to load members:', response.status, response.statusText);
@@ -493,7 +510,9 @@ export default function TeamDetailPage() {
 
   const canAccess = (requiredRole: 'owner' | 'developer' | 'reporter') => {
     const roleHierarchy = { owner: 3, developer: 2, reporter: 1 };
-    return roleHierarchy[currentUserRole] >= roleHierarchy[requiredRole];
+    const hasAccess = roleHierarchy[currentUserRole] >= roleHierarchy[requiredRole];
+    console.log(`🔍 canAccess(${requiredRole}): currentUserRole=${currentUserRole}, hasAccess=${hasAccess}`);
+    return hasAccess;
   };
 
   if (loading) {

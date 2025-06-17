@@ -47,6 +47,7 @@ class TeamMemberResponse(BaseModel):
     role: TeamRole
     joined_at: Optional[datetime]
     avatar_url: Optional[str] = None
+    is_current_user: bool = False
 
     class Config:
         from_attributes = True
@@ -362,7 +363,8 @@ async def get_team_members(
             email=member.user.email,
             role=member.role,
             joined_at=member.joined_at,
-            avatar_url=None  # TODO: Add avatar support
+            avatar_url=None,  # TODO: Add avatar support
+            is_current_user=(member.user_id == current_user.id)
         )
         for member in members
     ]
