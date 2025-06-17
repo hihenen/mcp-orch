@@ -26,7 +26,8 @@ export function ServerHeader({
   onRestartServer,
   onDeleteServer,
   onRefreshStatus,
-  onEditServer
+  onEditServer,
+  onRetryConnection
 }: ExtendedServerHeaderProps) {
   return (
     <div className="space-y-4">
@@ -57,10 +58,14 @@ export function ServerHeader({
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold">{server.name}</h1>
-              <Badge variant={server.status === 'online' ? 'default' : 'secondary'}>
+              <Badge variant={
+                server.status === 'online' ? 'default' : 
+                server.status === 'timeout' ? 'destructive' : 'secondary'
+              }>
                 {server.status === 'online' ? '온라인' : 
                  server.status === 'offline' ? '오프라인' :
-                 server.status === 'connecting' ? '연결 중' : '에러'}
+                 server.status === 'connecting' ? '연결 중' : 
+                 server.status === 'timeout' ? '연결 타임아웃' : '에러'}
               </Badge>
               {server.disabled && (
                 <Badge variant="outline">비활성화</Badge>
@@ -73,6 +78,16 @@ export function ServerHeader({
         </div>
         
         <div className="flex items-center gap-2">
+          {server.status === 'timeout' && onRetryConnection && (
+            <Button 
+              variant="outline"
+              onClick={onRetryConnection}
+              className="text-red-600 hover:text-red-700"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              연결 재시도
+            </Button>
+          )}
           <Button 
             variant="outline"
             onClick={onRefreshStatus}

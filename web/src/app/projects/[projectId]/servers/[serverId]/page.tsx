@@ -36,7 +36,7 @@ export default function ProjectServerDetailPage() {
   const canEditServer = currentUserRole === 'owner' || currentUserRole === 'developer';
 
   // Custom hooks 사용
-  const { server, isLoading, loadServerDetail, handleServerUpdated } = useServerDetail({
+  const { server, isLoading, loadServerDetail, handleServerUpdated, retryConnection } = useServerDetail({
     projectId,
     serverId
   });
@@ -104,6 +104,7 @@ export default function ProjectServerDetailPage() {
         onDeleteServer={handleDeleteServer}
         onRefreshStatus={handleRefreshStatus}
         onEditServer={() => setIsEditDialogOpen(true)}
+        onRetryConnection={retryConnection}
       />
 
       {/* 탭 네비게이션 */}

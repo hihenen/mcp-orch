@@ -27,21 +27,42 @@ export const GET = auth(async function GET(req) {
 
     console.log('✅ GET 서버 상세 정보:', { projectId, serverId });
 
-    // 4. 백엔드 API 호출
-    const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/servers/${serverId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${jwtToken}`,
-      },
-    });
+    // 4. 백엔드 API 호출 (15초 타임아웃)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/servers/${serverId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`,
+        },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const error = await response.text();
-      return NextResponse.json({ error }, { status: response.status });
+      if (!response.ok) {
+        const error = await response.text();
+        return NextResponse.json({ error }, { status: response.status });
+      }
+
+      const data = await response.json();
+      return NextResponse.json(data);
+      
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        console.error('❌ 서버 연결 테스트 타임아웃 (15초)');
+        return NextResponse.json({ 
+          error: 'MCP 서버 연결 테스트가 시간 초과되었습니다. 서버 상태를 확인해주세요.',
+          timeout: true 
+        }, { status: 408 });
+      }
+      
+      throw fetchError;
     }
-
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error) {
     console.error('GET 서버 상세 정보 API error:', error);
     return NextResponse.json(

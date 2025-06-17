@@ -17,7 +17,7 @@ export interface ServerDetail {
   id: string;
   name: string;
   description?: string;
-  status: 'online' | 'offline' | 'connecting' | 'error';
+  status: 'online' | 'offline' | 'connecting' | 'error' | 'timeout';
   disabled: boolean;
   transportType: string;
   command?: string;
@@ -47,4 +47,5 @@ export interface ServerHeaderProps {
   onDeleteServer: () => void;
   onRefreshStatus: () => void;
   onEditServer: () => void;
+  onRetryConnection?: () => void;
 }
