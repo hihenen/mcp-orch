@@ -64,12 +64,12 @@ export function ProjectLayout({ children }: ProjectLayoutProps) {
       icon: Users,
       description: '팀 멤버 관리'
     },
-    {
-      label: 'Tools',
-      href: `/projects/${projectId}/tools`,
-      icon: FileText,
-      description: '사용 가능한 도구'
-    },
+    // {
+    //   label: 'Tools',
+    //   href: `/projects/${projectId}/tools`,
+    //   icon: FileText,
+    //   description: '사용 가능한 도구'
+    // },
     {
       label: 'API Keys',
       href: `/projects/${projectId}/api-keys`,

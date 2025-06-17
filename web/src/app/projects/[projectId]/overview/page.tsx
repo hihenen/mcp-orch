@@ -274,7 +274,7 @@ export default function ProjectOverviewPage() {
         </Card>
 
         {/* 빠른 액션 카드들 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/members`}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -303,7 +303,8 @@ export default function ProjectOverviewPage() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/tools`}>
+          {/* Tools 페이지 임시 비활성화 */}
+          {/* <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/tools`}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
@@ -315,7 +316,7 @@ export default function ProjectOverviewPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/settings`}>
             <CardContent className="pt-6">
