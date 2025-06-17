@@ -378,11 +378,17 @@
   - [x] 빠른 액션 카드를 통한 직관적인 네비게이션 구현
   - [x] ProjectLayout 기반 일관된 네비게이션 구조 확인
 
+- [x] **TASK_070_10: Overview 페이지 undefined 배열 접근 오류 수정**
+  - [x] `projectServers`, `projectTools`, `projectMembers` 배열에 null-safe 체크 추가
+  - [x] undefined 상태에서 `.length` 및 `.slice()` 메서드 접근 방지
+  - [x] 모든 배열 조건부 렌더링을 안전하게 변경
+  - [x] TypeError: Cannot read properties of undefined 런타임 오류 완전 해결
+
 ## Progress Status
-- Current Progress: TASK_070 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링 완전 완료
+- Current Progress: TASK_070 완료 및 Overview 페이지 오류 수정 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링 및 런타임 오류 해결
 - Next Task: 추가 요청 대기 중
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성
+- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 및 undefined 배열 접근 오류 수정 완료 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성, 런타임 안정성 확보
 
 ## Lessons Learned and Insights
 
