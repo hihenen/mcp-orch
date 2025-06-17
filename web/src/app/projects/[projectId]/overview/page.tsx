@@ -156,18 +156,18 @@ export default function ProjectOverviewPage() {
               <div className="flex justify-between">
                 <span className="text-sm">활성 서버</span>
                 <span className="text-sm font-medium">
-                  {projectServers.filter(s => !s.disabled).length}
+                  {projectServers ? projectServers.filter(s => !s.disabled).length : 0}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">비활성 서버</span>
                 <span className="text-sm font-medium">
-                  {projectServers.filter(s => s.disabled).length}
+                  {projectServers ? projectServers.filter(s => s.disabled).length : 0}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">총 도구</span>
-                <span className="text-sm font-medium">{projectTools.length}</span>
+                <span className="text-sm font-medium">{projectTools ? projectTools.length : 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -182,7 +182,7 @@ export default function ProjectOverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {projectMembers.slice(0, 3).map((member) => (
+                {projectMembers ? projectMembers.slice(0, 3).map((member) => (
                   <div key={member.id} className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="text-xs">
@@ -201,13 +201,13 @@ export default function ProjectOverviewPage() {
                       </Badge>
                     </div>
                   </div>
-                ))}
-                {projectMembers.length > 3 && (
+                )) : []}
+                {projectMembers && projectMembers.length > 3 && (
                   <p className="text-xs text-muted-foreground">
                     +{projectMembers.length - 3}명 더
                   </p>
                 )}
-                {projectMembers.length === 0 && (
+                {(!projectMembers || projectMembers.length === 0) && (
                   <p className="text-xs text-muted-foreground">아직 멤버가 없습니다</p>
                 )}
               </div>
