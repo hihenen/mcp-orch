@@ -6,6 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Plus, 
   Search, 
@@ -14,7 +20,8 @@ import {
   Edit,
   Trash2,
   Power,
-  PowerOff
+  PowerOff,
+  MoreHorizontal
 } from 'lucide-react';
 import { useServerStore } from '@/stores/serverStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -268,40 +275,48 @@ export default function ProjectServersPage() {
                     >
                       {server.disabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditServer(server);
-                      }}
-                      title="서버 편집"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteServer(server);
-                      }}
-                      className="text-red-600 hover:text-red-700"
-                      title="서버 삭제"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShowServerDetail(server);
-                      }}
-                      title="서버 상세보기"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                          title="서버 옵션"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowServerDetail(server);
+                          }}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          상세보기
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditServer(server);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          편집
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteServer(server);
+                          }}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          삭제
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardHeader>
