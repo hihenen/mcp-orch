@@ -10,7 +10,8 @@ export const GET = auth(async function GET(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const teamId = params.teamId;
+    const resolvedParams = await params;
+    const teamId = resolvedParams.teamId;
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
@@ -50,7 +51,8 @@ export const POST = auth(async function POST(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const teamId = params.teamId;
+    const resolvedParams = await params;
+    const teamId = resolvedParams.teamId;
     const body = await req.json();
     const jwtToken = await getServerJwtToken(req as any);
     
