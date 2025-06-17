@@ -321,11 +321,67 @@
   - [x] 기존 `AddServerDialog` 편집 모드 연동
   - [x] 드롭다운에서 편집 클릭 시 기존 핸들러 호출
 
+### TASK_070: 프로젝트 페이지 구조를 GitLab/GitHub 스타일 독립 페이지로 리팩토링 ✅ 진행중
+
+**목표**: 프로젝트 상세 페이지의 탭 기반 구조를 GitLab/GitHub 스타일의 독립 페이지들로 분리하여 사용자 경험 개선
+
+- [x] **TASK_070_01: 프로젝트 페이지 구조를 GitLab/GitHub 스타일 독립 페이지로 리팩토링**
+  - [x] 기존 탭 기반 구조 분석 및 백업 파일 생성
+  - [x] 독립 페이지 구조 설계 (Overview, Members, Servers, Tools, API Keys, Activity, Settings)
+  - [x] 프로젝트 네비게이션 구조 개선
+
+- [x] **TASK_070_02: 서버 페이지 ProjectLayout 닫기 완료**
+  - [x] 기존 서버 페이지가 이미 ProjectLayout으로 올바르게 구현됨 확인
+  - [x] 서버 페이지 구조 검증 완료
+
+- [x] **TASK_070_03: Members 독립 페이지 생성**
+  - [x] 백업 파일에서 Members 탭 내용 추출
+  - [x] `/projects/[projectId]/members/page.tsx` 독립 페이지 생성
+  - [x] ProjectLayout 래퍼 적용 및 전체 기능 보존
+  - [x] 멤버 초대, 역할 관리, 섹션 그룹핑 기능 완전 보존
+
+- [x] **TASK_070_04: Tools 독립 페이지 업데이트**
+  - [x] 기존 Tools 페이지 ProjectLayout 적용
+  - [x] 백업 파일 참조하여 기능 개선
+  - [x] 서버별 도구 그룹핑, 검색/필터링, 통계 카드 추가
+  - [x] 도구 실행 모달 연동 및 새로고침 기능 추가
+
+- [x] **TASK_070_05: API Keys 독립 페이지 생성**
+  - [x] 백업 파일에서 API Keys 탭 내용 추출
+  - [x] `/projects/[projectId]/api-keys/page.tsx` 독립 페이지 생성
+  - [x] ProjectLayout 래퍼 적용 및 전체 기능 보존
+  - [x] API 키 생성, 삭제, Cline 설정 다운로드 기능 완전 구현
+  - [x] 만료 상태 표시 및 통계 카드 추가
+
+- [x] **TASK_070_06: Activity 독립 페이지 생성**
+  - [x] 백업 파일에서 Activity 탭 내용 추출
+  - [x] `/projects/[projectId]/activity/page.tsx` 독립 페이지 생성
+  - [x] ProjectLayout 래퍼 적용 및 활동 기록 표시 기능 구현
+  - [x] 활동 유형별 아이콘 및 색상 구분, 검색/필터링 기능
+  - [x] 모의 데이터와 통계 카드 구현 (추후 실제 API 연동 예정)
+
+- [x] **TASK_070_07: Settings 독립 페이지 생성**
+  - [x] 백업 파일에서 Settings 관련 내용 추출
+  - [x] `/projects/[projectId]/settings/page.tsx` 독립 페이지 생성
+  - [x] ProjectLayout 래퍼 적용 및 기본 정보 설정 기능
+  - [x] 보안 설정 섹션 연동, 위험 구역 (프로젝트 삭제) 구현
+  - [x] Owner 권한 기반 편집 제어 및 확인 다이얼로그
+
+- [ ] **TASK_070_08: 프로젝트 상세 페이지 탭 구조 제거 및 정리**
+  - [ ] 기존 프로젝트 상세 페이지에서 탭 UI 제거
+  - [ ] Overview 내용만 남기고 다른 탭들 제거
+  - [ ] 독립 페이지로의 네비게이션 링크 추가
+
+- [ ] **TASK_070_09: 네비게이션 및 라우팅 최종 검증**
+  - [ ] 모든 독립 페이지 간 네비게이션 확인
+  - [ ] ProjectLayout 내 네비게이션 메뉴 업데이트
+  - [ ] 브레드크럼 및 링크 정확성 검증
+
 ## Progress Status
-- Current Progress: TASK_069 완료 - 프로젝트 서버 카드 드롭다운 메뉴 및 삭제 확인 다이얼로그 구현 완료
-- Next Task: 추가 요청 대기 중
+- Current Progress: TASK_070_07 완료 - Activity, Settings 독립 페이지 생성 완료
+- Next Task: TASK_070_08 - 프로젝트 상세 페이지 탭 구조 제거 및 정리
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 서버 카드 UX 크게 개선 - 드롭다운 메뉴 통합 및 안전한 삭제 확인 시스템 구현
+- Automatic Check Feedback: GitLab/GitHub 스타일 독립 페이지 구조 완성 - Members, Tools, API Keys, Activity, Settings 모든 페이지 생성 완료
 
 ## Lessons Learned and Insights
 
