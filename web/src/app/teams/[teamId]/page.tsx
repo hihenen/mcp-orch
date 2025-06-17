@@ -282,6 +282,50 @@ export default function TeamDetailPage() {
     }
   };
 
+  const inviteMember = async () => {
+    if (!inviteEmail.trim()) {
+      alert('이메일을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/teams/${teamId}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          role: inviteRole
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Member invited successfully:', result);
+        
+        // 성공 알림
+        alert(`${inviteEmail}님을 ${inviteRole} 역할로 초대했습니다.`);
+        
+        // 다이얼로그 닫고 폼 리셋
+        setInviteMemberDialog(false);
+        setInviteEmail('');
+        setInviteRole('developer');
+        
+        // 멤버 목록 새로고침
+        loadMembers();
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to invite member:', errorText);
+        alert(`멤버 초대에 실패했습니다: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('❌ Error inviting member:', error);
+      alert('멤버 초대 중 오류가 발생했습니다.');
+    }
+  };
+
   const loadTools = async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/tools`, {
@@ -1088,7 +1132,10 @@ export default function TeamDetailPage() {
               >
                 취소
               </Button>
-              <Button disabled={!inviteEmail.trim()}>
+              <Button 
+                disabled={!inviteEmail.trim()}
+                onClick={inviteMember}
+              >
                 초대 보내기
               </Button>
             </div>
