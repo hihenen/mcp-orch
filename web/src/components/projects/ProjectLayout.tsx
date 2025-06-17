@@ -31,15 +31,19 @@ export function ProjectLayout({ children }: ProjectLayoutProps) {
     selectedProject, 
     projectMembers,
     projectServers,
-    loadProject, 
+    loadProject,
+    loadProjectMembers,
+    loadProjectServers, 
     isLoading 
   } = useProjectStore();
 
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
+      loadProjectMembers(projectId);
+      loadProjectServers(projectId);
     }
-  }, [projectId, loadProject]);
+  }, [projectId, loadProject, loadProjectMembers, loadProjectServers]);
 
   const navigationItems = [
     {
