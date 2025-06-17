@@ -531,7 +531,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           });
           
           if (toolsResponse.ok) {
-            const tools = await toolsResponse.json();
+            const toolsData = await toolsResponse.json();
+            // API가 { tools: [...] } 형태로 반환
+            const tools = toolsData.tools || toolsData || [];
             allTools.push(...tools);
           }
         } catch (error) {
