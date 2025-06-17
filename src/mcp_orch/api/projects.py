@@ -1788,7 +1788,7 @@ async def invite_team_to_project(
                 "user_name": user.name,
                 "user_email": user.email,
                 "reason": "Already a member",
-                "current_role": existing_project_member.role.value
+                "current_role": existing_project_member.role
             })
             continue
         

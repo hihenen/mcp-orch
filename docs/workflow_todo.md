@@ -218,11 +218,16 @@
   - [x] req.params → await params 방식으로 변경
   - [x] 팀 초대 실행 시 500 에러 해결
 
+- [x] **TASK_064_05: 백엔드 enum 타입 문제 수정**
+  - [x] projects.py:1791 라인에서 role.value → role 수정
+  - [x] AttributeError: 'str' object has no attribute 'value' 해결
+  - [x] 팀 초대 실행 시 백엔드 에러 완전 해결
+
 ## Progress Status
-- Current Progress: TASK_064 완료 - 팀 초대 전체 플로우 완전 정상화
+- Current Progress: TASK_064 완료 - 팀 초대 전체 플로우 완전 정상화 (백엔드 포함)
 - Next Task: 사용자 테스트 및 fnfea 팀 표시 확인
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 팀 초대 목록 로드 및 실행 모든 API 정상화, 완전한 기능 제공
+- Automatic Check Feedback: 프론트엔드/백엔드 모든 에러 해결, 팀 초대 기능 완전 정상 작동
 
 ## Lessons Learned and Insights
 
