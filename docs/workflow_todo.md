@@ -247,7 +247,7 @@
   - [ ] 팀 단위 제거 기능 (확인 다이얼로그)
   - [ ] 팀 정보 표시 (팀 이름, 초대자)
 
-### TASK_066: MCP 서버 연결 실패 예외 처리 개선
+### TASK_066: MCP 서버 연결 실패 예외 처리 개선 ✅ 완료
 
 **목표**: 개별 MCP 서버 연결 실패가 전체 시스템 시작을 막지 않도록 개선
 
@@ -260,15 +260,36 @@
   - [ ] 실패한 서버에 대한 백그라운드 재연결 시도
   - [ ] 재연결 성공 시 자동으로 서버 풀에 추가
 
-- [ ] **TASK_066_03: 서버 상태 모니터링 개선**
+- [ ] **TASK_066_03: 서버 상태 모니터링 개선 (선택사항)**
   - [ ] 서버별 연결 상태 추적
   - [ ] API에서 서버 상태 확인 가능하도록 개선
 
+### TASK_067: MCP 서버 통신 타임아웃 및 자동 비활성화 시스템
+
+**목표**: MCP 서버 통신 에러 시 빠른 실패 처리 및 자동 비활성화로 시스템 시작 지연 최소화
+
+- [x] **TASK_067_01: MCPServer 타임아웃 설정 개선**
+  - [x] read loop에서 빠른 실패 감지 및 pending requests 정리
+  - [x] stdio 통신 에러 시 즉시 중단
+  - [x] 세분화된 타임아웃 옵션 추가
+
+- [x] **TASK_067_03: 실패한 MCP 서버 자동 비활성화 시스템**
+  - [x] Registry에 자동 비활성화 로직 추가
+  - [x] `_connect_server` 실패 시 데이터베이스 업데이트
+  - [x] McpServer.is_enabled = False 설정
+  - [x] 실패 이유와 시간 기록
+  - [x] 관리자 API 추가 (/api/admin/mcp-servers)
+
+- [ ] **TASK_067_04: 웹 UI 관리 기능 (선택사항)**
+  - [ ] 서버 상태 표시 (활성/비활성/실패)
+  - [ ] 비활성화된 서버 재활성화 버튼
+  - [ ] 실패 이유 및 시간 표시
+
 ## Progress Status
-- Current Progress: TASK_066_01 완료 - MCP 서버 연결 실패 예외 처리 개선
-- Next Task: TASK_066_02/03 - 재시도 로직 및 모니터링 개선 (선택사항)
+- Current Progress: TASK_067_03 완료 - MCP 서버 자동 비활성화 시스템 및 관리자 API 구현
+- Next Task: TASK_067_04 - 웹 UI 관리 기능 (선택사항)
 - Last Update: 2025-06-17
-- Automatic Check Feedback: Registry 예외 처리 개선으로 개별 서버 실패가 전체 시스템 중단을 방지
+- Automatic Check Feedback: 실패한 MCP 서버 자동 비활성화 및 관리자 API로 완전한 서버 관리 시스템 구축
 
 ## Lessons Learned and Insights
 

@@ -199,10 +199,54 @@ class ToolRegistry:
                 server_info.connected = False
                 server_info.error = str(e)
                 
+            # 실패한 서버를 데이터베이스에서 자동 비활성화
+            await self._disable_failed_server(server_name, str(e))
+                
             # 예외를 다시 발생시켜 상위 레벨에서 처리하도록 함
             error_msg = f"Failed to connect to MCP server '{server_name}': {type(e).__name__}: {e}"
             logger.error(error_msg)
             raise Exception(error_msg) from e
+    
+    async def _disable_failed_server(self, server_name: str, error_message: str) -> None:
+        """
+        실패한 MCP 서버를 데이터베이스에서 비활성화
+        
+        Args:
+            server_name: 서버 이름
+            error_message: 실패 이유
+        """
+        try:
+            from ..database import get_db
+            from ..models import McpServer
+            from datetime import datetime
+            
+            db = next(get_db())
+            
+            # 해당 서버를 데이터베이스에서 찾아서 비활성화
+            db_server = db.query(McpServer).filter(McpServer.name == server_name).first()
+            if db_server:
+                db_server.is_enabled = False
+                db_server.updated_at = datetime.utcnow()
+                
+                # 실패 이유를 메타데이터에 저장 (JSON 필드가 있다면)
+                if hasattr(db_server, 'metadata'):
+                    metadata = db_server.metadata or {}
+                    metadata['last_failure'] = {
+                        'error': error_message,
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'auto_disabled': True
+                    }
+                    db_server.metadata = metadata
+                
+                db.commit()
+                logger.warning(f"Auto-disabled MCP server '{server_name}' in database due to connection failure")
+                logger.info(f"Server '{server_name}' will not be loaded on next restart. Re-enable it through admin API if needed.")
+            else:
+                logger.warning(f"Could not find MCP server '{server_name}' in database to disable")
+                
+        except Exception as e:
+            logger.error(f"Failed to auto-disable server '{server_name}' in database: {e}")
+            # 비활성화 실패는 전체 프로세스를 중단시키지 않음
                 
     async def _discover_tools(self, server_name: str, mcp_server: Any) -> None:
         """

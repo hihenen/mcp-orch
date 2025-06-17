@@ -85,28 +85,50 @@ class MCPServer:
                 
         self.is_connected = False
         self.tools.clear()
-        self.pending_requests.clear()
+        
+        # pending requests 정리
+        await self._cleanup_pending_requests("Server stopped")
     
     async def _read_loop(self) -> None:
         """stdout에서 메시지 읽기"""
-        while True:
-            try:
-                line = await self.process.stdout.readline()
-                if not line:
-                    break
-                    
-                # JSON 파싱
+        try:
+            while True:
                 try:
-                    data = json.loads(line.decode('utf-8').strip())
-                    await self._handle_message(data)
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse JSON from {self.config.name}: {e}")
-                    
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"Error in read loop for {self.config.name}: {e}")
-                break
+                    line = await self.process.stdout.readline()
+                    if not line:
+                        logger.warning(f"MCP server {self.config.name}: stdout closed")
+                        break
+                        
+                    # JSON 파싱
+                    try:
+                        data = json.loads(line.decode('utf-8').strip())
+                        await self._handle_message(data)
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Failed to parse JSON from {self.config.name}: {e}")
+                        # JSON 파싱 실패는 계속 진행 (다음 라인 시도)
+                        continue
+                        
+                except asyncio.CancelledError:
+                    logger.info(f"Read loop cancelled for {self.config.name}")
+                    break
+                except Exception as e:
+                    logger.error(f"Error in read loop for {self.config.name}: {e}")
+                    break
+        finally:
+            # read loop 종료 시 모든 pending requests를 실패 처리
+            await self._cleanup_pending_requests("Read loop terminated")
+    
+    async def _cleanup_pending_requests(self, error_message: str) -> None:
+        """모든 pending requests를 에러로 정리"""
+        if self.pending_requests:
+            logger.warning(f"Cleaning up {len(self.pending_requests)} pending requests for {self.config.name}: {error_message}")
+            
+            # 모든 pending requests를 실패 처리
+            for request_id, future in list(self.pending_requests.items()):
+                if not future.done():
+                    future.set_exception(Exception(f"Connection lost: {error_message}"))
+            
+            self.pending_requests.clear()
     
     async def _handle_message(self, data: Dict[str, Any]) -> None:
         """메시지 처리"""
@@ -123,7 +145,7 @@ class MCPServer:
             # 알림 메시지 등은 로깅
             logger.debug(f"Notification from {self.config.name}: {data}")
     
-    async def _send_request(self, method: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    async def _send_request(self, method: str, params: Optional[Dict[str, Any]] = None, timeout: Optional[int] = None) -> Any:
         """요청 전송 및 응답 대기"""
         self.request_id += 1
         request_id = str(self.request_id)
@@ -146,12 +168,13 @@ class MCPServer:
             await self.process.stdin.drain()
         
         # 응답 대기
+        request_timeout = timeout if timeout is not None else self.config.timeout
         try:
-            result = await asyncio.wait_for(future, timeout=self.config.timeout)
+            result = await asyncio.wait_for(future, timeout=request_timeout)
             return result
         except asyncio.TimeoutError:
             self.pending_requests.pop(request_id, None)
-            raise TimeoutError(f"Request timeout for {method}")
+            raise TimeoutError(f"Request timeout for {method} (waited {request_timeout}s)")
     
     async def _initialize(self) -> None:
         """서버 초기화"""
