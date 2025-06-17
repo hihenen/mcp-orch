@@ -215,8 +215,8 @@ async def get_teams(
 ):
     """Get teams for the current user"""
     
-    # JWT 토큰 전용 인증
-    current_user = await get_user_from_jwt_token(request, db)
+    # JWT 미들웨어에서 이미 인증된 사용자 가져오기
+    current_user = getattr(request.state, 'user', None)
     
     # 디버깅 정보 출력
     print(f"🔍 Teams API - Request headers: {dict(request.headers)}")
@@ -264,7 +264,7 @@ async def get_team_detail(
     db: Session = Depends(get_db)
 ):
     """Get detailed information about a specific team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -294,7 +294,7 @@ async def create_team(
 ):
     """Create a new team."""
     # JWT 토큰 전용 인증
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         print("❌ No authenticated user found for team creation")
@@ -342,7 +342,7 @@ async def get_team_members(
     db: Session = Depends(get_db)
 ):
     """Get all members of a team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -376,7 +376,7 @@ async def invite_team_member(
     db: Session = Depends(get_db)
 ):
     """Invite a new member to the team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -429,7 +429,7 @@ async def update_member_role(
     db: Session = Depends(get_db)
 ):
     """Update a team member's role."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -486,7 +486,7 @@ async def remove_team_member(
     db: Session = Depends(get_db)
 ):
     """Remove a member from the team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -542,7 +542,7 @@ async def get_team_servers(
     db: Session = Depends(get_db)
 ):
     """Get all servers for a team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -571,7 +571,7 @@ async def get_team_tools(
     db: Session = Depends(get_db)
 ):
     """Get all tools available to a team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -606,7 +606,7 @@ async def get_team_api_keys(
     db: Session = Depends(get_db)
 ):
     """Get all API keys for a team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -638,7 +638,7 @@ async def create_team_api_key(
     db: Session = Depends(get_db)
 ):
     """Create a new API key for the team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -691,7 +691,7 @@ async def delete_team_api_key(
     db: Session = Depends(get_db)
 ):
     """Delete an API key."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -731,7 +731,7 @@ async def get_team_activity(
     db: Session = Depends(get_db)
 ):
     """Get team activity feed."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -759,7 +759,7 @@ async def get_team_cline_config(
     db: Session = Depends(get_db)
 ):
     """Generate Cline configuration for the team."""
-    current_user = await get_user_from_jwt_token(request, db)
+    current_user = getattr(request.state, 'user', None)
     
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
