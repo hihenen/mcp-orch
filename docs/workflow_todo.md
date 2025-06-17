@@ -213,11 +213,16 @@
   - [x] loadAvailableTeams에서 전체 페이지 로딩 대신 별도 로딩 사용
   - [x] 팀 선택 드롭다운에 로딩 상태 표시 추가
 
+- [x] **TASK_064_04: 팀 초대 실행 API Next.js 15 호환성 수정**
+  - [x] /api/projects/[projectId]/teams/route.ts POST 메서드 수정
+  - [x] req.params → await params 방식으로 변경
+  - [x] 팀 초대 실행 시 500 에러 해결
+
 ## Progress Status
-- Current Progress: TASK_064 완료 - 팀 초대 탭 문제 및 화면 깜빡임 완전 해결
-- Next Task: 사용자 테스트 및 fnfea 팀 표시 여부 확인
+- Current Progress: TASK_064 완료 - 팀 초대 전체 플로우 완전 정상화
+- Next Task: 사용자 테스트 및 fnfea 팀 표시 확인
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 별도 로딩 상태로 화면 깜빡임 문제 해결, 원활한 UX 제공
+- Automatic Check Feedback: 팀 초대 목록 로드 및 실행 모든 API 정상화, 완전한 기능 제공
 
 ## Lessons Learned and Insights
 
