@@ -29,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function MyProjectsPage() {
+export default function ProjectsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   
@@ -149,9 +149,9 @@ export default function MyProjectsPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Projects</h1>
+          <h1 className="text-3xl font-bold">Projects</h1>
           <p className="text-muted-foreground mt-1">
-            개인 프로젝트를 관리하고 MCP 서버를 구성하세요
+            프로젝트를 관리하고 MCP 서버를 구성하세요
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

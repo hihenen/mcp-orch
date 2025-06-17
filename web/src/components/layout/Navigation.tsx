@@ -16,16 +16,16 @@ import { useAdminPermission } from '@/hooks/useAdminPermission';
 
 const baseNavItems = [
   {
+    title: 'Projects',
+    href: '/projects',
+    icon: FolderOpen,
+    description: '프로젝트 목록'
+  },
+  {
     title: 'Teams',
     href: '/teams',
     icon: Users,
     description: '팀 목록 보기'
-  },
-  {
-    title: 'My Projects',
-    href: '/projects',
-    icon: FolderOpen,
-    description: '개인 프로젝트 목록'
   },
 ];
 
