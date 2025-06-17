@@ -192,11 +192,14 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
           </div>
         </div>
 
-        {/* IP 범위 제한 */}
-        <div className="space-y-4">
+        {/* IP 범위 제한 - 준비 중 */}
+        <div className="space-y-4 opacity-60">
           <h4 className="font-medium flex items-center gap-2">
             <Globe className="h-4 w-4" />
             허용된 IP 범위
+            <Badge variant="outline" className="text-xs">
+              준비 중
+            </Badge>
           </h4>
           
           <div className="space-y-2">
@@ -206,27 +209,36 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
                 value={newIpRange}
                 onChange={(e) => setNewIpRange(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addIpRange()}
+                disabled
+                className="cursor-not-allowed"
               />
-              <Button onClick={addIpRange} variant="outline">
+              <Button onClick={addIpRange} variant="outline" disabled>
                 추가
               </Button>
             </div>
             
             <div className="flex flex-wrap gap-2">
               {settings.allowed_ip_ranges.map((ipRange) => (
-                <Badge key={ipRange} variant="secondary" className="flex items-center gap-1">
+                <Badge key={ipRange} variant="secondary" className="flex items-center gap-1 opacity-60">
                   {ipRange}
                   <button
                     onClick={() => removeIpRange(ipRange)}
-                    className="ml-1 hover:text-red-600"
+                    className="ml-1 hover:text-red-600 cursor-not-allowed"
+                    disabled
                   >
                     ×
                   </button>
                 </Badge>
               ))}
               {settings.allowed_ip_ranges.length === 0 && (
-                <p className="text-sm text-muted-foreground">모든 IP 허용</p>
+                <p className="text-sm text-muted-foreground">모든 IP 허용 (기능 준비 중)</p>
               )}
+            </div>
+            
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-700">
+                ⚠️ IP 범위 제한 기능은 현재 개발 중입니다. 향후 업데이트에서 제공될 예정입니다.
+              </p>
             </div>
           </div>
         </div>
@@ -252,8 +264,8 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
                 </div>
                 <div className="flex items-center gap-2">
                   <span>IP 제한:</span>
-                  <Badge variant={settings.allowed_ip_ranges.length > 0 ? "default" : "secondary"}>
-                    {settings.allowed_ip_ranges.length > 0 ? `${settings.allowed_ip_ranges.length}개 범위` : "제한 없음"}
+                  <Badge variant="outline">
+                    준비 중
                   </Badge>
                 </div>
               </div>
@@ -270,7 +282,7 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
               <ul className="text-sm text-green-700 mt-2 space-y-1">
                 <li>• <strong>SSE 인증:</strong> 현재 Cline에서 지원하지 않으므로 비활성화 권장</li>
                 <li>• <strong>메시지 인증:</strong> 보안을 위해 활성화 권장</li>
-                <li>• <strong>IP 제한:</strong> 필요시 특정 IP 범위만 허용</li>
+                <li>• <strong>IP 제한:</strong> 현재 개발 중 - 향후 업데이트에서 제공 예정</li>
                 <li>• 설정 변경은 자동으로 저장됩니다</li>
               </ul>
             </div>

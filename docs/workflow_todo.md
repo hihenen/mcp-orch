@@ -481,7 +481,26 @@
 
 ## 현재 진행 중인 작업
 
-### TASK_057: mcp_sdk_sse_bridge.py 인증 로직 수정 시 영향도 완전 분석 🔄 진행중
+### TASK_058: 허용된 IP 범위 기능 일시 비활성화 처리 ✅ 완료
+**핵심 목표**: UI에서 IP 범위 기능을 "준비 중" 상태로 표시하여 백엔드 미구현으로 인한 사용자 혼란 방지
+
+- [x] **현재 구현 상태 분석**
+  - [x] 프론트엔드: SecuritySettingsSection.tsx에서 완전한 UI 구현 확인
+  - [x] 백엔드: project_security.py에서 데이터베이스 저장만 가능, 실제 IP 검증 로직 없음
+  - [x] 위험도: 사용자가 설정해도 실제로는 작동하지 않는 상태 확인
+
+- [x] **UI 비활성화 처리**
+  - [x] IP 범위 섹션에 "준비 중" 배지 추가
+  - [x] 입력 필드 및 버튼 disabled 처리
+  - [x] 전체 섹션 opacity 60%로 시각적 비활성화
+  - [x] 경고 메시지 추가: "⚠️ IP 범위 제한 기능은 현재 개발 중입니다"
+
+- [x] **상태 표시 영역 업데이트**  
+  - [x] 현재 인증 상태에서 IP 제한을 "준비 중"으로 표시
+  - [x] 권장사항에서 IP 제한 설명을 "현재 개발 중" 안내로 변경
+  - [x] 사용자 혼란 방지를 위한 명확한 안내문 추가
+
+### TASK_057: mcp_sdk_sse_bridge.py 인증 로직 수정 시 영향도 완전 분석 ✅ 완료
 **핵심 목표**: Cline SSE 연결 시 401 에러 해결을 위한 mcp_sdk_sse_bridge.py 인증 수정 시 전체 시스템에 미치는 영향도를 완전 분석하여 안전한 수정 방안 도출
 
 **📋 분석 현황**:
@@ -949,10 +968,10 @@
   - [ ] JWT 인증 연동 확인
 
 ## Progress Status
-- Current Progress: **TASK_057 완료** - mcp_sdk_sse_bridge.py 인증 로직 수정 시 영향도 완전 분석 완료
-- Next Task: 안전한 인증 로직 수정 구현 (Cline 401 에러 해결)
+- Current Progress: **TASK_058 완료** - 허용된 IP 범위 기능 일시 비활성화 처리 완료
+- Next Task: Inspector 세션 ID 불일치 문제 해결
 - Last Update: 2025-06-17  
-- Automatic Check Feedback: **✅ 인증 설정 분석 완료** - 현실적이고 유연한 인증 시스템 구현 확인
+- Automatic Check Feedback: **✅ IP 범위 기능 UI 비활성화 완료** - 백엔드 미구현 상태에서 사용자 혼란 방지
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:
     1. **MCP 표준 호환성**: Claude Desktop, Cline 등 주요 MCP 클라이언트가 이 형식 사용
