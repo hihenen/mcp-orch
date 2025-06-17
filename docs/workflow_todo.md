@@ -188,7 +188,7 @@
   - [x] 멤버 제거 기능 구현
   - [x] 마지막 Owner 제거 방지 로직
 
-### TASK_064: 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결
+### TASK_064: 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결 ✅ 완료
 
 **목표**: 프로젝트 멤버 초대 모달에서 "팀 초대" 탭 클릭 시 loadAvailableTeams 함수가 자동 호출되도록 수정
 
@@ -201,12 +201,13 @@
   - [x] handleInviteTabChange 함수 생성
   - [x] 팀 탭 선택 시 loadAvailableTeams 호출 로직 추가
   - [x] Tabs 컴포넌트의 onValueChange 핸들러 교체
+  - [x] 디버깅 로그 추가 및 커밋 완료
 
 ## Progress Status
-- Current Progress: TASK_064 - 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결
-- Next Task: 탭 변경 핸들러 수정
+- Current Progress: TASK_064 완료 - 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결 완료
+- Next Task: 사용자 테스트 및 fnfea 팀 표시 여부 확인
 - Last Update: 2025-06-17
-- Automatic Check Feedback: fnfea 팀이 available-teams API에서 조회되지 않는 문제 분석을 위한 디버깅 계획 수립 완료
+- Automatic Check Feedback: 팀 초대 탭 클릭 시 availableTeams 자동 로드 기능 구현 완료
 
 ## Lessons Learned and Insights
 
