@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { 
   Users, 
   Server, 
@@ -322,7 +323,7 @@ export default function TeamDetailPage() {
 
   const inviteMember = async () => {
     if (!inviteEmail.trim()) {
-      alert('이메일을 입력해주세요.');
+      toast.error('이메일을 입력해주세요.');
       return;
     }
 
@@ -343,8 +344,8 @@ export default function TeamDetailPage() {
         const result = await response.json();
         console.log('✅ Member invited successfully:', result);
         
-        // 성공 알림
-        alert(`${inviteEmail}님을 ${inviteRole} 역할로 초대했습니다.`);
+        // 성공 토스트
+        toast.success(`${inviteEmail}님을 ${inviteRole} 역할로 초대했습니다.`);
         
         // 다이얼로그 닫고 폼 리셋
         setInviteMemberDialog(false);
@@ -356,11 +357,11 @@ export default function TeamDetailPage() {
       } else {
         const errorText = await response.text();
         console.error('❌ Failed to invite member:', errorText);
-        alert(`멤버 초대에 실패했습니다: ${errorText}`);
+        toast.error(`멤버 초대에 실패했습니다: ${errorText}`);
       }
     } catch (error) {
       console.error('❌ Error inviting member:', error);
-      alert('멤버 초대 중 오류가 발생했습니다.');
+      toast.error('멤버 초대 중 오류가 발생했습니다.');
     }
   };
 
@@ -545,16 +546,24 @@ export default function TeamDetailPage() {
 
       if (response.ok) {
         console.log('✅ Member role updated successfully');
+        
+        // 멤버 이름 찾기
+        const member = members.find(m => m.user_id === memberId);
+        const memberName = member?.name || member?.email || '멤버';
+        
+        // 성공 토스트 표시
+        toast.success(`${memberName}님의 역할이 ${newRole}로 변경되었습니다.`);
+        
         // 멤버 목록 새로고침
         loadMembers();
       } else {
         const errorText = await response.text();
         console.error('❌ Failed to update member role:', errorText);
-        alert(`역할 변경에 실패했습니다: ${errorText}`);
+        toast.error(`역할 변경에 실패했습니다: ${errorText}`);
       }
     } catch (error) {
       console.error('❌ Error updating member role:', error);
-      alert('역할 변경 중 오류가 발생했습니다.');
+      toast.error('역할 변경 중 오류가 발생했습니다.');
     }
   };
 
@@ -573,15 +582,15 @@ export default function TeamDetailPage() {
         console.log('✅ Member removed successfully');
         // 멤버 목록 새로고침
         loadMembers();
-        alert(`${memberName}님이 팀에서 제거되었습니다.`);
+        toast.success(`${memberName}님이 팀에서 제거되었습니다.`);
       } else {
         const errorText = await response.text();
         console.error('❌ Failed to remove member:', errorText);
-        alert(`멤버 제거에 실패했습니다: ${errorText}`);
+        toast.error(`멤버 제거에 실패했습니다: ${errorText}`);
       }
     } catch (error) {
       console.error('❌ Error removing member:', error);
-      alert('멤버 제거 중 오류가 발생했습니다.');
+      toast.error('멤버 제거 중 오류가 발생했습니다.');
     }
   };
 
