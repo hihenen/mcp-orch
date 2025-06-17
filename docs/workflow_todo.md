@@ -58,6 +58,23 @@
 
 ## Task List
 
+### TASK_071: 프로젝트에서 사용하지 않는 slug 필드 제거 ✅ 완료
+
+**목표**: 프로젝트 시스템에서 실제로 사용하지 않는 slug 필드를 완전히 제거하여 코드 간소화
+
+- [x] **프로젝트에서 사용하지 않는 slug 필드 제거**
+  - [x] 프론트엔드 Settings 페이지에서 slug 입력 필드 제거
+  - [x] 프론트엔드 프로젝트 생성 폼에서 slug 필드 제거  
+  - [x] Overview 페이지에서 slug 표시 제거
+  - [x] 백엔드 API에서 slug 필드 제거 (ProjectCreate, ProjectResponse, ProjectDetailResponse)
+  - [x] 프론트엔드 타입 정의에서 slug 제거 (Project, CreateProjectRequest)
+
+**기술적 개선사항**:
+- 🔧 **코드 간소화**: 사용하지 않는 slug 필드 완전 제거로 코드베이스 정리
+- 🔧 **프로젝트 생성 단순화**: name과 description만으로 프로젝트 생성 가능
+- 🔧 **URL 기반 라우팅**: UUID 기반 라우팅 시스템 유지, slug는 불필요 확인
+- 🔧 **타입 안정성**: TypeScript 인터페이스에서 불필요한 필드 제거로 타입 정확성 향상
+
 ### TASK_070: 프로젝트 페이지 구조를 GitLab/GitHub 스타일 독립 페이지로 리팩토링 ✅ 완료
 
 **목표**: 기존 탭 기반 구조를 GitLab/GitHub처럼 독립된 페이지 구조로 전환
@@ -104,10 +121,10 @@
 - 🔧 **포괄적 로깅 시스템**: API 호출 및 데이터 로딩 과정 추적 가능
 
 ## Progress Status
-- Current Progress: TASK_070 - 프로젝트 페이지 GitLab/GitHub 스타일 리팩토링 **완료**
+- Current Progress: TASK_071 - 프로젝트에서 사용하지 않는 slug 필드 제거 **완료**
 - Next Task: 새로운 사용자 요청 대기
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 모든 프로젝트 페이지가 독립 구조로 성공적으로 전환됨. 사용자 경험이 크게 향상되었으며, GitLab/GitHub와 유사한 직관적인 네비게이션 제공.
+- Automatic Check Feedback: 프로젝트 시스템에서 사용하지 않는 slug 필드를 완전히 제거하여 코드베이스가 간소화됨. 프로젝트 생성이 더욱 단순해지고 타입 안정성이 향상됨.
 
 ## Lessons Learned and Insights
 - **탭 vs 독립 페이지**: 복잡한 프로젝트 관리 시스템에서는 독립 페이지 구조가 사용자 경험 측면에서 우수함
