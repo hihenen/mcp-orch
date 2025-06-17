@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from ..database import get_db
 from ..models import Project, ProjectMember, User, McpServer, ProjectRole, InviteSource, ApiKey
 from ..models.favorite import UserFavorite
+from ..models.team import Team, TeamMember, TeamRole
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
 
@@ -43,6 +44,23 @@ class ProjectMemberCreate(BaseModel):
 
 class ProjectMemberUpdate(BaseModel):
     role: ProjectRole
+
+
+class TeamInviteCreate(BaseModel):
+    team_id: str = Field(..., description="초대할 팀의 ID")
+    role: ProjectRole = ProjectRole.DEVELOPER
+    invite_message: Optional[str] = Field(None, description="초대 메시지")
+
+
+class TeamInviteResponse(BaseModel):
+    team_id: str
+    team_name: str
+    added_members: List[ProjectMemberResponse]
+    skipped_members: List[dict]  # 이미 존재하는 멤버들
+    total_invited: int
+    
+    class Config:
+        from_attributes = True
 
 
 class ProjectResponse(BaseModel):
@@ -1678,3 +1696,189 @@ async def refresh_project_server_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to refresh server status: {str(e)}"
         )
+
+
+# 팀 일괄 초대 API
+@router.post("/projects/{project_id}/teams", response_model=TeamInviteResponse)
+async def invite_team_to_project(
+    project_id: UUID,
+    team_invite_data: TeamInviteCreate,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트에 팀 전체를 일괄 초대 (Owner/Developer만 가능)"""
+    
+    # 프로젝트 권한 확인 (Owner 또는 Developer)
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            or_(
+                ProjectMember.role == ProjectRole.OWNER,
+                ProjectMember.role == ProjectRole.DEVELOPER
+            )
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only project owners and developers can invite teams"
+        )
+    
+    # 프로젝트 존재 확인
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    
+    # 팀 존재 확인 및 현재 사용자의 팀 접근 권한 확인
+    try:
+        team_id_uuid = UUID(team_invite_data.team_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid team ID format"
+        )
+    
+    team = db.query(Team).filter(Team.id == team_id_uuid).first()
+    if not team:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Team not found"
+        )
+    
+    # 현재 사용자가 해당 팀의 멤버인지 확인
+    current_user_team_member = db.query(TeamMember).filter(
+        and_(
+            TeamMember.team_id == team_id_uuid,
+            TeamMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not current_user_team_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of the team to invite it to a project"
+        )
+    
+    # 팀의 모든 멤버 조회
+    team_members_query = db.query(TeamMember, User).join(
+        User, TeamMember.user_id == User.id
+    ).filter(TeamMember.team_id == team_id_uuid)
+    
+    added_members = []
+    skipped_members = []
+    
+    for team_member, user in team_members_query:
+        # 이미 프로젝트 멤버인지 확인
+        existing_project_member = db.query(ProjectMember).filter(
+            and_(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id == user.id
+            )
+        ).first()
+        
+        if existing_project_member:
+            # 이미 멤버인 경우 스킵
+            skipped_members.append({
+                "user_id": str(user.id),
+                "user_name": user.name,
+                "user_email": user.email,
+                "reason": "Already a member",
+                "current_role": existing_project_member.role.value
+            })
+            continue
+        
+        # 새 프로젝트 멤버 추가
+        new_project_member = ProjectMember(
+            project_id=project_id,
+            user_id=user.id,
+            role=team_invite_data.role,
+            invited_as=InviteSource.TEAM_MEMBER,
+            invited_by=current_user.id
+        )
+        
+        db.add(new_project_member)
+        db.flush()  # ID 생성을 위해 flush
+        
+        added_members.append(ProjectMemberResponse(
+            id=str(new_project_member.id),
+            user_id=str(new_project_member.user_id),
+            user_name=user.name,
+            user_email=user.email,
+            role=new_project_member.role,
+            invited_as=new_project_member.invited_as,
+            invited_by=str(new_project_member.invited_by),
+            joined_at=new_project_member.joined_at
+        ))
+    
+    db.commit()
+    
+    logger.info(f"Team '{team.name}' invited to project '{project.name}' by user {current_user.email}. "
+                f"Added {len(added_members)} members, skipped {len(skipped_members)} members.")
+    
+    return TeamInviteResponse(
+        team_id=str(team.id),
+        team_name=team.name,
+        added_members=added_members,
+        skipped_members=skipped_members,
+        total_invited=len(added_members)
+    )
+
+
+# 팀 목록 조회 API (프로젝트 초대용)
+class TeamForInviteResponse(BaseModel):
+    id: str
+    name: str
+    member_count: int
+    user_role: str
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get("/projects/{project_id}/available-teams", response_model=List[TeamForInviteResponse])
+async def get_available_teams_for_project(
+    project_id: UUID,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """프로젝트에 초대 가능한 팀 목록 조회 (현재 사용자가 멤버인 팀들)"""
+    
+    # 프로젝트 접근 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # 현재 사용자가 멤버인 팀들 조회
+    user_teams_query = db.query(TeamMember, Team).join(
+        Team, TeamMember.team_id == Team.id
+    ).filter(TeamMember.user_id == current_user.id)
+    
+    teams = []
+    for team_member, team in user_teams_query:
+        # 각 팀의 멤버 수 조회
+        member_count = db.query(TeamMember).filter(
+            TeamMember.team_id == team.id
+        ).count()
+        
+        teams.append(TeamForInviteResponse(
+            id=str(team.id),
+            name=team.name,
+            member_count=member_count,
+            user_role=team_member.role.value
+        ))
+    
+    return teams
