@@ -203,9 +203,14 @@
   - [x] Tabs 컴포넌트의 onValueChange 핸들러 교체
   - [x] 디버깅 로그 추가 및 커밋 완료
 
+- [x] **TASK_064_02: available-teams API 라우트 Next.js 15 호환성 수정**
+  - [x] req.params → await params 방식으로 변경
+  - [x] 함수 시그니처에 { params } 매개변수 추가
+  - [x] resolvedParams = await params 처리 방식 적용
+
 ## Progress Status
-- Current Progress: TASK_064 완료 - 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결 완료
-- Next Task: 사용자 테스트 및 fnfea 팀 표시 여부 확인
+- Current Progress: TASK_064_02 - Next.js 15 params 처리 문제 수정 진행 중
+- Next Task: available-teams API 라우트 수정 완료 및 테스트
 - Last Update: 2025-06-17
 - Automatic Check Feedback: 팀 초대 탭 클릭 시 availableTeams 자동 로드 기능 구현 완료
 

@@ -5,13 +5,14 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
 // 초대 가능한 팀 목록 조회
-export const GET = auth(async function GET(req) {
+export const GET = auth(async function GET(req, { params }) {
   try {
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId } = req.params;
+    const resolvedParams = await params;
+    const projectId = resolvedParams.projectId;
     
     const jwtToken = await getServerJwtToken(req as any);
     
