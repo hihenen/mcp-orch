@@ -146,10 +146,11 @@
   - [ ] 팀 선택 인터페이스 구현
   - [ ] 역할 설정 및 초대 확인 UI
 
-- [ ] **3단계: 기존 시스템 통합**
-  - [ ] 프로젝트 Store 함수 확장 (팀 초대 관련)
-  - [ ] API 라우트 추가 (`/api/projects/[projectId]/teams`)
-  - [ ] 에러 처리 및 성공 피드백 구현
+- [x] **3단계: 기존 시스템 통합**
+  - [x] 프로젝트 Store 함수 확장 (팀 초대 관련)
+  - [x] API 라우트 추가 (`/api/projects/[projectId]/teams`)
+  - [x] 가능한 팀 목록 조회 API 라우트 추가 (`/api/projects/[projectId]/available-teams`)
+  - [x] 에러 처리 및 성공 피드백 구현
 
 - [ ] **4단계: 사용자 경험 최적화**
   - [ ] 팀 멤버 미리보기 기능

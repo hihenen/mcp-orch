@@ -35,7 +35,7 @@ import {
 import { useProjectStore } from '@/stores/projectStore';
 import { useServerStore } from '@/stores/serverStore';
 import { useToolStore } from '@/stores/toolStore';
-import { Project, ProjectMember, ProjectRole, InviteSource } from '@/types/project';
+import { Project, ProjectMember, ProjectRole, InviteSource, TeamForInvite, TeamInviteRequest } from '@/types/project';
 import { MCPServer } from '@/types';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -58,10 +58,13 @@ export default function ProjectDetailPage() {
     projectMembers, 
     projectServers,
     projectApiKeys,
+    availableTeams,
     loadProject, 
     loadProjectMembers,
     loadProjectServers,
     loadProjectApiKeys,
+    loadAvailableTeams,
+    inviteTeamToProject,
     createProjectApiKey,
     deleteProjectApiKey,
     getProjectClineConfig,
@@ -77,10 +80,16 @@ export default function ProjectDetailPage() {
   
   const [activeTab, setActiveTab] = useState('overview');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteTab, setInviteTab] = useState('member'); // 'member' or 'team'
   const [inviteData, setInviteData] = useState({
     email: '',
     role: 'developer',
     inviteAs: 'individual',
+    message: ''
+  });
+  const [teamInviteData, setTeamInviteData] = useState({
+    teamId: '',
+    role: 'developer',
     message: ''
   });
   const [memberFilter, setMemberFilter] = useState('');
@@ -100,9 +109,10 @@ export default function ProjectDetailPage() {
       loadProjectMembers(projectId);
       loadProjectServers(projectId);
       loadProjectApiKeys(projectId);
+      loadAvailableTeams(projectId);
       loadTools();
     }
-  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadProjectApiKeys, loadTools]);
+  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadProjectApiKeys, loadAvailableTeams, loadTools]);
 
   // 멤버 초대 핸들러
   const handleInviteMember = async () => {
@@ -147,6 +157,52 @@ export default function ProjectDetailPage() {
     } catch (error) {
       console.error('멤버 초대 실패:', error);
       toast.error('멤버 초대에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // 팀 초대 핸들러
+  const handleInviteTeam = async () => {
+    if (!teamInviteData.teamId) {
+      toast.error('초대할 팀을 선택해주세요.');
+      return;
+    }
+
+    // 문자열을 enum으로 변환
+    const role = teamInviteData.role === 'owner' ? ProjectRole.OWNER :
+                 teamInviteData.role === 'developer' ? ProjectRole.DEVELOPER :
+                 ProjectRole.REPORTER;
+
+    try {
+      const teamInviteRequest: TeamInviteRequest = {
+        team_id: teamInviteData.teamId,
+        role: role,
+        invite_message: teamInviteData.message || undefined
+      };
+
+      const result = await inviteTeamToProject(projectId, teamInviteRequest);
+
+      toast.success(
+        `${result.team_name} 팀의 ${result.total_invited}명을 프로젝트에 초대했습니다.${
+          result.skipped_members.length > 0 ? 
+          ` (${result.skipped_members.length}명은 이미 멤버입니다)` : ''
+        }`
+      );
+
+      // 폼 리셋
+      setTeamInviteData({
+        teamId: '',
+        role: 'developer',
+        message: ''
+      });
+
+      // 다이얼로그 닫기
+      setIsInviteOpen(false);
+
+      // 멤버 목록은 Store에서 자동으로 새로고침됨
+
+    } catch (error) {
+      console.error('팀 초대 실패:', error);
+      toast.error('팀 초대에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -549,102 +605,212 @@ export default function ProjectDetailPage() {
               <h3 className="text-lg font-semibold">멤버 {projectMembers.length}명</h3>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">
-                다른 프로젝트에서 가져오기
-              </Button>
-              <Button variant="outline">
-                그룹 초대
-              </Button>
               <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    멤버 초대
+                    멤버/팀 초대
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-3xl">
                   <DialogHeader>
-                    <DialogTitle>멤버 초대</DialogTitle>
+                    <DialogTitle>멤버/팀 초대</DialogTitle>
                     <DialogDescription>
-                      새 멤버를 프로젝트에 초대하세요. 이메일 주소와 역할을 선택할 수 있습니다.
+                      개별 멤버를 초대하거나 팀 전체를 프로젝트에 초대할 수 있습니다.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="email">이메일 주소</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={inviteData.email}
-                        onChange={(e) => setInviteData(prev => ({ ...prev, email: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="role">역할 선택</Label>
-                      <Select
-                        value={inviteData.role}
-                        onValueChange={(value) => setInviteData(prev => ({ ...prev, role: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="owner">
-                            <div className="flex items-center gap-2">
-                              <Crown className="h-4 w-4 text-red-600" />
-                              <span>Owner</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="developer">
-                            <div className="flex items-center gap-2">
-                              <Code className="h-4 w-4 text-blue-600" />
-                              <span>Developer</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="reporter">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-gray-600" />
-                              <span>Reporter</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="inviteAs">초대 경로</Label>
-                      <Select
-                        value={inviteData.inviteAs}
-                        onValueChange={(value) => setInviteData(prev => ({ ...prev, inviteAs: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="individual">개인으로 초대</SelectItem>
-                          <SelectItem value="team_member">팀 멤버로 초대</SelectItem>
-                          <SelectItem value="external">외부 협력사로 초대</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="message">초대 메시지 (선택사항)</Label>
-                      <Textarea
-                        id="message"
-                        placeholder="프로젝트에 참여해주셔서 감사합니다..."
-                        value={inviteData.message}
-                        onChange={(e) => setInviteData(prev => ({ ...prev, message: e.target.value }))}
-                        rows={3}
-                      />
-                    </div>
-                  </div>
+                  
+                  <Tabs value={inviteTab} onValueChange={setInviteTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="member" className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        개별 멤버 초대
+                      </TabsTrigger>
+                      <TabsTrigger value="team" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        팀 초대
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="member" className="space-y-4 mt-4">
+                      <div>
+                        <Label htmlFor="email">이메일 주소</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="user@example.com"
+                          value={inviteData.email}
+                          onChange={(e) => setInviteData(prev => ({ ...prev, email: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="role">역할 선택</Label>
+                        <Select
+                          value={inviteData.role}
+                          onValueChange={(value) => setInviteData(prev => ({ ...prev, role: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="owner">
+                              <div className="flex items-center gap-2">
+                                <Crown className="h-4 w-4 text-red-600" />
+                                <span>Owner</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="developer">
+                              <div className="flex items-center gap-2">
+                                <Code className="h-4 w-4 text-blue-600" />
+                                <span>Developer</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="reporter">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-gray-600" />
+                                <span>Reporter</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="inviteAs">초대 경로</Label>
+                        <Select
+                          value={inviteData.inviteAs}
+                          onValueChange={(value) => setInviteData(prev => ({ ...prev, inviteAs: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="individual">개인으로 초대</SelectItem>
+                            <SelectItem value="team_member">팀 멤버로 초대</SelectItem>
+                            <SelectItem value="external">외부 협력사로 초대</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="member-message">초대 메시지 (선택사항)</Label>
+                        <Textarea
+                          id="member-message"
+                          placeholder="프로젝트에 참여해주셔서 감사합니다..."
+                          value={inviteData.message}
+                          onChange={(e) => setInviteData(prev => ({ ...prev, message: e.target.value }))}
+                          rows={3}
+                        />
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="team" className="space-y-4 mt-4">
+                      <div>
+                        <Label htmlFor="team">팀 선택</Label>
+                        <Select
+                          value={teamInviteData.teamId}
+                          onValueChange={(value) => setTeamInviteData(prev => ({ ...prev, teamId: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="초대할 팀을 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableTeams.map((team) => (
+                              <SelectItem key={team.id} value={team.id}>
+                                <div className="flex items-center justify-between w-full">
+                                  <span>{team.name}</span>
+                                  <span className="text-sm text-muted-foreground ml-2">
+                                    {team.member_count}명 • {team.user_role}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {availableTeams.length === 0 && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            초대할 수 있는 팀이 없습니다. 먼저 팀에 가입하거나 팀을 생성해주세요.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor="team-role">팀 멤버들의 역할</Label>
+                        <Select
+                          value={teamInviteData.role}
+                          onValueChange={(value) => setTeamInviteData(prev => ({ ...prev, role: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="owner">
+                              <div className="flex items-center gap-2">
+                                <Crown className="h-4 w-4 text-red-600" />
+                                <span>Owner</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="developer">
+                              <div className="flex items-center gap-2">
+                                <Code className="h-4 w-4 text-blue-600" />
+                                <span>Developer</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="reporter">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-gray-600" />
+                                <span>Reporter</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="team-message">초대 메시지 (선택사항)</Label>
+                        <Textarea
+                          id="team-message"
+                          placeholder="팀 전체를 프로젝트에 초대합니다..."
+                          value={teamInviteData.message}
+                          onChange={(e) => setTeamInviteData(prev => ({ ...prev, message: e.target.value }))}
+                          rows={3}
+                        />
+                      </div>
+                      
+                      {/* 팀 정보 미리보기 */}
+                      {teamInviteData.teamId && (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <h4 className="font-medium text-blue-900 mb-2">선택된 팀 정보</h4>
+                          {(() => {
+                            const selectedTeam = availableTeams.find(t => t.id === teamInviteData.teamId);
+                            return selectedTeam ? (
+                              <div className="text-sm text-blue-700">
+                                <p><strong>{selectedTeam.name}</strong></p>
+                                <p>{selectedTeam.member_count}명의 멤버가 프로젝트에 초대됩니다.</p>
+                                <p>현재 당신의 역할: {selectedTeam.user_role}</p>
+                              </div>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                  
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsInviteOpen(false)}>
                       취소
                     </Button>
-                    <Button onClick={handleInviteMember} disabled={!inviteData.email}>
-                      초대 보내기
-                    </Button>
+                    {inviteTab === 'member' ? (
+                      <Button 
+                        onClick={handleInviteMember} 
+                        disabled={!inviteData.email.trim()}
+                      >
+                        멤버 초대
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={handleInviteTeam} 
+                        disabled={!teamInviteData.teamId}
+                      >
+                        팀 초대
+                      </Button>
+                    )}
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
