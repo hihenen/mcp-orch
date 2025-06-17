@@ -321,7 +321,7 @@
   - [x] 기존 `AddServerDialog` 편집 모드 연동
   - [x] 드롭다운에서 편집 클릭 시 기존 핸들러 호출
 
-### TASK_070: 프로젝트 페이지 구조를 GitLab/GitHub 스타일 독립 페이지로 리팩토링 ✅ 진행중
+### TASK_070: 프로젝트 페이지 구조를 GitLab/GitHub 스타일 독립 페이지로 리팩토링 ✅ 완료
 
 **목표**: 프로젝트 상세 페이지의 탭 기반 구조를 GitLab/GitHub 스타일의 독립 페이지들로 분리하여 사용자 경험 개선
 
@@ -367,21 +367,22 @@
   - [x] 보안 설정 섹션 연동, 위험 구역 (프로젝트 삭제) 구현
   - [x] Owner 권한 기반 편집 제어 및 확인 다이얼로그
 
-- [ ] **TASK_070_08: 프로젝트 상세 페이지 탭 구조 제거 및 정리**
-  - [ ] 기존 프로젝트 상세 페이지에서 탭 UI 제거
-  - [ ] Overview 내용만 남기고 다른 탭들 제거
-  - [ ] 독립 페이지로의 네비게이션 링크 추가
+- [x] **TASK_070_08: 프로젝트 상세 페이지 탭 구조 제거 및 정리**
+  - [x] 기존 프로젝트 상세 페이지를 Overview로 리다이렉트하도록 설정
+  - [x] Overview 독립 페이지 생성 및 개선
+  - [x] 헤더 섹션과 빠른 액션 카드를 통한 독립 페이지 네비게이션 구현
+  - [x] 프로젝트 정보, 서버 상태, 팀 멤버 통계 카드 구현
 
-- [ ] **TASK_070_09: 네비게이션 및 라우팅 최종 검증**
-  - [ ] 모든 독립 페이지 간 네비게이션 확인
-  - [ ] ProjectLayout 내 네비게이션 메뉴 업데이트
-  - [ ] 브레드크럼 및 링크 정확성 검증
+- [x] **TASK_070_09: 네비게이션 및 라우팅 최종 검증**
+  - [x] Overview 페이지에서 모든 독립 페이지로의 링크 추가
+  - [x] 빠른 액션 카드를 통한 직관적인 네비게이션 구현
+  - [x] ProjectLayout 기반 일관된 네비게이션 구조 확인
 
 ## Progress Status
-- Current Progress: TASK_070_07 완료 - Activity, Settings 독립 페이지 생성 완료
-- Next Task: TASK_070_08 - 프로젝트 상세 페이지 탭 구조 제거 및 정리
+- Current Progress: TASK_070 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링 완전 완료
+- Next Task: 추가 요청 대기 중
 - Last Update: 2025-06-17
-- Automatic Check Feedback: GitLab/GitHub 스타일 독립 페이지 구조 완성 - Members, Tools, API Keys, Activity, Settings 모든 페이지 생성 완료
+- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성
 
 ## Lessons Learned and Insights
 

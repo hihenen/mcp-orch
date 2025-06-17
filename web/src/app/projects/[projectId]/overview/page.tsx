@@ -6,13 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
-  Users, 
-  Server, 
   Activity,
-  FileText
+  Server,
+  Users,
+  Calendar,
+  Hash,
+  CheckCircle,
+  Clock,
+  UserPlus,
+  Settings
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
-import { useToolStore } from '@/stores/toolStore';
 import { ProjectLayout } from '@/components/projects/ProjectLayout';
 
 function getInitials(name: string): string {
@@ -45,22 +49,20 @@ export default function ProjectOverviewPage() {
     selectedProject, 
     projectMembers, 
     projectServers,
+    projectTools,
     loadProject, 
     loadProjectMembers,
     loadProjectServers,
     isLoading 
   } = useProjectStore();
-  
-  const { tools: projectTools, loadTools } = useToolStore();
 
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
       loadProjectMembers(projectId);
       loadProjectServers(projectId);
-      loadTools();
     }
-  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadTools]);
+  }, [projectId, loadProject, loadProjectMembers, loadProjectServers]);
 
   if (isLoading) {
     return (
@@ -87,8 +89,19 @@ export default function ProjectOverviewPage() {
 
   return (
     <ProjectLayout>
-      <div className="space-y-6">
-        {/* 통계 카드들 */}
+      <div className="container py-6 space-y-6">
+        {/* 헤더 섹션 */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-blue-900">프로젝트 개요</h3>
+          </div>
+          <p className="text-sm text-blue-700">
+            {selectedProject.description || '이 프로젝트의 전반적인 현황과 주요 정보를 한눈에 확인할 수 있습니다.'}
+          </p>
+        </div>
+
+        {/* 주요 통계 카드들 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* 프로젝트 정보 카드 */}
           <Card>
@@ -100,22 +113,33 @@ export default function ProjectOverviewPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <p className="text-sm font-medium">생성일</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  생성일
+                </p>
+                <p className="text-sm text-muted-foreground ml-6">
                   {new Date(selectedProject.created_at).toLocaleDateString('ko-KR')}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium">슬러그</p>
-                <p className="text-sm text-muted-foreground font-mono">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  슬러그
+                </p>
+                <p className="text-sm text-muted-foreground font-mono ml-6">
                   {selectedProject.slug}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium">상태</p>
-                <Badge variant="outline" className="bg-green-50 text-green-700">
-                  활성
-                </Badge>
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  상태
+                </p>
+                <div className="ml-6">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    활성
+                  </Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -183,6 +207,9 @@ export default function ProjectOverviewPage() {
                     +{projectMembers.length - 3}명 더
                   </p>
                 )}
+                {projectMembers.length === 0 && (
+                  <p className="text-xs text-muted-foreground">아직 멤버가 없습니다</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -191,7 +218,10 @@ export default function ProjectOverviewPage() {
         {/* 최근 활동 */}
         <Card>
           <CardHeader>
-            <CardTitle>최근 활동</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              최근 활동
+            </CardTitle>
             <CardDescription>프로젝트의 최근 변경사항</CardDescription>
           </CardHeader>
           <CardContent>
@@ -221,53 +251,64 @@ export default function ProjectOverviewPage() {
           </CardContent>
         </Card>
 
-        {/* 빠른 작업 섹션 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>빠른 작업</CardTitle>
-            <CardDescription>자주 사용하는 기능들에 빠르게 접근</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                <div className="flex items-center gap-3">
-                  <Server className="h-6 w-6 text-blue-500" />
-                  <div>
-                    <p className="font-medium">서버 추가</p>
-                    <p className="text-sm text-muted-foreground">새 MCP 서버 추가</p>
-                  </div>
+        {/* 빠른 액션 카드들 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/members`}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <UserPlus className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">멤버 초대</p>
+                  <p className="text-xs text-muted-foreground">팀에 새 멤버 추가</p>
                 </div>
               </div>
-              <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                <div className="flex items-center gap-3">
-                  <Users className="h-6 w-6 text-green-500" />
-                  <div>
-                    <p className="font-medium">멤버 초대</p>
-                    <p className="text-sm text-muted-foreground">새 팀원 초대</p>
-                  </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/servers`}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Server className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">서버 관리</p>
+                  <p className="text-xs text-muted-foreground">MCP 서버 추가/관리</p>
                 </div>
               </div>
-              <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-6 w-6 text-purple-500" />
-                  <div>
-                    <p className="font-medium">도구 탐색</p>
-                    <p className="text-sm text-muted-foreground">사용 가능한 도구</p>
-                  </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/tools`}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Activity className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">도구 실행</p>
+                  <p className="text-xs text-muted-foreground">MCP 도구 사용</p>
                 </div>
               </div>
-              <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                <div className="flex items-center gap-3">
-                  <Activity className="h-6 w-6 text-orange-500" />
-                  <div>
-                    <p className="font-medium">활동 보기</p>
-                    <p className="text-sm text-muted-foreground">프로젝트 활동</p>
-                  </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${projectId}/settings`}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Settings className="h-4 w-4 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">설정</p>
+                  <p className="text-xs text-muted-foreground">프로젝트 설정 관리</p>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </ProjectLayout>
   );
