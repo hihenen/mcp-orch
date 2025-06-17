@@ -56,6 +56,9 @@ class ProjectMemberResponse(BaseModel):
     invited_by: str
     joined_at: datetime
     is_current_user: bool = False
+    # 팀 정보 (team_member로 초대된 경우)
+    team_id: Optional[str] = None
+    team_name: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -405,7 +408,7 @@ async def list_project_members(
     
     members = []
     for member, user in members_query:
-        members.append(ProjectMemberResponse(
+        member_response = ProjectMemberResponse(
             id=str(member.id),
             user_id=str(member.user_id),
             user_name=user.name,
@@ -413,8 +416,20 @@ async def list_project_members(
             role=member.role,
             invited_as=member.invited_as,
             invited_by=str(member.invited_by),
-            joined_at=member.joined_at
-        ))
+            joined_at=member.joined_at,
+            is_current_user=(user.id == current_user.id)
+        )
+        
+        # team_member로 초대된 경우 팀 정보 추가
+        if member.invited_as == InviteSource.TEAM_MEMBER:
+            # 초대한 사용자가 속한 팀을 찾아서 팀 정보 추가
+            # ProjectMember에 team_id를 저장하지 않으므로, 
+            # 초대한 시점의 팀 정보를 추적하기 위해 추가 로직이 필요
+            # 현재는 팀 정보를 저장하지 않으므로 None으로 둠
+            # TODO: ProjectMember 모델에 team_id 필드 추가 고려
+            pass
+        
+        members.append(member_response)
     
     return members
 

@@ -223,11 +223,35 @@
   - [x] AttributeError: 'str' object has no attribute 'value' 해결
   - [x] 팀 초대 실행 시 백엔드 에러 완전 해결
 
+### TASK_065: 프로젝트 멤버 뷰 섹션 그룹핑 개선
+
+**목표**: 프로젝트 멤버 조회 화면을 "직접 초대된 멤버"와 "팀별 멤버"로 구분하여 표시하는 섹션 그룹핑 UI 구현
+
+- [x] **TASK_065_01: 멤버 데이터 분류 로직 구현**
+  - [x] 멤버를 개별/팀 초대로 분류하는 로직 추가
+  - [x] InviteSource 기반 데이터 그룹핑
+  - [x] 팀별 멤버 그룹 생성 로직
+
+- [x] **TASK_065_02: 섹션 그룹핑 UI 구현**
+  - [x] "직접 초대된 멤버" 섹션 구현
+  - [x] "팀별 멤버" 섹션 구현 (팀별로 하위 그룹)
+  - [x] 각 섹션별 멤버 수 표시
+
+- [ ] **TASK_065_03: 팀별 접기/펼치기 기능**
+  - [ ] 팀별 섹션 토글 상태 관리
+  - [ ] 접기/펼치기 애니메이션 구현
+  - [ ] 기본 펼쳐진 상태로 설정
+
+- [ ] **TASK_065_04: 팀 레벨 관리 기능**
+  - [ ] 팀 단위 역할 일괄 변경 기능
+  - [ ] 팀 단위 제거 기능 (확인 다이얼로그)
+  - [ ] 팀 정보 표시 (팀 이름, 초대자)
+
 ## Progress Status
-- Current Progress: TASK_064 완료 - 팀 초대 전체 플로우 완전 정상화 (백엔드 포함)
-- Next Task: 사용자 테스트 및 fnfea 팀 표시 확인
-- Last Update: 2025-06-17
-- Automatic Check Feedback: 프론트엔드/백엔드 모든 에러 해결, 팀 초대 기능 완전 정상 작동
+- Current Progress: TASK_065_02 완료 - 프로젝트 멤버 섹션 그룹핑 UI 완성
+- Next Task: TASK_065_03 - 팀별 접기/펼치기 기능 구현 (선택사항)
+- Last Update: 2025-01-17
+- Automatic Check Feedback: 멤버 그룹핑 UI 성공적으로 구현됨
 
 ## Lessons Learned and Insights
 

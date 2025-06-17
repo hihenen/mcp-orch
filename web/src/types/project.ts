@@ -29,6 +29,9 @@ export interface ProjectMember {
   invited_by: string;
   joined_at: string;
   is_current_user?: boolean;
+  // 팀 정보 (team_member로 초대된 경우)
+  team_id?: string;
+  team_name?: string;
   // 사용자 정보 (조인된 데이터) - 백엔드에서 직접 user_name, user_email 제공
   user?: {
     name: string;
