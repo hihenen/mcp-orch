@@ -29,6 +29,8 @@ export function ProjectLayout({ children }: ProjectLayoutProps) {
   
   const { 
     selectedProject, 
+    projectMembers,
+    projectServers,
     loadProject, 
     isLoading 
   } = useProjectStore();
@@ -153,11 +155,11 @@ export function ProjectLayout({ children }: ProjectLayoutProps) {
               <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  <span>{selectedProject.members_count || 0}명</span>
+                  <span>{projectMembers ? projectMembers.length : selectedProject.members_count || selectedProject.member_count || 0}명</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Server className="h-4 w-4" />
-                  <span>{selectedProject.servers_count || 0}개 서버</span>
+                  <span>{projectServers ? projectServers.length : selectedProject.servers_count || selectedProject.server_count || 0}개 서버</span>
                 </div>
                 {selectedProject.created_at && (
                   <div>
