@@ -55,12 +55,12 @@ export default function ProjectToolsPage() {
   }, [projectId, loadProject, loadProjectServers, loadTools]);
 
   // 검색 필터링 - projectTools 사용
-  const filteredTools = projectTools.filter(tool => {
+  const filteredTools = projectTools ? projectTools.filter(tool => {
     const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (tool.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesServer = serverFilter === 'all' || tool.serverId === serverFilter;
     return matchesSearch && matchesServer;
-  });
+  }) : [];
 
   // 서버별 도구 그룹핑
   const toolsByServer = filteredTools.reduce((acc, tool) => {
@@ -72,7 +72,7 @@ export default function ProjectToolsPage() {
   }, {} as Record<string, typeof projectTools>);
 
   // 고유 서버 목록 가져오기
-  const uniqueServers = Array.from(new Set(projectTools.map(tool => tool.serverId)));
+  const uniqueServers = projectTools ? Array.from(new Set(projectTools.map(tool => tool.serverId))) : [];
 
   // 도구 새로고침 핸들러
   const handleRefreshTools = async () => {
@@ -160,7 +160,7 @@ export default function ProjectToolsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{projectTools.length}</div>
+              <div className="text-2xl font-bold">{projectTools ? projectTools.length : 0}</div>
               <p className="text-sm text-muted-foreground">사용 가능한 도구</p>
             </CardContent>
           </Card>
