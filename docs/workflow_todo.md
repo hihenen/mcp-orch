@@ -120,11 +120,50 @@
 - 🔧 **네비게이션 용어 개선**: "My Projects" → "Projects"로 변경, 메뉴 순서 최적화
 - 🔧 **포괄적 로깅 시스템**: API 호출 및 데이터 로딩 과정 추적 가능
 
+### TASK_073: 팀 페이지를 GitLab/GitHub 스타일 독립 페이지로 리팩토링
+
+**목표**: 현재 탭 기반 팀 상세 페이지(1516줄)를 프로젝트 페이지처럼 독립된 페이지 구조로 전환
+
+- [x] **TeamLayout 컴포넌트 생성**
+  - [x] 팀 정보 헤더 (이름, 설명, 멤버 수, 생성일)
+  - [x] 네비게이션 탭 메뉴 구조
+  - [x] 브레드크럼 네비게이션
+  - [x] 권한 기반 접근 제어
+
+- [ ] **각 기능별 독립 페이지 생성**
+  - [x] Overview 독립 페이지 (`/teams/[teamId]/overview`)
+  - [ ] Projects 독립 페이지 (`/teams/[teamId]/projects`)
+  - [ ] Members 독립 페이지 (`/teams/[teamId]/members`)
+  - [ ] Servers 독립 페이지 (`/teams/[teamId]/servers`)
+  - [ ] Tools 독립 페이지 (`/teams/[teamId]/tools`)
+  - [ ] Activity 독립 페이지 (`/teams/[teamId]/activity`)
+  - [ ] API Keys 독립 페이지 (`/teams/[teamId]/api-keys`)
+  - [ ] Settings 독립 페이지 (`/teams/[teamId]/settings`)
+
+- [ ] **기존 탭 기반 구조 제거 및 정리**
+  - [ ] 현재 단일 파일(1516줄)에서 기능별 분리
+  - [ ] 공통 로직은 커스텀 훅으로 분리
+  - [ ] API 호출 최적화 (페이지별 필요한 데이터만 로드)
+  - [ ] 라우팅 구조 개선
+
+- [ ] **성능 및 사용자 경험 최적화**
+  - [ ] 페이지별 lazy loading 구현
+  - [ ] SEO를 위한 독립 URL 구조
+  - [ ] 브라우저 네비게이션 지원
+  - [ ] 프로젝트 페이지와 일관된 UX 패턴
+
+**기술적 개선사항**:
+- 🔧 **성능 최적화**: 페이지별 데이터 로딩으로 초기 로드 속도 향상
+- 🔧 **SEO 개선**: 각 기능별 독립 URL로 검색 엔진 최적화
+- 🔧 **유지보수성**: 1516줄 → 200줄 단위로 분리하여 코드 관리 용이
+- 🔧 **일관성**: 프로젝트 페이지와 동일한 패턴으로 통일된 UX
+- 🔧 **확장성**: 새로운 기능 추가 시 독립적인 페이지로 확장 가능
+
 ## Progress Status
-- Current Progress: TASK_071 - 프로젝트에서 사용하지 않는 slug 필드 제거 **완료**
-- Next Task: 새로운 사용자 요청 대기
+- Current Progress: TASK_073 - 팀 페이지를 GitLab/GitHub 스타일 독립 페이지로 리팩토링 **계획 수립**
+- Next Task: TeamLayout 컴포넌트 생성
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 프로젝트 시스템에서 사용하지 않는 slug 필드를 완전히 제거하여 코드베이스가 간소화됨. 프로젝트 생성이 더욱 단순해지고 타입 안정성이 향상됨.
+- Automatic Check Feedback: 현재 1516줄의 거대한 단일 파일로 구성된 팀 상세 페이지를 프로젝트 페이지와 동일한 독립 페이지 구조로 리팩토링하여 성능, 사용자 경험, 유지보수성을 대폭 개선할 예정.
 
 ## Lessons Learned and Insights
 - **탭 vs 독립 페이지**: 복잡한 프로젝트 관리 시스템에서는 독립 페이지 구조가 사용자 경험 측면에서 우수함
