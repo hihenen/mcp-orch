@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Users, 
   Server, 
@@ -32,7 +34,12 @@ import {
   Mail,
   Shield,
   AlertTriangle,
-  FolderOpen
+  FolderOpen,
+  MoreHorizontal,
+  Crown,
+  Code,
+  FileText,
+  ChevronDown
 } from 'lucide-react';
 
 interface Organization {
@@ -121,6 +128,9 @@ export default function TeamDetailPage() {
   const [newApiKeyName, setNewApiKeyName] = useState('');
   const [editTeamName, setEditTeamName] = useState('');
   const [editTeamDescription, setEditTeamDescription] = useState('');
+  
+  // 멤버 관리 상태
+  const [memberFilter, setMemberFilter] = useState('');
 
   useEffect(() => {
     if (teamId) {
@@ -515,6 +525,66 @@ export default function TeamDetailPage() {
     return hasAccess;
   };
 
+  // 멤버 관리 헬퍼 함수들
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    try {
+      const response = await fetch(`/api/teams/${teamId}/members/${memberId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          role: newRole
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ Member role updated successfully');
+        // 멤버 목록 새로고침
+        loadMembers();
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to update member role:', errorText);
+        alert(`역할 변경에 실패했습니다: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('❌ Error updating member role:', error);
+      alert('역할 변경 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    if (!confirm(`정말로 ${memberName}님을 팀에서 제거하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/teams/${teamId}/members/${memberId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        console.log('✅ Member removed successfully');
+        // 멤버 목록 새로고침
+        loadMembers();
+        alert(`${memberName}님이 팀에서 제거되었습니다.`);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to remove member:', errorText);
+        alert(`멤버 제거에 실패했습니다: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('❌ Error removing member:', error);
+      alert('멤버 제거 중 오류가 발생했습니다.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-6">
@@ -817,13 +887,13 @@ export default function TeamDetailPage() {
         </TabsContent>
 
         {/* Members 탭 */}
-        <TabsContent value="members" className="space-y-4">
+        <TabsContent value="members" className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>팀원 관리</CardTitle>
-                  <CardDescription>팀원 목록 및 역할 관리</CardDescription>
+                  <CardDescription>팀원 {members.length}명</CardDescription>
                 </div>
                 {canAccess('owner') && (
                   <Button onClick={() => setInviteMemberDialog(true)}>
@@ -834,40 +904,153 @@ export default function TeamDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {members.map((member) => (
-                  <Card key={member.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarImage src={member.avatar_url} />
-                            <AvatarFallback>
-                              {member.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-medium">{member.name}</h3>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
+              {/* 멤버 검색 */}
+              <div className="flex items-center space-x-2 mb-6">
+                <div className="flex-1">
+                  <Input
+                    placeholder="멤버 검색..."
+                    value={memberFilter}
+                    onChange={(e) => setMemberFilter(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                <Button variant="outline" size="sm">
+                  정렬 <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* 멤버 테이블 */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="text-left p-4 font-medium text-sm text-gray-700">계정</th>
+                      <th className="text-left p-4 font-medium text-sm text-gray-700">출처</th>
+                      <th className="text-left p-4 font-medium text-sm text-gray-700">역할</th>
+                      <th className="text-left p-4 font-medium text-sm text-gray-700">가입일</th>
+                      <th className="text-left p-4 font-medium text-sm text-gray-700">활동</th>
+                      <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {members.filter(member => 
+                      memberFilter === '' || 
+                      member.name?.toLowerCase().includes(memberFilter.toLowerCase()) ||
+                      member.email?.toLowerCase().includes(memberFilter.toLowerCase())
+                    ).map((member) => (
+                      <tr key={member.id} className="hover:bg-gray-50">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={member.avatar_url} />
+                              <AvatarFallback className="text-sm">
+                                {getInitials(member.name || member.email || 'U')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{member.name || member.email || 'Unknown User'}</span>
+                                {member.is_current_user && (
+                                  <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
+                                    It's you
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {member.email || '@username'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">
+                            <p className="text-muted-foreground">팀 직접 초대</p>
                             <p className="text-xs text-muted-foreground">
-                              가입일: {formatDate(member.joined_at)}
+                              {organization?.name}
                             </p>
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={getRoleBadgeVariant(member.role)}>
-                            {getRoleIcon(member.role)} {member.role.toUpperCase()}
-                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <Select
+                            value={member.role}
+                            onValueChange={(value) => handleRoleChange(member.user_id, value)}
+                            disabled={!canAccess('owner') || member.role === 'owner'}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue>
+                                <div className="flex items-center gap-2">
+                                  {member.role === 'owner' && <Crown className="h-4 w-4 text-red-600" />}
+                                  {member.role === 'developer' && <Code className="h-4 w-4 text-blue-600" />}
+                                  {member.role === 'reporter' && <FileText className="h-4 w-4 text-gray-600" />}
+                                  <span className="capitalize">{member.role}</span>
+                                </div>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="owner">
+                                <div className="flex items-center gap-2">
+                                  <Crown className="h-4 w-4 text-red-600" />
+                                  <span>Owner</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="developer">
+                                <div className="flex items-center gap-2">
+                                  <Code className="h-4 w-4 text-blue-600" />
+                                  <span>Developer</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="reporter">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-gray-600" />
+                                  <span>Reporter</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm text-muted-foreground">
+                            <p>{formatDate(member.joined_at || new Date().toISOString())}</p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm text-muted-foreground">
+                            <p>최근 활동</p>
+                            <p className="text-xs">활성 상태</p>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right">
                           {canAccess('owner') && member.role !== 'owner' && (
-                            <Button size="sm" variant="outline">
-                              <Edit className="w-4 h-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  권한 편집
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Mail className="h-4 w-4 mr-2" />
+                                  다시 초대
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={() => handleRemoveMember(member.user_id, member.name || member.email || 'Unknown User')}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  멤버 제거
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

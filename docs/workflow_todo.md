@@ -158,11 +158,41 @@
   - [x] 중복 멤버 안내 및 처리 (백엔드에서 자동 처리 후 결과 표시)
   - [x] 일괄 초대 진행 상황 표시 (성공/스킵 멤버 수 토스트로 표시)
 
+### TASK_062: 팀 Members UI를 프로젝트 Members 테이블 스타일로 변경
+
+**목표**: 팀 멤버 관리 UI를 프로젝트 멤버 관리와 동일한 테이블 형태로 변경하여 일관된 사용자 경험 제공
+
+- [ ] **TASK_062_01: 팀 Members 탭 UI를 프로젝트 Members 스타일로 변경**
+  - [x] 프로젝트 Members 테이블 구조 분석
+  - [ ] 팀 Members 카드 UI를 테이블 형태로 변경
+  - [ ] 테이블 헤더 구현 (계정, 출처, 역할, 가입일, 활동)
+  - [ ] 아바타 및 사용자 정보 테이블 셀 구현
+
+- [ ] **TASK_062_02: 테이블 형태로 멤버 목록 표시**
+  - [ ] 멤버 데이터를 테이블 행으로 렌더링
+  - [ ] 현재 사용자 식별 뱃지 ("It's you") 추가
+  - [ ] 가입일 및 활동 정보 표시
+
+- [ ] **TASK_062_03: 멤버 검색 및 정렬 기능 추가**
+  - [ ] 멤버 검색 입력창 추가
+  - [ ] 이름/이메일 기반 필터링 구현
+  - [ ] 정렬 옵션 추가 (이름, 역할, 가입일)
+
+- [ ] **TASK_062_04: 역할 변경 드롭다운 기능 추가**
+  - [ ] Select 컴포넌트로 역할 선택기 구현
+  - [ ] Owner/Developer/Reporter 역할 아이콘 추가
+  - [ ] 역할 변경 API 호출 구현
+
+- [ ] **TASK_062_05: 멤버 제거 기능 추가**
+  - [ ] 더보기 메뉴 (DropdownMenu) 구현
+  - [ ] 멤버 제거 기능 구현
+  - [ ] 마지막 Owner 제거 방지 로직
+
 ## Progress Status
-- Current Progress: TASK_059 - 프로젝트 팀 일괄 초대 기능 구현 완료 ✅
-- Next Task: 사용자 요청 대기 중
+- Current Progress: TASK_062_01 - 팀 Members 탭 UI를 프로젝트 Members 스타일로 변경 (진행 중)
+- Next Task: TASK_062_02 - 테이블 형태로 멤버 목록 표시
 - Last Update: 2025-06-17
-- Automatic Check Feedback: GitLab 스타일 통합형 UI로 팀 일괄 초대 기능 완전 구현 완료
+- Automatic Check Feedback: 프로젝트 Members 테이블 구조 분석 완료, 팀 Members UI 변경 작업 시작
 
 ## Lessons Learned and Insights
 
