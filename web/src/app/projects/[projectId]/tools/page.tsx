@@ -35,7 +35,8 @@ export default function ProjectToolsPage() {
     selectedProject,
     projectTools,
     loadProject,
-    loadProjectServers
+    loadProjectServers,
+    loadProjectTools
   } = useProjectStore();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,9 +51,10 @@ export default function ProjectToolsPage() {
     if (projectId) {
       loadProject(projectId);
       loadProjectServers(projectId);
+      loadProjectTools(projectId);
       loadTools();
     }
-  }, [projectId, loadProject, loadProjectServers, loadTools]);
+  }, [projectId, loadProject, loadProjectServers, loadProjectTools, loadTools]);
 
   // 검색 필터링 - projectTools 사용
   const filteredTools = projectTools ? projectTools.filter(tool => {

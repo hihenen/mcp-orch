@@ -20,6 +20,7 @@ import {
   TeamInviteRequest,
   TeamInviteResponse
 } from '@/types/project';
+import { Tool } from '@/types';
 
 interface ProjectStore {
   // 상태
@@ -28,6 +29,7 @@ interface ProjectStore {
   projectServers: ProjectServer[];
   projectMembers: ProjectMember[];
   projectApiKeys: ProjectApiKey[];
+  projectTools: Tool[];
   availableTeams: TeamForInvite[];
   isLoading: boolean;
   isLoadingAvailableTeams: boolean;
@@ -68,6 +70,9 @@ interface ProjectStore {
   toggleProjectServer: (projectId: string, serverId: string) => Promise<any>;
   restartProjectServer: (projectId: string, serverId: string) => Promise<any>;
 
+  // 프로젝트 도구 관리
+  loadProjectTools: (projectId: string) => Promise<void>;
+
   // 프로젝트 API 키 관리
   loadProjectApiKeys: (projectId: string) => Promise<void>;
   createProjectApiKey: (projectId: string, data: CreateProjectApiKeyRequest) => Promise<ProjectApiKey & { api_key: string }>;
@@ -96,6 +101,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   projectServers: [],
   projectMembers: [],
   projectApiKeys: [],
+  projectTools: [],
   availableTeams: [],
   isLoading: false,
   isLoadingAvailableTeams: false,
@@ -496,6 +502,50 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         isLoading: false 
       });
       throw error;
+    }
+  },
+
+  // 프로젝트 도구 관리
+  loadProjectTools: async (projectId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load project servers: ${response.statusText}`);
+      }
+      
+      const servers = await response.json();
+      
+      // 각 서버의 도구들을 로드
+      const allTools: Tool[] = [];
+      
+      for (const server of servers) {
+        if (server.disabled) continue; // 비활성화된 서버는 스킵
+        
+        try {
+          const toolsResponse = await fetch(`/api/projects/${projectId}/servers/${server.id}/tools`, {
+            credentials: 'include',
+          });
+          
+          if (toolsResponse.ok) {
+            const tools = await toolsResponse.json();
+            allTools.push(...tools);
+          }
+        } catch (error) {
+          console.warn(`Failed to load tools for server ${server.id}:`, error);
+          // 개별 서버 도구 로드 실패는 전체 프로세스를 중단하지 않음
+        }
+      }
+      
+      set({ projectTools: allTools, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to load project tools',
+        isLoading: false 
+      });
     }
   },
 

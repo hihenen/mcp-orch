@@ -53,6 +53,7 @@ export default function ProjectOverviewPage() {
     loadProject, 
     loadProjectMembers,
     loadProjectServers,
+    loadProjectTools,
     isLoading 
   } = useProjectStore();
 
@@ -61,8 +62,9 @@ export default function ProjectOverviewPage() {
       loadProject(projectId);
       loadProjectMembers(projectId);
       loadProjectServers(projectId);
+      loadProjectTools(projectId);
     }
-  }, [projectId, loadProject, loadProjectMembers, loadProjectServers]);
+  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadProjectTools]);
 
   if (isLoading) {
     return (
