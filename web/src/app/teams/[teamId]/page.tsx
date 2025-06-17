@@ -224,39 +224,16 @@ export default function TeamDetailPage() {
       if (response.ok) {
         const memberData = await response.json();
         setMembers(memberData);
+        console.log('✅ Successfully loaded team members:', memberData);
       } else {
         console.error('Failed to load members:', response.status, response.statusText);
-        // 데모 데이터
-        const demoMembers: Member[] = [
-          {
-            id: '1',
-            user_id: 'user1',
-            name: 'John Doe',
-            email: 'john@example.com',
-            role: 'owner',
-            joined_at: '2025-06-01T10:00:00Z'
-          },
-          {
-            id: '2',
-            user_id: 'user2',
-            name: 'Jane Smith',
-            email: 'jane@example.com',
-            role: 'developer',
-            joined_at: '2025-06-02T14:00:00Z'
-          },
-          {
-            id: '3',
-            user_id: 'user3',
-            name: 'Bob Wilson',
-            email: 'bob@example.com',
-            role: 'reporter',
-            joined_at: '2025-06-03T09:00:00Z'
-          }
-        ];
-        setMembers(demoMembers);
+        const errorText = await response.text();
+        console.error('Error details:', errorText);
+        setMembers([]); // 빈 배열로 설정
       }
     } catch (error) {
       console.error('Failed to load members:', error);
+      setMembers([]); // 빈 배열로 설정
     }
   };
 

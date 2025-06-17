@@ -46,6 +46,21 @@ class ProjectMemberUpdate(BaseModel):
     role: ProjectRole
 
 
+class ProjectMemberResponse(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    user_email: str
+    role: ProjectRole
+    invited_as: InviteSource
+    invited_by: str
+    joined_at: datetime
+    is_current_user: bool = False
+    
+    class Config:
+        from_attributes = True
+
+
 class TeamInviteCreate(BaseModel):
     team_id: str = Field(..., description="초대할 팀의 ID")
     role: ProjectRole = ProjectRole.DEVELOPER
@@ -73,21 +88,6 @@ class ProjectResponse(BaseModel):
     updated_at: datetime
     member_count: int
     server_count: int
-    
-    class Config:
-        from_attributes = True
-
-
-class ProjectMemberResponse(BaseModel):
-    id: str
-    user_id: str
-    user_name: str
-    user_email: str
-    role: ProjectRole
-    invited_as: InviteSource
-    invited_by: str
-    joined_at: datetime
-    is_current_user: bool = False
     
     class Config:
         from_attributes = True
