@@ -397,11 +397,18 @@
   - [x] Overview/Tools 페이지에서 `loadProjectTools` 호출 추가
   - [x] API 응답 구조 처리 개선: `{tools: [...]}` 형태 대응
 
+- [x] **TASK_070_13: 네비게이션 UX 개선 - 용어 및 순서 최적화**
+  - [x] "My Projects" → "Projects"로 간결한 용어로 변경
+  - [x] 네비게이션 순서 개선: "Projects" → "Teams" (워크플로우 우선순위 반영)
+  - [x] 프로젝트 페이지 제목 및 설명 텍스트 업데이트
+  - [x] 협업 중심의 명확한 용어로 일관성 확보
+  - [x] 업계 표준 UX 패턴 적용 (GitHub/GitLab 스타일)
+
 ## Progress Status
-- Current Progress: TASK_070 완료 및 데이터 로딩 문제 해결 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링 및 projectTools 지원 완전 구현
+- Current Progress: TASK_070 완료 및 네비게이션 UX 개선 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링, projectTools 지원 구현, 네비게이션 용어/순서 최적화
 - Next Task: 추가 요청 대기 중  
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 및 데이터 로딩 문제 해결 완료 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성, projectTools 누락 문제 해결, 런타임 안정성 확보
+- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 및 사용자 경험 최적화 완료 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성, projectTools 누락 문제 해결, 네비게이션 UX 개선, 런타임 안정성 확보
 
 ## Lessons Learned and Insights
 
