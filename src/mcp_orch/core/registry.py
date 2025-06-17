@@ -116,14 +116,38 @@ class ToolRegistry:
     async def connect_servers(self) -> None:
         """모든 설정된 MCP 서버에 연결"""
         tasks = []
+        server_names = []
+        
         for server_name, server_info in self._servers.items():
             if not server_info.disabled:
                 tasks.append(self._connect_server(server_name, server_info))
+                server_names.append(server_name)
                 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        connected = sum(1 for r in results if not isinstance(r, Exception))
-        logger.info(f"Connected to {connected}/{len(tasks)} MCP servers")
+        # 결과 분석
+        connected = 0
+        failed = 0
+        failed_servers = []
+        
+        for i, result in enumerate(results):
+            server_name = server_names[i]
+            if isinstance(result, Exception):
+                failed += 1
+                failed_servers.append(server_name)
+                logger.error(f"Failed to connect to {server_name}: {result}")
+            else:
+                connected += 1
+                
+        # 연결 결과 요약
+        total = len(tasks)
+        logger.info(f"MCP Server Connection Summary: {connected}/{total} servers connected successfully")
+        
+        if failed > 0:
+            logger.warning(f"Failed to connect to {failed} servers: {', '.join(failed_servers)}")
+            logger.info("Server will continue to operate with available MCP servers")
+        else:
+            logger.info("All MCP servers connected successfully")
         
     async def _connect_server(self, server_name: str, server_info: ServerInfo) -> None:
         """
@@ -132,9 +156,12 @@ class ToolRegistry:
         Args:
             server_name: 서버 이름
             server_info: 서버 정보
+            
+        Raises:
+            Exception: 연결 실패 시 예외를 발생시켜 상위에서 처리
         """
         try:
-            logger.info(f"Connecting to MCP server: {server_name}")
+            logger.info(f"Attempting to connect to MCP server: {server_name}")
             
             # MCPServer 인스턴스 생성 및 시작
             from ..proxy.mcp_server import MCPServer
@@ -159,6 +186,7 @@ class ToolRegistry:
                 self._server_connections[server_name] = mcp_server  # 호환성을 위해
                 server_info.connected = True
                 server_info.last_connected = datetime.now()
+                server_info.error = None  # 성공 시 이전 에러 클리어
                 
             # 도구 발견
             await self._discover_tools(server_name, mcp_server)
@@ -166,10 +194,15 @@ class ToolRegistry:
             logger.info(f"Successfully connected to {server_name}")
             
         except Exception as e:
-            logger.error(f"Failed to connect to {server_name}: {e}", exc_info=True)
+            # 서버 상태 업데이트
             async with self._lock:
                 server_info.connected = False
                 server_info.error = str(e)
+                
+            # 예외를 다시 발생시켜 상위 레벨에서 처리하도록 함
+            error_msg = f"Failed to connect to MCP server '{server_name}': {type(e).__name__}: {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg) from e
                 
     async def _discover_tools(self, server_name: str, mcp_server: Any) -> None:
         """
@@ -206,7 +239,9 @@ class ToolRegistry:
             logger.info(f"Discovered {len(namespaced_tools)} tools from {server_name}")
             
         except Exception as e:
-            logger.error(f"Error discovering tools from {server_name}: {e}", exc_info=True)
+            # 도구 발견 실패는 서버 연결을 중단시키지 않음 (서버는 연결되었지만 도구만 없는 상태)
+            logger.warning(f"Failed to discover tools from {server_name}: {e}")
+            logger.info(f"Server {server_name} will remain connected without tools")
             
     async def register_tool(self, server_name: str, tool_info: Dict[str, Any]) -> str:
         """
