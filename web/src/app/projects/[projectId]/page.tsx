@@ -339,6 +339,17 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // 팀 초대 탭 변경 핸들러
+  const handleInviteTabChange = (value: string) => {
+    setInviteTab(value);
+    
+    // 팀 초대 탭 선택 시 available teams 로드
+    if (value === 'team') {
+      console.log('🔄 Team tab selected - loading available teams...');
+      loadAvailableTeams(projectId);
+    }
+  };
+
   if (isLoading || !selectedProject) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -620,7 +631,7 @@ export default function ProjectDetailPage() {
                     </DialogDescription>
                   </DialogHeader>
                   
-                  <Tabs value={inviteTab} onValueChange={setInviteTab} className="w-full">
+                  <Tabs value={inviteTab} onValueChange={handleInviteTabChange} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="member" className="flex items-center gap-2">
                         <UserPlus className="h-4 w-4" />

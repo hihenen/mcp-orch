@@ -188,39 +188,23 @@
   - [x] 멤버 제거 기능 구현
   - [x] 마지막 Owner 제거 방지 로직
 
-### TASK_063: 프로젝트 available-teams API에서 fnfea 팀이 안 보이는 문제 디버깅 및 해결
+### TASK_064: 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결
 
-**목표**: "/api/projects/{project_id}/available-teams" 엔드포인트에서 사용자가 Owner인 fnfea 팀이 조회되지 않는 문제 해결
+**목표**: 프로젝트 멤버 초대 모달에서 "팀 초대" 탭 클릭 시 loadAvailableTeams 함수가 자동 호출되도록 수정
 
 **문제 분석**:
-- 사용자는 fnfea 팀의 Owner라고 주장
-- available teams API는 "현재 사용자가 멤버인 팀들"만 반환 
-- 쿼리: `db.query(TeamMember, Team).join(Team, TeamMember.team_id == Team.id).filter(TeamMember.user_id == current_user.id)`
+- 현재 loadAvailableTeams는 프로젝트 로드 시에만 한 번 호출됨 (useEffect)
+- 팀 초대 탭 클릭 시에는 새로고침되지 않아 팀 목록이 비어있음
+- 사용자가 "팀 초대" 탭을 클릭할 때마다 최신 팀 목록을 불러와야 함
 
-- [ ] **TASK_063_01: 디버깅 로그 추가 및 문제 분석**
-  - [ ] JWT 토큰 인증 과정에 디버깅 로그 추가
-  - [ ] 현재 사용자 ID 확인 로그 추가  
-  - [ ] TeamMember 테이블 쿼리 결과 로그 추가
-  - [ ] available-teams API 호출 시 전체 프로세스 추적
-
-- [ ] **TASK_063_02: 데이터베이스 상태 확인**
-  - [ ] TeamMember 테이블에서 fnfea 팀과 현재 사용자 관계 확인
-  - [ ] Team 테이블에서 fnfea 팀 존재 여부 확인
-  - [ ] User 테이블에서 현재 사용자 정보 확인
-
-- [ ] **TASK_063_03: API 호출 과정 검증**
-  - [ ] 프론트엔드에서 JWT 토큰 생성 과정 확인
-  - [ ] 백엔드에서 JWT 토큰 검증 과정 확인
-  - [ ] HTTP 요청/응답 헤더 및 바디 확인
-
-- [ ] **TASK_063_04: 문제점 식별 및 해결**
-  - [ ] 식별된 문제점에 따른 수정 작업
-  - [ ] 수정 후 테스트 및 검증
-  - [ ] 추가 디버깅 로그 정리
+- [x] **TASK_064_01: 탭 변경 핸들러 추가**
+  - [x] handleInviteTabChange 함수 생성
+  - [x] 팀 탭 선택 시 loadAvailableTeams 호출 로직 추가
+  - [x] Tabs 컴포넌트의 onValueChange 핸들러 교체
 
 ## Progress Status
-- Current Progress: TASK_063 - 프로젝트 available-teams API에서 fnfea 팀이 안 보이는 문제 디버깅 및 해결
-- Next Task: TASK_063_01 - 디버깅 로그 추가 및 문제 분석
+- Current Progress: TASK_064 - 팀 초대 탭 클릭 시 loadAvailableTeams 호출 문제 해결
+- Next Task: 탭 변경 핸들러 수정
 - Last Update: 2025-06-17
 - Automatic Check Feedback: fnfea 팀이 available-teams API에서 조회되지 않는 문제 분석을 위한 디버깅 계획 수립 완료
 
