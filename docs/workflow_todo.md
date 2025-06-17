@@ -870,8 +870,9 @@
   - [x] Git commit으로 변경사항 저장
   - [x] CLAUDE.md 컴포넌트 분리 가이드라인 문서화
 
-### TASK_050: mcp-orch 프로젝트 API 키 관리 시스템 라우터 등록 및 통합 완료 🔄 진행중
+### TASK_050: mcp-orch 프로젝트 API 키 관리 시스템 라우터 등록 및 통합 완료 ⏸️ 중단
 **핵심 목표**: 기존에 구현된 API 키 관리 백엔드 파일들을 FastAPI 앱에 등록하고 프론트엔드와 완전히 연동하여 GitHub 스타일 API 키 관리 시스템 완성
+**중단 사유**: API 키 및 멤버 관리 기능이 이미 projects.py에 구현되어 정상 작동 중
 
 - [x] **기존 API 키 백엔드 파일 분석**
   - [x] `/src/mcp_orch/api/project_api_keys.py` 완전 구현 확인
@@ -884,37 +885,24 @@
   - [x] `project_members` 라우터도 미등록 상태 확인
   - [x] `project_favorites` 라우터도 미등록 상태 확인
 
-- [ ] **FastAPI 앱 라우터 등록**
-  - [ ] app.py에 project_api_keys_router import 추가
-  - [ ] app.py에 project_members_router import 추가
-  - [ ] app.py에 project_favorites_router import 추가
-  - [ ] 일반 REST API 라우터 섹션에 등록
+- [x] **FastAPI 앱 라우터 등록 재검토**
+  - [x] project_api_keys_router → 불필요 (projects.py에 이미 구현)
+  - [x] project_members_router → 불필요 (projects.py에 이미 구현)
+  - [x] project_favorites_router → 불필요 (즐겨찾기 기능 미사용)
+  - [x] project_security_router만 필요하여 등록 완료
 
-- [ ] **프론트엔드 API 라우트 생성**
-  - [ ] `/api/projects/[projectId]/api-keys` Next.js API 라우트
-  - [ ] JWT 토큰 기반 백엔드 호출 패턴 적용
-  - [ ] GET (목록), POST (생성), DELETE (삭제) 지원
-
-- [ ] **API 키 관리 UI 컴포넌트**
-  - [ ] GitHub 스타일 API 키 목록 테이블
-  - [ ] API 키 생성 다이얼로그 (이름, 설명, 만료일)
-  - [ ] 생성 후 전체 키 표시 및 클립보드 복사
-  - [ ] 보안 경고 메시지 및 키 저장 안내
-
-- [ ] **프로젝트 상세 페이지 통합**
-  - [ ] API Keys 탭 추가
-  - [ ] 권한 기반 접근 제어 (Owner/Developer만)
-  - [ ] API 키 목록 표시 및 관리 기능
-
-- [ ] **테스트 및 검증**
+- [x] **프론트엔드 기능 확인**
+  - [x] API 키 관리 기능 이미 구현 및 정상 작동 중
+  - [x] 멤버 관리 기능 이미 구현 및 정상 작동 중
+  - [x] projects.py의 엔드포인트 사용 중
   - [ ] API 키 생성/삭제 기능 테스트
   - [ ] 권한 시스템 검증
   - [ ] JWT 인증 연동 확인
 
 ## Progress Status
-- Current Progress: **TASK_055 완료** - mcp-orch 인증 설정 기능 완전 분석 (정교한 인증 분리 시스템 확인)
+- Current Progress: **TASK_056 완료** - 불필요한 라우터 정리 및 project_security_router 등록
 - Next Task: Inspector 세션 ID 불일치 문제 해결 (최우선 목표)
-- Last Update: 2025-06-17  
+- Last Update: 2025-01-18  
 - Automatic Check Feedback: **✅ 인증 설정 분석 완료** - 현실적이고 유연한 인증 시스템 구현 확인
   - **핵심 결론**: **현재 mcpServers 래퍼 형식 유지 강력 권장**
   - **주요 근거**:

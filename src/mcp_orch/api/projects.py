@@ -870,6 +870,10 @@ async def create_project_api_key(
 ):
     """프로젝트 API 키 생성 (Owner/Developer만 가능)"""
     
+    # 디버깅 로그 추가
+    logger.info(f"🔍 API 키 생성 요청 - 프로젝트: {project_id}, 사용자: {current_user.email}")
+    logger.info(f"🔍 요청 데이터: name={api_key_data.name}, description={api_key_data.description}, expires_at={api_key_data.expires_at}")
+    
     # 프로젝트 권한 확인 (Owner 또는 Developer)
     project_member = db.query(ProjectMember).filter(
         and_(
@@ -882,13 +886,19 @@ async def create_project_api_key(
         )
     ).first()
     
+    logger.info(f"🔍 프로젝트 멤버 조회 결과: {project_member}")
+    if project_member:
+        logger.info(f"🔍 사용자 역할: {project_member.role}")
+    
     if not project_member:
+        logger.error(f"❌ 권한 없음 - 사용자 {current_user.email}가 프로젝트 {project_id}의 멤버가 아님")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only project owners and developers can create API keys"
         )
     
     # API 키 이름 중복 확인 (프로젝트 내에서)
+    logger.info(f"🔍 API 키 중복 확인 시작 - name: {api_key_data.name}")
     existing_key = db.query(ApiKey).filter(
         and_(
             ApiKey.project_id == project_id,
@@ -896,7 +906,10 @@ async def create_project_api_key(
         )
     ).first()
     
+    logger.info(f"🔍 기존 API 키 조회 결과: {existing_key}")
+    
     if existing_key:
+        logger.warning(f"🚨 API 키 이름 중복 - name: {api_key_data.name}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="API key name already exists in this project"
@@ -908,25 +921,43 @@ async def create_project_api_key(
     
     # 32바이트 랜덤 키 생성
     raw_key = secrets.token_urlsafe(32)
-    full_api_key = f"project_{str(project_id).replace('-', '')[:8]}_{raw_key}"
+    full_api_key = f"mch_{raw_key}"
     
     # 키 해시 생성 (저장용)
     key_hash = hashlib.sha256(full_api_key.encode()).hexdigest()
-    key_prefix = full_api_key[:12] + "..."
+    key_prefix = full_api_key[:16] + "..."
     
-    new_api_key = ApiKey(
-        project_id=project_id,
-        name=api_key_data.name,
-        description=api_key_data.description,
-        key_hash=key_hash,
-        key_prefix=key_prefix,
-        expires_at=api_key_data.expires_at,
-        created_by_id=current_user.id
-    )
+    logger.info(f"🔍 API 키 객체 생성 시작 - key_prefix: {key_prefix}")
     
-    db.add(new_api_key)
-    db.commit()
-    db.refresh(new_api_key)
+    try:
+        new_api_key = ApiKey(
+            project_id=project_id,
+            name=api_key_data.name,
+            description=api_key_data.description,
+            key_hash=key_hash,
+            key_prefix=key_prefix,
+            expires_at=api_key_data.expires_at,
+            created_by_id=current_user.id
+        )
+        
+        logger.info(f"🔍 API 키 객체 생성 완료")
+        
+        db.add(new_api_key)
+        logger.info(f"🔍 데이터베이스 add 완료")
+        
+        db.commit()
+        logger.info(f"🔍 데이터베이스 commit 완료")
+        
+        db.refresh(new_api_key)
+        logger.info(f"✅ API 키 생성 성공 - ID: {new_api_key.id}")
+        
+    except Exception as e:
+        logger.error(f"❌ API 키 생성 중 에러: {type(e).__name__}: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create API key: {str(e)}"
+        )
     
     return ApiKeyCreateResponse(
         id=str(new_api_key.id),
