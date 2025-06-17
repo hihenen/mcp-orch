@@ -278,19 +278,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   // 프로젝트 멤버 관리
   loadProjectMembers: async (projectId: string) => {
+    console.log('📞 API 호출: loadProjectMembers 시작', projectId);
     set({ isLoading: true, error: null });
     try {
       const response = await fetch(`/api/projects/${projectId}/members`, {
         credentials: 'include',
       });
       
+      console.log('📞 API 응답: /api/projects/members', response.status, response.ok);
+      
       if (!response.ok) {
         throw new Error(`Failed to load project members: ${response.statusText}`);
       }
       
       const members = await response.json();
+      console.log('📞 API 데이터: loadProjectMembers 결과', members.length, '명');
       set({ projectMembers: members, isLoading: false });
     } catch (error) {
+      console.error('📞 API 오류: loadProjectMembers', error);
       set({ 
         error: error instanceof Error ? error.message : 'Failed to load project members',
         isLoading: false 
@@ -394,19 +399,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   // 프로젝트 서버 관리
   loadProjectServers: async (projectId: string) => {
+    console.log('📞 API 호출: loadProjectServers 시작', projectId);
     set({ isLoading: true, error: null });
     try {
       const response = await fetch(`/api/projects/${projectId}/servers`, {
         credentials: 'include',
       });
       
+      console.log('📞 API 응답: /api/projects/servers', response.status, response.ok);
+      
       if (!response.ok) {
         throw new Error(`Failed to load project servers: ${response.statusText}`);
       }
       
       const servers = await response.json();
+      console.log('📞 API 데이터: loadProjectServers 결과', servers.length, '개');
       set({ projectServers: servers, isLoading: false });
     } catch (error) {
+      console.error('📞 API 오류: loadProjectServers', error);
       set({ 
         error: error instanceof Error ? error.message : 'Failed to load project servers',
         isLoading: false 
@@ -507,43 +517,56 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   // 프로젝트 도구 관리
   loadProjectTools: async (projectId: string) => {
+    console.log('📞 API 호출: loadProjectTools 시작', projectId);
     set({ isLoading: true, error: null });
     try {
       const response = await fetch(`/api/projects/${projectId}/servers`, {
         credentials: 'include',
       });
       
+      console.log('📞 API 응답: /api/projects/servers (for tools)', response.status, response.ok);
+      
       if (!response.ok) {
         throw new Error(`Failed to load project servers: ${response.statusText}`);
       }
       
       const servers = await response.json();
+      console.log('📞 API 데이터: 서버 목록 (도구 로드용)', servers.length, '개');
       
       // 각 서버의 도구들을 로드
       const allTools: Tool[] = [];
       
       for (const server of servers) {
-        if (server.disabled) continue; // 비활성화된 서버는 스킵
+        if (server.disabled) {
+          console.log('⏭️ 비활성 서버 스킵:', server.id);
+          continue; // 비활성화된 서버는 스킵
+        }
         
         try {
+          console.log('📞 서버별 도구 API 호출:', server.id);
           const toolsResponse = await fetch(`/api/projects/${projectId}/servers/${server.id}/tools`, {
             credentials: 'include',
           });
+          
+          console.log('📞 서버별 도구 API 응답:', server.id, toolsResponse.status, toolsResponse.ok);
           
           if (toolsResponse.ok) {
             const toolsData = await toolsResponse.json();
             // API가 { tools: [...] } 형태로 반환
             const tools = toolsData.tools || toolsData || [];
+            console.log('📞 서버별 도구 데이터:', server.id, tools.length, '개');
             allTools.push(...tools);
           }
         } catch (error) {
-          console.warn(`Failed to load tools for server ${server.id}:`, error);
+          console.warn(`📞 서버별 도구 로드 실패 ${server.id}:`, error);
           // 개별 서버 도구 로드 실패는 전체 프로세스를 중단하지 않음
         }
       }
       
+      console.log('📞 API 데이터: loadProjectTools 최종 결과', allTools.length, '개 도구');
       set({ projectTools: allTools, isLoading: false });
     } catch (error) {
+      console.error('📞 API 오류: loadProjectTools', error);
       set({ 
         error: error instanceof Error ? error.message : 'Failed to load project tools',
         isLoading: false 

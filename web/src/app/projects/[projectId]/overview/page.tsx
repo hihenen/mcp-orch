@@ -59,10 +59,31 @@ export default function ProjectOverviewPage() {
 
   useEffect(() => {
     if (projectId) {
-      loadProject(projectId);
-      loadProjectMembers(projectId);
-      loadProjectServers(projectId);
-      loadProjectTools(projectId);
+      console.log('🔵 Overview 페이지 - 데이터 로딩 시작:', projectId);
+      
+      loadProject(projectId).then(() => {
+        console.log('✅ loadProject 완료');
+      }).catch(err => {
+        console.error('❌ loadProject 실패:', err);
+      });
+      
+      loadProjectMembers(projectId).then(() => {
+        console.log('✅ loadProjectMembers 완료');
+      }).catch(err => {
+        console.error('❌ loadProjectMembers 실패:', err);
+      });
+      
+      loadProjectServers(projectId).then(() => {
+        console.log('✅ loadProjectServers 완료');
+      }).catch(err => {
+        console.error('❌ loadProjectServers 실패:', err);
+      });
+      
+      loadProjectTools(projectId).then(() => {
+        console.log('✅ loadProjectTools 완료');
+      }).catch(err => {
+        console.error('❌ loadProjectTools 실패:', err);
+      });
     }
   }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadProjectTools]);
 
@@ -78,6 +99,15 @@ export default function ProjectOverviewPage() {
       </ProjectLayout>
     );
   }
+
+  // 렌더링 시점 데이터 상태 로깅
+  console.log('🔍 Overview 렌더링 상태:', {
+    selectedProject: !!selectedProject,
+    projectMembers: projectMembers ? projectMembers.length : 'undefined',
+    projectServers: projectServers ? projectServers.length : 'undefined', 
+    projectTools: projectTools ? projectTools.length : 'undefined',
+    isLoading
+  });
 
   if (!selectedProject) {
     return (
