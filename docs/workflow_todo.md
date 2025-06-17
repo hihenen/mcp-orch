@@ -390,11 +390,18 @@
   - [x] `uniqueServers` 배열 생성 시 null-safe 처리
   - [x] 통계 카드 렌더링에서 안전한 배열 접근 보장
 
+- [x] **TASK_070_12: projectStore에 projectTools 지원 완전 구현**
+  - [x] `projectStore` 인터페이스에 `projectTools: Tool[]` 속성 추가
+  - [x] `loadProjectTools(projectId)` 함수 구현: 프로젝트의 모든 활성 서버 도구 로드
+  - [x] Tool 타입 import 및 초기 상태 설정
+  - [x] Overview/Tools 페이지에서 `loadProjectTools` 호출 추가
+  - [x] API 응답 구조 처리 개선: `{tools: [...]}` 형태 대응
+
 ## Progress Status
-- Current Progress: TASK_070 완료 및 런타임 안정성 확보 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링 및 Overview/Tools 페이지 오류 해결
-- Next Task: 추가 요청 대기 중
+- Current Progress: TASK_070 완료 및 데이터 로딩 문제 해결 완료 - GitLab/GitHub 스타일 독립 페이지 구조 리팩토링 및 projectTools 지원 완전 구현
+- Next Task: 추가 요청 대기 중  
 - Last Update: 2025-06-17
-- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 및 undefined 배열 접근 오류 수정 완료 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성, 런타임 안정성 확보
+- Automatic Check Feedback: 프로젝트 페이지 구조 완전 개편 성공 및 데이터 로딩 문제 해결 완료 - 탭 기반에서 독립 페이지 구조로 전환, Overview/Members/Tools/API Keys/Activity/Settings 모든 페이지 완성, projectTools 누락 문제 해결, 런타임 안정성 확보
 
 ## Lessons Learned and Insights
 
