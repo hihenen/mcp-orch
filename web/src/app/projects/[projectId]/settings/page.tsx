@@ -36,8 +36,7 @@ export default function ProjectSettingsPage() {
   // 상태 관리
   const [projectData, setProjectData] = useState({
     name: '',
-    description: '',
-    slug: ''
+    description: ''
   });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -56,8 +55,7 @@ export default function ProjectSettingsPage() {
     if (selectedProject) {
       setProjectData({
         name: selectedProject.name || '',
-        description: selectedProject.description || '',
-        slug: selectedProject.slug || ''
+        description: selectedProject.description || ''
       });
     }
   }, [selectedProject]);
@@ -77,17 +75,11 @@ export default function ProjectSettingsPage() {
       return;
     }
 
-    if (!projectData.slug.trim()) {
-      toast.error('슬러그를 입력해주세요.');
-      return;
-    }
-
     setIsSaving(true);
     try {
       await updateProject(projectId, {
         name: projectData.name,
-        description: projectData.description,
-        slug: projectData.slug
+        description: projectData.description
       });
       
       toast.success('프로젝트 설정이 저장되었습니다.');
@@ -125,22 +117,6 @@ export default function ProjectSettingsPage() {
   };
 
   // 슬러그 자동 생성
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9가-힣]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-  };
-
-  // 프로젝트 이름 변경 시 슬러그 자동 업데이트
-  const handleNameChange = (value: string) => {
-    setProjectData(prev => ({
-      ...prev,
-      name: value,
-      slug: generateSlug(value)
-    }));
-  };
 
   if (!selectedProject) {
     return (
@@ -200,7 +176,7 @@ export default function ProjectSettingsPage() {
                 id="projectName"
                 type="text"
                 value={projectData.name}
-                onChange={(e) => handleNameChange(e.target.value)}
+                onChange={(e) => setProjectData(prev => ({ ...prev, name: e.target.value }))}
                 disabled={!canEdit}
                 placeholder="프로젝트 이름을 입력하세요"
               />
@@ -215,21 +191,6 @@ export default function ProjectSettingsPage() {
                 rows={3}
                 placeholder="프로젝트에 대한 설명을 입력하세요"
               />
-            </div>
-            <div>
-              <Label htmlFor="projectSlug">슬러그</Label>
-              <Input
-                id="projectSlug"
-                type="text"
-                value={projectData.slug}
-                onChange={(e) => setProjectData(prev => ({ ...prev, slug: e.target.value }))}
-                disabled={!canEdit}
-                className="font-mono"
-                placeholder="project-slug"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                URL에 사용되는 고유 식별자입니다. 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.
-              </p>
             </div>
             {canEdit && (
               <Button onClick={handleSaveSettings} disabled={isSaving}>

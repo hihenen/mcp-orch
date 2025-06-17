@@ -10,7 +10,6 @@ import {
   Server,
   Users,
   Calendar,
-  Hash,
   CheckCircle,
   Clock,
   UserPlus,
@@ -151,15 +150,6 @@ export default function ProjectOverviewPage() {
                 </p>
                 <p className="text-sm text-muted-foreground ml-6">
                   {new Date(selectedProject.created_at).toLocaleDateString('ko-KR')}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  슬러그
-                </p>
-                <p className="text-sm text-muted-foreground font-mono ml-6">
-                  {selectedProject.slug}
                 </p>
               </div>
               <div>

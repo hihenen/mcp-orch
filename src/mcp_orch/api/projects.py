@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    slug: str = Field(..., min_length=1, max_length=100)
 
 
 class ProjectUpdate(BaseModel):
@@ -85,7 +84,6 @@ class ProjectResponse(BaseModel):
     id: str
     name: str
     description: Optional[str]
-    slug: str
     created_by: str
     created_at: datetime
     updated_at: datetime
@@ -145,7 +143,6 @@ async def list_user_projects(
             id=str(project.id),
             name=project.name,
             description=project.description,
-            slug=project.slug,
             created_by=str(project.created_by),
             created_at=project.created_at,
             updated_at=project.updated_at,
@@ -164,19 +161,10 @@ async def create_project(
 ):
     """새 프로젝트 생성"""
     
-    # slug 중복 확인
-    existing_project = db.query(Project).filter(Project.slug == project_data.slug).first()
-    if existing_project:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Project slug already exists"
-        )
-    
     # 프로젝트 생성
     project = Project(
         name=project_data.name,
         description=project_data.description,
-        slug=project_data.slug,
         created_by=current_user.id
     )
     
@@ -200,7 +188,6 @@ async def create_project(
         id=str(project.id),
         name=project.name,
         description=project.description,
-        slug=project.slug,
         created_by=str(project.created_by),
         created_at=project.created_at,
         updated_at=project.updated_at,
@@ -266,7 +253,6 @@ async def get_project_detail(
         id=str(project.id),
         name=project.name,
         description=project.description,
-        slug=project.slug,
         created_by=str(project.created_by),
         created_at=project.created_at,
         updated_at=project.updated_at,
@@ -332,7 +318,6 @@ async def update_project(
         id=str(project.id),
         name=project.name,
         description=project.description,
-        slug=project.slug,
         created_by=str(project.created_by),
         created_at=project.created_at,
         updated_at=project.updated_at,

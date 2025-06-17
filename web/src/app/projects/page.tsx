@@ -51,7 +51,6 @@ export default function ProjectsPage() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    slug: '',
     team_id: ''
   });
 
@@ -92,21 +91,6 @@ export default function ProjectsPage() {
   );
 
   // 슬러그 자동 생성
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9가-힣]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-  };
-
-  const handleNameChange = (name: string) => {
-    setNewProject(prev => ({
-      ...prev,
-      name,
-      slug: generateSlug(name)
-    }));
-  };
 
   const handleCreateProject = async () => {
     try {
@@ -117,7 +101,7 @@ export default function ProjectsPage() {
       };
       await createProject(projectData);
       setIsCreateDialogOpen(false);
-      setNewProject({ name: '', description: '', slug: '', team_id: '' });
+      setNewProject({ name: '', description: '', team_id: '' });
     } catch (error) {
       console.error('Failed to create project:', error);
     }
@@ -174,7 +158,7 @@ export default function ProjectsPage() {
                 <Input
                   id="name"
                   value={newProject.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
+                  onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="예: Frontend Dashboard"
                 />
               </div>
@@ -187,18 +171,6 @@ export default function ProjectsPage() {
                   placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
                   rows={3}
                 />
-              </div>
-              <div>
-                <Label htmlFor="slug">슬러그</Label>
-                <Input
-                  id="slug"
-                  value={newProject.slug}
-                  onChange={(e) => setNewProject(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="frontend-dashboard"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  URL에 사용될 고유 식별자입니다.
-                </p>
               </div>
               <div>
                 <Label htmlFor="team">소속 팀 (선택사항)</Label>
@@ -229,7 +201,7 @@ export default function ProjectsPage() {
               </Button>
               <Button 
                 onClick={handleCreateProject}
-                disabled={!newProject.name || !newProject.slug}
+                disabled={!newProject.name}
               >
                 생성
               </Button>

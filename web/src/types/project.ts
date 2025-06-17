@@ -6,7 +6,6 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
-  slug: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -59,7 +58,6 @@ export enum InviteSource {
 export interface CreateProjectRequest {
   name: string;
   description?: string;
-  slug: string;
 }
 
 export interface UpdateProjectRequest {
