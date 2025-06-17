@@ -73,7 +73,8 @@ export default function ProjectDetailPage() {
     removeProjectMember,
     toggleProjectServer,
     restartProjectServer,
-    isLoading 
+    isLoading,
+    isLoadingAvailableTeams 
   } = useProjectStore();
   
   const { tools, loadTools } = useToolStore();
@@ -719,12 +720,20 @@ export default function ProjectDetailPage() {
                         <Select
                           value={teamInviteData.teamId}
                           onValueChange={(value) => setTeamInviteData(prev => ({ ...prev, teamId: value }))}
+                          disabled={isLoadingAvailableTeams}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="초대할 팀을 선택하세요" />
+                            <SelectValue placeholder={isLoadingAvailableTeams ? "팀 목록을 불러오는 중..." : "초대할 팀을 선택하세요"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {availableTeams.map((team) => (
+                            {isLoadingAvailableTeams ? (
+                              <SelectItem value="loading" disabled>
+                                <div className="flex items-center gap-2">
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                  <span>로딩 중...</span>
+                                </div>
+                              </SelectItem>
+                            ) : availableTeams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 <div className="flex items-center justify-between w-full">
                                   <span>{team.name}</span>
@@ -736,7 +745,7 @@ export default function ProjectDetailPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                        {availableTeams.length === 0 && (
+                        {!isLoadingAvailableTeams && availableTeams.length === 0 && (
                           <p className="text-sm text-muted-foreground mt-1">
                             초대할 수 있는 팀이 없습니다. 먼저 팀에 가입하거나 팀을 생성해주세요.
                           </p>

@@ -30,6 +30,7 @@ interface ProjectStore {
   projectApiKeys: ProjectApiKey[];
   availableTeams: TeamForInvite[];
   isLoading: boolean;
+  isLoadingAvailableTeams: boolean;
   error: string | null;
 
   // 프로젝트 컨텍스트 상태
@@ -97,6 +98,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   projectApiKeys: [],
   availableTeams: [],
   isLoading: false,
+  isLoadingAvailableTeams: false,
   error: null,
 
   // 프로젝트 컨텍스트 초기 상태
@@ -766,7 +768,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   // 팀 관련 함수들
   loadAvailableTeams: async (projectId: string) => {
     try {
-      set({ isLoading: true, error: null });
+      set({ isLoadingAvailableTeams: true, error: null });
       
       const response = await fetch(`/api/projects/${projectId}/available-teams`);
       
@@ -779,13 +781,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       
       set({ 
         availableTeams,
-        isLoading: false 
+        isLoadingAvailableTeams: false 
       });
     } catch (error) {
       console.error('Error loading available teams:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Failed to load available teams',
-        isLoading: false 
+        isLoadingAvailableTeams: false 
       });
     }
   },

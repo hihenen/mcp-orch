@@ -208,11 +208,16 @@
   - [x] 함수 시그니처에 { params } 매개변수 추가
   - [x] resolvedParams = await params 처리 방식 적용
 
+- [x] **TASK_064_03: 화면 깜빡임 문제 해결**
+  - [x] projectStore에 isLoadingAvailableTeams 별도 로딩 상태 추가
+  - [x] loadAvailableTeams에서 전체 페이지 로딩 대신 별도 로딩 사용
+  - [x] 팀 선택 드롭다운에 로딩 상태 표시 추가
+
 ## Progress Status
-- Current Progress: TASK_064 완료 - 팀 초대 탭 API 호출 문제 완전 해결
+- Current Progress: TASK_064 완료 - 팀 초대 탭 문제 및 화면 깜빡임 완전 해결
 - Next Task: 사용자 테스트 및 fnfea 팀 표시 여부 확인
 - Last Update: 2025-06-17
-- Automatic Check Feedback: Next.js 15 호환성 문제 및 팀 초대 탭 로딩 문제 완전 해결
+- Automatic Check Feedback: 별도 로딩 상태로 화면 깜빡임 문제 해결, 원활한 UX 제공
 
 ## Lessons Learned and Insights
 
