@@ -28,6 +28,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
 import { ServerDetailModal } from '@/components/servers/ServerDetailModal';
 import { DeleteServerDialog } from '@/components/servers/DeleteServerDialog';
+import { ProjectLayout } from '@/components/projects/ProjectLayout';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -179,41 +180,33 @@ export default function ProjectServersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">서버 목록을 불러오는 중...</p>
+      <ProjectLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">서버 목록을 불러오는 중...</p>
+          </div>
         </div>
-      </div>
+      </ProjectLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* 브레드크럼 */}
-      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">Home</Link>
-        <span>/</span>
-        <Link href={`/projects/${projectId}`} className="hover:text-foreground">
-          {selectedProject?.name || 'Project'}
-        </Link>
-        <span>/</span>
-        <span className="text-foreground">Servers</span>
-      </div>
-
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Servers</h1>
-          <p className="text-muted-foreground mt-1">
-            {selectedProject?.name || 'Project'} 프로젝트의 MCP 서버를 관리하세요
-          </p>
+    <ProjectLayout>
+      <div className="space-y-6">
+        {/* 페이지 헤더 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Servers</h1>
+            <p className="text-muted-foreground mt-1">
+              프로젝트의 MCP 서버를 관리하세요
+            </p>
+          </div>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            서버 추가
+          </Button>
         </div>
-        <Button onClick={() => setShowAddDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          서버 추가
-        </Button>
-      </div>
 
       {/* 검색 및 필터 */}
       <div className="flex items-center gap-4">
@@ -400,6 +393,7 @@ export default function ProjectServersPage() {
         onConfirm={confirmDeleteServer}
         isDeleting={isDeleting}
       />
-    </div>
+      </div>
+    </ProjectLayout>
   );
 }
