@@ -13,6 +13,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
+from apscheduler import events
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -65,8 +66,8 @@ class SchedulerService:
         )
         
         # 이벤트 리스너 등록 (APScheduler 3.x 방식)
-        self.scheduler.add_listener(self._job_executed, mask='EVENT_JOB_EXECUTED')
-        self.scheduler.add_listener(self._job_error, mask='EVENT_JOB_ERROR')
+        self.scheduler.add_listener(self._job_executed, mask=events.EVENT_JOB_EXECUTED)
+        self.scheduler.add_listener(self._job_error, mask=events.EVENT_JOB_ERROR)
         
         logger.info("Scheduler service initialized")
         
