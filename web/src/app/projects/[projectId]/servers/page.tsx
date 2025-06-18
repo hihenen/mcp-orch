@@ -21,7 +21,9 @@ import {
   Trash2,
   Power,
   PowerOff,
-  MoreHorizontal
+  MoreHorizontal,
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { useServerStore } from '@/stores/serverStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -55,6 +57,9 @@ export default function ProjectServersPage() {
   const [deletingServer, setDeletingServer] = useState<any>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshingServerId, setRefreshingServerId] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   // 서버 스토어에서 프로젝트 서버 가져오기
   const projectServers = getProjectServers(projectId);
 
@@ -172,6 +177,65 @@ export default function ProjectServersPage() {
     fetchProjectServers(projectId);
   };
 
+  // 전체 서버 새로고침 핸들러
+  const handleRefreshAllServers = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/refresh-status`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 상태 새로고침 실패');
+      }
+
+      const data = await response.json();
+      console.log('전체 서버 새로고침 성공:', data);
+      
+      // 서버 목록 새로고침
+      await fetchProjectServers(projectId);
+      setLastRefresh(new Date());
+      
+      toast.success(`${data.message || '모든 서버 상태가 새로고침되었습니다.'}`);
+    } catch (error) {
+      console.error('전체 서버 새로고침 오류:', error);
+      toast.error(`서버 새로고침 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // 개별 서버 새로고침 핸들러
+  const handleRefreshServer = async (server: any) => {
+    setRefreshingServerId(server.id);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/refresh-status`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 상태 새로고침 실패');
+      }
+
+      const data = await response.json();
+      console.log('서버 새로고침 성공:', data);
+      
+      // 서버 목록 새로고침
+      await fetchProjectServers(projectId);
+      
+      toast.success(`${server.name} 서버 상태가 새로고침되었습니다.`);
+    } catch (error) {
+      console.error('서버 새로고침 오류:', error);
+      toast.error(`서버 새로고침 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+    } finally {
+      setRefreshingServerId(null);
+    }
+  };
+
   // 프로젝트별 서버 목록 필터링
   const filteredServers = projectServers.filter(server => 
     server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -219,10 +283,30 @@ export default function ProjectServersPage() {
             className="pl-10"
           />
         </div>
-        <Badge variant="outline">
-          {filteredServers.length}개 서버
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">
+            {filteredServers.length}개 서버
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshAllServers}
+            disabled={isRefreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? '새로고침 중...' : '전체 새로고침'}
+          </Button>
+        </div>
       </div>
+
+      {/* 마지막 새로고침 시간 표시 */}
+      {lastRefresh && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          마지막 새로고침: {lastRefresh.toLocaleString('ko-KR')}
+        </div>
+      )}
 
       {/* 서버 목록 */}
       {filteredServers.length === 0 ? (
@@ -271,6 +355,18 @@ export default function ProjectServersPage() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRefreshServer(server);
+                      }}
+                      disabled={refreshingServerId === server.id}
+                      title="서버 상태 새로고침"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${refreshingServerId === server.id ? 'animate-spin' : ''}`} />
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"

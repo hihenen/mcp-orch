@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from ..database import get_db
 from ..models import Project, ProjectMember, User, McpServer, ProjectRole
+from ..models.mcp_server import McpServerStatus
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
 
@@ -109,7 +110,7 @@ async def list_project_servers(
     
     result = []
     for server in servers:
-        # 실시간 서버 상태 확인
+        # DB에 저장된 상태 정보 사용 (실시간 확인 제거)
         server_status = "offline"
         tools_count = 0
         
@@ -117,28 +118,30 @@ async def list_project_servers(
         if not server.is_enabled:
             server_status = "disabled"
         else:
-            # 서버 설정 구성
-            server_config = {
-                'command': server.command,
-                'args': server.args or [],
-                'env': server.env or {},
-                'timeout': 10,  # 빠른 응답을 위한 짧은 타임아웃
-                'transportType': server.transport_type or 'stdio',
-                'disabled': not server.is_enabled
-            }
+            # 데이터베이스에서 마지막 알려진 상태 사용
+            if hasattr(server, 'status') and server.status:
+                # McpServerStatus enum을 문자열로 변환
+                if hasattr(server.status, 'value'):
+                    db_status = server.status.value
+                else:
+                    db_status = str(server.status)
+                
+                # 상태 매핑
+                if db_status == "active":
+                    server_status = "online"
+                elif db_status == "inactive":
+                    server_status = "offline"
+                elif db_status == "error":
+                    server_status = "error"
+                else:
+                    server_status = "offline"
+            else:
+                server_status = "unknown"
             
-            # 실시간 상태 및 도구 개수 조회
-            try:
-                unique_server_id = f"{str(server.project_id).replace('-', '')[:8]}.{server.name.replace(' ', '_').replace('.', '_')}"
-                logger.info(f"Checking status for server {server.name} with unique_id: {unique_server_id}")
-                server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
-                logger.info(f"Server {server.name} status: {server_status}")
-                if server_status == "online":
-                    tools_count = await mcp_connection_service.get_server_tools_count(unique_server_id, server_config)
-                    logger.info(f"Server {server.name} tools count: {tools_count}")
-            except Exception as e:
-                logger.error(f"Error checking server {server.id} ({server.name}) status: {e}")
-                server_status = "error"
+            # 도구 개수는 데이터베이스의 tools 관계에서 조회
+            tools_count = len(server.tools) if server.tools else 0
+            
+            logger.info(f"Server {server.name} using cached status: {server_status}, tools: {tools_count}")
         
         result.append(ServerResponse(
             id=str(server.id),
@@ -541,28 +544,69 @@ async def refresh_project_servers_status(
         )
     
     try:
-        # 모든 서버 상태 새로고침
-        server_results = await mcp_connection_service.refresh_all_servers(db)
-        
-        # 프로젝트별 서버만 필터링
+        # 프로젝트별 서버만 조회
         project_servers = db.query(McpServer).filter(
             McpServer.project_id == project_id
         ).all()
         
         project_results = {}
+        updated_count = 0
+        
         for server in project_servers:
-            server_id = str(server.id)
-            if server_id in server_results:
-                project_results[server_id] = server_results[server_id]
-            else:
-                project_results[server_id] = {
-                    'status': 'not_configured',
+            try:
+                # 서버 설정 구성
+                server_config = mcp_connection_service._build_server_config_from_db(server)
+                if not server_config:
+                    server.status = McpServerStatus.ERROR
+                    server.last_error = "Server configuration is incomplete"
+                    project_results[str(server.id)] = {
+                        'status': 'not_configured',
+                        'tools_count': 0,
+                        'tools': []
+                    }
+                    continue
+                
+                # 고유 서버 ID 생성
+                unique_server_id = mcp_connection_service._generate_unique_server_id(server)
+                
+                # 서버 상태 확인
+                status_result = await mcp_connection_service.check_server_status(unique_server_id, server_config)
+                
+                # 도구 목록 조회 (온라인인 경우에만)
+                tools = []
+                if status_result == "online":
+                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
+                    server.status = McpServerStatus.ACTIVE
+                    server.last_used_at = datetime.utcnow()
+                    server.last_error = None
+                elif status_result == "offline":
+                    server.status = McpServerStatus.INACTIVE
+                else:  # error
+                    server.status = McpServerStatus.ERROR
+                    server.last_error = f"Connection failed: {status_result}"
+                
+                project_results[str(server.id)] = {
+                    'status': status_result,
+                    'tools_count': len(tools),
+                    'tools': tools
+                }
+                updated_count += 1
+                
+            except Exception as e:
+                logger.error(f"Error refreshing server {server.name}: {e}")
+                server.status = McpServerStatus.ERROR
+                server.last_error = str(e)
+                project_results[str(server.id)] = {
+                    'status': 'error',
                     'tools_count': 0,
                     'tools': []
                 }
         
+        # 모든 변경사항 한 번에 커밋
+        db.commit()
+        
         return {
-            "message": "Server status refreshed successfully",
+            "message": f"Refreshed {updated_count}/{len(project_servers)} servers successfully",
             "servers": project_results,
             "refreshed_at": datetime.utcnow().isoformat()
         }
@@ -615,6 +659,10 @@ async def refresh_project_server_status(
         # 데이터베이스에서 서버 설정 구성
         server_config = mcp_connection_service._build_server_config_from_db(server)
         if not server_config:
+            # 설정 불완전 상태로 DB 업데이트
+            server.status = McpServerStatus.ERROR
+            server.last_error = "Server configuration is incomplete"
+            db.commit()
             return {
                 "message": f"Server '{server.name}' configuration is incomplete",
                 "status": "not_configured",
@@ -622,16 +670,28 @@ async def refresh_project_server_status(
                 "tools": []
             }
         
+        # 고유 서버 ID 생성
+        unique_server_id = mcp_connection_service._generate_unique_server_id(server)
+        
         # 서버 상태 확인
-        status_result = await mcp_connection_service.check_server_status(server.name, server_config)
+        status_result = await mcp_connection_service.check_server_status(unique_server_id, server_config)
         
         # 도구 목록 조회 (온라인인 경우에만)
         tools = []
         if status_result == "online":
-            tools = await mcp_connection_service.get_server_tools(server.name, server_config)
-            # 데이터베이스 업데이트
+            tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
+            # 상태를 active로 업데이트
+            server.status = McpServerStatus.ACTIVE
             server.last_used_at = datetime.utcnow()
-            db.commit()
+            server.last_error = None
+        elif status_result == "offline":
+            server.status = McpServerStatus.INACTIVE
+        else:  # error
+            server.status = McpServerStatus.ERROR
+            server.last_error = f"Connection failed: {status_result}"
+        
+        # 데이터베이스 업데이트
+        db.commit()
         
         return {
             "message": f"Server '{server.name}' status refreshed successfully",
