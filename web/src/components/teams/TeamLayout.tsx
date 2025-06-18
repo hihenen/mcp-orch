@@ -10,8 +10,6 @@ import {
   Server, 
   Settings, 
   Activity, 
-  Key,
-  FileText,
   BarChart3,
   Home,
   FolderOpen
@@ -71,22 +69,10 @@ export function TeamLayout({ children }: TeamLayoutProps) {
       description: 'MCP 서버 관리'
     },
     {
-      label: 'Tools',
-      href: `/teams/${teamId}/tools`,
-      icon: FileText,
-      description: '사용 가능한 도구'
-    },
-    {
       label: 'Activity',
       href: `/teams/${teamId}/activity`,
       icon: Activity,
       description: '팀 활동'
-    },
-    {
-      label: 'API Keys',
-      href: `/teams/${teamId}/api-keys`,
-      icon: Key,
-      description: 'API 키 관리'
     },
     {
       label: 'Settings',
