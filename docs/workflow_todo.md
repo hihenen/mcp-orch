@@ -740,8 +740,41 @@
 - commit bc800de - "docs: [TASK_095] workflow_todo.md 업데이트 - Workers API 오류 해결 완료"
 - commit 1d74d0f - "fix: [TASK_096] scheduler_service get_status에 job_history_count 필드 누락 해결"
 
+### TASK_097: APScheduler 4.x 호환성 문제 해결 ✅ 완료
+
+**목표**: APScheduler 4.x 새로운 API에 맞춰 scheduler_service.py의 BaseExecutor max_workers 오류 해결
+
+- [x] **APScheduler 4.x 새 API 적용**
+  - [x] 구식 AsyncIOScheduler, AsyncIOExecutor, MemoryJobStore import 제거
+  - [x] 새로운 AsyncScheduler import 및 사용
+  - [x] AsyncExitStack을 통한 스케줄러 생명주기 관리
+  - [x] add_job() → add_schedule() 메서드 변경
+
+- [x] **스케줄링 및 이벤트 시스템 업데이트**
+  - [x] IntervalTrigger 사용 방식 현대화
+  - [x] get_jobs() → get_schedules() 메서드 변경
+  - [x] 이벤트 리스너 등록 방식 변경 (add_listener → subscribe)
+  - [x] Event 핸들러 APScheduler 4.x 방식으로 통합
+
+- [x] **API 호환성 유지**
+  - [x] get_status() 메서드를 비동기 함수로 변경
+  - [x] workers.py에서 await scheduler_service.get_status() 호출 수정
+  - [x] 기존 설정 및 job_history 기능 유지
+  - [x] stop(), restart() 메서드 새로운 생명주기에 맞게 수정
+
+**기술적 해결사항**:
+- 🔧 **API 현대화**: APScheduler 3.x → 4.x 전면 업그레이드로 최신 비동기 패턴 적용
+- 🔧 **BaseExecutor 오류 해결**: max_workers 매개변수 사용하지 않는 새로운 executor 시스템
+- 🔧 **생명주기 관리**: AsyncExitStack을 통한 안전한 스케줄러 리소스 관리
+- 🔧 **이벤트 시스템**: 단일 이벤트 핸들러로 통합된 모니터링 시스템
+- 🔧 **호환성 보장**: 기존 API 인터페이스 유지하면서 내부 구현 현대화
+
+**커밋 정보**: 
+- commit 9d1ac50 - "docs: [TASK_096] workflow_todo.md 업데이트 - scheduler_service 필드 누락 해결 완료"
+- commit 028c750 - "fix: [TASK_097] APScheduler 4.x 호환성 문제 해결"
+
 ## Progress Status
-- Current Progress: TASK_096 - scheduler_service get_status job_history_count 필드 누락 해결 ✅ 완료
+- Current Progress: TASK_097 - APScheduler 4.x 호환성 문제 해결 ✅ 완료
 - Next Task: 사용자 테스트 및 추가 요구사항 확인
 - Last Update: 2025-06-18
 - Automatic Check Status: COMPLETE
