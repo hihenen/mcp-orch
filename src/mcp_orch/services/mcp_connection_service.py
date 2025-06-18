@@ -404,7 +404,7 @@ class McpConnectionService:
                 env=full_env
             )
             
-            # 초기화 메시지
+            # 1단계: 초기화 메시지 먼저 전송
             init_message = {
                 "jsonrpc": "2.0",
                 "id": 1,
@@ -416,7 +416,45 @@ class McpConnectionService:
                 }
             }
             
-            # 도구 호출 메시지
+            init_json = json.dumps(init_message) + '\n'
+            process.stdin.write(init_json.encode())
+            await process.stdin.drain()
+            
+            # 2단계: 초기화 응답 대기 (최대 5초)
+            init_timeout = 5
+            init_completed = False
+            start_init_time = time.time()
+            
+            while time.time() - start_init_time < init_timeout:
+                if process.stdout.at_eof():
+                    break
+                    
+                try:
+                    # 논블로킹으로 한 줄씩 읽기
+                    line = await asyncio.wait_for(process.stdout.readline(), timeout=1.0)
+                    if not line:
+                        break
+                    
+                    line_text = line.decode().strip()
+                    if line_text:
+                        try:
+                            response = json.loads(line_text)
+                            if response.get('id') == 1 and 'result' in response:
+                                logger.info(f"✅ MCP server {server_id} initialized successfully")
+                                init_completed = True
+                                break
+                            elif response.get('id') == 1 and 'error' in response:
+                                error = response['error']
+                                raise ValueError(f"MCP initialization failed: {error.get('message', 'Unknown error')}")
+                        except json.JSONDecodeError:
+                            continue
+                except asyncio.TimeoutError:
+                    continue
+            
+            if not init_completed:
+                raise ValueError(f"MCP server {server_id} initialization timeout")
+            
+            # 3단계: 초기화 완료 후 도구 호출
             tool_call_message = {
                 "jsonrpc": "2.0",
                 "id": 2,
@@ -427,24 +465,26 @@ class McpConnectionService:
                 }
             }
             
-            init_json = json.dumps(init_message) + '\n'
             tool_call_json = json.dumps(tool_call_message) + '\n'
-            
-            process.stdin.write(init_json.encode())
             process.stdin.write(tool_call_json.encode())
             await process.stdin.drain()
             process.stdin.close()
             
-            # 응답 대기
+            # 4단계: 도구 호출 응답 대기
             try:
+                # 남은 응답들을 읽어서 도구 호출 결과 찾기
+                remaining_timeout = timeout - (time.time() - start_init_time)
+                remaining_timeout = max(1, remaining_timeout)  # 최소 1초
+                
                 stdout_data, stderr_data = await asyncio.wait_for(
-                    process.communicate(), timeout=timeout
+                    process.communicate(), timeout=remaining_timeout
                 )
                 
-                response_lines = stdout_data.decode().strip().split('\n')
+                # 남은 출력에서 도구 호출 응답 찾기
+                remaining_lines = stdout_data.decode().strip().split('\n') if stdout_data else []
                 result = None
                 
-                for line in response_lines:
+                for line in remaining_lines:
                     if line.strip():
                         try:
                             response = json.loads(line)
@@ -462,6 +502,13 @@ class McpConnectionService:
                                 elif 'error' in response:
                                     error = response['error']
                                     error_message = f"Tool error: {error.get('message', 'Unknown error')}"
+                                    error_code = str(error.get('code', 'TOOL_ERROR'))
+                                    
+                                    # 초기화 관련 에러 특별 처리
+                                    if "initialization" in error_message.lower():
+                                        error_code = "INITIALIZATION_INCOMPLETE"
+                                    elif error.get('code') == -32602:
+                                        error_code = "INVALID_PARAMETERS"
                                     
                                     # 실행 시간 계산 및 ERROR 로그 저장
                                     execution_time = time.time() - start_time
@@ -473,7 +520,7 @@ class McpConnectionService:
                                             status=CallStatus.ERROR,
                                             output_data=None,
                                             error_message=error_message,
-                                            error_code=error.get('code', 'TOOL_ERROR')
+                                            error_code=error_code
                                         )
                                     
                                     raise ValueError(error_message)
