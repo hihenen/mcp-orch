@@ -717,8 +717,31 @@
 **커밋 정보**: 
 - commit 4e3f8c8 - "fix: [TASK_095] Workers API 변수명 충돌 오류 해결"
 
+### TASK_096: scheduler_service get_status job_history_count 필드 누락 해결 ✅ 완료
+
+**목표**: 스케줄러 미초기화 상태에서 get_status() 메서드의 job_history_count 필드 누락 문제 해결
+
+- [x] **문제 원인 분석**
+  - [x] scheduler_service.py:128-133의 early return에서 job_history_count 필드 누락 확인
+  - [x] 스케줄러가 초기화되지 않은 상태에서 Workers API 호출 시 Pydantic 검증 실패
+  - [x] WorkerStatus 모델에서 required 필드인 job_history_count가 없어 500 에러 발생
+
+- [x] **job_history_count 필드 추가**
+  - [x] 스케줄러 미초기화 상태의 반환 딕셔너리에 'job_history_count': len(self.job_history) 추가
+  - [x] 초기화 전/후 모든 시나리오에서 동일한 필드 구조 보장
+  - [x] WorkerStatus Pydantic 모델과 완전 호환성 확보
+
+**기술적 해결사항**:
+- 🔧 **필드 일관성 보장**: 스케줄러 초기화 여부와 관계없이 모든 필수 필드 반환
+- 🔧 **Pydantic 호환성**: WorkerStatus 모델의 모든 required 필드 매핑 완료
+- 🔧 **API 안정성**: 500 Internal Server Error 해결로 Workers API 정상 작동
+
+**커밋 정보**: 
+- commit bc800de - "docs: [TASK_095] workflow_todo.md 업데이트 - Workers API 오류 해결 완료"
+- commit 1d74d0f - "fix: [TASK_096] scheduler_service get_status에 job_history_count 필드 누락 해결"
+
 ## Progress Status
-- Current Progress: TASK_095 - Workers API 변수명 충돌 오류 해결 ✅ 완료
+- Current Progress: TASK_096 - scheduler_service get_status job_history_count 필드 누락 해결 ✅ 완료
 - Next Task: 사용자 테스트 및 추가 요구사항 확인
 - Last Update: 2025-06-18
 - Automatic Check Status: COMPLETE
