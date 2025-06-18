@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTeamStore } from '@/stores/teamStore';
 
 export interface TeamMember {
   id: string;
@@ -73,6 +74,9 @@ export const useTeamData = (teamId: string) => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // TeamStore 접근
+  const { setSelectedTeam } = useTeamStore();
 
   const loadOrganization = useCallback(async () => {
     console.log(`🔍 [TEAM_DEBUG] Loading organization for teamId: ${teamId}`);
@@ -88,6 +92,18 @@ export const useTeamData = (teamId: string) => {
         const orgData = await response.json();
         console.log('🔍 [TEAM_DEBUG] Organization data received:', orgData);
         setOrganization(orgData);
+        
+        // TeamStore도 업데이트하여 TeamLayout에서 올바른 데이터 표시
+        const teamStoreData = {
+          id: orgData.id,
+          name: orgData.name,
+          description: orgData.description || '',
+          created_at: orgData.created_at,
+          member_count: orgData.member_count || 0,
+          role: (orgData.user_role?.toUpperCase() || 'MEMBER') as 'OWNER' | 'ADMIN' | 'MEMBER'
+        };
+        console.log('🔍 [TEAM_DEBUG] Updating TeamStore with:', teamStoreData);
+        setSelectedTeam(teamStoreData);
       } else {
         console.log('🔍 [TEAM_DEBUG] Organization API failed, using fallback data');
         // 최소한의 기본 데이터만 설정 (실제 팀 이름 유지)
@@ -105,7 +121,7 @@ export const useTeamData = (teamId: string) => {
       // 에러 시 null로 설정하여 빈 상태 표시
       setOrganization(null);
     }
-  }, [teamId]);
+  }, [teamId, setSelectedTeam]);
 
   const loadMembers = useCallback(async () => {
     try {
@@ -258,7 +274,16 @@ export const useTeamData = (teamId: string) => {
     } finally {
       setLoading(false);
     }
-  }, [teamId]);
+  }, [
+    teamId,
+    loadOrganization,
+    loadMembers,
+    loadServers,
+    loadTools,
+    loadApiKeys,
+    loadActivities,
+    loadProjects
+  ]);
 
   return {
     // 데이터

@@ -201,7 +201,7 @@
 - 🔧 **문제 원인 특정**: API 엔드포인트 누락이 핵심 원인으로 확인
 - 🔧 **더미 데이터 위치 파악**: teamStore.ts의 개발 환경 폴백 데이터 확인
 
-### TASK_076: 팀 ID 불일치 문제 해결
+### TASK_076: 팀 ID 불일치 문제 해결 ✅ 완료
 
 **목표**: URL의 실제 teamId와 표시되는 더미 데이터의 ID 불일치 문제 해결
 
@@ -211,26 +211,57 @@
 - API 호출 상태: 404 Not Found
 - 결과: 더미 데이터(teamStore.ts의 demoTeams)가 화면에 표시됨
 
-- [ ] **API 엔드포인트 확인**
-  - [ ] `/api/teams/{teamId}` 백엔드 엔드포인트 존재 여부 확인
-  - [ ] 실제 팀 데이터베이스에 해당 teamId 존재 여부 확인
-  - [ ] API 라우트 파일 위치 및 구현 상태 점검
+- [x] **API 엔드포인트 확인**
+  - [x] `/api/teams/{teamId}` 백엔드 엔드포인트 존재 여부 확인 ✅ (이미 구현됨)
+  - [x] 실제 팀 데이터베이스에 해당 teamId 존재 여부 확인 
+  - [x] API 라우트 파일 위치 및 구현 상태 점검 ✅ (누락된 파일 확인)
 
-- [ ] **팀 ID 전달 과정 검증**
-  - [ ] URL 파라미터 파싱 과정 확인
-  - [ ] useParams로 추출한 teamId 정확성 검증
-  - [ ] API 호출 시 사용되는 teamId 값 확인
+- [x] **팀 ID 전달 과정 검증**
+  - [x] URL 파라미터 파싱 과정 확인 ✅ (useParams 정상 작동)
+  - [x] useParams로 추출한 teamId 정확성 검증 ✅ (올바른 값 전달)
+  - [x] API 호출 시 사용되는 teamId 값 확인 ✅ (디버깅 로그로 확인)
 
-- [ ] **백엔드 API 구현 또는 수정**
-  - [ ] `/api/teams/[teamId]/route.ts` 파일 생성/수정
-  - [ ] 실제 팀 데이터 조회 로직 구현
-  - [ ] JWT 인증 기반 팀 접근 권한 검증
+- [x] **백엔드 API 구현 또는 수정**
+  - [x] `/api/teams/[teamId]/route.ts` 파일 생성/수정 ✅ (새 파일 생성)
+  - [x] 실제 팀 데이터 조회 로직 구현 ✅ (백엔드 연결)
+  - [x] JWT 인증 기반 팀 접근 권한 검증 ✅ (auth wrapper 적용)
+
+**기술적 개선사항**:
+- 🔧 **API 연결 복구**: 누락된 프론트엔드 API 라우트 생성으로 백엔드 연결 복구
+- 🔧 **JWT 인증 통합**: Next.js auth wrapper와 JWT 토큰 기반 보안 인증 구현
+- 🔧 **디버깅 시스템**: 상세한 로깅으로 API 호출 과정 추적 및 문제 진단 가능
+- 🔧 **RESTful API**: GET/PUT/DELETE 메서드 지원으로 완전한 CRUD 작업 가능
+
+### TASK_077: TeamStore와 실제 API 데이터 동기화 문제 해결
+
+**목표**: useTeamData로 받아온 실제 팀 데이터와 TeamStore의 selectedTeam을 동기화
+
+**현재 상황**:
+- ✅ API 호출 성공: `Organization API response status: 200`
+- ✅ 실제 데이터 수신: `{id: '0482968e-1f3a-4641-8873-3a6915f7b5c2', name: 'fnfea'}`
+- ❌ TeamStore 더미 데이터: `{id: '550e8400-e29b-41d4-a716-446655440000', name: "John's Organization"}`
+- ❌ 화면 표시: 여전히 더미 데이터 "John's Organization" 표시
+
+- [ ] **데이터 흐름 분석**
+  - [ ] useTeamData의 organization 데이터와 teamStore의 selectedTeam 분리 현상 확인
+  - [ ] TeamLayout이 teamStore를 참조하는 로직 분석
+  - [ ] 실제 데이터로 teamStore 업데이트하는 메커니즘 누락 확인
+
+- [ ] **TeamStore 업데이트 로직 구현**
+  - [ ] useTeamData에서 organization 데이터 받을 때 teamStore 동기화
+  - [ ] TeamLayout에서 실제 데이터 우선 사용하도록 수정
+  - [ ] 더미 데이터 의존성 제거
+
+- [ ] **디버깅 정보 정리**
+  - [ ] 성공적으로 작동하는 디버깅 로그 제거
+  - [ ] 화면 디버깅 박스 제거
+  - [ ] 깔끔한 UI로 복원
 
 ## Progress Status
-- Current Progress: TASK_076 - 팀 ID 불일치 문제 해결 **진행중**
-- Next Task: API 엔드포인트 확인
+- Current Progress: TASK_077 - TeamStore와 실제 API 데이터 동기화 문제 해결 **진행중**
+- Next Task: 데이터 흐름 분석
 - Last Update: 2025-06-18
-- Automatic Check Feedback: URL teamId(`0482968e-1f3a-4641-8873-3a6915f7b5c2`)와 표시되는 더미 데이터 ID가 불일치하는 문제 확인. API 호출 404 오류로 인해 teamStore의 더미 데이터가 표시됨. `/api/teams/{teamId}` 엔드포인트 누락이 핵심 원인으로 판단.
+- Automatic Check Feedback: API 호출은 성공하여 실제 팀 데이터를 받아오지만, TeamStore의 selectedTeam이 더미 데이터를 참조하여 화면에 잘못된 정보가 표시됨. useTeamData와 teamStore 간의 동기화 메커니즘 구현 필요.
 
 ## Lessons Learned and Insights
 - **탭 vs 독립 페이지**: 복잡한 프로젝트 관리 시스템에서는 독립 페이지 구조가 사용자 경험 측면에서 우수함
