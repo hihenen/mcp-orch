@@ -120,6 +120,81 @@ export default function UsersPage() {
     fetchUsers();
   };
 
+  const handleToggleRole = async (user: UserData) => {
+    const newRole = user.role === 'admin' ? 'user' : 'admin';
+    const isDowngrading = user.role === 'admin' && newRole === 'user';
+    
+    // 자신의 관리자 권한 해제 방지 확인이 필요하다면 서버에서 처리됨
+    if (isDowngrading) {
+      const confirmed = window.confirm(
+        `${user.name || user.email}의 관리자 권한을 해제하시겠습니까?\n` +
+        '이 작업은 즉시 적용됩니다.'
+      );
+      if (!confirmed) return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          is_admin: newRole === 'admin'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user role');
+      }
+
+      // 사용자 목록 새로고침
+      fetchUsers();
+    } catch (error) {
+      console.error('역할 변경 실패:', error);
+      alert(error instanceof Error ? error.message : '역할 변경에 실패했습니다.');
+    }
+  };
+
+  const handleToggleStatus = async (user: UserData) => {
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    const isDeactivating = user.status === 'active' && newStatus === 'inactive';
+    
+    if (isDeactivating) {
+      const confirmed = window.confirm(
+        `${user.name || user.email} 계정을 비활성화하시겠습니까?\n` +
+        '비활성화된 사용자는 로그인할 수 없습니다.'
+      );
+      if (!confirmed) return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          is_active: newStatus === 'active'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user status');
+      }
+
+      // 사용자 목록 새로고침
+      fetchUsers();
+    } catch (error) {
+      console.error('상태 변경 실패:', error);
+      alert(error instanceof Error ? error.message : '상태 변경에 실패했습니다.');
+    }
+  };
+
   const confirmDeleteUser = async () => {
     if (!deletingUser) return;
     
@@ -303,7 +378,7 @@ export default function UsersPage() {
         <CardHeader>
           <CardTitle>사용자 목록</CardTitle>
           <CardDescription>
-            시스템에 등록된 모든 사용자를 관리할 수 있습니다
+            시스템에 등록된 모든 사용자를 관리할 수 있습니다. 역할과 상태를 클릭하여 바로 변경할 수 있습니다.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -350,10 +425,30 @@ export default function UsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getRoleBadge(user.role)}
+                      <div className="flex items-center gap-2">
+                        {getRoleBadge(user.role)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleRole(user)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          {user.role === 'admin' ? '↓ 일반' : '↑ 관리자'}
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(user.status)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(user.status)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(user)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          {user.status === 'active' ? '비활성화' : '활성화'}
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
