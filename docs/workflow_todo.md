@@ -429,21 +429,21 @@
 
 **목표**: 1-5분 간격으로 서버 상태를 자동 업데이트하는 백그라운드 워커 시스템 구현
 
-- [ ] **의존성 추가**
-  - [ ] pyproject.toml에 APScheduler 의존성 추가
-  - [ ] requirements 업데이트
+- [x] **의존성 추가**
+  - [x] pyproject.toml에 APScheduler 의존성 추가
+  - [x] requirements 업데이트
 
-- [ ] **워커 시스템 구현**
-  - [ ] 백그라운드 스케줄러 서비스 클래스 생성
-  - [ ] 서버 상태 체크 워커 함수 구현
-  - [ ] FastAPI 애플리케이션과 스케줄러 통합
-  - [ ] 1-5분 간격 설정 가능한 주기적 작업
+- [x] **워커 시스템 구현**
+  - [x] 백그라운드 스케줄러 서비스 클래스 생성
+  - [x] 서버 상태 체크 워커 함수 구현
+  - [x] FastAPI 애플리케이션과 스케줄러 통합
+  - [x] 1-5분 간격 설정 가능한 주기적 작업
 
-- [ ] **워커 관리 API**
-  - [ ] 워커 상태 조회 API (`GET /api/workers/status`)
-  - [ ] 워커 시작/정지 API (`POST /api/workers/start`, `POST /api/workers/stop`)
-  - [ ] 워커 설정 변경 API (`PUT /api/workers/config`)
-  - [ ] 워커 실행 이력 조회 API (`GET /api/workers/history`)
+- [x] **워커 관리 API**
+  - [x] 워커 상태 조회 API (`GET /api/workers/status`)
+  - [x] 워커 시작/정지 API (`POST /api/workers/start`, `POST /api/workers/stop`)
+  - [x] 워커 설정 변경 API (`PUT /api/workers/config`)
+  - [x] 워커 실행 이력 조회 API (`GET /api/workers/history`)
 
 - [ ] **프론트엔드 관리 UI**
   - [ ] 관리자 페이지에 워커 상태 표시
@@ -678,10 +678,10 @@
 - **상세 정보**: `/api/projects/{projectId}/servers/{serverId}`
 
 ## Progress Status
-- Current Progress: TASK_093 - 중복 API 제거 + APScheduler 백그라운드 워커 구현 (진행 중)
-- Next Task: Phase 1 - FastAPI 라우터 우선순위 및 실제 처리 엔드포인트 식별
+- Current Progress: TASK_090 - APScheduler 워커 시스템 구현 (백엔드 핵심 완료, 프론트엔드 UI 진행 중)
+- Next Task: 프론트엔드 관리자 페이지에 워커 상태 표시 및 제어 UI 구현
 - Last Update: 2025-06-18
-- Automatic Check Status: IN_PROGRESS
+- Automatic Check Status: PASS
 
 ## Lessons Learned and Insights
 - SQLAlchemy Enum 컬럼은 상황에 따라 Enum 객체 또는 문자열로 반환될 수 있음
