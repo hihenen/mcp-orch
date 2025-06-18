@@ -484,6 +484,69 @@ async def run_mcp_bridge_session(
             except Exception as e:
                 logger.error(f"Error calling tool {name} on {server_name}: {e}")
                 
+                # SSE 브리지 레벨 에러도 ToolCallLog에 기록
+                try:
+                    from ..models import ToolCallLog, CallStatus
+                    import time
+                    
+                    # 로그용 데이터베이스 세션
+                    error_log_db = get_db_session()
+                    try:
+                        # 에러 상세 분석
+                        error_message = str(e)
+                        error_code = "SSE_BRIDGE_ERROR"
+                        
+                        # MCP 프로토콜 에러 감지
+                        if "Invalid request parameters" in error_message:
+                            error_code = "INVALID_PARAMETERS"
+                        elif "initialization was complete" in error_message:
+                            error_code = "INITIALIZATION_INCOMPLETE"
+                        elif "Method not found" in error_message:
+                            error_code = "METHOD_NOT_FOUND"
+                        
+                        # ToolCallLog 생성
+                        error_log = ToolCallLog(
+                            session_id=session_id,
+                            server_id=str(server_record.id),
+                            project_id=project_id,
+                            tool_name=name,
+                            tool_namespace=f"{str(server_record.id)}.{name}",
+                            input_data={
+                                'arguments': arguments,
+                                'context': {
+                                    'user_agent': user_agent,
+                                    'ip_address': client_ip,
+                                    'call_time': datetime.utcnow().isoformat(),
+                                    'error_location': 'sse_bridge'
+                                }
+                            },
+                            output_data=None,
+                            execution_time=0.0,  # 즉시 실패
+                            status=CallStatus.ERROR,
+                            error_message=error_message,
+                            error_code=error_code,
+                            user_agent=user_agent,
+                            ip_address=client_ip
+                        )
+                        
+                        error_log_db.add(error_log)
+                        error_log_db.commit()
+                        
+                        logger.info(f"📊 SSE Bridge error logged: {name} ({error_code})")
+                        
+                    except Exception as log_error:
+                        logger.error(f"❌ Failed to log SSE bridge error: {log_error}")
+                    finally:
+                        error_log_db.close()
+                        
+                except ImportError:
+                    logger.warning("Could not import ToolCallLog for error logging")
+                
+                # 실패 시 세션 통계 업데이트
+                if client_session:
+                    client_session.failed_calls += 1
+                    db.commit()
+                
                 # 에러 시 에러 메시지 반환
                 return [
                     types.TextContent(

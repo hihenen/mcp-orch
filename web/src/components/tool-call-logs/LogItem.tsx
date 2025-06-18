@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Clock, User, MapPin, Code, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ToolCallLog, STATUS_COLORS, CLIENT_TYPE_ICONS } from '@/types/tool-call-logs';
+import { ToolCallLog, STATUS_COLORS, CLIENT_TYPE_ICONS, ERROR_CODE_DESCRIPTIONS } from '@/types/tool-call-logs';
 
 interface LogItemProps {
   log: ToolCallLog;
@@ -192,7 +192,14 @@ export function LogItem({ log, isExpanded = false, onToggleExpanded }: LogItemPr
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-gray-500 block">에러 코드:</span>
-                    <span className="font-mono text-red-600">{log.error_code || 'N/A'}</span>
+                    <div className="space-y-1">
+                      <span className="font-mono text-red-600">{log.error_code || 'N/A'}</span>
+                      {log.error_code && ERROR_CODE_DESCRIPTIONS[log.error_code as keyof typeof ERROR_CODE_DESCRIPTIONS] && (
+                        <div className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded border">
+                          {ERROR_CODE_DESCRIPTIONS[log.error_code as keyof typeof ERROR_CODE_DESCRIPTIONS]}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
