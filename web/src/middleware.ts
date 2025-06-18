@@ -6,10 +6,12 @@ export default auth((req: NextRequest & { auth: any }) => {
   // 인증된 사용자만 접근 가능한 경로들
   const protectedPaths = [
     '/dashboard',
+    '/projects',
     '/servers',
     '/tools',
     '/logs',
-    '/config'
+    '/config',
+    '/admin'
   ]
 
   // 공개 경로들 (인증 불필요)

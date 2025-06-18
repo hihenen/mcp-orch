@@ -33,9 +33,9 @@ export default function SignInPage() {
       if (result?.error) {
         setError('이메일 또는 비밀번호가 올바르지 않습니다.')
       } else {
-        // 세션 정보를 새로고침하고 대시보드로 이동
+        // 세션 정보를 새로고침하고 프로젝트 페이지로 이동
         await getSession()
-        router.push('/dashboard')
+        router.push('/projects')
         router.refresh()
       }
     } catch (error) {
