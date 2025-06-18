@@ -696,12 +696,27 @@ async def get_team_projects(
     ).all()
     team_member_ids = [member_id[0] for member_id in team_member_ids]
     
-    # 팀 멤버들이 참여한 프로젝트들 조회 (중복 제거)
-    projects_query = db.query(Project).join(ProjectMember).filter(
+    # 팀 멤버들이 참여한 프로젝트들 조회 (JSON 컬럼 제외하여 DISTINCT 오류 방지)
+    # PostgreSQL JSON 컬럼은 DISTINCT에서 equality operator가 없어서 오류 발생
+    projects_query = db.query(
+        Project.id,
+        Project.name, 
+        Project.description,
+        Project.created_by,
+        Project.created_at,
+        Project.updated_at
+    ).join(ProjectMember).filter(
         ProjectMember.user_id.in_(team_member_ids)
     ).distinct()
     
-    projects = projects_query.all()
+    project_rows = projects_query.all()
+    
+    # 프로젝트 ID들을 별도로 조회하여 전체 객체 가져오기
+    if project_rows:
+        project_ids = [row.id for row in project_rows]
+        projects = db.query(Project).filter(Project.id.in_(project_ids)).all()
+    else:
+        projects = []
     
     result = []
     for project in projects:
@@ -724,6 +739,10 @@ async def get_team_projects(
         
         # 현재 사용자가 이 프로젝트에 접근할 수 있는지 확인
         if user_project_member:
+            # Enum 속성 안전 접근 - 이미 문자열인 경우와 Enum 객체인 경우 모두 처리
+            user_role = user_project_member.role.value if hasattr(user_project_member.role, 'value') else user_project_member.role
+            invited_as = user_project_member.invited_as.value if hasattr(user_project_member.invited_as, 'value') else user_project_member.invited_as
+            
             result.append({
                 "id": str(project.id),
                 "name": project.name,
@@ -731,8 +750,8 @@ async def get_team_projects(
                 "created_at": project.created_at.isoformat(),
                 "member_count": member_count,
                 "server_count": server_count,
-                "user_role": user_project_member.role.value,
-                "invited_as": user_project_member.invited_as.value
+                "user_role": user_role,
+                "invited_as": invited_as
             })
     
     return result
