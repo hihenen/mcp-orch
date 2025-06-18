@@ -854,8 +854,42 @@
 **커밋 정보**: 
 - commit ab4f70b - "fix: [TASK_099] APScheduler 이벤트 마스크 오류 해결"
 
+### TASK_100: 로그인 후 기본 페이지를 /projects로 변경 ✅ 완료
+
+**목표**: 로그인 성공 시 Dashboard 대신 Projects 페이지로 바로 이동하도록 개선
+
+- [x] **현재 Dashboard 페이지 기능 분석**
+  - [x] Dashboard 페이지 콘텐츠 확인 (프로젝트별 서버 상태, 통계 등)
+  - [x] 사용자 워크플로우 관점에서 유용성 평가
+  - [x] 대부분 사용자가 프로젝트 목록을 먼저 보고 싶어함을 확인
+
+- [x] **로그인 성공 후 리다이렉트 경로를 /projects로 변경**
+  - [x] signin 페이지에서 router.push('/dashboard') → router.push('/projects') 변경
+  - [x] 주석도 "프로젝트 페이지로 이동"으로 수정
+  - [x] /projects 페이지 존재 및 기능 확인
+
+- [x] **NextAuth.js 설정에서 callbackUrl 수정**
+  - [x] auth.ts에 redirect callback 함수 추가
+  - [x] 기본 리다이렉트 경로를 /projects로 설정
+  - [x] 기존 jwt, session callbacks와 통합
+
+- [x] **네비게이션 및 사용자 경험 조정**
+  - [x] middleware.ts에 /projects를 보호된 경로로 추가
+  - [x] /admin 경로도 보호된 경로에 추가
+  - [x] 전체적인 사용자 워크플로우 개선
+
+**기술적 해결사항**:
+- 🔧 **UX 개선**: 로그인 → 프로젝트 목록 직접 이동으로 클릭 수 감소
+- 🔧 **사용자 중심 설계**: 가장 많이 사용하는 기능을 첫 화면으로 설정
+- 🔧 **NextAuth.js 통합**: redirect callback으로 모든 로그인 경로에서 일관된 리다이렉트
+- 🔧 **보안 강화**: middleware에서 /projects 경로 인증 보호 추가
+- 🔧 **업계 표준**: GitHub, GitLab 등과 동일한 패턴 (프로젝트/레포지토리 목록 우선)
+
+**커밋 정보**: 
+- commit feffb54 - "feat: [TASK_100] 로그인 후 기본 페이지를 /projects로 변경"
+
 ## Progress Status
-- Current Progress: TASK_099 - APScheduler 이벤트 마스크 오류 해결 ✅ 완료
+- Current Progress: TASK_100 - 로그인 후 기본 페이지를 /projects로 변경 ✅ 완료
 - Next Task: 사용자 테스트 및 추가 요구사항 확인
 - Last Update: 2025-06-18
 - Automatic Check Status: COMPLETE
@@ -880,3 +914,6 @@
 - **중복 API 엔드포인트 문제**: 동일한 기능의 API가 여러 파일에 존재할 때 일관성 없는 최적화로 성능 병목 발생
 - **실시간 vs 캐시 전략**: 실시간 연결 테스트는 정확하지만 느리고, DB 캐시는 빠르지만 수동 새로고침 필요
 - **성능 최적화 검증의 중요성**: 하나의 파일만 최적화해도 다른 경로에서 동일한 문제가 발생할 수 있음
+- **사용자 중심 UX 설계**: 기술적 기능(Dashboard)보다 실제 사용 패턴(Projects 목록)을 우선시하는 것이 중요
+- **업계 표준 패턴 적용**: GitHub, GitLab 등 유사 서비스의 UX 패턴을 참조하여 사용자 기대에 부합하는 경험 제공
+- **로그인 후 워크플로우 최적화**: 사용자가 가장 자주 하는 행동(프로젝트 선택)을 첫 화면으로 설정하여 효율성 향상
