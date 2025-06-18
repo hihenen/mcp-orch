@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface TeamMember {
   id: string;
@@ -74,7 +74,7 @@ export const useTeamData = (teamId: string) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadOrganization = async () => {
+  const loadOrganization = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}`, {
         headers: { 'Content-Type': 'application/json' },
@@ -98,9 +98,9 @@ export const useTeamData = (teamId: string) => {
       // 에러 시 null로 설정하여 빈 상태 표시
       setOrganization(null);
     }
-  };
+  }, [teamId]);
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/members`, {
         headers: { 'Content-Type': 'application/json' },
@@ -128,9 +128,9 @@ export const useTeamData = (teamId: string) => {
     } catch (error) {
       console.error('Failed to load members:', error);
     }
-  };
+  }, [teamId]);
 
-  const loadServers = async () => {
+  const loadServers = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/servers`, {
         headers: { 'Content-Type': 'application/json' },
@@ -147,9 +147,9 @@ export const useTeamData = (teamId: string) => {
     } catch (error) {
       console.error('Failed to load servers:', error);
     }
-  };
+  }, [teamId]);
 
-  const loadTools = async () => {
+  const loadTools = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/tools`, {
         headers: { 'Content-Type': 'application/json' },
@@ -166,9 +166,9 @@ export const useTeamData = (teamId: string) => {
     } catch (error) {
       console.error('Failed to load tools:', error);
     }
-  };
+  }, [teamId]);
 
-  const loadApiKeys = async () => {
+  const loadApiKeys = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/api-keys`, {
         headers: { 'Content-Type': 'application/json' },
@@ -185,9 +185,9 @@ export const useTeamData = (teamId: string) => {
     } catch (error) {
       console.error('Failed to load API keys:', error);
     }
-  };
+  }, [teamId]);
 
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/activity`, {
         headers: { 'Content-Type': 'application/json' },
@@ -213,9 +213,9 @@ export const useTeamData = (teamId: string) => {
     } catch (error) {
       console.error('Failed to load activities:', error);
     }
-  };
+  }, [teamId]);
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/projects`, {
         headers: { 'Content-Type': 'application/json' },
@@ -232,9 +232,9 @@ export const useTeamData = (teamId: string) => {
     } catch (error) {
       console.error('Failed to load projects:', error);
     }
-  };
+  }, [teamId]);
 
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([
@@ -251,7 +251,7 @@ export const useTeamData = (teamId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [teamId]);
 
   return {
     // 데이터
