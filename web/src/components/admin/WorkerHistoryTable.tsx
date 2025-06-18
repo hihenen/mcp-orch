@@ -95,6 +95,7 @@ export function WorkerHistoryTable({ history, isLoading, onRefresh }: WorkerHist
                   <TableHead>소요 시간</TableHead>
                   <TableHead>체크된 서버</TableHead>
                   <TableHead>업데이트된 서버</TableHead>
+                  <TableHead>동기화된 도구</TableHead>
                   <TableHead>에러 수</TableHead>
                   <TableHead>에러 메시지</TableHead>
                 </TableRow>
@@ -125,6 +126,21 @@ export function WorkerHistoryTable({ history, isLoading, onRefresh }: WorkerHist
                         <Badge variant="secondary">
                           {entry.updated_count}개
                         </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {entry.tools_synced_count !== undefined ? (
+                        entry.tools_synced_count > 0 ? (
+                          <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200">
+                            {entry.tools_synced_count}개
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-600">
+                            0개
+                          </Badge>
+                        )
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}

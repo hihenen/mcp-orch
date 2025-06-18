@@ -29,6 +29,7 @@ export interface JobHistoryEntry {
   status: string;
   checked_count?: number;
   updated_count?: number;
+  tools_synced_count?: number;
   error_count?: number;
   error?: string;
 }

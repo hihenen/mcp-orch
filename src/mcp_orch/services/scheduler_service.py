@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import McpServer, Project
+from ..models.mcp_server import McpTool
 from ..services.mcp_connection_service import mcp_connection_service
 
 logger = logging.getLogger(__name__)
@@ -177,6 +178,7 @@ class SchedulerService:
                 checked_count = 0
                 updated_count = 0
                 error_count = 0
+                tools_synced_count = 0
                 
                 for server in servers:
                     try:
@@ -208,6 +210,17 @@ class SchedulerService:
                             server.last_used_at = datetime.utcnow()
                             updated_count += 1
                             logger.info(f"Updated server {server.name} status to {new_status.value}")
+                        
+                        # 온라인 서버의 도구 목록 동기화
+                        if new_status == McpServerStatus.ACTIVE:
+                            try:
+                                tools_updated = await self._sync_server_tools(server, db)
+                                if tools_updated > 0:
+                                    tools_synced_count += tools_updated
+                                    logger.info(f"Synced {tools_updated} tools for server {server.name}")
+                            except Exception as tool_sync_error:
+                                logger.error(f"Failed to sync tools for server {server.name}: {tool_sync_error}")
+                                # 도구 동기화 실패는 서버 상태에 영향을 주지 않음
                             
                         checked_count += 1
                         
@@ -232,13 +245,15 @@ class SchedulerService:
                     'checked_count': checked_count,
                     'updated_count': updated_count,
                     'error_count': error_count,
+                    'tools_synced_count': tools_synced_count,
                     'status': 'success'
                 })
                 
                 logger.info(
                     f"Scheduled server check completed: "
                     f"checked={checked_count}, updated={updated_count}, "
-                    f"errors={error_count}, duration={execution_time:.2f}s"
+                    f"tools_synced={tools_synced_count}, errors={error_count}, "
+                    f"duration={execution_time:.2f}s"
                 )
                 
             finally:
@@ -264,6 +279,68 @@ class SchedulerService:
         """작업 실행 오류 이벤트 핸들러"""
         logger.error(f"Job {event.job_id} failed: {event.exception}")
         
+    async def _sync_server_tools(self, server: McpServer, db: Session) -> int:
+        """서버의 도구 목록을 동기화하고 업데이트된 도구 개수 반환"""
+        try:
+            # 서버 설정 준비
+            server_config = {
+                'command': server.command,
+                'args': server.args or [],
+                'env': server.env or {},
+                'timeout': 30
+            }
+            
+            unique_server_id = f"{server.project_id}_{server.name}"
+            
+            # 실제 서버에서 도구 목록 가져오기
+            current_tools = await mcp_connection_service.get_server_tools(
+                unique_server_id, server_config
+            )
+            
+            # 현재 DB에 저장된 도구 목록
+            existing_tools = {tool.name: tool for tool in server.tools}
+            current_tool_names = {tool.get('name') for tool in current_tools if tool.get('name')}
+            
+            tools_updated = 0
+            
+            # 새로운 도구 추가 또는 기존 도구 업데이트
+            for tool_data in current_tools:
+                tool_name = tool_data.get('name')
+                if not tool_name:
+                    continue
+                    
+                if tool_name in existing_tools:
+                    # 기존 도구 업데이트
+                    existing_tool = existing_tools[tool_name]
+                    existing_tool.description = tool_data.get('description', '')
+                    existing_tool.input_schema = tool_data.get('inputSchema', {})
+                    existing_tool.last_seen_at = datetime.utcnow()
+                else:
+                    # 새로운 도구 추가
+                    new_tool = McpTool(
+                        server_id=server.id,
+                        name=tool_name,
+                        display_name=tool_data.get('displayName') or tool_name,
+                        description=tool_data.get('description', ''),
+                        input_schema=tool_data.get('inputSchema', {}),
+                        discovered_at=datetime.utcnow(),
+                        last_seen_at=datetime.utcnow()
+                    )
+                    db.add(new_tool)
+                    tools_updated += 1
+                    
+            # 더 이상 존재하지 않는 도구 제거
+            for tool_name, tool in existing_tools.items():
+                if tool_name not in current_tool_names:
+                    db.delete(tool)
+                    tools_updated += 1
+                    
+            return tools_updated
+            
+        except Exception as e:
+            logger.error(f"Error syncing tools for server {server.name}: {e}")
+            return 0
+
     def _add_job_history(self, entry: Dict):
         """작업 실행 이력 추가"""
         self.job_history.append(entry)
