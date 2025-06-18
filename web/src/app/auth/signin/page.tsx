@@ -45,15 +45,6 @@ export default function SignInPage() {
     }
   }
 
-  const handleOAuthSignIn = async (provider: string) => {
-    setIsLoading(true)
-    try {
-      await signIn(provider, { callbackUrl: '/dashboard' })
-    } catch (error) {
-      setError(`${provider} 로그인 중 오류가 발생했습니다.`)
-      setIsLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -101,34 +92,6 @@ export default function SignInPage() {
               로그인
             </Button>
           </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">또는</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleOAuthSignIn('google')}
-              disabled={isLoading}
-            >
-              Google로 로그인
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleOAuthSignIn('github')}
-              disabled={isLoading}
-            >
-              GitHub로 로그인
-            </Button>
-          </div>
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">계정이 없으신가요? </span>

@@ -219,8 +219,23 @@
 - 디버깅 및 문제 추적 완전 지원
 - MCP 프로토콜 에러 분석 및 연결 문제 진단
 
+### TASK_086: 로그인 페이지 OAuth 프로바이더 제거
+
+**목표**: 로그인 페이지에서 Google, GitHub 등 OAuth 프로바이더 제거하여 단순화
+
+- [ ] **NextAuth.js 설정 확인**
+  - [x] auth.ts 파일에서 현재 프로바이더 설정 확인
+  - [x] 사용중인 OAuth 프로바이더 목록 파악 - 현재 Credentials만 사용 중
+  - [x] 제거 대상 프로바이더 식별 - UI에서만 Google, GitHub 버튼 존재
+
+- [x] **로그인 페이지 UI 수정**
+  - [x] 로그인 페이지에서 OAuth 버튼들 제거
+  - [x] "또는" 구분선 제거
+  - [x] handleOAuthSignIn 함수 제거
+  - [x] UI 레이아웃 정리 및 최적화
+
 ## Progress Status
-- Current Progress: TASK_084 완료 - ToolCallLog 수집 시스템 + SSE 브리지 에러 로깅까지 완전 구현 완료
+- Current Progress: TASK_086 완료 - 로그인 페이지 OAuth 프로바이더 제거 완료
 - Next Task: 대기 중 (사용자 요청 대기)
 - Last Update: 2025-06-18
 - Automatic Check Status: PASS
