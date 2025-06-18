@@ -130,15 +130,15 @@
   - [x] 브레드크럼 네비게이션
   - [x] 권한 기반 접근 제어
 
-- [ ] **각 기능별 독립 페이지 생성**
+- [x] **각 기능별 독립 페이지 생성**
   - [x] Overview 독립 페이지 (`/teams/[teamId]/overview`)
-  - [ ] Projects 독립 페이지 (`/teams/[teamId]/projects`)
-  - [ ] Members 독립 페이지 (`/teams/[teamId]/members`)
-  - [ ] Servers 독립 페이지 (`/teams/[teamId]/servers`)
-  - [ ] Tools 독립 페이지 (`/teams/[teamId]/tools`)
-  - [ ] Activity 독립 페이지 (`/teams/[teamId]/activity`)
-  - [ ] API Keys 독립 페이지 (`/teams/[teamId]/api-keys`)
-  - [ ] Settings 독립 페이지 (`/teams/[teamId]/settings`)
+  - [x] Projects 독립 페이지 (`/teams/[teamId]/projects`)
+  - [x] Members 독립 페이지 (`/teams/[teamId]/members`)
+  - [x] Servers 독립 페이지 (`/teams/[teamId]/servers`)
+  - [x] Tools 독립 페이지 (`/teams/[teamId]/tools`)
+  - [x] Activity 독립 페이지 (`/teams/[teamId]/activity`)
+  - [x] API Keys 독립 페이지 (`/teams/[teamId]/api-keys`)
+  - [x] Settings 독립 페이지 (`/teams/[teamId]/settings`)
 
 - [ ] **기존 탭 기반 구조 제거 및 정리**
   - [ ] 현재 단일 파일(1516줄)에서 기능별 분리
