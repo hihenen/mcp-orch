@@ -11,8 +11,6 @@ import { formatDate, getRelativeTime } from '@/utils/teamUtils';
 import { 
   Users, 
   Server, 
-  Wrench, 
-  Key,
   Activity
 } from 'lucide-react';
 
@@ -21,32 +19,16 @@ export default function TeamOverviewPage() {
   const teamId = params.teamId as string;
   const { selectedTeam } = useTeamStore();
   
-  console.log('🔍 [OVERVIEW_DEBUG] TeamOverviewPage rendered with teamId:', teamId);
-  console.log('🔍 [OVERVIEW_DEBUG] selectedTeam from store:', selectedTeam);
-  
   const {
     organization,
     members,
     servers,
-    tools,
-    apiKeys,
     activities,
     loading,
     loadAllData
   } = useTeamData(teamId);
 
-  console.log('🔍 [OVERVIEW_DEBUG] useTeamData results:', {
-    organization,
-    membersCount: members?.length,
-    serversCount: servers?.length,
-    toolsCount: tools?.length,
-    apiKeysCount: apiKeys?.length,
-    activitiesCount: activities?.length,
-    loading
-  });
-
   useEffect(() => {
-    console.log('🔍 [OVERVIEW_DEBUG] useEffect triggered with teamId:', teamId);
     if (teamId) {
       loadAllData();
     }
@@ -82,7 +64,7 @@ export default function TeamOverviewPage() {
         </div>
 
         {/* 통계 카드들 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
@@ -101,28 +83,6 @@ export default function TeamOverviewPage() {
                 <div>
                   <p className="text-2xl font-bold">{servers.length}</p>
                   <p className="text-sm text-muted-foreground">서버</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Wrench className="w-8 h-8 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">{tools.length}</p>
-                  <p className="text-sm text-muted-foreground">도구</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Key className="w-8 h-8 text-purple-500" />
-                <div>
-                  <p className="text-2xl font-bold">{apiKeys.length}</p>
-                  <p className="text-sm text-muted-foreground">API 키</p>
                 </div>
               </div>
             </CardContent>

@@ -242,15 +242,15 @@
 - ❌ TeamStore 더미 데이터: `{id: '550e8400-e29b-41d4-a716-446655440000', name: "John's Organization"}`
 - ❌ 화면 표시: 여전히 더미 데이터 "John's Organization" 표시
 
-- [ ] **데이터 흐름 분석**
-  - [ ] useTeamData의 organization 데이터와 teamStore의 selectedTeam 분리 현상 확인
-  - [ ] TeamLayout이 teamStore를 참조하는 로직 분석
-  - [ ] 실제 데이터로 teamStore 업데이트하는 메커니즘 누락 확인
+- [x] **데이터 흐름 분석**
+  - [x] useTeamData의 organization 데이터와 teamStore의 selectedTeam 분리 현상 확인
+  - [x] TeamLayout이 teamStore를 참조하는 로직 분석
+  - [x] 실제 데이터로 teamStore 업데이트하는 메커니즘 누락 확인
 
-- [ ] **TeamStore 업데이트 로직 구현**
-  - [ ] useTeamData에서 organization 데이터 받을 때 teamStore 동기화
-  - [ ] TeamLayout에서 실제 데이터 우선 사용하도록 수정
-  - [ ] 더미 데이터 의존성 제거
+- [x] **TeamStore 업데이트 로직 구현**
+  - [x] useTeamData에서 organization 데이터 받을 때 teamStore 동기화
+  - [x] TeamLayout에서 실제 데이터 우선 사용하도록 수정
+  - [x] 더미 데이터 의존성 제거
 
 - [ ] **디버깅 정보 정리**
   - [ ] 성공적으로 작동하는 디버깅 로그 제거

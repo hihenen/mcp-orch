@@ -14,8 +14,6 @@ export const GET = auth(async function GET(req) {
     // URL에서 teamId 추출
     const url = new URL(req.url);
     const teamId = url.pathname.split('/')[3]; // /api/teams/[teamId]
-    
-    console.log(`🔍 [TEAM_API] Getting team detail for teamId: ${teamId}`);
 
     // JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
@@ -25,8 +23,6 @@ export const GET = auth(async function GET(req) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    console.log('✅ Using JWT token for backend request');
-
     const response = await fetch(`${BACKEND_URL}/api/teams/${teamId}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -34,16 +30,12 @@ export const GET = auth(async function GET(req) {
       },
     });
 
-    console.log(`🔍 [TEAM_API] Backend response status: ${response.status}`);
-
     if (!response.ok) {
       const error = await response.text();
-      console.error(`🔍 [TEAM_API] Backend error: ${error}`);
       return NextResponse.json({ error }, { status: response.status });
     }
 
     const data = await response.json();
-    console.log('🔍 [TEAM_API] Team data received:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Team detail API error:', error);
@@ -66,7 +58,6 @@ export const PUT = auth(async function PUT(req) {
     const teamId = url.pathname.split('/')[3]; // /api/teams/[teamId]
     
     const body = await req.json();
-    console.log(`🔍 [TEAM_API] Updating team ${teamId} with data:`, body);
 
     // JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
@@ -75,8 +66,6 @@ export const PUT = auth(async function PUT(req) {
       console.error('❌ Failed to generate JWT token for PUT');
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
-
-    console.log('✅ Using JWT token for PUT request');
 
     const response = await fetch(`${BACKEND_URL}/api/teams/${teamId}`, {
       method: 'PUT',
@@ -87,16 +76,12 @@ export const PUT = auth(async function PUT(req) {
       body: JSON.stringify(body),
     });
 
-    console.log(`🔍 [TEAM_API] PUT response status: ${response.status}`);
-
     if (!response.ok) {
       const error = await response.text();
-      console.error(`🔍 [TEAM_API] PUT error: ${error}`);
       return NextResponse.json({ error }, { status: response.status });
     }
 
     const data = await response.json();
-    console.log('🔍 [TEAM_API] Team updated:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Team update API error:', error);
@@ -117,8 +102,6 @@ export const DELETE = auth(async function DELETE(req) {
     // URL에서 teamId 추출
     const url = new URL(req.url);
     const teamId = url.pathname.split('/')[3]; // /api/teams/[teamId]
-    
-    console.log(`🔍 [TEAM_API] Deleting team ${teamId}`);
 
     // JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
@@ -128,8 +111,6 @@ export const DELETE = auth(async function DELETE(req) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    console.log('✅ Using JWT token for DELETE request');
-
     const response = await fetch(`${BACKEND_URL}/api/teams/${teamId}`, {
       method: 'DELETE',
       headers: {
@@ -138,16 +119,12 @@ export const DELETE = auth(async function DELETE(req) {
       },
     });
 
-    console.log(`🔍 [TEAM_API] DELETE response status: ${response.status}`);
-
     if (!response.ok) {
       const error = await response.text();
-      console.error(`🔍 [TEAM_API] DELETE error: ${error}`);
       return NextResponse.json({ error }, { status: response.status });
     }
 
     const data = await response.json();
-    console.log('🔍 [TEAM_API] Team deleted:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Team delete API error:', error);

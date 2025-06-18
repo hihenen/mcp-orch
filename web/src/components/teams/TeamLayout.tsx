@@ -28,8 +28,6 @@ export function TeamLayout({ children }: TeamLayoutProps) {
   const pathname = usePathname();
   const teamId = params.teamId as string;
   
-  console.log('🔍 [LAYOUT_DEBUG] TeamLayout rendered with teamId:', teamId);
-  
   const { 
     selectedTeam,
     userTeams,
@@ -37,12 +35,6 @@ export function TeamLayout({ children }: TeamLayoutProps) {
     setSelectedTeam,
     getTeamById
   } = useTeamStore();
-  
-  console.log('🔍 [LAYOUT_DEBUG] TeamStore state:', {
-    selectedTeam,
-    userTeamsCount: userTeams?.length,
-    loading
-  });
 
   useEffect(() => {
     if (teamId && userTeams.length > 0) {
@@ -187,16 +179,6 @@ export function TeamLayout({ children }: TeamLayoutProps) {
                     생성일: {new Date(selectedTeam.created_at).toLocaleDateString('ko-KR')}
                   </div>
                 )}
-              </div>
-              
-              {/* 디버깅 정보 표시 */}
-              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
-                <div>🔍 DEBUG - Team Data:</div>
-                <div>Name: {selectedTeam.name}</div>
-                <div>Description: {selectedTeam.description || 'No description'}</div>
-                <div>Member Count: {selectedTeam.member_count}</div>
-                <div>Created At: {selectedTeam.created_at}</div>
-                <div>Team ID: {selectedTeam.id}</div>
               </div>
             </div>
           </div>
