@@ -393,31 +393,188 @@
 
 **결론**: 이 페이지에서는 개별 서버의 상세 정보를 별도로 호출하지 않고, 서버 목록 API 한 번의 호출로 모든 필요한 정보를 가져옴. 개별 서버 API 호출은 상태 변경(새로고침, 토글, 삭제) 작업에만 사용됨.
 
-### TASK_090: 프로젝트 탭 페이지 서버 API 호출 분석
+### TASK_090: 백엔드 새로고침 API 데이터베이스 캐시 시스템 분석 ✅ 완료
 
-**목표**: 프로젝트 탭 페이지들에서 서버 관련 API 호출 패턴 분석 및 성능 이슈 식별
+**목표**: project_servers.py의 새로고침 API들이 데이터베이스 상태를 캐시로 활용하는 방식 분석
 
-- [ ] **프로젝트 탭 페이지별 서버 API 호출 분석**
-  - [ ] Members 페이지 서버 API 호출 확인
-  - [ ] API Keys 페이지 서버 API 호출 확인  
-  - [ ] Activity 페이지 서버 API 호출 확인
-  - [ ] Settings 페이지 서버 API 호출 확인
+- [x] **전체 새로고침 API 분석 (refresh_project_servers_status)**
+  - [x] 524-618줄 refresh_project_servers_status 함수 구조 분석
+  - [x] 실시간 MCP 서버 상태 확인 프로세스 분석
+  - [x] 데이터베이스 상태 업데이트 필드 확인
+  - [x] 캐시 저장 메커니즘 분석
 
-- [ ] **useProjectStore 서버 관련 함수 분석**
-  - [ ] loadProjectServers 호출 패턴 확인
-  - [ ] loadProjectTools 호출 패턴 확인 
-  - [ ] refreshProjectServers 호출 패턴 확인
-  - [ ] 서버 상태 확인 API들의 성능 영향 분석
+- [x] **개별 새로고침 API 분석 (refresh_project_server_status)**
+  - [x] 621-708줄 refresh_project_server_status 함수 구조 분석
+  - [x] 단일 서버 상태 확인 및 업데이트 프로세스 분석
+  - [x] 데이터베이스 캐시 업데이트 패턴 확인
+  - [x] 도구 목록 캐싱 방식 분석
 
-- [ ] **문제점 식별 및 우선순위 설정**
-  - [ ] 불필요한 서버 API 호출 지점 식별
-  - [ ] 성능에 영향을 주는 API 호출 우선순위 설정
-  - [ ] 최적화 필요한 페이지 순위 정리
-  - [ ] 권장 해결책 제시
+- [x] **서버 목록 API 캐시 활용 분석 (list_project_servers)**
+  - [x] 84-163줄 list_project_servers 함수의 캐시 사용 방식 분석
+  - [x] 실시간 확인 제거 후 DB 정보 활용 방식 확인
+  - [x] 성능 최적화된 캐시 기반 응답 구조 분석
+  - [x] 캐시 무효화 및 갱신 전략 확인
+
+### TASK_091: 웹 프론트엔드 서버 API 호출 패턴 검색 ✅ 완료
+
+**목표**: `/api/projects/` 패턴을 사용하는 servers 관련 API 호출 코드 탐지 및 분석
+
+- [x] stores/ 폴더에서 서버 API 호출 패턴 검색
+- [x] components/ 폴더에서 서버 API 호출 패턴 검색  
+- [x] app/ 폴더 페이지에서 서버 API 호출 패턴 검색
+- [x] hooks/ 폴더에서 서버 API 호출 패턴 검색
+- [x] 결과 정리 및 분석 보고
+
+### TASK_092: projects.py 중복 서버 API 성능 최적화 
+
+**목표**: projects.py의 list_project_servers 함수에서 실시간 MCP 연결 테스트 제거하여 성능 최적화
+
+**🚨 발견된 문제**:
+- Next.js API (`/api/projects/[projectId]/servers/route.ts:26`) → FastAPI `projects.py:1100` 호출
+- `projects.py`의 `list_project_servers` 함수에서 여전히 실시간 `check_server_status` 호출 (1150줄)
+- `project_servers.py`는 이미 최적화되었지만 `projects.py`는 아직 실시간 연결 테스트 수행
+
+- [x] **문제 분석 완료**
+  - [x] projects.py와 project_servers.py에 동일한 함수명 확인
+  - [x] Next.js API가 호출하는 실제 백엔드 엔드포인트 식별 
+  - [x] projects.py:1100의 실시간 연결 테스트 코드 확인
+
+- [x] **projects.py 최적화 적용**
+  - [x] projects.py:1147-1155 실시간 상태 확인 코드 제거
+  - [x] DB 캐시 기반 상태 표시로 변경 (project_servers.py와 동일)
+  - [x] McpServerStatus enum 활용한 상태 매핑 구현
+  - [x] 도구 개수는 DB 관계에서 조회하도록 수정
+
+- [ ] **성능 최적화 검증**
+  - [ ] 수정 후 API 응답 시간 측정
+  - [ ] 실시간 연결 테스트 완전 제거 확인
+  - [ ] 기능적 정합성 유지 확인
+
+**🔍 발견된 서버 API 호출 패턴 전체 분석**:
+
+## 📊 1. stores/ 폴더 (2개 파일)
+
+### 1.1 projectStore.ts - 주요 서버 관리 스토어
+**파일**: `/web/src/stores/projectStore.ts`
+
+**핵심 API 호출**:
+- **라인 407**: `fetch(\`/api/projects/\${projectId}/servers\`)` - 서버 목록 조회 (빠른 캐시 모드)
+- **라인 433**: `fetch(\`/api/projects/\${projectId}/servers/refresh-status\`)` - 전체 서버 새로고침  
+- **라인 460**: `fetch(\`/api/projects/\${projectId}/servers/\${serverId}/refresh-status\`)` - 개별 서버 새로고침
+- **라인 486**: `fetch(\`/api/projects/\${projectId}/servers\`)` - 서버 추가 (POST)
+- **라인 521**: `fetch(\`/api/projects/\${projectId}/servers/\${serverId}/toggle\`)` - 서버 토글
+- **라인 553**: `fetch(\`/api/projects/\${projectId}/servers/\${serverId}/restart\`)` - 서버 재시작
+- **라인 579**: `fetch(\`/api/projects/\${projectId}/servers\`)` - 도구 로드를 위한 서버 목록
+- **라인 603**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}/tools\`)` - 서버별 도구 목록
+
+**특징**: 모든 서버 관련 상태 관리의 중심지, 성능 최적화를 위한 캐시 기반과 실시간 새로고침 분리
+
+### 1.2 serverStore.ts - 레거시 서버 스토어  
+**파일**: `/web/src/stores/serverStore.ts`
+
+**핵심 API 호출**:
+- **라인 102**: `fetch(\`/api/projects/\${projectId}/servers\`)` - 프로젝트 서버 목록 조회
+
+**특징**: 과거 사용되던 스토어, 현재는 projectStore로 통합되어 사용 빈도 감소
+
+## 📋 2. components/ 폴더 (3개 파일)
+
+### 2.1 AddServerDialog.tsx - 서버 추가/편집 다이얼로그
+**파일**: `/web/src/components/servers/AddServerDialog.tsx`
+
+**핵심 API 호출**:
+- **라인 478**: `fetch(\`/api/projects/\${projectId}/servers/\${editServer.id}\`)` - 서버 수정 (PUT)
+- **라인 504**: `fetch(\`/api/projects/\${projectId}/servers\`)` - 서버 추가 (POST)
+- **라인 576**: `fetch(\`/api/projects/\${projectId}/servers/\${editServer.id}\`)` - JSON 편집 모드 서버 수정 (PUT) 
+- **라인 623**: `fetch(\`/api/projects/\${projectId}/servers\`)` - JSON 일괄 추가 (POST)
+
+**특징**: 개별 서버 관리, JSON 일괄 처리 기능 포함
+
+### 2.2 ServerToolsTab.tsx - 서버 도구 탭
+**파일**: `/web/src/components/servers/detail/ServerToolsTab.tsx`
+
+**핵심 API 호출**:
+- **라인 29**: `fetch(\`/api/projects/\${projectId}/servers/\${serverId}\`)` - 서버 상세 정보 및 도구 목록
+
+**특징**: 서버 상세 페이지에서 도구 정보 표시
+
+### 2.3 ServerDetailModal.tsx - 서버 상세 모달
+**파일**: `/web/src/components/servers/ServerDetailModal.tsx`
+
+**핵심 API 호출**:
+- **라인 62**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}\`)` - 서버 상세 정보
+- **라인 138**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}/toggle\`)` - 서버 토글
+
+**특징**: 모달에서 서버 정보 표시 및 기본 제어
+
+## 📄 3. app/ 폴더 페이지 (4개 파일)
+
+### 3.1 projects/[projectId]/servers/page.tsx - 서버 리스트 페이지
+**파일**: `/web/src/app/projects/[projectId]/servers/page.tsx`
+
+**핵심 API 호출**:
+- **라인 111**: `fetch(\`/api/projects/\${projectId}/servers?serverId=\${deletingServer.id}\`)` - 서버 삭제 (DELETE)
+- **라인 143**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}/toggle\`)` - 서버 토글
+
+**특징**: 프로젝트별 서버 목록 관리, projectStore와 긴밀히 연동
+
+### 3.2 servers/[serverId]/page_backup.tsx - 서버 상세 페이지 백업
+**파일**: `/web/src/app/projects/[projectId]/servers/[serverId]/page_backup.tsx`
+
+**핵심 API 호출**:
+- **라인 85**: `fetch(\`/api/projects/\${projectId}/servers/\${serverId}\`)` - 서버 상세 정보
+
+**특징**: 개별 서버 상세 페이지 (백업 버전)
+
+### 3.3 servers/page.tsx - 전체 서버 페이지
+**일반 서버 목록**: `fetch(\`/api/projects/\${currentProject.id}/servers\`)` - 현재 프로젝트의 서버 조회
+
+### 3.4 dashboard/page.tsx - 대시보드
+**서버 정보 로드**: `fetch(\`/api/projects/\${currentProject.id}/servers\`)` - 대시보드용 서버 정보
+
+## 🔧 4. hooks/ 폴더 (2개 파일)
+
+### 4.1 useServerDetail.ts - 서버 상세 정보 훅
+**파일**: `/web/src/components/servers/detail/hooks/useServerDetail.ts`
+
+**핵심 API 호출**:
+- **라인 32**: `fetch(\`/api/projects/\${projectId}/servers/\${serverId}\`)` - 서버 상세 정보
+
+**특징**: 서버 상세 페이지용 데이터 관리, 타임아웃 처리 포함
+
+### 4.2 useServerActions.ts - 서버 액션 훅  
+**파일**: `/web/src/components/servers/detail/hooks/useServerActions.ts`
+
+**핵심 API 호출**:
+- **라인 32**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}/toggle\`)` - 서버 토글
+- **라인 62**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}/restart\`)` - 서버 재시작
+- **라인 92**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}/refresh-status\`)` - 서버 상태 새로고침
+- **라인 124**: `fetch(\`/api/projects/\${projectId}/servers/\${server.id}\`)` - 서버 삭제 (DELETE)
+
+**특징**: 서버 제어 액션들을 전담 처리
+
+## 🚨 주요 발견사항
+
+### ✅ 긍정적 패턴
+1. **중앙화된 상태 관리**: projectStore가 주요 서버 API 호출을 담당
+2. **성능 최적화**: 캐시 기반 빠른 로딩과 실시간 새로고침 분리
+3. **모듈화된 훅**: 서버 액션과 상세 정보를 별도 훅으로 분리
+4. **일관된 URL 패턴**: 모든 API가 `/api/projects/{projectId}/servers` 패턴 사용
+
+### ⚠️ 주의사항
+1. **API 호출 중복**: 여러 컴포넌트에서 동일한 API를 개별적으로 호출하는 경우 존재
+2. **에러 처리 분산**: 각 파일마다 개별적인 에러 처리 로직
+3. **상태 동기화**: serverStore와 projectStore 간의 잠재적 충돌 가능성
+
+### 📈 사용 빈도 분석
+- **가장 많이 사용**: `/api/projects/{projectId}/servers` (기본 서버 목록/조회/추가)
+- **실시간 제어**: `/api/projects/{projectId}/servers/{serverId}/toggle`
+- **상태 관리**: `/api/projects/{projectId}/servers/{serverId}/refresh-status`
+- **상세 정보**: `/api/projects/{projectId}/servers/{serverId}`
 
 ## Progress Status
-- Current Progress: TASK_090 - 프로젝트 탭 페이지 서버 API 호출 분석 (분석 중)
-- Next Task: 서버 API 호출 패턴 분석 완료 후 최적화 방안 제시
+- Current Progress: TASK_091 - 웹 프론트엔드 서버 API 호출 패턴 검색 (완료)
+- Next Task: 새로운 작업 대기
 - Last Update: 2025-06-18
 - Automatic Check Status: PASS
 

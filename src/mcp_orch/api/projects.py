@@ -1134,25 +1134,30 @@ async def list_project_servers(
         if not server.is_enabled:
             server_status = "disabled"
         else:
-            # 서버 설정 구성
-            server_config = {
-                'command': server.command,
-                'args': server.args or [],
-                'env': server.env or {},
-                'timeout': 10,  # 빠른 응답을 위한 짧은 타임아웃
-                'transportType': server.transport_type or 'stdio',
-                'disabled': not server.is_enabled
-            }
+            # DB에 저장된 상태 정보 사용 (실시간 확인 제거)
+            if hasattr(server, 'status') and server.status:
+                # McpServerStatus enum을 문자열로 변환
+                if hasattr(server.status, 'value'):
+                    db_status = server.status.value
+                else:
+                    db_status = str(server.status)
+                
+                # 상태 매핑
+                if db_status == "active":
+                    server_status = "online"
+                elif db_status == "inactive":
+                    server_status = "offline"
+                elif db_status == "error":
+                    server_status = "error"
+                else:
+                    server_status = "offline"
+            else:
+                server_status = "unknown"
             
-            # 실시간 상태 및 도구 개수 조회
-            try:
-                unique_server_id = f"{str(server.project_id).replace('-', '')[:8]}.{server.name.replace(' ', '_').replace('.', '_')}"
-                server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
-                if server_status == "online":
-                    tools_count = await mcp_connection_service.get_server_tools_count(unique_server_id, server_config)
-            except Exception as e:
-                logger.error(f"Error checking server {server.id} status: {e}")
-                server_status = "error"
+            # 도구 개수는 데이터베이스의 tools 관계에서 조회
+            tools_count = len(server.tools) if server.tools else 0
+            
+            logger.info(f"Server {server.name} using cached status: {server_status}, tools: {tools_count}")
         
         result.append(ServerResponse(
             id=str(server.id),
