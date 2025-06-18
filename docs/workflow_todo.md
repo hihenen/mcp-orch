@@ -155,6 +155,12 @@
   - [x] 평균 응답시간 표시
   - [x] 에러 분포 분석
 
+- [x] **Phase 6: SSE 브리지 레벨 에러 로깅**
+  - [x] SSE 브리지에서 MCP 프로토콜 에러 감지
+  - [x] 에러 코드별 분류 (INVALID_PARAMETERS, INITIALIZATION_INCOMPLETE)
+  - [x] SSE 브리지 에러도 ToolCallLog에 기록
+  - [x] 프론트엔드 에러 코드 설명 확장
+
 **분석 결과**:
 
 🔍 **ToolCallLog 수집 시스템 현황**:
@@ -198,10 +204,11 @@
 - ✅ **클라이언트 감지**: Cline, Cursor, VS Code 등 클라이언트 타입 자동 인식
 - ✅ **완전한 추적**: IP 주소, User-Agent, 세션 활동 시간 모든 정보 수집
 - ✅ **데이터 무결성**: 트랜잭션 안전성과 에러 처리로 데이터 손실 방지
+- ✅ **SSE 브리지 에러 로깅**: MCP 프로토콜 에러까지 완전히 캡처하여 누락 없는 로그 수집
 
 📊 **수집되는 완전한 데이터**:
 - **ClientSession**: 클라이언트 연결, 타입, 활동 시간, 호출 통계
-- **ToolCallLog**: 도구별 실행 시간, 성공/실패, 입출력 데이터, 오류 정보
+- **ToolCallLog**: 도구별 실행 시간, 성공/실패, 입출력 데이터, 오류 정보, SSE 브리지 에러
 - **실시간 통계**: total_calls, successful_calls, failed_calls 자동 집계
 
 🚀 **활용 가능한 기능**:
@@ -210,9 +217,10 @@
 - 클라이언트별 사용 패턴 분석
 - 실시간 Activity 피드 데이터 소스
 - 디버깅 및 문제 추적 완전 지원
+- MCP 프로토콜 에러 분석 및 연결 문제 진단
 
 ## Progress Status
-- Current Progress: TASK_085 완료 - Datadog/Sentry 스타일 ToolCallLog 조회 시스템 완전 구현 완료
+- Current Progress: TASK_084 완료 - ToolCallLog 수집 시스템 + SSE 브리지 에러 로깅까지 완전 구현 완료
 - Next Task: 대기 중 (사용자 요청 대기)
 - Last Update: 2025-06-18
 - Automatic Check Status: PASS
@@ -231,3 +239,6 @@
 - **실시간 통계 업데이트**: 도구 호출마다 세션 통계를 실시간으로 업데이트하여 정확한 사용량 추적
 - **클라이언트 타입 감지**: User-Agent 헤더를 통한 클라이언트 자동 감지로 더 나은 사용자 경험 제공
 - **트랜잭션 분리**: 세션 관리와 로그 저장을 별도 트랜잭션으로 분리하여 데이터 무결성 보장
+- **SSE 브리지 에러 로깅**: MCP 프로토콜 레벨 에러도 일반 도구 호출과 동일하게 로그 수집하여 완전한 추적 가능
+- **에러 코드 분류**: INVALID_PARAMETERS, INITIALIZATION_INCOMPLETE 등 MCP 에러 코드별로 상세 분류하여 문제 진단 용이
+- **다층 로그 수집**: 정상 도구 호출(mcp_connection_service)과 에러 상황(SSE bridge) 모두에서 로그 수집하여 누락 방지
