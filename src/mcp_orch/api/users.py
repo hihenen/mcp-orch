@@ -1,15 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import bcrypt
-from typing import Optional
+from typing import Optional, List
 import os
 from datetime import datetime, timezone, timedelta
 from jose import jwt
 
 from ..database import get_db
 from ..models.user import User
+from .jwt_auth import get_user_from_jwt_token
 
 # JWT 설정
 NEXTAUTH_SECRET = os.getenv("NEXTAUTH_SECRET", "your-secret-key-here-change-in-production")
@@ -242,4 +243,324 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류가 발생했습니다: {str(e)}"
+        )
+
+# 관리자 권한 확인 함수
+async def get_current_admin_user(request: Request, db: Session = Depends(get_db)) -> User:
+    """관리자 권한을 가진 현재 사용자를 반환합니다."""
+    user = await get_user_from_jwt_token(request, db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    
+    return user
+
+# 사용자 관리용 응답 모델
+class AdminUserResponse(BaseModel):
+    id: str
+    name: Optional[str]
+    email: str
+    role: str  # 'admin' 또는 'user'
+    status: str  # 'active' 또는 'inactive'
+    created_at: datetime
+    last_login_at: Optional[datetime] = None
+    projects_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+class AdminUserListResponse(BaseModel):
+    users: List[AdminUserResponse]
+    total: int
+
+class CreateUserRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    is_admin: bool = False
+
+class UpdateUserRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+# 관리자용 사용자 관리 API
+@router.get("/admin", response_model=AdminUserListResponse)
+async def list_users_admin(
+    request: Request,
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자용 사용자 목록 조회"""
+    try:
+        # 기본 쿼리
+        query = db.query(User)
+        
+        # 검색 조건 적용
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                (User.name.ilike(search_term)) | 
+                (User.email.ilike(search_term))
+            )
+        
+        # 전체 카운트
+        total = query.count()
+        
+        # 페이지네이션 적용
+        users = query.offset(skip).limit(limit).all()
+        
+        # 각 사용자에 대한 프로젝트 수 계산 (향후 구현)
+        user_responses = []
+        for user in users:
+            user_response = AdminUserResponse(
+                id=str(user.id),
+                name=user.name,
+                email=user.email,
+                role='admin' if user.is_admin else 'user',
+                status='active' if user.is_active else 'inactive',
+                created_at=user.created_at,
+                last_login_at=None,  # 향후 로그인 추적 기능 구현 시 업데이트
+                projects_count=0  # 향후 프로젝트 카운트 기능 구현 시 업데이트
+            )
+            user_responses.append(user_response)
+        
+        return AdminUserListResponse(
+            users=user_responses,
+            total=total
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"사용자 목록 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.post("/admin", response_model=AdminUserResponse)
+async def create_user_admin(
+    request: Request,
+    user_data: CreateUserRequest,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자용 사용자 생성"""
+    try:
+        # 이메일 중복 확인
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="이미 사용 중인 이메일입니다."
+            )
+        
+        # 비밀번호 해시화
+        hashed_password = bcrypt.hashpw(
+            user_data.password.encode('utf-8'), 
+            bcrypt.gensalt()
+        ).decode('utf-8')
+        
+        # 새 사용자 생성
+        new_user = User(
+            name=user_data.name,
+            email=user_data.email,
+            password=hashed_password,
+            is_admin=user_data.is_admin,
+            is_active=True
+        )
+        
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        return AdminUserResponse(
+            id=str(new_user.id),
+            name=new_user.name,
+            email=new_user.email,
+            role='admin' if new_user.is_admin else 'user',
+            status='active' if new_user.is_active else 'inactive',
+            created_at=new_user.created_at,
+            last_login_at=None,
+            projects_count=0
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"사용자 생성 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.get("/admin/{user_id}", response_model=AdminUserResponse)
+async def get_user_admin(
+    request: Request,
+    user_id: str,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자용 특정 사용자 조회"""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="사용자를 찾을 수 없습니다."
+            )
+        
+        return AdminUserResponse(
+            id=str(user.id),
+            name=user.name,
+            email=user.email,
+            role='admin' if user.is_admin else 'user',
+            status='active' if user.is_active else 'inactive',
+            created_at=user.created_at,
+            last_login_at=None,
+            projects_count=0
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"사용자 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.put("/admin/{user_id}", response_model=AdminUserResponse)
+async def update_user_admin(
+    request: Request,
+    user_id: str,
+    user_data: UpdateUserRequest,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자용 사용자 정보 수정"""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="사용자를 찾을 수 없습니다."
+            )
+        
+        # 자기 자신의 관리자 권한은 해제할 수 없도록 제한
+        if str(user.id) == str(current_user.id) and user_data.is_admin is False:
+            raise HTTPException(
+                status_code=400,
+                detail="자신의 관리자 권한은 해제할 수 없습니다."
+            )
+        
+        # 마지막 관리자인 경우 권한 해제 방지
+        if user_data.is_admin is False and user.is_admin:
+            admin_count = db.query(User).filter(User.is_admin == True).count()
+            if admin_count <= 1:
+                raise HTTPException(
+                    status_code=400,
+                    detail="마지막 관리자의 권한은 해제할 수 없습니다."
+                )
+        
+        # 이메일 중복 확인 (변경하는 경우)
+        if user_data.email and user_data.email != user.email:
+            existing_user = db.query(User).filter(User.email == user_data.email).first()
+            if existing_user:
+                raise HTTPException(
+                    status_code=400,
+                    detail="이미 사용 중인 이메일입니다."
+                )
+        
+        # 필드 업데이트
+        if user_data.name is not None:
+            user.name = user_data.name
+        if user_data.email is not None:
+            user.email = user_data.email
+        if user_data.is_admin is not None:
+            user.is_admin = user_data.is_admin
+        if user_data.is_active is not None:
+            user.is_active = user_data.is_active
+        
+        user.updated_at = datetime.now(timezone.utc)
+        
+        db.commit()
+        db.refresh(user)
+        
+        return AdminUserResponse(
+            id=str(user.id),
+            name=user.name,
+            email=user.email,
+            role='admin' if user.is_admin else 'user',
+            status='active' if user.is_active else 'inactive',
+            created_at=user.created_at,
+            last_login_at=None,
+            projects_count=0
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"사용자 수정 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.delete("/admin/{user_id}")
+async def delete_user_admin(
+    request: Request,
+    user_id: str,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자용 사용자 삭제 (소프트 삭제)"""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="사용자를 찾을 수 없습니다."
+            )
+        
+        # 자기 자신은 삭제할 수 없도록 제한
+        if str(user.id) == str(current_user.id):
+            raise HTTPException(
+                status_code=400,
+                detail="자신의 계정은 삭제할 수 없습니다."
+            )
+        
+        # 마지막 관리자인 경우 삭제 방지
+        if user.is_admin:
+            admin_count = db.query(User).filter(User.is_admin == True).count()
+            if admin_count <= 1:
+                raise HTTPException(
+                    status_code=400,
+                    detail="마지막 관리자는 삭제할 수 없습니다."
+                )
+        
+        # 소프트 삭제 (비활성화)
+        user.is_active = False
+        user.updated_at = datetime.now(timezone.utc)
+        
+        db.commit()
+        
+        return {"message": "사용자가 성공적으로 비활성화되었습니다."}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"사용자 삭제 중 오류가 발생했습니다: {str(e)}"
         )
