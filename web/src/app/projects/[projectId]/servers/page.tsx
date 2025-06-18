@@ -25,7 +25,6 @@ import {
   RefreshCw,
   Clock
 } from 'lucide-react';
-import { useServerStore } from '@/stores/serverStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
 import { ServerDetailModal } from '@/components/servers/ServerDetailModal';
@@ -38,17 +37,14 @@ export default function ProjectServersPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   
-  const { 
-    fetchProjectServers,
-    getProjectServers,
-    isLoading 
-  } = useServerStore();
-  
   const {
     selectedProject,
+    projectServers,
     loadProject,
+    loadProjectServers,
     refreshProjectServers,
-    refreshSingleProjectServer
+    refreshSingleProjectServer,
+    isLoading
   } = useProjectStore();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,29 +58,27 @@ export default function ProjectServersPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshingServerId, setRefreshingServerId] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  // 서버 스토어에서 프로젝트 서버 가져오기
-  const projectServers = getProjectServers(projectId);
 
   // 페이지 로드 시 프로젝트 정보와 서버 목록 로드
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
-      fetchProjectServers(projectId);
+      loadProjectServers(projectId);
     }
-  }, [projectId, loadProject, fetchProjectServers]);
+  }, [projectId, loadProject, loadProjectServers]);
 
   // 서버 추가 핸들러
   const handleServerAdded = (serverConfig: any) => {
     console.log('새 서버 추가:', serverConfig);
     // 프로젝트별 서버 목록 새로고침
-    fetchProjectServers(projectId);
+    loadProjectServers(projectId);
   };
 
   // 서버 수정 핸들러
   const handleServerUpdated = (serverConfig: any) => {
     console.log('서버 수정:', serverConfig);
     // 프로젝트별 서버 목록 새로고침
-    fetchProjectServers(projectId);
+    loadProjectServers(projectId);
     setEditingServer(null);
   };
 
@@ -128,7 +122,7 @@ export default function ProjectServersPage() {
       console.log('서버 삭제 성공:', data);
       
       // 프로젝트별 서버 목록 새로고침
-      fetchProjectServers(projectId);
+      loadProjectServers(projectId);
       
       toast.success(`서버 삭제 완료: ${deletingServer.name} 서버가 삭제되었습니다.`);
       
@@ -160,7 +154,7 @@ export default function ProjectServersPage() {
       console.log('서버 토글 성공:', data);
       
       // 프로젝트별 서버 목록 새로고침
-      fetchProjectServers(projectId);
+      loadProjectServers(projectId);
       
       toast.success(data.message);
     } catch (error) {
@@ -176,7 +170,7 @@ export default function ProjectServersPage() {
 
   // 서버 상세 모달에서 서버 업데이트 핸들러
   const handleServerUpdatedFromModal = () => {
-    fetchProjectServers(projectId);
+    loadProjectServers(projectId);
   };
 
   // 전체 서버 새로고침 핸들러
@@ -186,7 +180,7 @@ export default function ProjectServersPage() {
       const data = await refreshProjectServers(projectId);
       
       // 서버 목록 새로고침
-      await fetchProjectServers(projectId);
+      await loadProjectServers(projectId);
       setLastRefresh(new Date());
       
       toast.success(`${data.message || '모든 서버 상태가 새로고침되었습니다.'}`);
@@ -205,7 +199,7 @@ export default function ProjectServersPage() {
       const data = await refreshSingleProjectServer(projectId, server.id);
       
       // 서버 목록 새로고침
-      await fetchProjectServers(projectId);
+      await loadProjectServers(projectId);
       
       toast.success(`${server.name} 서버 상태가 새로고침되었습니다.`);
     } catch (error) {
@@ -217,7 +211,7 @@ export default function ProjectServersPage() {
   };
 
   // 프로젝트별 서버 목록 필터링
-  const filteredServers = projectServers.filter(server => 
+  const filteredServers = (projectServers || []).filter(server => 
     server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     server.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
