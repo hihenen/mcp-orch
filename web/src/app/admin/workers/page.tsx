@@ -65,7 +65,14 @@ export default function WorkersPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">워커 관리</h2>
+            <p className="text-muted-foreground">APScheduler 백그라운드 워커를 관리하고 모니터링합니다</p>
+          </div>
+        </div>
+        
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
@@ -78,7 +85,14 @@ export default function WorkersPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">워커 관리</h2>
+            <p className="text-muted-foreground">APScheduler 백그라운드 워커를 관리하고 모니터링합니다</p>
+          </div>
+        </div>
+        
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
@@ -96,7 +110,14 @@ export default function WorkersPage() {
 
   if (!status) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">워커 관리</h2>
+            <p className="text-muted-foreground">APScheduler 백그라운드 워커를 관리하고 모니터링합니다</p>
+          </div>
+        </div>
+        
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground">워커 상태를 가져올 수 없습니다.</p>
@@ -107,13 +128,13 @@ export default function WorkersPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* 페이지 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">워커 관리</h1>
-          <p className="text-muted-foreground mt-1">
-            APScheduler 백그라운드 워커를 관리하고 모니터링하세요
+          <h2 className="text-xl font-semibold">워커 관리</h2>
+          <p className="text-muted-foreground">
+            APScheduler 백그라운드 워커를 관리하고 모니터링합니다
           </p>
         </div>
         <Button
