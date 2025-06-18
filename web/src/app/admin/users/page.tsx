@@ -13,15 +13,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   Users, 
   Search, 
@@ -511,28 +509,34 @@ export default function UsersPage() {
       />
 
       {/* 삭제 확인 다이얼로그 */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>사용자 삭제 확인</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>사용자 삭제 확인</DialogTitle>
+            <DialogDescription>
               정말로 <strong>{deletingUser?.name || deletingUser?.email}</strong> 사용자를 삭제하시겠습니까?
               <br />
               이 작업은 되돌릴 수 없으며, 사용자 계정이 비활성화됩니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              취소
+            </Button>
+            <Button
               onClick={confirmDeleteUser}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
               {isDeleting ? '삭제 중...' : '삭제'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
