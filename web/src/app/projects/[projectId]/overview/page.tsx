@@ -50,12 +50,10 @@ export default function ProjectOverviewPage() {
     selectedProject, 
     projectMembers, 
     projectServers,
-    projectTools,
     loadProject, 
     loadProjectMembers,
     loadProjectServers,
     refreshProjectServers,
-    loadProjectTools,
     isLoading 
   } = useProjectStore();
 
@@ -81,13 +79,11 @@ export default function ProjectOverviewPage() {
         console.error('❌ loadProjectServers 실패:', err);
       });
       
-      loadProjectTools(projectId).then(() => {
-        console.log('✅ loadProjectTools 완료');
-      }).catch(err => {
-        console.error('❌ loadProjectTools 실패:', err);
-      });
+      // loadProjectTools 제거 - 성능 최적화를 위해 서버별 실시간 도구 조회 비활성화
+      // 도구 개수는 서버 목록에서 가져온 캐시된 정보 사용
+      console.log('ℹ️ Overview 페이지: 도구 실시간 로드 스킵 (성능 최적화)');
     }
-  }, [projectId, loadProject, loadProjectMembers, loadProjectServers, loadProjectTools]);
+  }, [projectId, loadProject, loadProjectMembers, loadProjectServers]);
 
   if (isLoading) {
     return (
@@ -107,7 +103,7 @@ export default function ProjectOverviewPage() {
     selectedProject: !!selectedProject,
     projectMembers: projectMembers ? projectMembers.length : 'undefined',
     projectServers: projectServers ? projectServers.length : 'undefined', 
-    projectTools: projectTools ? projectTools.length : 'undefined',
+    totalTools: projectServers ? projectServers.reduce((total, server) => total + (server.tools_count || 0), 0) : 0,
     isLoading
   });
 
@@ -209,7 +205,12 @@ export default function ProjectOverviewPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">총 도구</span>
-                <span className="text-sm font-medium">{projectTools ? projectTools.length : 0}</span>
+                <span className="text-sm font-medium">
+                  {projectServers ? 
+                    projectServers.reduce((total, server) => 
+                      total + (server.tools_count || server.availableTools || 0), 0
+                    ) : 0}
+                </span>
               </div>
             </CardContent>
           </Card>
