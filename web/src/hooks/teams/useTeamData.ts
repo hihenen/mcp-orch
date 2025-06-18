@@ -85,16 +85,18 @@ export const useTeamData = (teamId: string) => {
         const orgData = await response.json();
         setOrganization(orgData);
       } else {
-        // 데모 데이터
+        // 최소한의 기본 데이터만 설정 (실제 팀 이름 유지)
         setOrganization({
           id: teamId,
-          name: "Development Team",
-          description: "소프트웨어 개발 팀",
-          created_at: "2025-06-01T10:00:00Z"
+          name: "팀", // 실제 팀 이름은 UI에서 처리
+          description: "",
+          created_at: new Date().toISOString()
         });
       }
     } catch (error) {
       console.error('Failed to load organization:', error);
+      // 에러 시 null로 설정하여 빈 상태 표시
+      setOrganization(null);
     }
   };
 
@@ -109,34 +111,16 @@ export const useTeamData = (teamId: string) => {
         const memberData = await response.json();
         setMembers(memberData);
       } else {
-        // 데모 데이터
+        // 현재 사용자만 포함하는 최소 데이터
         const demoMembers: TeamMember[] = [
           {
             id: '1',
             user_id: '1',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
+            name: '나',
+            email: 'current.user@example.com',
             role: 'owner',
-            joined_at: '2025-06-01T10:00:00Z',
+            joined_at: new Date().toISOString(),
             is_current_user: true
-          },
-          {
-            id: '2',
-            user_id: '2', 
-            name: 'Jane Smith',
-            email: 'jane.smith@example.com',
-            role: 'developer',
-            joined_at: '2025-06-02T11:30:00Z',
-            is_current_user: false
-          },
-          {
-            id: '3',
-            user_id: '3',
-            name: 'Bob Wilson',
-            email: 'bob.wilson@example.com', 
-            role: 'reporter',
-            joined_at: '2025-06-03T09:00:00Z',
-            is_current_user: false
           }
         ];
         setMembers(demoMembers);
@@ -157,30 +141,8 @@ export const useTeamData = (teamId: string) => {
         const serverData = await response.json();
         setServers(serverData);
       } else {
-        // 데모 데이터
-        const demoServers: TeamServer[] = [
-          {
-            id: '1',
-            name: 'Excel Server',
-            description: 'Excel 파일 처리 서버',
-            command: 'node',
-            args: ['excel-server.js'],
-            env: {},
-            disabled: false,
-            status: 'running'
-          },
-          {
-            id: '2',
-            name: 'AWS Server', 
-            description: 'AWS 리소스 관리 서버',
-            command: 'python',
-            args: ['aws-server.py'],
-            env: {},
-            disabled: false,
-            status: 'running'
-          }
-        ];
-        setServers(demoServers);
+        // 빈 상태로 설정 (서버가 없는 것이 더 현실적)
+        setServers([]);
       }
     } catch (error) {
       console.error('Failed to load servers:', error);
@@ -198,24 +160,8 @@ export const useTeamData = (teamId: string) => {
         const toolData = await response.json();
         setTools(toolData);
       } else {
-        // 데모 데이터
-        const demoTools: TeamTool[] = [
-          {
-            id: '1',
-            name: 'Read Excel Sheet',
-            server_name: 'Excel Server',
-            description: 'Read data from Excel files',
-            usage_count: 25
-          },
-          {
-            id: '2',
-            name: 'List S3 Buckets',
-            server_name: 'AWS Server',
-            description: 'List all S3 buckets in the account',
-            usage_count: 12
-          }
-        ];
-        setTools(demoTools);
+        // 빈 상태로 설정 (도구가 없는 것이 더 현실적)
+        setTools([]);
       }
     } catch (error) {
       console.error('Failed to load tools:', error);
@@ -233,28 +179,8 @@ export const useTeamData = (teamId: string) => {
         const keyData = await response.json();
         setApiKeys(keyData);
       } else {
-        // 데모 데이터
-        const demoKeys: ApiKey[] = [
-          {
-            id: '1',
-            name: 'Development Key',
-            key_prefix: 'mcp_abc123',
-            is_active: true,
-            expires_at: undefined,
-            created_at: '2025-06-01T10:00:00Z',
-            last_used_at: '2025-06-03T15:30:00Z'
-          },
-          {
-            id: '2',
-            name: 'Production Key', 
-            key_prefix: 'mcp_def456',
-            is_active: true,
-            expires_at: '2025-12-31T23:59:59Z',
-            created_at: '2025-06-02T14:00:00Z',
-            last_used_at: undefined
-          }
-        ];
-        setApiKeys(demoKeys);
+        // 빈 상태로 설정 (API 키가 없는 것이 더 현실적)
+        setApiKeys([]);
       }
     } catch (error) {
       console.error('Failed to load API keys:', error);
@@ -272,28 +198,14 @@ export const useTeamData = (teamId: string) => {
         const activityData = await response.json();
         setActivities(activityData);
       } else {
-        // 데모 데이터
+        // 팀 생성 활동만 표시
         const demoActivities: ActivityItem[] = [
           {
             id: '1',
-            type: 'member_joined',
-            description: 'Bob Wilson joined the team as Reporter',
-            user_name: 'Bob Wilson',
-            timestamp: '2025-06-03T09:00:00Z'
-          },
-          {
-            id: '2',
-            type: 'server_added',
-            description: 'AWS Server was added to the team',
-            user_name: 'John Doe',
-            timestamp: '2025-06-02T16:30:00Z'
-          },
-          {
-            id: '3',
-            type: 'tool_executed',
-            description: 'Read Excel Sheet tool was executed 5 times',
-            user_name: 'Jane Smith',
-            timestamp: '2025-06-02T14:20:00Z'
+            type: 'settings_changed',
+            description: '팀이 생성되었습니다',
+            user_name: '나',
+            timestamp: new Date().toISOString()
           }
         ];
         setActivities(demoActivities);
@@ -314,34 +226,8 @@ export const useTeamData = (teamId: string) => {
         const projectData = await response.json();
         setProjects(projectData);
       } else {
-        // 데모 데이터
-        const demoProjects: Project[] = [
-          {
-            id: '1',
-            name: 'MCP Integration',
-            description: 'MCP 서버 통합 프로젝트',
-            created_at: '2025-06-01T10:00:00Z',
-            member_count: 3,
-            server_count: 2
-          },
-          {
-            id: '2',
-            name: 'Data Analysis',
-            description: '데이터 분석 자동화 프로젝트',
-            created_at: '2025-06-02T14:00:00Z',
-            member_count: 2,
-            server_count: 1
-          },
-          {
-            id: '3',
-            name: 'AWS Automation',
-            description: 'AWS 리소스 자동화',
-            created_at: '2025-06-03T09:00:00Z',
-            member_count: 4,
-            server_count: 3
-          }
-        ];
-        setProjects(demoProjects);
+        // 빈 상태로 설정 (프로젝트가 없는 것이 더 현실적)
+        setProjects([]);
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
