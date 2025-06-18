@@ -773,8 +773,49 @@
 - commit 9d1ac50 - "docs: [TASK_096] workflow_todo.md 업데이트 - scheduler_service 필드 누락 해결 완료"
 - commit 028c750 - "fix: [TASK_097] APScheduler 4.x 호환성 문제 해결"
 
+### TASK_098: APScheduler 3.x 호환성 문제 해결 ✅ 완료
+
+**목표**: 설치된 APScheduler 3.11.0 버전에 맞춰 import 오류 및 API 호환성 문제 해결
+
+- [x] **APScheduler 버전 확인**
+  - [x] 실제 설치된 버전이 3.11.0임을 확인
+  - [x] APScheduler 4.x API가 사용 불가능함을 확인
+  - [x] 기존 3.x API로 되돌려야 함을 확인
+
+- [x] **APScheduler 3.x API로 되돌리기**
+  - [x] `AsyncScheduler` → `AsyncIOScheduler` import 변경
+  - [x] `add_schedule()` → `add_job()` 메서드 변경
+  - [x] `get_schedules()` → `get_jobs()` 메서드 변경
+  - [x] AsyncExitStack 제거하고 기존 3.x 초기화 방식 복원
+
+- [x] **Executor 설정 수정**
+  - [x] `AsyncIOExecutor(max_workers=...)` → `AsyncIOExecutor()` 변경
+  - [x] max_workers 매개변수 제거로 BaseExecutor 오류 해결
+  - [x] 기존 jobstores, executors, job_defaults 설정 복원
+
+- [x] **이벤트 시스템 복원**
+  - [x] `subscribe()` → `add_listener()` 방식으로 복원
+  - [x] `_job_executed`, `_job_error` 핸들러 분리
+  - [x] EVENT_JOB_EXECUTED, EVENT_JOB_ERROR 마스크 사용
+
+- [x] **API 호환성 복원**
+  - [x] `get_status()` 메서드를 동기 함수로 변경
+  - [x] workers.py에서 `await` 제거
+  - [x] 기존 start(), stop() 메서드 3.x 방식 복원
+
+**기술적 해결사항**:
+- 🔧 **버전 호환성**: 설치된 APScheduler 3.11.0에 정확히 맞춘 API 사용
+- 🔧 **Import 오류 해결**: `AsyncScheduler` import 오류 완전 해결
+- 🔧 **BaseExecutor 오류 해결**: max_workers 매개변수 제거로 초기화 오류 완전 해결
+- 🔧 **기능 유지**: 기존 스케줄링, 이벤트 처리, 상태 조회 기능 모두 정상 작동
+- 🔧 **서버 시작 성공**: mcp-orch serve 명령어 정상 실행 확인
+
+**커밋 정보**: 
+- commit dd1c4f1 - "docs: [TASK_097] workflow_todo.md 업데이트 - APScheduler 4.x 호환성 해결 완료"
+- commit 9b16154 - "fix: [TASK_098] APScheduler 3.x 호환성으로 되돌리기"
+
 ## Progress Status
-- Current Progress: TASK_097 - APScheduler 4.x 호환성 문제 해결 ✅ 완료
+- Current Progress: TASK_098 - APScheduler 3.x 호환성 문제 해결 ✅ 완료
 - Next Task: 사용자 테스트 및 추가 요구사항 확인
 - Last Update: 2025-06-18
 - Automatic Check Status: COMPLETE
