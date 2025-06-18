@@ -691,8 +691,34 @@
 - **상태 관리**: `/api/projects/{projectId}/servers/{serverId}/refresh-status`
 - **상세 정보**: `/api/projects/{projectId}/servers/{serverId}`
 
+### TASK_095: Workers API 변수명 충돌 오류 해결 ✅ 완료
+
+**목표**: workers.py의 FastAPI status 모듈과 스케줄러 상태 데이터 간의 변수명 충돌 해결
+
+- [x] **변수명 충돌 문제 분석**
+  - [x] `get_worker_status` 함수에서 변수명 충돌 확인
+  - [x] `status = scheduler_service.get_status()` 후 `status.HTTP_500_INTERNAL_SERVER_ERROR` 접근 시도로 AttributeError 발생
+  - [x] scheduler_service.get_status()가 dict를 반환하므로 HTTP_500_INTERNAL_SERVER_ERROR 속성 없음
+
+- [x] **변수명 충돌 해결**
+  - [x] `status = scheduler_service.get_status()` → `worker_status = scheduler_service.get_status()` 변경
+  - [x] `WorkerStatus(**status)` → `WorkerStatus(**worker_status)` 변경
+  - [x] FastAPI `status` 모듈은 그대로 유지하여 정상적인 HTTP 상태 코드 접근
+
+- [x] **WorkerStatus 모델 검증**
+  - [x] scheduler_service.get_status()가 이미 job_history_count 필드 반환 확인
+  - [x] Pydantic 모델 필드 매핑 정상 작동 확인
+
+**기술적 해결사항**:
+- 🔧 **변수명 충돌 해결**: 로컬 변수 `status`를 `worker_status`로 변경하여 FastAPI `status` 모듈과 분리
+- 🔧 **AttributeError 해결**: dict 객체에서 HTTP 상수 접근 시도 문제 완전 해결
+- 🔧 **코드 안정성**: 명확한 변수명으로 가독성 및 유지보수성 향상
+
+**커밋 정보**: 
+- commit 4e3f8c8 - "fix: [TASK_095] Workers API 변수명 충돌 오류 해결"
+
 ## Progress Status
-- Current Progress: TASK_090 - APScheduler 워커 시스템 구현 ✅ 완료 (백엔드 + 프론트엔드 완전 구현)
+- Current Progress: TASK_095 - Workers API 변수명 충돌 오류 해결 ✅ 완료
 - Next Task: 사용자 테스트 및 추가 요구사항 확인
 - Last Update: 2025-06-18
 - Automatic Check Status: COMPLETE
