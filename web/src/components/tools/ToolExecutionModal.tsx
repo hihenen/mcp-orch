@@ -85,22 +85,6 @@ export function ToolExecutionModal({ tool, isOpen, onClose }: ToolExecutionModal
 
     const startTime = new Date()
     const executionId = `exec-${Date.now()}`
-    
-    // 백엔드에 실행 시작 기록
-    try {
-      const apiClient = getApiClient()
-      await apiClient.createExecution({
-        id: executionId,
-        serverId: tool.serverId || tool.namespace.split('.')[0],
-        toolId: tool.id || `${tool.namespace}.${tool.name}`,
-        toolName: tool.name,
-        status: 'running',
-        startTime: startTime.toISOString(),
-        parameters
-      })
-    } catch (error) {
-      console.error('Failed to create execution record:', error)
-    }
 
     try {
       const result = await executeTool(tool.namespace || `${tool.serverId}.${tool.name}`, tool.name, parameters)
@@ -109,20 +93,7 @@ export function ToolExecutionModal({ tool, isOpen, onClose }: ToolExecutionModal
       
       setExecutionResult(result)
       
-      // 백엔드에 실행 완료 업데이트
-      try {
-        const apiClient = getApiClient()
-        await apiClient.updateExecution(executionId, {
-          status: 'completed',
-          endTime: endTime.toISOString(),
-          duration,
-          result
-        })
-      } catch (error) {
-        console.error('Failed to update execution record:', error)
-      }
-      
-      // 로컬 스토어에도 추가
+      // 로컬 스토어에만 추가 (ToolCallLog 시스템이 백엔드 로깅을 처리)
       addExecution({
         id: executionId,
         toolName: tool.name,
@@ -141,20 +112,7 @@ export function ToolExecutionModal({ tool, isOpen, onClose }: ToolExecutionModal
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'
       setExecutionError(errorMessage)
       
-      // 백엔드에 실행 실패 업데이트
-      try {
-        const apiClient = getApiClient()
-        await apiClient.updateExecution(executionId, {
-          status: 'failed',
-          endTime: endTime.toISOString(),
-          duration,
-          error: errorMessage
-        })
-      } catch (error) {
-        console.error('Failed to update execution record:', error)
-      }
-      
-      // 로컬 스토어에도 추가
+      // 로컬 스토어에만 추가 (ToolCallLog 시스템이 백엔드 로깅을 처리)
       addExecution({
         id: executionId,
         toolName: tool.name,
@@ -169,10 +127,6 @@ export function ToolExecutionModal({ tool, isOpen, onClose }: ToolExecutionModal
       })
     } finally {
       setIsExecuting(false)
-      
-      // 실행 히스토리 새로고침
-      const { fetchExecutions } = useExecutionStore.getState()
-      fetchExecutions(20)
     }
   }
 
