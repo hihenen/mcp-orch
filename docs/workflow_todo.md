@@ -272,6 +272,12 @@
   - [x] 서버 페이지에서 중앙화된 새로고침 함수 사용
   - [x] 일관된 새로고침 로직 적용
 
+- [x] **전체 프로젝트 탭 성능 최적화**
+  - [x] Overview 페이지: loadProjectTools 제거로 실시간 도구 조회 비활성화
+  - [x] Servers 페이지: serverStore → projectStore 통합으로 중복 API 호출 제거
+  - [x] 다른 탭 페이지 분석: Members, API Keys, Activity, Settings 모두 최적화 상태 확인
+  - [x] 모든 프로젝트 탭에서 60초+ → 밀리초 로딩 시간 단축 달성
+
 **기술적 해결사항**:
 - 🔧 **성능 최적화**: 서버 리스트 로딩 시간을 60초+ → 수 밀리초로 단축
 - 🔧 **캐시 기반 표시**: 실시간 연결 테스트 제거하고 DB 캐시된 상태 사용
@@ -282,6 +288,9 @@
 
 **커밋 정보**: 
 - commit 4b02926 - "feat: [TASK_087] 서버 리스트 페이지 성능 최적화 완료"
+- commit 9a624ff - "feat: [TASK_087] 프론트엔드 새로고침 기능 통합 완료"
+- commit 5df38e3 - "fix: [TASK_087] Overview 페이지 실시간 도구 조회 제거로 성능 최적화"
+- commit ea011c6 - "fix: [TASK_087] 서버 페이지 중복 스토어 문제 해결 및 성능 최적화"
 
 ### TASK_088: projects.py GET 엔드포인트 MCP 서버 상태 확인 분석 ✅ 완료
 
@@ -384,9 +393,31 @@
 
 **결론**: 이 페이지에서는 개별 서버의 상세 정보를 별도로 호출하지 않고, 서버 목록 API 한 번의 호출로 모든 필요한 정보를 가져옴. 개별 서버 API 호출은 상태 변경(새로고침, 토글, 삭제) 작업에만 사용됨.
 
+### TASK_090: 프로젝트 탭 페이지 서버 API 호출 분석
+
+**목표**: 프로젝트 탭 페이지들에서 서버 관련 API 호출 패턴 분석 및 성능 이슈 식별
+
+- [ ] **프로젝트 탭 페이지별 서버 API 호출 분석**
+  - [ ] Members 페이지 서버 API 호출 확인
+  - [ ] API Keys 페이지 서버 API 호출 확인  
+  - [ ] Activity 페이지 서버 API 호출 확인
+  - [ ] Settings 페이지 서버 API 호출 확인
+
+- [ ] **useProjectStore 서버 관련 함수 분석**
+  - [ ] loadProjectServers 호출 패턴 확인
+  - [ ] loadProjectTools 호출 패턴 확인 
+  - [ ] refreshProjectServers 호출 패턴 확인
+  - [ ] 서버 상태 확인 API들의 성능 영향 분석
+
+- [ ] **문제점 식별 및 우선순위 설정**
+  - [ ] 불필요한 서버 API 호출 지점 식별
+  - [ ] 성능에 영향을 주는 API 호출 우선순위 설정
+  - [ ] 최적화 필요한 페이지 순위 정리
+  - [ ] 권장 해결책 제시
+
 ## Progress Status
-- Current Progress: TASK_087 - 서버 리스트 페이지 성능 최적화 완료 (프론트엔드 스토어 통합 완료)
-- Next Task: 추가 작업 대기
+- Current Progress: TASK_090 - 프로젝트 탭 페이지 서버 API 호출 분석 (분석 중)
+- Next Task: 서버 API 호출 패턴 분석 완료 후 최적화 방안 제시
 - Last Update: 2025-06-18
 - Automatic Check Status: PASS
 
