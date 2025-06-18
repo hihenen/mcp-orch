@@ -19,13 +19,13 @@ import {
 
 interface UserData {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   role: 'admin' | 'user';
   status: 'active' | 'inactive';
-  createdAt: string;
-  lastLoginAt: string | null;
-  projectsCount: number;
+  created_at: string;
+  last_login_at: string | null;
+  projects_count: number;
 }
 
 export default function UsersPage() {
@@ -33,68 +33,43 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // 더미 데이터로 시작 (추후 실제 API 연동)
+  // 실제 API에서 사용자 데이터 로드
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
       
-      // 시뮬레이션된 API 호출
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const dummyUsers: UserData[] = [
-        {
-          id: '1',
-          name: '관리자',
-          email: 'admin@example.com',
-          role: 'admin',
-          status: 'active',
-          createdAt: '2024-01-15T09:00:00Z',
-          lastLoginAt: '2024-03-15T14:30:00Z',
-          projectsCount: 3
-        },
-        {
-          id: '2',
-          name: '김개발',
-          email: 'kim.dev@example.com',
-          role: 'user',
-          status: 'active',
-          createdAt: '2024-02-01T10:15:00Z',
-          lastLoginAt: '2024-03-15T11:20:00Z',
-          projectsCount: 2
-        },
-        {
-          id: '3',
-          name: '박테스터',
-          email: 'park.test@example.com',
-          role: 'user',
-          status: 'active',
-          createdAt: '2024-02-10T16:45:00Z',
-          lastLoginAt: '2024-03-14T09:15:00Z',
-          projectsCount: 1
-        },
-        {
-          id: '4',
-          name: '이비활성',
-          email: 'lee.inactive@example.com',
-          role: 'user',
-          status: 'inactive',
-          createdAt: '2024-01-20T08:30:00Z',
-          lastLoginAt: '2024-02-28T15:00:00Z',
-          projectsCount: 0
+      try {
+        const queryParams = new URLSearchParams({
+          skip: '0',
+          limit: '100',
+          ...(searchTerm && { search: searchTerm })
+        });
+
+        const response = await fetch(`/api/admin/users?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      ];
-      
-      setUsers(dummyUsers);
-      setIsLoading(false);
+        
+        const data = await response.json();
+        setUsers(data.users || []);
+      } catch (error) {
+        console.error('사용자 목록 로드 실패:', error);
+        // 실패 시 빈 배열로 설정
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchUsers();
-  }, []);
+    // 검색어 변경 시 약간의 지연을 두고 API 호출
+    const timeoutId = setTimeout(fetchUsers, searchTerm ? 500 : 0);
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // API에서 이미 검색이 처리되므로 필터링 불필요
+  const filteredUsers = users;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -234,7 +209,7 @@ export default function UsersPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {users.filter(u => {
-                const createdDate = new Date(u.createdAt);
+                const createdDate = new Date(u.created_at);
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                 return createdDate > oneWeekAgo;
@@ -290,7 +265,7 @@ export default function UsersPage() {
                           <User className="h-4 w-4" />
                         </div>
                         <div>
-                          <div className="font-medium">{user.name}</div>
+                          <div className="font-medium">{user.name || '이름 없음'}</div>
                           <div className="text-sm text-muted-foreground flex items-center">
                             <Mail className="h-3 w-3 mr-1" />
                             {user.email}
@@ -306,17 +281,17 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {user.projectsCount}개 프로젝트
+                        {user.projects_count}개 프로젝트
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {formatDate(user.createdAt)}
+                        {formatDate(user.created_at)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {user.lastLoginAt ? formatDate(user.lastLoginAt) : '없음'}
+                        {user.last_login_at ? formatDate(user.last_login_at) : '없음'}
                       </div>
                     </TableCell>
                     <TableCell>
