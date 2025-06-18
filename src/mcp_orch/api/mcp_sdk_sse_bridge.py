@@ -10,6 +10,7 @@ import asyncio
 import logging
 from typing import Dict, Optional, Any
 from uuid import UUID
+from datetime import datetime
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Request, HTTPException, status, Depends
@@ -24,7 +25,7 @@ from mcp.shared.message import SessionMessage
 import mcp.types as types
 
 from ..database import get_db
-from ..models import Project, McpServer, User
+from ..models import Project, McpServer, User, ClientSession
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
 
@@ -210,7 +211,8 @@ async def mcp_sse_bridge_endpoint(
                 write_stream, 
                 project_id, 
                 server_name, 
-                server_record
+                server_record,
+                request
             )
         
         # 빈 응답 반환 (python-sdk 예제에 따라)
@@ -310,7 +312,8 @@ async def run_mcp_bridge_session(
     write_stream, 
     project_id: UUID,
     server_name: str,
-    server_record: McpServer
+    server_record: McpServer,
+    request: Request = None
 ):
     """
     MCP Bridge 세션 실행
@@ -320,7 +323,58 @@ async def run_mcp_bridge_session(
     
     logger.info(f"Starting MCP bridge session for {server_name}")
     
+    # 클라이언트 세션 생성 및 관리
+    from ..database import get_db_session
+    from uuid import uuid4
+    
+    session_id = str(uuid4())
+    user_agent = request.headers.get("user-agent") if request else None
+    client_ip = None
+    
+    # IP 주소 추출
+    if request:
+        # X-Forwarded-For 헤더 확인 (프록시/로드밸런서 사용 시)
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            client_ip = forwarded_for.split(",")[0].strip()
+        else:
+            # 직접 연결인 경우 클라이언트 IP
+            if hasattr(request, 'client') and request.client:
+                client_ip = request.client.host
+    
+    # 클라이언트 타입 추정
+    client_type = "unknown"
+    if user_agent:
+        if "cline" in user_agent.lower():
+            client_type = "cline"
+        elif "cursor" in user_agent.lower():
+            client_type = "cursor"
+        elif "vscode" in user_agent.lower():
+            client_type = "vscode"
+    
+    logger.info(f"🔗 Creating session {session_id} for {client_type} client (IP: {client_ip})")
+    
+    # 데이터베이스 세션 생성
+    db = get_db_session()
+    client_session = None
+    
     try:
+        # ClientSession 생성
+        client_session = ClientSession(
+            id=session_id,
+            client_type=client_type,
+            server_id=str(server_record.id),
+            project_id=project_id,
+            user_agent=user_agent,
+            ip_address=client_ip,
+            is_active=True
+        )
+        
+        db.add(client_session)
+        db.commit()
+        
+        logger.info(f"✅ ClientSession created: {session_id}")
+        
         # 서버 설정 구성
         server_config = _build_server_config_from_db(server_record)
         if not server_config:
@@ -374,23 +428,33 @@ async def run_mcp_bridge_session(
             try:
                 logger.info(f"Proxying tool call to {server_name}: {name} with arguments: {arguments}")
                 
-                # 데이터베이스 세션 가져오기 (ToolCallLog 저장용)
-                from ..database import get_db_session
-                db = get_db_session()
+                # 도구 호출 로그용 데이터베이스 세션 생성
+                tool_log_db = get_db_session()
                 
                 try:
+                    # 세션 활동 업데이트
+                    if client_session:
+                        client_session.last_activity = datetime.utcnow()
+                        client_session.total_calls += 1
+                        db.commit()
+                    
                     # 실제 MCP 서버로 도구 호출 전달 (ToolCallLog 수집 포함)
                     result = await mcp_connection_service.call_tool(
                         server_id=str(server_record.id),
                         server_config=server_config,
                         tool_name=name,
                         arguments=arguments,
-                        session_id=None,  # TODO: SSE 세션에서 session_id 추출 필요
-                        project_id=str(project_id),
-                        user_agent=None,  # TODO: SSE 요청에서 user_agent 추출 필요
-                        ip_address=None,  # TODO: SSE 요청에서 IP 주소 추출 필요
-                        db=db
+                        session_id=session_id,
+                        project_id=project_id,
+                        user_agent=user_agent,
+                        ip_address=client_ip,
+                        db=tool_log_db
                     )
+                    
+                    # 성공 시 세션 통계 업데이트
+                    if client_session:
+                        client_session.successful_calls += 1
+                        db.commit()
                     
                     logger.info(f"Tool call result from {server_name}: {result}")
                     
@@ -407,8 +471,15 @@ async def run_mcp_bridge_session(
                         )
                     ]
                     
+                except Exception as e:
+                    # 실패 시 세션 통계 업데이트
+                    if client_session:
+                        client_session.failed_calls += 1
+                        db.commit()
+                    raise
+                    
                 finally:
-                    db.close()
+                    tool_log_db.close()
                 
             except Exception as e:
                 logger.error(f"Error calling tool {name} on {server_name}: {e}")
@@ -432,6 +503,19 @@ async def run_mcp_bridge_session(
     except Exception as e:
         logger.error(f"Error in MCP bridge session: {e}")
         raise
+        
+    finally:
+        # 세션 종료 처리
+        if client_session and db:
+            try:
+                client_session.is_active = False
+                client_session.disconnected_at = datetime.utcnow()
+                db.commit()
+                logger.info(f"🔌 ClientSession {session_id} disconnected")
+            except Exception as e:
+                logger.error(f"Error updating session on disconnect: {e}")
+            finally:
+                db.close()
 
 
 # 이제 python-sdk Server 클래스가 모든 메시지 처리를 담당하므로
