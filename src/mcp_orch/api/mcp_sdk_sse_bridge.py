@@ -374,28 +374,41 @@ async def run_mcp_bridge_session(
             try:
                 logger.info(f"Proxying tool call to {server_name}: {name} with arguments: {arguments}")
                 
-                # 실제 MCP 서버로 도구 호출 전달
-                result = await mcp_connection_service.call_tool(
-                    str(server_record.id),
-                    server_config,
-                    name,
-                    arguments
-                )
+                # 데이터베이스 세션 가져오기 (ToolCallLog 저장용)
+                from ..database import get_db_session
+                db = get_db_session()
                 
-                logger.info(f"Tool call result from {server_name}: {result}")
-                
-                # 결과를 TextContent 형식으로 변환
-                if result:
-                    result_text = str(result) if not isinstance(result, str) else result
-                else:
-                    result_text = f"Tool '{name}' executed successfully"
-                
-                return [
-                    types.TextContent(
-                        type="text",
-                        text=result_text
+                try:
+                    # 실제 MCP 서버로 도구 호출 전달 (ToolCallLog 수집 포함)
+                    result = await mcp_connection_service.call_tool(
+                        server_id=str(server_record.id),
+                        server_config=server_config,
+                        tool_name=name,
+                        arguments=arguments,
+                        session_id=None,  # TODO: SSE 세션에서 session_id 추출 필요
+                        project_id=str(project_id),
+                        user_agent=None,  # TODO: SSE 요청에서 user_agent 추출 필요
+                        ip_address=None,  # TODO: SSE 요청에서 IP 주소 추출 필요
+                        db=db
                     )
-                ]
+                    
+                    logger.info(f"Tool call result from {server_name}: {result}")
+                    
+                    # 결과를 TextContent 형식으로 변환
+                    if result:
+                        result_text = str(result) if not isinstance(result, str) else result
+                    else:
+                        result_text = f"Tool '{name}' executed successfully"
+                    
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=result_text
+                        )
+                    ]
+                    
+                finally:
+                    db.close()
                 
             except Exception as e:
                 logger.error(f"Error calling tool {name} on {server_name}: {e}")

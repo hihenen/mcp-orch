@@ -85,3 +85,8 @@ def get_db():
 def init_sync_db() -> None:
     """Initialize database tables (sync version)."""
     Base.metadata.create_all(bind=sync_engine)
+
+
+def get_db_session() -> Session:
+    """Get sync database session for direct use."""
+    return SessionLocal()

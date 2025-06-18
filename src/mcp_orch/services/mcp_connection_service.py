@@ -6,11 +6,13 @@ import asyncio
 import json
 import subprocess
 import logging
-from typing import Dict, List, Optional, Any
+import time
+from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
+from uuid import UUID
 from sqlalchemy.orm import Session
 
-from ..models import McpServer
+from ..models import McpServer, ToolCallLog, CallStatus, ClientSession
 
 logger = logging.getLogger(__name__)
 
@@ -315,8 +317,65 @@ class McpConnectionService:
             logger.error(f"Error getting tools count for server {server_id}: {e}")
             return 0
     
-    async def call_tool(self, server_id: str, server_config: Dict, tool_name: str, arguments: Dict) -> Any:
-        """MCP 서버의 도구 호출"""
+    async def call_tool(
+        self, 
+        server_id: str, 
+        server_config: Dict, 
+        tool_name: str, 
+        arguments: Dict,
+        session_id: Optional[str] = None,
+        project_id: Optional[Union[str, UUID]] = None,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        db: Optional[Session] = None
+    ) -> Any:
+        """
+        MCP 서버의 도구 호출 (ToolCallLog 수집 포함)
+        
+        Args:
+            server_id: MCP 서버 ID
+            server_config: 서버 설정
+            tool_name: 호출할 도구 이름
+            arguments: 도구 호출 인수
+            session_id: 클라이언트 세션 ID (옵션)
+            project_id: 프로젝트 ID (옵션)
+            user_agent: 사용자 에이전트 (옵션)
+            ip_address: IP 주소 (옵션) 
+            db: 데이터베이스 세션 (옵션)
+        """
+        
+        # 실행 시간 측정 시작
+        start_time = time.time()
+        
+        # 프로젝트 ID를 UUID로 변환
+        converted_project_id = None
+        if project_id:
+            if isinstance(project_id, str):
+                try:
+                    converted_project_id = UUID(project_id)
+                except ValueError:
+                    logger.warning(f"Invalid project_id format: {project_id}")
+            elif isinstance(project_id, UUID):
+                converted_project_id = project_id
+        
+        # 로그 기본 정보 설정
+        log_data = {
+            'session_id': session_id,
+            'server_id': server_id,
+            'project_id': converted_project_id,
+            'tool_name': tool_name,
+            'input_data': {
+                'arguments': arguments,
+                'context': {
+                    'user_agent': user_agent,
+                    'ip_address': ip_address,
+                    'call_time': datetime.utcnow().isoformat()
+                }
+            },
+            'user_agent': user_agent,
+            'ip_address': ip_address
+        }
+        
         try:
             # 서버가 비활성화된 경우
             if server_config.get('disabled', False):
@@ -329,6 +388,8 @@ class McpConnectionService:
             
             if not command:
                 raise ValueError("Server command not configured")
+            
+            logger.info(f"🔧 Calling tool {tool_name} on server {server_id} with arguments: {arguments}")
             
             # 환경 변수 설정
             import os
@@ -381,6 +442,7 @@ class McpConnectionService:
                 )
                 
                 response_lines = stdout_data.decode().strip().split('\n')
+                result = None
                 
                 for line in response_lines:
                     if line.strip():
@@ -395,11 +457,26 @@ class McpConnectionService:
                                         if content_list and isinstance(content_list, list):
                                             first_content = content_list[0]
                                             if isinstance(first_content, dict) and 'text' in first_content:
-                                                return first_content['text']
-                                    return result
+                                                result = first_content['text']
+                                    break
                                 elif 'error' in response:
                                     error = response['error']
-                                    raise ValueError(f"Tool error: {error.get('message', 'Unknown error')}")
+                                    error_message = f"Tool error: {error.get('message', 'Unknown error')}"
+                                    
+                                    # 실행 시간 계산 및 ERROR 로그 저장
+                                    execution_time = time.time() - start_time
+                                    if db:
+                                        await self._save_tool_call_log(
+                                            db=db,
+                                            log_data=log_data,
+                                            execution_time=execution_time,
+                                            status=CallStatus.ERROR,
+                                            output_data=None,
+                                            error_message=error_message,
+                                            error_code=error.get('code', 'TOOL_ERROR')
+                                        )
+                                    
+                                    raise ValueError(error_message)
                         except json.JSONDecodeError:
                             continue
                 
@@ -409,16 +486,121 @@ class McpConnectionService:
                     if stderr_text:
                         logger.warning(f"Tool call stderr: {stderr_text}")
                 
-                raise ValueError(f"No valid response received for tool call {tool_name}")
+                if result is None:
+                    error_message = f"No valid response received for tool call {tool_name}"
+                    
+                    # 실행 시간 계산 및 ERROR 로그 저장
+                    execution_time = time.time() - start_time
+                    if db:
+                        await self._save_tool_call_log(
+                            db=db,
+                            log_data=log_data,
+                            execution_time=execution_time,
+                            status=CallStatus.ERROR,
+                            output_data=None,
+                            error_message=error_message,
+                            error_code='NO_RESPONSE'
+                        )
+                    
+                    raise ValueError(error_message)
+                
+                # 성공적인 실행 시간 계산 및 SUCCESS 로그 저장
+                execution_time = time.time() - start_time
+                
+                if db:
+                    await self._save_tool_call_log(
+                        db=db,
+                        log_data=log_data,
+                        execution_time=execution_time,
+                        status=CallStatus.SUCCESS,
+                        output_data={
+                            'result': result,
+                            'metadata': {
+                                'response_size': len(str(result)) if result else 0,
+                                'stdout_lines': len(response_lines)
+                            }
+                        }
+                    )
+                
+                logger.info(f"✅ Tool {tool_name} executed successfully in {execution_time:.3f}s")
+                return result
                 
             except asyncio.TimeoutError:
                 process.kill()
                 await process.wait()
-                raise ValueError(f"Tool call timeout for {tool_name}")
+                
+                # 실행 시간 계산 및 TIMEOUT 로그 저장
+                execution_time = time.time() - start_time
+                error_message = f"Tool call timeout for {tool_name}"
+                
+                if db:
+                    await self._save_tool_call_log(
+                        db=db,
+                        log_data=log_data,
+                        execution_time=execution_time,
+                        status=CallStatus.TIMEOUT,
+                        output_data=None,
+                        error_message=error_message,
+                        error_code='TIMEOUT'
+                    )
+                
+                raise ValueError(error_message)
                 
         except Exception as e:
-            logger.error(f"Error calling tool {tool_name} on server {server_id}: {e}")
+            # 실행 시간 계산 및 ERROR 로그 저장
+            execution_time = time.time() - start_time
+            error_message = str(e)
+            
+            if db:
+                await self._save_tool_call_log(
+                    db=db,
+                    log_data=log_data,
+                    execution_time=execution_time,
+                    status=CallStatus.ERROR,
+                    output_data=None,
+                    error_message=error_message,
+                    error_code='EXECUTION_ERROR'
+                )
+            
+            logger.error(f"❌ Error calling tool {tool_name} on server {server_id}: {e}")
             raise
+    
+    async def _save_tool_call_log(
+        self,
+        db: Session,
+        log_data: Dict,
+        execution_time: float,
+        status: CallStatus,
+        output_data: Optional[Dict] = None,
+        error_message: Optional[str] = None,
+        error_code: Optional[str] = None
+    ):
+        """ToolCallLog 데이터베이스에 저장"""
+        try:
+            tool_call_log = ToolCallLog(
+                session_id=log_data.get('session_id'),
+                server_id=log_data.get('server_id'),
+                project_id=log_data.get('project_id'),
+                tool_name=log_data.get('tool_name'),
+                tool_namespace=f"{log_data.get('server_id')}.{log_data.get('tool_name')}",
+                input_data=log_data.get('input_data'),
+                output_data=output_data,
+                execution_time=execution_time,
+                status=status,
+                error_message=error_message,
+                error_code=error_code,
+                user_agent=log_data.get('user_agent'),
+                ip_address=log_data.get('ip_address')
+            )
+            
+            db.add(tool_call_log)
+            db.commit()
+            
+            logger.info(f"📊 ToolCallLog saved: {tool_call_log.tool_name} ({status.value}) in {execution_time:.3f}s")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to save ToolCallLog: {e}")
+            db.rollback()
 
 
 # 전역 서비스 인스턴스
