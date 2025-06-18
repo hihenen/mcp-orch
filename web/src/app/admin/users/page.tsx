@@ -6,6 +6,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Users, 
   Search, 
@@ -14,8 +30,11 @@ import {
   MoreHorizontal,
   Calendar,
   Mail,
-  User
+  User,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import { UserEditModal } from '@/components/admin/UserEditModal';
 
 interface UserData {
   id: string;
@@ -32,36 +51,43 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 모달 상태 관리
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<UserData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // fetchUsers 함수를 먼저 정의
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    
+    try {
+      const queryParams = new URLSearchParams({
+        skip: '0',
+        limit: '100',
+        ...(searchTerm && { search: searchTerm })
+      });
+
+      const response = await fetch(`/api/admin/users?${queryParams}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('사용자 목록 로드 실패:', error);
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 실제 API에서 사용자 데이터 로드
   useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      
-      try {
-        const queryParams = new URLSearchParams({
-          skip: '0',
-          limit: '100',
-          ...(searchTerm && { search: searchTerm })
-        });
-
-        const response = await fetch(`/api/admin/users?${queryParams}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setUsers(data.users || []);
-      } catch (error) {
-        console.error('사용자 목록 로드 실패:', error);
-        // 실패 시 빈 배열로 설정
-        setUsers([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     // 검색어 변경 시 약간의 지연을 두고 API 호출
     const timeoutId = setTimeout(fetchUsers, searchTerm ? 500 : 0);
     
@@ -70,6 +96,56 @@ export default function UsersPage() {
 
   // API에서 이미 검색이 처리되므로 필터링 불필요
   const filteredUsers = users;
+
+  // 사용자 처리 핸들러들
+  const handleAddUser = () => {
+    setEditingUser(null);
+    setEditModalOpen(true);
+  };
+
+  const handleEditUser = (user: UserData) => {
+    setEditingUser(user);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteUser = (user: UserData) => {
+    setDeletingUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleUserSaved = () => {
+    setEditModalOpen(false);
+    setEditingUser(null);
+    // 사용자 목록 새로고침
+    fetchUsers();
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deletingUser) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/users/${deletingUser.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete user');
+      }
+
+      // 사용자 목록에서 제거
+      setUsers(users.filter(u => u.id !== deletingUser.id));
+      setDeleteDialogOpen(false);
+      setDeletingUser(null);
+    } catch (error) {
+      console.error('사용자 삭제 실패:', error);
+      alert(error instanceof Error ? error.message : '사용자 삭제에 실패했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -150,7 +226,7 @@ export default function UsersPage() {
           <h2 className="text-xl font-semibold">사용자 관리</h2>
           <p className="text-muted-foreground">시스템 사용자 계정을 관리합니다</p>
         </div>
-        <Button>
+        <Button onClick={handleAddUser}>
           <UserPlus className="h-4 w-4 mr-2" />
           사용자 추가
         </Button>
@@ -295,9 +371,26 @@ export default function UsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            편집
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteUser(user)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -313,6 +406,38 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 사용자 편집/추가 모달 */}
+      <UserEditModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        user={editingUser}
+        onSaved={handleUserSaved}
+      />
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>사용자 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 <strong>{deletingUser?.name || deletingUser?.email}</strong> 사용자를 삭제하시겠습니까?
+              <br />
+              이 작업은 되돌릴 수 없으며, 사용자 계정이 비활성화됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteUser}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
