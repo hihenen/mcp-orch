@@ -28,6 +28,7 @@ from .fastmcp_impl import router as fastmcp_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router
 from .tools import router as tools_router
+from .tool_call_logs import router as tool_call_logs_router
 from .profile import router as profile_router
 from .project_security import router as project_security_router
 from .admin import router as admin_router
@@ -102,6 +103,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(servers_router)
     app.include_router(server_logs_router)
     app.include_router(tools_router)
+    app.include_router(tool_call_logs_router)  # 🔧 ToolCallLog 조회 API (Datadog/Sentry 스타일)
     app.include_router(profile_router)  # 🔧 프로필 관리 API
     app.include_router(project_security_router)  # 🔧 프로젝트 보안 설정 API
     app.include_router(admin_router)  # 🔧 관리자 API
