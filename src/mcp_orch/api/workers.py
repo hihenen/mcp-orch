@@ -72,7 +72,7 @@ async def get_worker_status(
 ):
     """워커 상태 조회"""
     try:
-        worker_status = scheduler_service.get_status()
+        worker_status = await scheduler_service.get_status()
         return WorkerStatus(**worker_status)
     except Exception as e:
         logger.error(f"Error getting worker status: {e}")

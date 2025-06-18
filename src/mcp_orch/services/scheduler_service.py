@@ -5,14 +5,13 @@ APScheduler 기반 백그라운드 워커 서비스
 """
 
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler import AsyncScheduler, Event
 from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.executors.asyncio import AsyncIOExecutor
-from apscheduler.jobstores.memory import MemoryJobStore
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -26,16 +25,17 @@ class SchedulerService:
     """APScheduler 기반 백그라운드 워커 관리 서비스"""
     
     def __init__(self):
-        self.scheduler: Optional[AsyncIOScheduler] = None
+        self.scheduler: Optional[AsyncScheduler] = None
         self.is_running = False
         self.config = {
             'server_check_interval': 300,  # 5분 (기본값)
-            'max_workers': 3,  # 동시 실행 워커 수
+            'max_workers': 3,  # 동시 실행 워커 수 (참고용)
             'coalesce': True,  # 중복 작업 병합
             'max_instances': 1,  # 작업 인스턴스 수 제한
         }
         self.job_history: List[Dict] = []
         self.max_history_size = 100
+        self._exit_stack: Optional[AsyncExitStack] = None
         
     async def initialize(self):
         """스케줄러 초기화"""
@@ -43,31 +43,12 @@ class SchedulerService:
             logger.warning("Scheduler already initialized")
             return
             
-        # Job stores, executors, and job defaults
-        jobstores = {
-            'default': MemoryJobStore()
-        }
+        # APScheduler 4.x 새로운 API 사용
+        self._exit_stack = AsyncExitStack()
+        self.scheduler = await self._exit_stack.enter_async_context(AsyncScheduler())
         
-        executors = {
-            'default': AsyncIOExecutor(max_workers=self.config['max_workers'])
-        }
-        
-        job_defaults = {
-            'coalesce': self.config['coalesce'],
-            'max_instances': self.config['max_instances']
-        }
-        
-        # 스케줄러 생성
-        self.scheduler = AsyncIOScheduler(
-            jobstores=jobstores,
-            executors=executors,
-            job_defaults=job_defaults,
-            timezone='Asia/Seoul'
-        )
-        
-        # 이벤트 리스너 등록
-        self.scheduler.add_listener(self._job_executed, mask='EVENT_JOB_EXECUTED')
-        self.scheduler.add_listener(self._job_error, mask='EVENT_JOB_ERROR')
+        # 이벤트 리스너 등록 (새로운 방식)
+        self.scheduler.subscribe(self._job_executed)
         
         logger.info("Scheduler service initialized")
         
@@ -80,16 +61,16 @@ class SchedulerService:
             logger.warning("Scheduler already running")
             return
             
-        # 서버 상태 체크 작업 스케줄링
-        self.scheduler.add_job(
+        # 서버 상태 체크 작업 스케줄링 (APScheduler 4.x 방식)
+        await self.scheduler.add_schedule(
             self._check_all_servers_status,
-            trigger=IntervalTrigger(seconds=self.config['server_check_interval']),
+            IntervalTrigger(seconds=self.config['server_check_interval']),
             id='server_status_check',
-            name='서버 상태 자동 체크',
-            replace_existing=True
+            coalesce=self.config['coalesce'],
+            max_instances=self.config['max_instances']
         )
         
-        self.scheduler.start()
+        # APScheduler 4.x는 자동으로 시작됨
         self.is_running = True
         
         logger.info(f"Scheduler started with {self.config['server_check_interval']}s interval")
@@ -100,7 +81,12 @@ class SchedulerService:
             logger.warning("Scheduler not running")
             return
             
-        self.scheduler.shutdown(wait=False)
+        # APScheduler 4.x 방식으로 정리
+        if self._exit_stack:
+            await self._exit_stack.aclose()
+            self._exit_stack = None
+        
+        self.scheduler = None
         self.is_running = False
         
         logger.info("Scheduler stopped")
@@ -122,7 +108,7 @@ class SchedulerService:
             import asyncio
             asyncio.create_task(self.restart())
             
-    def get_status(self) -> Dict:
+    async def get_status(self) -> Dict:
         """스케줄러 상태 조회"""
         if not self.scheduler:
             return {
@@ -134,14 +120,19 @@ class SchedulerService:
             }
             
         jobs = []
-        if self.scheduler.get_jobs():
-            for job in self.scheduler.get_jobs():
+        try:
+            # APScheduler 4.x에서는 get_schedules() 사용
+            schedules = await self.scheduler.get_schedules()
+            for schedule in schedules:
                 jobs.append({
-                    'id': job.id,
-                    'name': job.name,
-                    'next_run': job.next_run_time.isoformat() if job.next_run_time else None,
-                    'trigger': str(job.trigger)
+                    'id': schedule.id,
+                    'name': schedule.id,  # APScheduler 4.x에서는 schedule.id가 이름 역할
+                    'next_run': schedule.next_fire_time.isoformat() if schedule.next_fire_time else None,
+                    'trigger': str(schedule.trigger)
                 })
+        except Exception as e:
+            logger.warning(f"Failed to get schedules: {e}")
+            jobs = []
                 
         last_execution = None
         if self.job_history:
@@ -256,13 +247,17 @@ class SchedulerService:
                 'status': 'error'
             })
             
-    def _job_executed(self, event):
-        """작업 실행 완료 이벤트 핸들러"""
-        logger.debug(f"Job {event.job_id} executed successfully")
+    def _job_executed(self, event: Event):
+        """작업 실행 이벤트 핸들러 (APScheduler 4.x)"""
+        # APScheduler 4.x에서는 다양한 이벤트 타입을 하나의 핸들러에서 처리
+        event_type = type(event).__name__
+        logger.debug(f"Received scheduler event: {event_type}")
         
-    def _job_error(self, event):
-        """작업 실행 오류 이벤트 핸들러"""
-        logger.error(f"Job {event.job_id} failed: {event.exception}")
+        # 이벤트 타입별 처리는 필요시 추가
+        if hasattr(event, 'exception'):
+            logger.error(f"Job execution failed: {event.exception}")
+        else:
+            logger.debug(f"Job event received: {event_type}")
         
     def _add_job_history(self, entry: Dict):
         """작업 실행 이력 추가"""
