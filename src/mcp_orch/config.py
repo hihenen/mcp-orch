@@ -30,6 +30,10 @@ class SecurityConfig(BaseModel):
     jwt_secret: Optional[str] = None
     cors_origins: List[str] = Field(default_factory=lambda: ["*"])
     
+    # 초기 관리자 계정 설정
+    initial_admin_email: Optional[str] = None
+    initial_admin_password: Optional[str] = None
+    
     @field_validator('jwt_secret')
     def validate_jwt_secret(cls, v):
         if v is None:
@@ -199,6 +203,8 @@ class Settings(BaseSettings):
             # 보안 설정
             "API_KEY": ("security", "api_keys"),
             "JWT_SECRET": ("security", "jwt_secret"),
+            "INITIAL_ADMIN_EMAIL": ("security", "initial_admin_email"),
+            "INITIAL_ADMIN_PASSWORD": ("security", "initial_admin_password"),
             
             # LLM 설정
             "LLM_PROVIDER": ("llm", "provider"),
