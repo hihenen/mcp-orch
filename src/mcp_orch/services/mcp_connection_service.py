@@ -564,7 +564,7 @@ class McpConnectionService:
                             'result': result,
                             'metadata': {
                                 'response_size': len(str(result)) if result else 0,
-                                'stdout_lines': len(response_lines)
+                                'stdout_lines': len(remaining_lines)
                             }
                         }
                     )
