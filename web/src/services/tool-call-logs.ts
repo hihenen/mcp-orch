@@ -10,7 +10,8 @@ import {
   ToolCallLog 
 } from '@/types/tool-call-logs';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
+// Next.js API 라우트를 통해 백엔드로 프록시
+const API_BASE_URL = '';
 
 class ToolCallLogError extends Error {
   constructor(message: string, public status?: number) {
@@ -69,7 +70,7 @@ export class ToolCallLogService {
    */
   static async getToolCallLogs(params: LogListParams): Promise<ToolCallLogListResponse> {
     const queryString = buildQueryParams(params);
-    const url = `${API_BASE_URL}/api/tool-call-logs/?${queryString}`;
+    const url = `/api/tool-call-logs?${queryString}`;
     
     console.log('🔍 Fetching tool call logs:', url);
     
@@ -87,7 +88,7 @@ export class ToolCallLogService {
     end_time?: string;
   }): Promise<ToolCallLogMetrics> {
     const queryString = buildQueryParams(params);
-    const url = `${API_BASE_URL}/api/tool-call-logs/metrics?${queryString}`;
+    const url = `/api/tool-call-logs/metrics?${queryString}`;
     
     console.log('📊 Fetching tool call metrics:', url);
     
@@ -98,7 +99,7 @@ export class ToolCallLogService {
    * 특정 ToolCallLog 상세 조회
    */
   static async getToolCallLog(logId: number, projectId: string): Promise<ToolCallLog> {
-    const url = `${API_BASE_URL}/api/tool-call-logs/${logId}?project_id=${projectId}`;
+    const url = `/api/tool-call-logs/${logId}?project_id=${projectId}`;
     
     console.log('🔍 Fetching tool call log detail:', url);
     
