@@ -814,8 +814,48 @@
 - commit dd1c4f1 - "docs: [TASK_097] workflow_todo.md 업데이트 - APScheduler 4.x 호환성 해결 완료"
 - commit 9b16154 - "fix: [TASK_098] APScheduler 3.x 호환성으로 되돌리기"
 
+### TASK_099: APScheduler 이벤트 마스크 오류 해결 ✅ 완료
+
+**목표**: "unsupported operand type(s) for &: 'int' and 'str'" 오류 해결
+
+- [x] **APScheduler 이벤트 마스크 오류 분석 및 해결**
+  - [x] 이벤트 리스너 등록에서 마스크 매개변수 타입 오류 분석
+  - [x] APScheduler 3.x 이벤트 상수 확인 (모든 EVENT_* 상수는 정수형)
+  - [x] 문자열 마스크 대신 올바른 정수 상수 사용
+
+- [x] **scheduler_service.py 이벤트 리스너 코드 수정**
+  - [x] events 모듈 import 추가
+  - [x] 'EVENT_JOB_EXECUTED' 문자열을 events.EVENT_JOB_EXECUTED 정수 상수로 변경
+  - [x] 'EVENT_JOB_ERROR' 문자열을 events.EVENT_JOB_ERROR 정수 상수로 변경
+
+- [x] **APScheduler 3.x 이벤트 상수 확인 및 적용**
+  - [x] APScheduler events 모듈의 모든 상수가 정수형임을 확인
+  - [x] EVENT_JOB_EXECUTED: 4096 (int), EVENT_JOB_ERROR: 8192 (int)
+  - [x] 올바른 이벤트 상수 사용으로 마스크 연산 오류 해결
+
+- [x] **서버 시작 검증 및 테스트**
+  - [x] 스케줄러 서비스 단독 초기화 테스트 성공
+  - [x] FastAPI 앱 생성 테스트 성공
+  - [x] 전체 서버 시작 프로세스 시뮬레이션 테스트 성공
+  - [x] 스케줄러 시작/정지 사이클 정상 동작 확인
+
+**기술적 해결사항**:
+- 🔧 **이벤트 마스크 수정**: 문자열 'EVENT_JOB_EXECUTED' → 정수 events.EVENT_JOB_EXECUTED
+- 🔧 **Import 추가**: `from apscheduler import events` 모듈 추가
+- 🔧 **타입 안정성**: 정수 상수 사용으로 비트 마스크 연산 오류 완전 해결
+- 🔧 **APScheduler 3.x 호환성**: 모든 이벤트 리스너가 올바른 상수 사용
+
+**테스트 결과**:
+- ✅ **스케줄러 초기화**: 단독 테스트 성공
+- ✅ **FastAPI 통합**: 앱 생성 시 오류 없음
+- ✅ **전체 시작 프로세스**: 초기화 → 시작 → 상태확인 → 정지 모든 단계 성공
+- ✅ **작업 스케줄링**: "서버 상태 자동 체크" 작업 정상 등록 및 실행
+
+**커밋 정보**: 
+- commit ab4f70b - "fix: [TASK_099] APScheduler 이벤트 마스크 오류 해결"
+
 ## Progress Status
-- Current Progress: TASK_098 - APScheduler 3.x 호환성 문제 해결 ✅ 완료
+- Current Progress: TASK_099 - APScheduler 이벤트 마스크 오류 해결 ✅ 완료
 - Next Task: 사용자 테스트 및 추가 요구사항 확인
 - Last Update: 2025-06-18
 - Automatic Check Status: COMPLETE
