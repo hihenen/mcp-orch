@@ -21,6 +21,9 @@ export default function TeamOverviewPage() {
   const teamId = params.teamId as string;
   const { selectedTeam } = useTeamStore();
   
+  console.log('🔍 [OVERVIEW_DEBUG] TeamOverviewPage rendered with teamId:', teamId);
+  console.log('🔍 [OVERVIEW_DEBUG] selectedTeam from store:', selectedTeam);
+  
   const {
     organization,
     members,
@@ -32,7 +35,18 @@ export default function TeamOverviewPage() {
     loadAllData
   } = useTeamData(teamId);
 
+  console.log('🔍 [OVERVIEW_DEBUG] useTeamData results:', {
+    organization,
+    membersCount: members?.length,
+    serversCount: servers?.length,
+    toolsCount: tools?.length,
+    apiKeysCount: apiKeys?.length,
+    activitiesCount: activities?.length,
+    loading
+  });
+
   useEffect(() => {
+    console.log('🔍 [OVERVIEW_DEBUG] useEffect triggered with teamId:', teamId);
     if (teamId) {
       loadAllData();
     }

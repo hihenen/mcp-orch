@@ -75,26 +75,33 @@ export const useTeamData = (teamId: string) => {
   const [loading, setLoading] = useState(false);
 
   const loadOrganization = useCallback(async () => {
+    console.log(`🔍 [TEAM_DEBUG] Loading organization for teamId: ${teamId}`);
     try {
       const response = await fetch(`/api/teams/${teamId}`, {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       });
 
+      console.log(`🔍 [TEAM_DEBUG] Organization API response status: ${response.status}`);
+
       if (response.ok) {
         const orgData = await response.json();
+        console.log('🔍 [TEAM_DEBUG] Organization data received:', orgData);
         setOrganization(orgData);
       } else {
+        console.log('🔍 [TEAM_DEBUG] Organization API failed, using fallback data');
         // 최소한의 기본 데이터만 설정 (실제 팀 이름 유지)
-        setOrganization({
+        const fallbackData = {
           id: teamId,
           name: "팀", // 실제 팀 이름은 UI에서 처리
           description: "",
           created_at: new Date().toISOString()
-        });
+        };
+        console.log('🔍 [TEAM_DEBUG] Setting fallback organization data:', fallbackData);
+        setOrganization(fallbackData);
       }
     } catch (error) {
-      console.error('Failed to load organization:', error);
+      console.error('🔍 [TEAM_DEBUG] Failed to load organization:', error);
       // 에러 시 null로 설정하여 빈 상태 표시
       setOrganization(null);
     }
