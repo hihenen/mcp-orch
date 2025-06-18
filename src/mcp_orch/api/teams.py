@@ -53,28 +53,6 @@ class TeamMemberResponse(BaseModel):
         from_attributes = True
 
 
-class TeamServerResponse(BaseModel):
-    """Team server information."""
-    id: str
-    name: str
-    status: str = "active"  # active, inactive, error
-    tool_count: int = 0
-    last_used: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-class TeamToolResponse(BaseModel):
-    """Team tool information."""
-    id: str
-    name: str
-    server_name: str
-    description: Optional[str] = None
-    usage_count: int = 0
-
-    class Config:
-        from_attributes = True
 
 
 class TeamApiKeyResponse(BaseModel):
@@ -537,68 +515,8 @@ async def remove_team_member(
     return {"message": "Member removed successfully"}
 
 
-@router.get("/{team_id}/servers", response_model=List[TeamServerResponse])
-async def get_team_servers(
-    team_id: str,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    """Get all servers for a team."""
-    current_user = getattr(request.state, 'user', None)
-    
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    team, _ = get_team_and_verify_access(team_id, current_user, db)
-    
-    servers = db.query(McpServer).filter(
-        McpServer.team_id == team.id
-    ).all()
-    
-    return [
-        TeamServerResponse(
-            id=server.name,  # Use name as ID for compatibility
-            name=server.name,
-            status="active" if server.is_enabled else "inactive",
-            tool_count=len(server.tools) if server.tools else 0,
-            last_used=server.last_used_at
-        )
-        for server in servers
-    ]
 
 
-@router.get("/{team_id}/tools", response_model=List[TeamToolResponse])
-async def get_team_tools(
-    team_id: str,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    """Get all tools available to a team."""
-    current_user = getattr(request.state, 'user', None)
-    
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    team, _ = get_team_and_verify_access(team_id, current_user, db)
-    
-    # Get all tools from team's servers
-    servers = db.query(McpServer).filter(
-        McpServer.team_id == team.id
-    ).all()
-    
-    tools = []
-    for server in servers:
-        if server.tools:
-            for tool in server.tools:
-                tools.append(
-                    TeamToolResponse(
-                        id=f"{server.name}_{tool.name}",
-                        name=tool.name,
-                        server_name=server.name,
-                        description=tool.description,
-                        usage_count=tool.call_count or 0
-                    )
-                )
-    
-    return tools
 
 
 @router.get("/{team_id}/api-keys", response_model=List[TeamApiKeyResponse])

@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Users, 
-  Server, 
   Settings, 
   Activity, 
   BarChart3,
@@ -61,12 +60,6 @@ export function TeamLayout({ children }: TeamLayoutProps) {
       href: `/teams/${teamId}/members`,
       icon: Users,
       description: '팀 멤버 관리'
-    },
-    {
-      label: 'Servers',
-      href: `/teams/${teamId}/servers`,
-      icon: Server,
-      description: 'MCP 서버 관리'
     },
     {
       label: 'Activity',

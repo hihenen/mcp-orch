@@ -232,15 +232,15 @@
 - 🔧 **디버깅 시스템**: 상세한 로깅으로 API 호출 과정 추적 및 문제 진단 가능
 - 🔧 **RESTful API**: GET/PUT/DELETE 메서드 지원으로 완전한 CRUD 작업 가능
 
-### TASK_077: TeamStore와 실제 API 데이터 동기화 문제 해결
+### TASK_077: TeamStore와 실제 API 데이터 동기화 문제 해결 ✅ 완료
 
 **목표**: useTeamData로 받아온 실제 팀 데이터와 TeamStore의 selectedTeam을 동기화
 
 **현재 상황**:
 - ✅ API 호출 성공: `Organization API response status: 200`
 - ✅ 실제 데이터 수신: `{id: '0482968e-1f3a-4641-8873-3a6915f7b5c2', name: 'fnfea'}`
-- ❌ TeamStore 더미 데이터: `{id: '550e8400-e29b-41d4-a716-446655440000', name: "John's Organization"}`
-- ❌ 화면 표시: 여전히 더미 데이터 "John's Organization" 표시
+- ✅ TeamStore 동기화: 실제 API 데이터로 selectedTeam 업데이트
+- ✅ 화면 표시: 실제 팀 데이터 "fnfea" 정상 표시
 
 - [x] **데이터 흐름 분석**
   - [x] useTeamData의 organization 데이터와 teamStore의 selectedTeam 분리 현상 확인
@@ -252,16 +252,69 @@
   - [x] TeamLayout에서 실제 데이터 우선 사용하도록 수정
   - [x] 더미 데이터 의존성 제거
 
-- [ ] **디버깅 정보 정리**
-  - [ ] 성공적으로 작동하는 디버깅 로그 제거
-  - [ ] 화면 디버깅 박스 제거
-  - [ ] 깔끔한 UI로 복원
+- [x] **디버깅 정보 정리**
+  - [x] 성공적으로 작동하는 디버깅 로그 제거
+  - [x] 화면 디버깅 박스 제거
+  - [x] 깔끔한 UI로 복원
+
+**기술적 개선사항**:
+- 🔧 **데이터 동기화**: useTeamData와 TeamStore 간 실시간 동기화 메커니즘 구현
+- 🔧 **UI 정리**: Tools, API Keys 통계 카드 제거로 핵심 정보만 표시
+- 🔧 **코드 정리**: 모든 디버깅 로그 및 화면 디버깅 요소 제거
+- 🔧 **성능 최적화**: 불필요한 렌더링 및 API 호출 제거
+
+### TASK_078: 팀 네비게이션에서 Tools와 API Keys 완전 제거 ✅ 완료
+
+**목표**: 팀 네비게이션 탭에서 Tools와 API Keys 항목을 완전히 제거하여 6개 탭으로 정리
+
+- [x] **사용하지 않는 아이콘 import 정리**
+  - [x] Key, FileText 아이콘 import 제거
+  - [x] 실제 사용되는 아이콘만 유지
+
+- [x] **변경사항 커밋으로 확정**
+  - [x] TeamLayout.tsx 변경사항 스테이징
+  - [x] 명확한 커밋 메시지로 변경사항 기록
+  - [x] git 히스토리에 Tools/API Keys 제거 작업 문서화
+
+**최종 결과**:
+- ✅ 팀 네비게이션 탭: 6개 항목 (Overview, Projects, Members, Servers, Activity, Settings)
+- ✅ Tools, API Keys 항목 완전 제거
+- ✅ 코드 정리: 사용하지 않는 import 구문 정리
+
+**기술적 개선사항**:
+- 🔧 **코드 정리**: 사용하지 않는 아이콘 import 완전 제거
+- 🔧 **UI 간소화**: 핵심 팀 관리 기능에 집중한 네비게이션 구조
+- 🔧 **일관성**: Overview 페이지와 네비게이션 탭의 일치된 구조
+
+### TASK_079: MCP Orchestrator 아키텍처 분석 및 팀-프로젝트-서버 관계 구조 검토
+
+**목표**: 현재 시스템의 팀-프로젝트-서버 관계 구조를 분석하고 UX 개선 방안 제시
+
+- [ ] **현재 구조 분석**
+  - [ ] 데이터베이스 모델 관계 분석 (Team, Project, Server 간 관계)
+  - [ ] 서버 등록/관리 흐름 분석 (프로젝트 중심 vs 팀 중심)
+  - [ ] 팀-프로젝트 관계 구조 검토
+
+- [ ] **사용자 스크린샷 분석**
+  - [ ] `/teams/[teamId]/servers` 페이지 현재 구현 상태 확인
+  - [ ] 팀에서 서버 관리의 필요성 및 중복성 검토
+  - [ ] 프로젝트에서 서버 관리와의 차이점 분석
+
+- [ ] **아키텍처 문제점 식별**
+  - [ ] 서버가 프로젝트에 속하는데 팀에서도 서버 관리하는 구조적 모순
+  - [ ] 팀 서버 API 엔드포인트의 잘못된 team_id 참조 문제
+  - [ ] 사용자 혼란을 야기하는 중복 기능 식별
+
+- [ ] **개선 방안 제시**
+  - [ ] 프로젝트 중심 아키텍처로의 명확한 전환 방안
+  - [ ] 팀 서버 페이지 제거 또는 프로젝트 연결 방식으로 변경
+  - [ ] 사용자 경험 개선을 위한 정보 아키텍처 재설계
 
 ## Progress Status
-- Current Progress: TASK_077 - TeamStore와 실제 API 데이터 동기화 문제 해결 **진행중**
-- Next Task: 데이터 흐름 분석
+- Current Progress: TASK_079 - MCP Orchestrator 아키텍처 분석 시작
+- Next Task: 현재 구조 분석 및 문제점 식별
 - Last Update: 2025-06-18
-- Automatic Check Feedback: API 호출은 성공하여 실제 팀 데이터를 받아오지만, TeamStore의 selectedTeam이 더미 데이터를 참조하여 화면에 잘못된 정보가 표시됨. useTeamData와 teamStore 간의 동기화 메커니즘 구현 필요.
+- Automatic Check Feedback: 데이터베이스 모델 분석 완료. 핵심 문제 발견: 서버는 프로젝트에 속하는데(McpServer.project_id) 팀 API에서 서버를 조회할 때 존재하지 않는 team_id 필드를 참조하는 구조적 모순. 팀 서버 관리 기능의 필요성 재검토 필요.
 
 ## Lessons Learned and Insights
 - **탭 vs 독립 페이지**: 복잡한 프로젝트 관리 시스템에서는 독립 페이지 구조가 사용자 경험 측면에서 우수함
