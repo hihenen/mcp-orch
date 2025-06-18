@@ -160,11 +160,29 @@
 - 🔧 **일관성**: 프로젝트 페이지와 동일한 패턴으로 통일된 UX
 - 🔧 **확장성**: 새로운 기능 추가 시 독립적인 페이지로 확장 가능
 
+### TASK_074: 팀 Overview 페이지 무한루프 해결 ✅ 완료
+
+**목표**: useEffect 의존성 배열과 함수 생성 최적화로 무한루프 제거
+
+- [x] **useTeamData 훅 최적화**
+  - [x] `useCallback`으로 모든 API 호출 함수 메모이제이션
+  - [x] `teamId`를 의존성 배열에 추가하여 불필요한 재생성 방지
+  - [x] `loadAllData` 함수 메모이제이션으로 무한루프 해결
+
+- [x] **TeamOverviewPage useEffect 안정화**  
+  - [x] 메모이제이션된 `loadAllData` 함수로 안전한 의존성 배열 구성
+  - [x] `teamId` 변경 시에만 데이터 로드되도록 최적화
+
+**기술적 개선사항**:
+- 🔧 **성능 최적화**: `useCallback`으로 함수 메모이제이션하여 불필요한 재렌더링 방지
+- 🔧 **API 호출 최적화**: 무한루프 제거로 중복 API 요청 완전 차단
+- 🔧 **의존성 관리**: 최소한의 의존성으로 안정적인 훅 설계 완성
+
 ## Progress Status
-- Current Progress: TASK_073 완료 - 팀 페이지 GitLab/GitHub 스타일 독립 페이지 리팩토링 **완료**
+- Current Progress: TASK_074 완료 - 팀 Overview 페이지 무한루프 해결 **완료**
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-18
-- Automatic Check Feedback: 1516줄 단일 파일을 8개 독립 페이지로 성공적으로 분리. TeamLayout 컴포넌트, useTeamData/useTeamPermissions 커스텀 훅, teamUtils 유틸리티 함수 생성으로 재사용성과 유지보수성 대폭 향상. 프로젝트 페이지와 일관된 UX 패턴 적용으로 사용자 경험 개선 완료.
+- Automatic Check Feedback: useTeamData 훅의 모든 API 호출 함수를 useCallback으로 메모이제이션하여 무한루프 문제 완전 해결. teamId 변경 시에만 함수가 재생성되도록 최적화하여 성능 향상 및 안정성 확보.
 
 ## Lessons Learned and Insights
 - **탭 vs 독립 페이지**: 복잡한 프로젝트 관리 시스템에서는 독립 페이지 구조가 사용자 경험 측면에서 우수함
