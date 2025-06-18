@@ -125,11 +125,11 @@
 
 **목표**: Datadog/Sentry 스타일의 실시간 ToolCallLog 조회 시스템 구현
 
-- [ ] **Phase 1: 백엔드 API 구현**
-  - [ ] ToolCallLog 조회 API 개발 (시간 범위, 필터링, 페이지네이션)
-  - [ ] 집계 메트릭 API (성공률, 응답시간, 에러율)
-  - [ ] 검색 기능 (JSONB 필드 텍스트 검색)
-  - [ ] 데이터베이스 인덱스 최적화
+- [x] **Phase 1: 백엔드 API 구현**
+  - [x] ToolCallLog 조회 API 개발 (시간 범위, 필터링, 페이지네이션)
+  - [x] 집계 메트릭 API (성공률, 응답시간, 에러율)
+  - [x] 검색 기능 (JSONB 필드 텍스트 검색)
+  - [x] 데이터베이스 인덱스 최적화
 
 - [ ] **Phase 2: 프론트엔드 로그 리스트 UI**
   - [ ] 가상 스크롤 로그 리스트 컴포넌트
@@ -212,8 +212,8 @@
 - 디버깅 및 문제 추적 완전 지원
 
 ## Progress Status
-- Current Progress: TASK_084 완료 - ToolCallLog 수집 시스템 완전 구현 완료
-- Next Task: 대기 중 (사용자 요청 대기)
+- Current Progress: TASK_085 Phase 1 완료 - ToolCallLog 조회 API 백엔드 구현 완료
+- Next Task: TASK_085 Phase 2 - 프론트엔드 로그 리스트 UI 구현
 - Last Update: 2025-06-18
 - Automatic Check Status: PASS
 

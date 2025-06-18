@@ -1,24 +1,28 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogList } from '@/components/tool-call-logs';
 import { ServerTabProps } from './types';
 
-export function ServerLogsTab({ server }: ServerTabProps) {
+export function ServerLogsTab({ server, projectId, serverId }: ServerTabProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>서버 로그</CardTitle>
-        <CardDescription>
-          서버 실행 및 오류 로그를 확인할 수 있습니다.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center py-8 text-muted-foreground">
-          <div className="text-4xl mb-4">📄</div>
-          <p>로그 시스템 구현 예정</p>
-          <p className="text-sm mt-2">서버 로그 수집 및 표시 기능이 곧 추가될 예정입니다.</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>서버 로그</CardTitle>
+          <CardDescription>
+            {server.name} 서버의 도구 호출 로그를 실시간으로 확인할 수 있습니다.
+            Datadog/Sentry 스타일의 고급 필터링과 메트릭을 제공합니다.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* 로그 리스트 */}
+      <LogList 
+        projectId={projectId}
+        serverId={serverId}
+      />
+    </div>
   );
 }
