@@ -129,7 +129,8 @@ class SchedulerService:
                 'running': False,
                 'jobs': [],
                 'config': self.config,
-                'last_execution': None
+                'last_execution': None,
+                'job_history_count': len(self.job_history)
             }
             
         jobs = []
