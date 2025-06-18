@@ -13,7 +13,6 @@ export function ServerLogsTab({ server, projectId, serverId }: ServerTabProps) {
           <CardTitle>서버 로그</CardTitle>
           <CardDescription>
             {server.name} 서버의 도구 호출 로그를 실시간으로 확인할 수 있습니다.
-            Datadog/Sentry 스타일의 고급 필터링과 메트릭을 제공합니다.
           </CardDescription>
         </CardHeader>
       </Card>
