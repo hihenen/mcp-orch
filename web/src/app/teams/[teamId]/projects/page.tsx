@@ -50,6 +50,8 @@ export default function TeamProjectsPage() {
   const loadProjects = async () => {
     setLoading(true);
     try {
+      console.log(`🔍 Loading projects for team: ${teamId}`);
+      
       const response = await fetch(`/api/teams/${teamId}/projects`, {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -57,40 +59,18 @@ export default function TeamProjectsPage() {
 
       if (response.ok) {
         const projectData = await response.json();
+        console.log(`✅ Successfully loaded ${projectData.length} projects`);
         setProjects(projectData);
       } else {
-        console.error('Failed to load projects:', response.status, response.statusText);
-        // 데모 데이터
-        const demoProjects: Project[] = [
-          {
-            id: '1',
-            name: 'MCP Integration',
-            description: 'MCP 서버 통합 프로젝트',
-            created_at: '2025-06-01T10:00:00Z',
-            member_count: 3,
-            server_count: 2
-          },
-          {
-            id: '2',
-            name: 'Data Analysis',
-            description: '데이터 분석 자동화 프로젝트',
-            created_at: '2025-06-02T14:00:00Z',
-            member_count: 2,
-            server_count: 1
-          },
-          {
-            id: '3',
-            name: 'AWS Automation',
-            description: 'AWS 리소스 자동화',
-            created_at: '2025-06-03T09:00:00Z',
-            member_count: 4,
-            server_count: 3
-          }
-        ];
-        setProjects(demoProjects);
+        const errorText = await response.text();
+        console.error('Failed to load projects:', response.status, response.statusText, errorText);
+        toast.error(`프로젝트 로드 실패: ${response.status} ${errorText}`);
+        setProjects([]); // 오류 시 빈 배열로 설정
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
+      toast.error('프로젝트 로드 중 네트워크 오류가 발생했습니다.');
+      setProjects([]); // 오류 시 빈 배열로 설정
     } finally {
       setLoading(false);
     }

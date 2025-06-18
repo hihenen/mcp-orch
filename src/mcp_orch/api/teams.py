@@ -13,6 +13,7 @@ from ..models.team import Team, TeamMember, TeamRole
 from ..models.user import User
 from ..models.api_key import ApiKey
 from ..models.mcp_server import McpServer
+from ..models import Project, ProjectMember, ProjectRole, InviteSource
 from .header_auth import get_user_from_headers
 from .jwt_auth import get_current_user, verify_jwt_token, get_user_from_jwt_token
 
@@ -670,6 +671,122 @@ async def get_team_activity(
     ]
     
     return activities
+
+
+@router.get("/{team_id}/projects", response_model=List[dict])
+async def get_team_projects(
+    team_id: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """팀에서 접근 가능한 프로젝트 목록 조회"""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    team, membership = get_team_and_verify_access(team_id, current_user, db)
+    
+    # 팀 멤버들이 참여한 모든 프로젝트 조회
+    # 팀 멤버로 초대된 프로젝트 + 개별적으로 참여한 프로젝트를 모두 포함
+    
+    # 팀의 모든 멤버 ID 조회
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).all()
+    team_member_ids = [member_id[0] for member_id in team_member_ids]
+    
+    # 팀 멤버들이 참여한 프로젝트들 조회 (중복 제거)
+    projects_query = db.query(Project).join(ProjectMember).filter(
+        ProjectMember.user_id.in_(team_member_ids)
+    ).distinct()
+    
+    projects = projects_query.all()
+    
+    result = []
+    for project in projects:
+        # 프로젝트별 통계 계산
+        member_count = db.query(ProjectMember).filter(
+            ProjectMember.project_id == project.id
+        ).count()
+        
+        server_count = db.query(McpServer).filter(
+            McpServer.project_id == project.id
+        ).count()
+        
+        # 현재 사용자의 이 프로젝트에서의 역할 확인
+        user_project_member = db.query(ProjectMember).filter(
+            and_(
+                ProjectMember.project_id == project.id,
+                ProjectMember.user_id == current_user.id
+            )
+        ).first()
+        
+        # 현재 사용자가 이 프로젝트에 접근할 수 있는지 확인
+        if user_project_member:
+            result.append({
+                "id": str(project.id),
+                "name": project.name,
+                "description": project.description,
+                "created_at": project.created_at.isoformat(),
+                "member_count": member_count,
+                "server_count": server_count,
+                "user_role": user_project_member.role.value,
+                "invited_as": user_project_member.invited_as.value
+            })
+    
+    return result
+
+
+@router.post("/{team_id}/projects", response_model=dict)
+async def create_team_project(
+    team_id: str,
+    project_data: dict,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """팀에서 새 프로젝트 생성"""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    team, membership = get_team_and_verify_access(team_id, current_user, db, TeamRole.DEVELOPER)
+    
+    # 프로젝트 생성
+    
+    project = Project(
+        name=project_data.get('name'),
+        description=project_data.get('description'),
+        created_by=current_user.id
+    )
+    
+    db.add(project)
+    db.flush()  # ID 생성을 위해 flush
+    
+    # 생성자를 Owner로 자동 추가
+    project_member = ProjectMember(
+        project_id=project.id,
+        user_id=current_user.id,
+        role=ProjectRole.OWNER,
+        invited_as=InviteSource.INDIVIDUAL,
+        invited_by=current_user.id
+    )
+    
+    db.add(project_member)
+    db.commit()
+    db.refresh(project)
+    
+    return {
+        "id": str(project.id),
+        "name": project.name,
+        "description": project.description,
+        "created_at": project.created_at.isoformat(),
+        "member_count": 1,
+        "server_count": 0,
+        "user_role": ProjectRole.OWNER.value,
+        "invited_as": InviteSource.INDIVIDUAL.value
+    }
 
 
 @router.get("/{team_id}/cline-config")
