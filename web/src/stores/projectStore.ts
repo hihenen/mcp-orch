@@ -66,6 +66,8 @@ interface ProjectStore {
 
   // 프로젝트 서버 관리
   loadProjectServers: (projectId: string) => Promise<void>;
+  refreshProjectServers: (projectId: string) => Promise<any>;
+  refreshSingleProjectServer: (projectId: string, serverId: string) => Promise<any>;
   addProjectServer: (projectId: string, serverData: any) => Promise<ProjectServer>;
   toggleProjectServer: (projectId: string, serverId: string) => Promise<any>;
   restartProjectServer: (projectId: string, serverId: string) => Promise<any>;
@@ -397,23 +399,23 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  // 프로젝트 서버 관리
+  // 프로젝트 서버 관리 (빠른 캐시 기반)
   loadProjectServers: async (projectId: string) => {
-    console.log('📞 API 호출: loadProjectServers 시작', projectId);
+    console.log('📞 API 호출: loadProjectServers 시작 (빠른 캐시 모드)', projectId);
     set({ isLoading: true, error: null });
     try {
       const response = await fetch(`/api/projects/${projectId}/servers`, {
         credentials: 'include',
       });
       
-      console.log('📞 API 응답: /api/projects/servers', response.status, response.ok);
+      console.log('📞 API 응답: /api/projects/servers (빠른 모드)', response.status, response.ok);
       
       if (!response.ok) {
         throw new Error(`Failed to load project servers: ${response.statusText}`);
       }
       
       const servers = await response.json();
-      console.log('📞 API 데이터: loadProjectServers 결과', servers.length, '개');
+      console.log('📞 API 데이터: loadProjectServers 결과 (캐시)', servers.length, '개');
       set({ projectServers: servers, isLoading: false });
     } catch (error) {
       console.error('📞 API 오류: loadProjectServers', error);
@@ -421,6 +423,60 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         error: error instanceof Error ? error.message : 'Failed to load project servers',
         isLoading: false 
       });
+    }
+  },
+
+  // 서버 상태 새로고침 (실시간 확인)
+  refreshProjectServers: async (projectId: string) => {
+    console.log('🔄 서버 상태 새로고침 시작', projectId);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/refresh-status`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 상태 새로고침 실패');
+      }
+
+      const data = await response.json();
+      console.log('✅ 전체 서버 새로고침 완료:', data);
+      
+      // 새로고침 후 최신 데이터 다시 로드
+      await get().loadProjectServers(projectId);
+      
+      return data;
+    } catch (error) {
+      console.error('❌ 서버 새로고침 오류:', error);
+      throw error;
+    }
+  },
+
+  // 개별 서버 새로고침
+  refreshSingleProjectServer: async (projectId: string, serverId: string) => {
+    console.log('🔄 개별 서버 새로고침 시작:', serverId);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/servers/${serverId}/refresh-status`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '서버 새로고침 실패');
+      }
+
+      const data = await response.json();
+      console.log('✅ 개별 서버 새로고침 완료:', data);
+      
+      // 새로고침 후 최신 데이터 다시 로드
+      await get().loadProjectServers(projectId);
+      
+      return data;
+    } catch (error) {
+      console.error('❌ 개별 서버 새로고침 오류:', error);
+      throw error;
     }
   },
 

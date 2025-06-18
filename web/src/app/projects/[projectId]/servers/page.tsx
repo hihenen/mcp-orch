@@ -46,7 +46,9 @@ export default function ProjectServersPage() {
   
   const {
     selectedProject,
-    loadProject
+    loadProject,
+    refreshProjectServers,
+    refreshSingleProjectServer
   } = useProjectStore();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,18 +183,7 @@ export default function ProjectServersPage() {
   const handleRefreshAllServers = async () => {
     setIsRefreshing(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/servers/refresh-status`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '서버 상태 새로고침 실패');
-      }
-
-      const data = await response.json();
-      console.log('전체 서버 새로고침 성공:', data);
+      const data = await refreshProjectServers(projectId);
       
       // 서버 목록 새로고침
       await fetchProjectServers(projectId);
@@ -211,18 +202,7 @@ export default function ProjectServersPage() {
   const handleRefreshServer = async (server: any) => {
     setRefreshingServerId(server.id);
     try {
-      const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/refresh-status`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '서버 상태 새로고침 실패');
-      }
-
-      const data = await response.json();
-      console.log('서버 새로고침 성공:', data);
+      const data = await refreshSingleProjectServer(projectId, server.id);
       
       // 서버 목록 새로고침
       await fetchProjectServers(projectId);

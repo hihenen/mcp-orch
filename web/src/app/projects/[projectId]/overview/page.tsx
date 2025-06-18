@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Activity,
@@ -13,7 +14,8 @@ import {
   CheckCircle,
   Clock,
   UserPlus,
-  Settings
+  Settings,
+  RefreshCw
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { ProjectLayout } from '@/components/projects/ProjectLayout';
@@ -52,6 +54,7 @@ export default function ProjectOverviewPage() {
     loadProject, 
     loadProjectMembers,
     loadProjectServers,
+    refreshProjectServers,
     loadProjectTools,
     isLoading 
   } = useProjectStore();
@@ -169,10 +172,27 @@ export default function ProjectOverviewPage() {
           {/* 서버 상태 카드 */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Server className="h-5 w-5" />
-                서버 상태
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Server className="h-5 w-5" />
+                  서버 상태
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await refreshProjectServers(projectId);
+                    } catch (error) {
+                      console.error('서버 새로고침 실패:', error);
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  새로고침
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">

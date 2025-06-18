@@ -266,19 +266,127 @@
   - [x] 새로고침 진행 상태 표시
   - [x] 마지막 확인 시간 표시
 
+- [x] **프론트엔드 스토어 통합**
+  - [x] projectStore에 새로고침 함수 추가 (refreshProjectServers, refreshSingleProjectServer)
+  - [x] Overview 페이지에 서버 상태 새로고침 버튼 추가
+  - [x] 서버 페이지에서 중앙화된 새로고침 함수 사용
+  - [x] 일관된 새로고침 로직 적용
+
 **기술적 해결사항**:
 - 🔧 **성능 최적화**: 서버 리스트 로딩 시간을 60초+ → 수 밀리초로 단축
 - 🔧 **캐시 기반 표시**: 실시간 연결 테스트 제거하고 DB 캐시된 상태 사용
 - 🔧 **수동 새로고침 UI**: 전체/개별 새로고침 버튼과 진행 상태 표시
 - 🔧 **사용자 경험**: 즉시 로딩 + 필요 시 수동 새로고침으로 성능과 정확성 균형
 - 🔧 **API 분리**: 빠른 목록 조회와 정확한 상태 확인을 별도 API로 분리
+- 🔧 **중앙화된 상태 관리**: projectStore를 통한 일관된 새로고침 로직
 
 **커밋 정보**: 
-- commit [추후 추가] - "feat: [TASK_087] 서버 리스트 페이지 성능 최적화 완료"
+- commit 4b02926 - "feat: [TASK_087] 서버 리스트 페이지 성능 최적화 완료"
+
+### TASK_088: projects.py GET 엔드포인트 MCP 서버 상태 확인 분석 ✅ 완료
+
+**목표**: `/Users/yun/work/ai/mcp/mcp-orch/src/mcp_orch/api/projects.py` 파일에서 단일 프로젝트 조회 GET 엔드포인트의 MCP 서버 상태 확인 분석
+
+- [x] **단일 프로젝트 조회 GET 엔드포인트 확인**
+  - [x] @router.get("/projects/{project_id}") 엔드포인트 위치 확인 (199-263줄)
+  - [x] get_project_detail 함수의 구현 내용 분석
+  - [x] MCP 서버 상태 확인 여부 분석
+
+**분석 결과**:
+
+🔍 **단일 프로젝트 GET 엔드포인트**: `get_project_detail` (199-263줄)
+- ✅ **엔드포인트**: `@router.get("/projects/{project_id}", response_model=ProjectDetailResponse)`
+- ✅ **함수명**: `get_project_detail(project_id: UUID, current_user: User, db: Session)`
+- ❌ **MCP 서버 상태 확인 없음**: 이 엔드포인트는 **프로젝트 기본 정보만** 반환하며 MCP 서버 상태는 확인하지 않음
+
+📊 **get_project_detail 함수 기능**:
+- **프로젝트 기본 정보**: 이름, 설명, 생성일, 수정일
+- **멤버 목록**: 프로젝트에 참여한 사용자들 정보 (사용자명, 이메일, 역할, 초대 방식)  
+- **통계 정보**: 멤버 수, 서버 수 (단순 count만)
+- **향후 구현**: recent_activity 필드는 빈 배열로 반환 (99, 262줄)
+
+🚨 **MCP 서버 상태 확인하는 엔드포인트들**:
+1. **`list_project_servers`** (1100-1174줄): 프로젝트별 서버 목록 + 실시간 상태 확인
+   - 라인 1150: `check_server_status()` 호출
+   - 라인 1152: `get_server_tools_count()` 호출
+2. **`get_project_server_detail`** (1177-1254줄): 개별 서버 상세 + 실시간 상태 확인
+   - 라인 1229: `check_server_status()` 호출
+   - 라인 1231: `get_server_tools()` 호출
+
+**결론**: 단일 프로젝트 조회(`/projects/{project_id}`) 엔드포인트는 MCP 서버 상태 확인을 하지 않으며, 서버 관련 정보는 단순히 서버 개수만 반환함. MCP 서버 상태가 필요한 경우 별도의 서버 관리 엔드포인트를 사용해야 함.
+
+### TASK_089: 서버 페이지 개별 서버 API 호출 패턴 분석 ✅ 완료
+
+**목표**: `/projects/[projectId]/servers/page.tsx`에서 개별 서버 상세 정보를 호출하는 API 패턴 분석
+
+- [x] **개별 서버 API 호출 패턴 확인**
+  - [x] page.tsx 파일에서 server.id를 사용한 fetch 호출 검색
+  - [x] 개별 서버 상세 정보 API 호출 지점 식별
+  - [x] 서버 상태 확인 및 새로고침 API 호출 분석
+  - [x] 서버 토글, 삭제 등 개별 서버 대상 API 호출 분석
+
+**분석 결과**:
+
+🔍 **서버 페이지 개별 서버 API 호출 패턴**:
+
+❌ **개별 서버 상세 정보 API 호출 없음**: 
+- 이 페이지에서는 개별 서버의 상세 정보를 별도로 fetch하지 않음
+- 모든 서버 정보는 `fetchProjectServers(projectId)` 호출로 한번에 로드됨
+- 서버 카드에 표시되는 정보는 초기 로드된 데이터를 사용
+
+🚨 **개별 서버 API 호출 지점**:
+
+1. **개별 서버 새로고침** (라인 211-237):
+   ```typescript
+   const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/refresh-status`, {
+     method: 'POST',
+     credentials: 'include'
+   });
+   ```
+
+2. **서버 토글 (활성화/비활성화)** (라인 145-168):
+   ```typescript
+   const response = await fetch(`/api/projects/${projectId}/servers/${server.id}/toggle`, {
+     method: 'POST',
+     credentials: 'include'
+   });
+   ```
+
+3. **서버 삭제** (라인 115-142):
+   ```typescript
+   const response = await fetch(`/api/projects/${projectId}/servers?serverId=${deletingServer.id}`, {
+     method: 'DELETE',
+     credentials: 'include'
+   });
+   ```
+
+4. **서버 상세 페이지 이동** (라인 171-173):
+   ```typescript
+   const handleShowServerDetail = (server: any) => {
+     window.location.href = `/projects/${projectId}/servers/${server.id}`;
+   };
+   ```
+
+📊 **중요한 발견사항**:
+
+✅ **전체 서버 목록 API**: 
+- `fetchProjectServers(projectId)` - 모든 서버 정보를 한번에 로드
+- 서버 상태, 도구 개수, 마지막 연결 시간 등 포함
+
+✅ **개별 서버 작업 API들**:
+- 새로고침: `/api/projects/${projectId}/servers/${server.id}/refresh-status`
+- 토글: `/api/projects/${projectId}/servers/${server.id}/toggle`  
+- 삭제: `/api/projects/${projectId}/servers?serverId=${server.id}`
+
+❌ **개별 서버 상세 정보 API 호출 없음**: 
+- 서버 카드에서 상세 정보를 추가로 fetch하지 않음
+- 모든 정보는 초기 서버 목록 로드 시 포함됨
+
+**결론**: 이 페이지에서는 개별 서버의 상세 정보를 별도로 호출하지 않고, 서버 목록 API 한 번의 호출로 모든 필요한 정보를 가져옴. 개별 서버 API 호출은 상태 변경(새로고침, 토글, 삭제) 작업에만 사용됨.
 
 ## Progress Status
-- Current Progress: TASK_087 완료 - 서버 리스트 페이지 성능 최적화 완료 (수동 새로고침 방식 구현)
-- Next Task: 새로운 작업 대기
+- Current Progress: TASK_087 - 서버 리스트 페이지 성능 최적화 완료 (프론트엔드 스토어 통합 완료)
+- Next Task: 추가 작업 대기
 - Last Update: 2025-06-18
 - Automatic Check Status: PASS
 
