@@ -32,6 +32,7 @@ from .tool_call_logs import router as tool_call_logs_router
 from .profile import router as profile_router
 from .project_security import router as project_security_router
 from .admin import router as admin_router
+from .workers import router as workers_router
 from starlette.routing import Mount
 from mcp.server.sse import SseServerTransport
 
@@ -48,10 +49,27 @@ async def lifespan(app: FastAPI):
     controller = app.state.controller
     await controller.initialize()
     
+    # 스케줄러 서비스 초기화 및 시작
+    from ..services.scheduler_service import scheduler_service
+    try:
+        await scheduler_service.initialize()
+        await scheduler_service.start()
+        logger.info("Scheduler service started")
+    except Exception as e:
+        logger.error(f"Failed to start scheduler service: {e}")
+    
     yield
     
     # 종료 시
     logger.info("Shutting down MCP Orch API server")
+    
+    # 스케줄러 정지
+    try:
+        await scheduler_service.stop()
+        logger.info("Scheduler service stopped")
+    except Exception as e:
+        logger.error(f"Error stopping scheduler service: {e}")
+    
     await controller.shutdown()
 
 
@@ -107,6 +125,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(profile_router)  # 🔧 프로필 관리 API
     app.include_router(project_security_router)  # 🔧 프로젝트 보안 설정 API
     app.include_router(admin_router)  # 🔧 관리자 API
+    app.include_router(workers_router)  # 🔧 워커 관리 API
     app.include_router(fastmcp_router)
     
     # 2. 프로젝트 관리 API (일반 API 라우터)
