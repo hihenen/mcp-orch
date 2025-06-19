@@ -3,7 +3,7 @@ from uuid import uuid4
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, JSON, Enum as SQLEnum
+from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, JSON, Enum as SQLEnum, Text
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 
@@ -108,7 +108,7 @@ class McpTool(Base):
     # Tool identification
     name = Column(String(255), nullable=False)
     display_name = Column(String(255), nullable=True)
-    description = Column(String(1000), nullable=True)
+    description = Column(Text, nullable=True)  # Changed from String(1000) to Text for longer descriptions
     
     # Tool schema
     input_schema = Column(JSON, nullable=True)
