@@ -464,9 +464,42 @@
 **커밋 정보**: 
 - commit 7db11aa - "fix: [TASK_065] API Keys 필터링 Boolean 파싱 오류 수정"
 
+### TASK_066: 프로젝트 권한 체크 대소문자 비교 오류 수정 ✅ 완료
+
+**목표**: Owner 권한 사용자가 읽기 전용 모드로 표시되는 권한 체크 로직 오류 수정
+
+- [x] **권한 체크 로직 분석**
+  - [x] 프로젝트 설정 페이지의 `canEdit` 로직에서 'Owner' 비교 확인
+  - [x] `useProjectStore`의 `currentUserRole` 설정 방식 분석
+  - [x] 백엔드 API 응답 데이터 구조 파악
+
+- [x] **데이터베이스 권한 데이터 확인**
+  - [x] ProjectRole enum에서 OWNER = "owner" (소문자) 정의 확인
+  - [x] 백엔드에서 "owner" (소문자)로 반환하는 것 확인
+  - [x] 프론트엔드에서 "Owner" (대문자)와 비교하는 문제 식별
+
+- [x] **권한 비교 로직 수정**
+  - [x] `currentUserRole === 'Owner'` → `currentUserRole?.toLowerCase() === 'owner'` 수정
+  - [x] 대소문자 구분 없는 안전한 비교로 변경
+  - [x] null 체크 추가로 안정성 확보
+
+- [x] **UI 표시 로직 수정**
+  - [x] 읽기 전용 모드 표시 조건 자동 해결
+  - [x] "권한 없음" 경고 표시 조건 자동 해결
+  - [x] Owner 권한에 대한 올바른 편집 권한 부여
+
+**기술적 해결사항**:
+- 🔧 **대소문자 안전 비교**: `?.toLowerCase() === 'owner'` 패턴으로 안전한 권한 체크
+- 🔧 **Null 안전성**: Optional chaining으로 undefined/null 값 처리
+- 🔧 **권한 일관성**: 백엔드 ProjectRole enum과 일치하는 소문자 기준 비교
+- 🔧 **사용자 경험**: Owner 권한 사용자의 정상적인 편집 권한 복구
+
+**커밋 정보**: 
+- commit adf537e - "fix: [TASK_066] 프로젝트 권한 체크 대소문자 비교 오류 수정"
+
 ## Progress Status
-- Current Progress: TASK_065 완료 - API Keys 필터링 Boolean 파싱 오류 수정 완료
-- Next Task: 사용자 요청 대기 - 새로운 기능 요청이나 버그 리포트 대기 중
+- Current Progress: TASK_066 완료 - 프로젝트 권한 체크 대소문자 비교 오류 수정 완료
+- Next Task: 사용자 요청 대기 - 새로운 기능 요청이나 버그 리포트 대기 중  
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 
