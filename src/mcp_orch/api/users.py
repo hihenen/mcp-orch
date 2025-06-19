@@ -309,6 +309,7 @@ async def list_users_admin(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = None,
+    include_inactive: bool = False,
     current_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -316,6 +317,10 @@ async def list_users_admin(
     try:
         # 기본 쿼리
         query = db.query(User)
+        
+        # 활성 사용자만 필터링 (기본값)
+        if not include_inactive:
+            query = query.filter(User.is_active == True)
         
         # 검색 조건 적용
         if search:
