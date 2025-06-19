@@ -61,7 +61,7 @@ export default function ProjectSettingsPage() {
   }, [selectedProject]);
 
   // 편집 권한 확인 (Owner만 편집 가능)
-  const canEdit = currentUserRole === 'Owner';
+  const canEdit = currentUserRole?.toLowerCase() === 'owner';
 
   // 설정 저장 핸들러
   const handleSaveSettings = async () => {
