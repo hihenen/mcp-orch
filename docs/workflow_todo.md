@@ -854,8 +854,38 @@
 - 🔧 **이력 관리**: 메모리 기반 작업 실행 이력 (최대 100개) 저장
 - 🔧 **관리자 UI**: 실시간 워커 상태 모니터링 및 제어 기능 완비
 
+### TASK_076: MCP Inspector JDBC 연결 분석 ✅ 완료
+
+**목표**: MCP Inspector에서 JDBC MCP 서버와 연결할 때의 요청 순서와 방식 분석
+
+- [x] **MCP Inspector 연결 구조 분석**
+  - [x] useConnection 훅에서 MCP 클라이언트 초기화 과정 확인
+  - [x] Transport 생성 및 연결 순서 파악
+  - [x] SSEClientTransport/StreamableHTTPClientTransport 방식 분석
+- [x] **초기화 및 도구 목록 요청 순서 분석**
+  - [x] connect() 함수에서 client.connect(transport) 호출
+  - [x] 연결 성공 후 client.getServerCapabilities() 실행
+  - [x] initialize 요청은 SDK 내부에서 자동 처리됨
+  - [x] tools/list 요청은 사용자가 Tools 탭 클릭 시 별도 실행
+- [x] **요청 처리 방식 확인**
+  - [x] makeRequest() 함수에서 모든 MCP 요청 통합 처리
+  - [x] 각 요청은 순차적으로 처리 (동시 요청 없음)
+  - [x] 응답 대기: timeout 설정 (기본 120초) 내에서 대기
+  - [x] 에러 처리: 타임아웃, 네트워크 오류 등 예외 상황 처리
+- [x] **JDBC MCP 서버 도구 동적 생성 방식 확인**
+  - [x] mcp-orch의 standard_mcp.py에서 하드코딩된 도구 목록 확인
+  - [x] 실제 JDBC 서버는 별도 프로세스로 실행되어 동적 도구 생성
+  - [x] _forward_to_actual_server() 함수로 실제 서버와 통신
+
+**기술적 발견사항**:
+- 🔧 **순차적 연결**: initialize → capabilities 확인 → 사용자 요청 시 tools/list 실행
+- 🔧 **프록시 구조**: MCP Inspector는 프록시 서버를 통해 실제 MCP 서버와 통신
+- 🔧 **SDK 자동화**: @modelcontextprotocol/sdk가 initialize 과정을 자동 처리
+- 🔧 **요청 대기**: 각 요청마다 개별 타임아웃 설정으로 응답 대기
+- 🔧 **동적 도구**: 실제 JDBC 서버는 연결 설정에 따라 동적으로 도구 생성
+
 ## Progress Status
-- Current Progress: TASK_075 완료 - APScheduler 관련 파일 분석 완료
+- Current Progress: TASK_076 완료 - MCP Inspector JDBC 연결 분석 완료
 - Next Task: 사용자 요청에 따른 새로운 작업 대기
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
