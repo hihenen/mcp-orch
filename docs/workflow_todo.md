@@ -201,8 +201,29 @@
 **커밋 정보**: 
 - commit [sha] - "feat: [TASK_058] Admin Teams UI에서 Plan 필드 제거 및 편집 기능 개선"
 
+### TASK_059: Teams 편집 API 오류 수정 ✅ 완료
+
+**목표**: Teams 편집 시 발생하는 Next.js params 오류와 백엔드 McpServer.team_id 오류 수정
+
+- [x] **Next.js API 라우트 수정**
+  - [x] `params.team_id` → `const { team_id } = await params` 로 변경
+  - [x] GET, PUT, DELETE 모든 메서드에 적용
+  - [x] Next.js 15+ 동적 API 호환성 확보
+- [x] **백엔드 teams.py McpServer 참조 오류 수정**
+  - [x] McpServer.team_id 참조를 project_id 기반으로 변경
+  - [x] ApiKey.team_id 참조도 project_id 기반으로 변경
+  - [x] TeamMember → ProjectMember → McpServer/ApiKey 경로로 간접 참조
+
+**기술적 해결사항**:
+- 🔧 **Next.js 호환성**: async params 패턴으로 동적 라우트 파라미터 처리
+- 🔧 **데이터 모델 일관성**: 모든 API에서 project_id 기반 구조로 통일
+- 🔧 **API 안정성**: Teams 편집 기능 완전히 정상 작동
+
+**커밋 정보**: 
+- commit [sha] - "fix: [TASK_059] Teams 편집 API Next.js params 오류 및 McpServer 참조 수정"
+
 ## Progress Status
-- Current Progress: TASK_058 - Admin Teams UI Plan 필드 제거 및 편집 기능 개선 ✅ 완료
+- Current Progress: TASK_059 - Teams 편집 API 오류 수정 ✅ 완료
 - Next Task: Projects 관리 페이지 UI 구현 (영어)
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS

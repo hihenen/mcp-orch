@@ -17,7 +17,8 @@ export const GET = auth(async function GET(req, { params }) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${params.team_id}`, {
+    const { team_id } = await params;
+    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${team_id}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
@@ -54,7 +55,8 @@ export const PUT = auth(async function PUT(req, { params }) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${params.team_id}`, {
+    const { team_id } = await params;
+    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${team_id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -92,7 +94,8 @@ export const DELETE = auth(async function DELETE(req, { params }) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${params.team_id}`, {
+    const { team_id } = await params;
+    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${team_id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -821,18 +821,32 @@ async def get_team_cline_config(
         raise HTTPException(status_code=401, detail="Authentication required")
     team, _ = get_team_and_verify_access(team_id, current_user, db, TeamRole.DEVELOPER)
     
-    # Get team's active servers
+    # Get team's active servers (through projects owned by team members)
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    team_project_ids = db.query(ProjectMember.project_id).filter(
+        ProjectMember.user_id.in_(
+            db.query(team_member_ids.c.user_id)
+        )
+    ).distinct().subquery()
+    
     servers = db.query(McpServer).filter(
         and_(
-            McpServer.team_id == team.id,
+            McpServer.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            ),
             McpServer.is_enabled == True
         )
     ).all()
     
-    # Get team's API keys
+    # Get team's API keys (through projects owned by team members)
     api_keys = db.query(ApiKey).filter(
         and_(
-            ApiKey.team_id == team.id,
+            ApiKey.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            ),
             ApiKey.is_active == True
         )
     ).first()
