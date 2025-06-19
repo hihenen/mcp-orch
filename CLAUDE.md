@@ -1178,6 +1178,78 @@ export default function ProjectServerDetailPage() {
 
 이 지침을 따르면 유지보수하기 쉽고 확장 가능한 컴포넌트 구조를 만들 수 있습니다.
 
+# DateTime 처리 표준 가이드라인
+
+## 현재 상황 분석 (2025-06-19 기준)
+- **백엔드**: SQLAlchemy `DateTime` 필드 사용 중 (timezone=False)
+- **저장 형식**: `datetime.utcnow` 또는 `func.now()` 사용
+- **API 응답**: Pydantic 기본 직렬화 (ISO 8601 형식)
+- **프론트엔드**: date-utils 유틸리티로 브라우저 locale 기반 표시
+
+## 표준화 방향
+
+### 백엔드 (FastAPI/SQLAlchemy)
+```python
+# 점진적 마이그레이션 - 파일 수정 시 함께 개선
+from sqlalchemy import DateTime
+
+# 현재 (대부분의 모델)
+created_at = Column(DateTime, default=datetime.utcnow)
+
+# 향후 목표 (UTC + timezone aware)
+created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+```
+
+### API 응답 (Pydantic)
+```python
+# Response 모델에서 datetime 필드 정의
+class SomeResponse(BaseModel):
+    created_at: datetime  # ISO 8601 자동 직렬화
+    updated_at: datetime
+    
+    class Config:
+        # timezone 정보 포함하여 직렬화
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
+```
+
+### 프론트엔드 (Next.js)
+```typescript
+// 필수: date-utils 함수 사용
+import { formatDate, formatDateTime } from '@/lib/date-utils';
+
+// ❌ 하드코딩 금지
+<span>{new Date(dateString).toLocaleDateString('ko-KR')}</span>
+
+// ✅ 올바른 사용
+<span>{formatDate(dateString)}</span>      // 날짜만
+<span>{formatDateTime(dateString)}</span>  // 날짜+시간
+```
+
+## 점진적 마이그레이션 전략
+
+### Phase 1: 즉시 적용 (현재)
+1. 새로운 기능 개발 시 위 표준 준수
+2. 기존 파일 수정 시 해당 파일의 datetime 처리 개선
+3. 프론트엔드는 date-utils 사용 필수
+
+### Phase 2: 핵심 모델 표준화
+1. User, Project, ApiKey 모델의 datetime 필드 UTC + timezone 설정
+2. 관련 API Response 모델 검증
+3. 테스트 및 마이그레이션
+
+### Phase 3: 전체 표준화
+1. 모든 모델의 datetime 필드 표준화
+2. ESLint 규칙으로 하드코딩된 locale 검사
+3. 사용자별 timezone 설정 기능 추가
+
+## 체크리스트
+- [ ] 새 모델 생성 시 `DateTime(timezone=True)` 사용
+- [ ] API Response에 datetime 필드 포함 시 ISO 8601 확인
+- [ ] 프론트엔드에서 날짜 표시 시 date-utils 사용
+- [ ] 하드코딩된 'ko-KR', 'en-US' 발견 시 즉시 수정
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.

@@ -718,39 +718,19 @@
 - 🔧 **코드 품질**: 모든 코드 주석과 에러 메시지를 영어로 표준화
 - 🔧 **지역화**: 날짜 표시 형식을 글로벌 표준 en-US로 변경
 
-### TASK_073: 프로젝트 datetime 필드 현황 분석 및 개선 방안 제시
-
-**목표**: mcp-orch 프로젝트의 datetime 필드 저장/처리/표시 현황을 전면 분석하고 개선 방안 제시
-
-- [x] **SQLAlchemy 모델 datetime 필드 현황 조사**
-  - [x] User 모델의 datetime 필드 분석 (created_at, updated_at, last_login)
-  - [x] Project, Team, McpServer, ApiKey 모델의 datetime 필드 분석
-  - [x] DateTime vs DateTime(timezone=True) 사용 현황 파악
-  - [x] 현재 timezone 정보 포함 여부 확인
-- [ ] **백엔드 API 응답 포맷 분석**
-  - [ ] Pydantic 모델의 datetime 직렬화 방식 확인
-  - [ ] API 응답에서 실제 datetime 포맷 예시 수집
-  - [ ] UTC 저장 여부 및 ISO 8601 준수 확인
-  - [ ] timezone 정보 포함 여부 확인
-- [ ] **프론트엔드 datetime 처리 현황 분석**
-  - [ ] 관리자 페이지의 datetime 표시 방식 조사
-  - [ ] 브라우저에서 현재 표시되는 시간 포맷 확인
-  - [ ] 하드코딩된 한국 시간 처리 찾기
-  - [ ] Next.js 컴포넌트에서 날짜 포맷팅 패턴 조사
-- [ ] **문제점 식별 및 개선 방안 제시**
-  - [ ] UTC 저장이 안 되는 필드 식별
-  - [ ] API 응답 포맷 일관성 문제 파악
-  - [ ] 프론트엔드 현지화 부족 부분 식별
-  - [ ] 종합적인 datetime 표준화 방안 제시
-
-### TASK_072: 날짜 현지화 시스템 구현
+### TASK_072: 날짜 현지화 시스템 구현 - 간소화 전략 적용 중
 
 **목표**: 백엔드 UTC 저장 표준화 및 프론트엔드 브라우저 locale 기반 날짜 현지화 구현
 
-- [ ] **백엔드 UTC 저장 표준화**
-  - [x] 현재 datetime 필드 저장 방식 분석
-  - [ ] 모든 datetime 응답을 UTC ISO 8601 포맷으로 표준화
-  - [ ] API 응답 형식 일관성 확보
+**간소화 전략**:
+- 빠른 패턴 파악: grep 명령으로 datetime 사용 패턴 확인
+- 대표 샘플링: User, Project, ApiKey 모델만 먼저 분석
+- 점진적 개선: 파일 수정 시 해당 부분의 datetime 처리도 함께 개선
+
+- [ ] **백엔드 UTC 저장 표준화 (간소화)**
+  - [ ] User, Project 모델의 datetime 필드만 UTC 표준화
+  - [ ] 해당 API 응답 포맷 통일 (ISO 8601)
+  - [x] CLAUDE.md에 DateTime 처리 가이드라인 추가
 - [x] **프론트엔드 날짜 포맷팅 유틸리티 구현**
   - [x] `formatDate` 유틸리티 함수 생성
   - [x] 브라우저 locale 자동 감지 (navigator.language)
@@ -760,10 +740,21 @@
   - [x] 관리자 페이지 날짜 표시 영역 개선
   - [x] 사용자 가입일, 마지막 로그인 등 날짜 필드 적용
   - [x] 워커 실행 이력, 로그 시간 등 시스템 시간 적용
-- [ ] **사용자 타임존 설정 기능 준비**
-  - [ ] 사용자 프로필에 timezone 필드 추가 계획
-  - [ ] 선호 날짜 포맷 설정 인터페이스 설계
-  - [ ] 수동 타임존 선택 옵션 구조 설계
+
+### TASK_073: 프로젝트 datetime 필드 현황 분석 - 간소화 버전
+
+**목표**: 대표 샘플 3개만 분석하여 공통 패턴 파악 및 가이드라인 문서화
+
+- [x] **SQLAlchemy 모델 샘플 분석**
+  - [x] User 모델 datetime 필드 확인 - func.now() 사용 중
+  - [x] Project 모델 datetime 필드 확인 - datetime.utcnow 사용 중
+  - [x] ApiKey 모델 datetime 필드 확인 - datetime.utcnow 사용 중
+- [x] **API 응답 샘플 확인**
+  - [x] AdminTeamResponse 등에서 datetime 타입 사용 확인
+  - [x] Pydantic 기본 직렬화로 ISO 8601 포맷 자동 변환
+- [x] **CLAUDE.md 가이드라인 작성**
+  - [x] DateTime 처리 표준 정의 완료
+  - [x] 점진적 마이그레이션 방법 문서화 완료
 
 ### TASK_069: 관리자 페이지 여백 설정 일관성 검토
 
@@ -835,8 +826,8 @@
 - commit 94e6c82 - "feat: [TASK_068] Improve API Keys page search - replace onChange with button + Enter key"
 
 ## Progress Status
-- Current Progress: TASK_072 진행 - 프론트엔드 날짜 현지화 구현 완료, 백엔드 표준화 계획  
-- Next Task: 백엔드 UTC ISO 8601 포맷 표준화 및 사용자 타임존 설정 준비
+- Current Progress: TASK_073 완료 - DateTime 처리 가이드라인 문서화, TASK_072 백엔드 표준화 작업 남음
+- Next Task: User, Project 모델의 datetime 필드 UTC 표준화 작업
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 
