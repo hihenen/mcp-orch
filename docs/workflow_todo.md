@@ -123,18 +123,22 @@
   - [x] Projects 생성/수정/삭제 API (하드 삭제)
   - [x] Projects 소유권 이전 API
   - [x] Projects 멤버 관리 API
-- [ ] **Teams 관리 페이지 UI 구현 (영어)**
-  - [ ] Teams 목록 테이블
-  - [ ] 검색 및 필터링 기능
-  - [ ] 팀 생성/편집 모달
+- [x] **Teams 관리 페이지 UI 구현 (영어)**
+  - [x] Teams 목록 테이블 (페이지네이션, 검색, 필터링)
+  - [x] 검색 및 필터링 기능 (활성/비활성, 검색어)
+  - [x] 팀 생성 모달 (CreateTeamModal)
+  - [x] 팀 편집 모달 (EditTeamModal)
+  - [x] 소유권 이전 모달 (TransferOwnershipModal)
+  - [x] 통계 대시보드 카드
+  - [x] Next.js API 라우트 연결
 - [ ] **Projects 관리 페이지 UI 구현 (영어)**
   - [ ] Projects 목록 테이블
   - [ ] 검색 및 필터링 기능
   - [ ] 프로젝트 생성/편집 모달
 
 ## Progress Status
-- Current Progress: TASK_055 - 백엔드 Teams/Projects 관리 API 구현 ✅ 완료
-- Next Task: Teams 관리 페이지 UI 구현 (영어)
+- Current Progress: TASK_055 - Teams 관리 페이지 UI 구현 ✅ 완료
+- Next Task: Projects 관리 페이지 UI 구현 (영어)
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 
