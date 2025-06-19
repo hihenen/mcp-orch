@@ -566,6 +566,61 @@
 **커밋 정보**:
 - commit 5aeaf86 - "feat: [TASK_067] Add error detail modal with copy functionality for worker history"
 
+### TASK_070: 관리자 Overview 페이지 영어 UI 변환 ✅ 완료
+
+**목표**: CLAUDE.md English-First 정책에 따라 관리자 Overview 페이지의 모든 한국어 UI를 영어로 변환
+
+- [x] **System Overview 섹션 영어 변환**
+  - [x] "시스템 개요" → "System Overview"
+  - [x] "마지막 업데이트" → "Last updated"
+  - [x] "새로고침" → "Refresh"
+  - [x] 시간 표시 형식을 ko-KR에서 en-US로 변경
+- [x] **통계 카드 영어 변환**
+  - [x] "총 사용자" → "Total Users"
+  - [x] "관리자: X명" → "Admins: X"
+  - [x] "총 프로젝트" → "Total Projects"
+  - [x] "생성된 프로젝트 수" → "Created projects"
+  - [x] "MCP 서버" → "MCP Servers"
+  - [x] "활성/전체 서버" → "Active/Total servers"
+  - [x] "워커 상태" → "Worker Status"
+  - [x] "실행 중" → "Running", "정지됨" → "Stopped"
+  - [x] "백그라운드 워커" → "Background worker"
+- [x] **Quick Actions 섹션 영어 변환**
+  - [x] "빠른 액션" → "Quick Actions"
+  - [x] "워커 관리" → "Worker Management"
+  - [x] "APScheduler 백그라운드 워커를 관리하고 모니터링하세요" → "Manage and monitor APScheduler background workers"
+  - [x] "워커 관리로 이동" → "Go to Workers"
+  - [x] "마지막 실행" → "Last run"
+  - [x] "사용자 관리" → "User Management"
+  - [x] "사용자 계정, 권한, 팀 멤버십을 관리하세요" → "Manage user accounts, permissions, and team memberships"
+  - [x] "사용자 관리로 이동" → "Go to Users"
+  - [x] "시스템 모니터링" → "System Monitoring"
+  - [x] "시스템 로그, 성능 메트릭, 활동 추적" → "System logs, performance metrics, and activity tracking"
+  - [x] "준비 중" → "Coming Soon"
+- [x] **System Status 섹션 영어 변환**
+  - [x] "시스템 상태" → "System Status"
+  - [x] "주요 컴포넌트 상태" → "Core Component Status"
+  - [x] "시스템의 주요 컴포넌트들의 현재 상태입니다" → "Current status of the system's core components"
+  - [x] "FastAPI 백엔드" → "FastAPI Backend"
+  - [x] "정상 동작 중" → "Running normally"
+  - [x] "온라인" → "Online"
+  - [x] "PostgreSQL 데이터베이스" → "PostgreSQL Database"
+  - [x] "연결 상태 양호" → "Connection healthy"
+  - [x] "연결됨" → "Connected"
+  - [x] "APScheduler 워커" → "APScheduler Worker"
+  - [x] "자동 서버 상태 체크 실행 중" → "Auto server status check running"
+  - [x] "워커가 정지된 상태" → "Worker is stopped"
+- [x] **코드 주석 영어 변환**
+  - [x] "폴백으로 더미 데이터 사용" → "Fallback to dummy data on error"
+  - [x] "30초마다 자동 새로고침" → "Auto refresh every 30 seconds"
+  - [x] 모든 섹션 주석을 영어로 변경
+
+**기술적 해결사항**:
+- 🔧 **UI 언어 일관성**: CLAUDE.md English-First 정책 완전 적용
+- 🔧 **시간 지역화**: 모든 시간 표시를 한국어(ko-KR)에서 영어(en-US)로 변경
+- 🔧 **사용자 경험**: 영어 UI로 글로벌 표준 관리자 패널 구현
+- 🔧 **코드 주석**: 개발자 가독성을 위한 영어 주석 표준화
+
 ### TASK_069: 관리자 페이지 여백 설정 일관성 검토
 
 **목표**: AdminLayout의 여백 설정과 각 관리자 페이지의 여백 설정 일관성 확인 및 최적화
@@ -636,8 +691,8 @@
 - commit 94e6c82 - "feat: [TASK_068] Improve API Keys page search - replace onChange with button + Enter key"
 
 ## Progress Status
-- Current Progress: TASK_069 계획 완료 - 관리자 페이지 여백 설정 일관성 검토 계획
-- Next Task: TASK_069 실행 대기 - ACT 명령어 대기 중
+- Current Progress: TASK_070 완료 - 관리자 Overview 페이지 영어 UI 변환 완료
+- Next Task: TASK_069 계획 완료 - 관리자 페이지 여백 설정 일관성 검토 대기
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 

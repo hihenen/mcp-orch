@@ -18,9 +18,7 @@ import {
 } from 'lucide-react';
 
 interface SystemStats {
-  total_users: number;
-  active_users: number;
-  inactive_users: number;
+  total_users: number;  // Active users only (deleted users excluded)
   admin_users: number;
   total_projects: number;
   total_servers: number;
@@ -51,11 +49,9 @@ export default function AdminPage() {
         setLastUpdated(new Date());
       } catch (error) {
         console.error('❌ Failed to fetch system stats:', error);
-        // 폴백으로 더미 데이터 사용
+        // Fallback to dummy data on error
         setStats({
           total_users: 0,
-          active_users: 0,
-          inactive_users: 0,
           admin_users: 0,
           total_projects: 0,
           total_servers: 0,
@@ -70,7 +66,7 @@ export default function AdminPage() {
 
     fetchSystemStats();
     
-    // 30초마다 자동 새로고침
+    // Auto refresh every 30 seconds
     const interval = setInterval(fetchSystemStats, 30000);
     
     return () => clearInterval(interval);
@@ -110,14 +106,14 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      {/* 시스템 개요 */}
+      {/* System Overview */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">시스템 개요</h2>
+          <h2 className="text-xl font-semibold">System Overview</h2>
           <div className="flex items-center gap-2">
             {lastUpdated && (
               <span className="text-sm text-muted-foreground">
-                마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR')}
+                Last updated: {lastUpdated.toLocaleTimeString('en-US')}
               </span>
             )}
             <Button 
@@ -127,40 +123,40 @@ export default function AdminPage() {
               disabled={isLoading}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              새로고침
+              Refresh
             </Button>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">총 사용자</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
               <p className="text-xs text-muted-foreground">
-                활성: {stats?.active_users || 0} | 비활성: {stats?.inactive_users || 0} | 관리자: {stats?.admin_users || 0}
+                Admins: {stats?.admin_users || 0}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">총 프로젝트</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.total_projects || 0}</div>
               <p className="text-xs text-muted-foreground">
-                생성된 프로젝트 수
+                Created projects
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">MCP 서버</CardTitle>
+              <CardTitle className="text-sm font-medium">MCP Servers</CardTitle>
               <Server className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -168,14 +164,14 @@ export default function AdminPage() {
                 {stats?.active_servers || 0}/{stats?.total_servers || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                활성/전체 서버
+                Active/Total servers
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">워커 상태</CardTitle>
+              <CardTitle className="text-sm font-medium">Worker Status</CardTitle>
               <Zap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -183,46 +179,46 @@ export default function AdminPage() {
                 {stats?.worker_status === 'running' ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    실행 중
+                    Running
                   </Badge>
                 ) : (
                   <Badge variant="secondary">
                     <AlertTriangle className="h-3 w-3 mr-1" />
-                    정지됨
+                    Stopped
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                백그라운드 워커
+                Background worker
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* 빠른 액션 */}
+      {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">빠른 액션</h2>
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Zap className="h-5 w-5" />
-                <span>워커 관리</span>
+                <span>Worker Management</span>
               </CardTitle>
               <CardDescription>
-                APScheduler 백그라운드 워커를 관리하고 모니터링하세요
+                Manage and monitor APScheduler background workers
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/admin/workers">
                 <Button className="w-full">
-                  워커 관리로 이동
+                  Go to Workers
                 </Button>
               </Link>
               {stats?.last_worker_run && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  마지막 실행: {new Date(stats.last_worker_run).toLocaleString('ko-KR')}
+                  Last run: {new Date(stats.last_worker_run).toLocaleString('en-US')}
                 </p>
               )}
             </CardContent>
@@ -232,16 +228,16 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="h-5 w-5" />
-                <span>사용자 관리</span>
+                <span>User Management</span>
               </CardTitle>
               <CardDescription>
-                사용자 계정, 권한, 팀 멤버십을 관리하세요
+                Manage user accounts, permissions, and team memberships
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/admin/users">
                 <Button className="w-full">
-                  사용자 관리로 이동
+                  Go to Users
                 </Button>
               </Link>
             </CardContent>
@@ -251,29 +247,29 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="h-5 w-5" />
-                <span>시스템 모니터링</span>
+                <span>System Monitoring</span>
               </CardTitle>
               <CardDescription>
-                시스템 로그, 성능 메트릭, 활동 추적
+                System logs, performance metrics, and activity tracking
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" className="w-full" disabled>
-                준비 중
+                Coming Soon
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* 시스템 상태 */}
+      {/* System Status */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">시스템 상태</h2>
+        <h2 className="text-xl font-semibold mb-4">System Status</h2>
         <Card>
           <CardHeader>
-            <CardTitle>주요 컴포넌트 상태</CardTitle>
+            <CardTitle>Core Component Status</CardTitle>
             <CardDescription>
-              시스템의 주요 컴포넌트들의 현재 상태입니다
+              Current status of the system's core components
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -282,22 +278,22 @@ export default function AdminPage() {
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <div>
-                    <div className="font-medium">FastAPI 백엔드</div>
-                    <div className="text-sm text-muted-foreground">정상 동작 중</div>
+                    <div className="font-medium">FastAPI Backend</div>
+                    <div className="text-sm text-muted-foreground">Running normally</div>
                   </div>
                 </div>
-                <Badge className="bg-green-100 text-green-800 border-green-200">온라인</Badge>
+                <Badge className="bg-green-100 text-green-800 border-green-200">Online</Badge>
               </div>
 
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <div>
-                    <div className="font-medium">PostgreSQL 데이터베이스</div>
-                    <div className="text-sm text-muted-foreground">연결 상태 양호</div>
+                    <div className="font-medium">PostgreSQL Database</div>
+                    <div className="text-sm text-muted-foreground">Connection healthy</div>
                   </div>
                 </div>
-                <Badge className="bg-green-100 text-green-800 border-green-200">연결됨</Badge>
+                <Badge className="bg-green-100 text-green-800 border-green-200">Connected</Badge>
               </div>
 
               <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -308,9 +304,9 @@ export default function AdminPage() {
                     <AlertTriangle className="h-5 w-5 text-yellow-500" />
                   )}
                   <div>
-                    <div className="font-medium">APScheduler 워커</div>
+                    <div className="font-medium">APScheduler Worker</div>
                     <div className="text-sm text-muted-foreground">
-                      {stats?.worker_status === 'running' ? '자동 서버 상태 체크 실행 중' : '워커가 정지된 상태'}
+                      {stats?.worker_status === 'running' ? 'Auto server status check running' : 'Worker is stopped'}
                     </div>
                   </div>
                 </div>
@@ -320,7 +316,7 @@ export default function AdminPage() {
                     : "bg-yellow-100 text-yellow-800 border-yellow-200"
                   }
                 >
-                  {stats?.worker_status === 'running' ? '실행 중' : '정지됨'}
+                  {stats?.worker_status === 'running' ? 'Running' : 'Stopped'}
                 </Badge>
               </div>
             </div>
