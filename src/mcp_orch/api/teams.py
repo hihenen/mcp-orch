@@ -533,8 +533,21 @@ async def get_team_api_keys(
         raise HTTPException(status_code=401, detail="Authentication required")
     team, _ = get_team_and_verify_access(team_id, current_user, db, TeamRole.DEVELOPER)
     
+    # Get team's API keys (through projects owned by team members)
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    team_project_ids = db.query(ProjectMember.project_id).filter(
+        ProjectMember.user_id.in_(
+            db.query(team_member_ids.c.user_id)
+        )
+    ).distinct().subquery()
+    
     api_keys = db.query(ApiKey).filter(
-        ApiKey.team_id == team.id
+        ApiKey.project_id.in_(
+            db.query(team_project_ids.c.project_id)
+        )
     ).all()
     
     return [
@@ -565,9 +578,21 @@ async def create_team_api_key(
         raise HTTPException(status_code=401, detail="Authentication required")
     team, _ = get_team_and_verify_access(team_id, current_user, db, TeamRole.OWNER)
     
-    # Check API key limit
+    # Check API key limit (through projects owned by team members)
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    team_project_ids = db.query(ProjectMember.project_id).filter(
+        ProjectMember.user_id.in_(
+            db.query(team_member_ids.c.user_id)
+        )
+    ).distinct().subquery()
+    
     existing_keys = db.query(ApiKey).filter(
-        ApiKey.team_id == team.id
+        ApiKey.project_id.in_(
+            db.query(team_project_ids.c.project_id)
+        )
     ).count()
     
     if existing_keys >= team.max_api_keys:
@@ -626,10 +651,23 @@ async def delete_team_api_key(
             detail="Invalid API key ID format"
         )
     
+    # Find API key through projects owned by team members
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    team_project_ids = db.query(ProjectMember.project_id).filter(
+        ProjectMember.user_id.in_(
+            db.query(team_member_ids.c.user_id)
+        )
+    ).distinct().subquery()
+    
     api_key = db.query(ApiKey).filter(
         and_(
             ApiKey.id == key_uuid,
-            ApiKey.team_id == team.id
+            ApiKey.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            )
         )
     ).first()
     

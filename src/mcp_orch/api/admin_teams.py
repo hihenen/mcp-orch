@@ -265,7 +265,9 @@ async def get_team_admin(
         ).count()
         
         server_count = db.query(McpServer).filter(
-            McpServer.team_id == team.id
+            McpServer.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            )
         ).count()
         
         # Get owner information
@@ -462,7 +464,9 @@ async def update_team_admin(
         ).count()
         
         server_count = db.query(McpServer).filter(
-            McpServer.team_id == team.id
+            McpServer.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            )
         ).count()
         
         owner_membership = db.query(TeamMember).options(
