@@ -11,6 +11,7 @@ from .server_log import ServerLog, LogLevel, LogCategory
 from .favorite import UserFavorite
 from .client_session import ClientSession
 from .tool_call_log import ToolCallLog, CallStatus
+from .worker_config import WorkerConfig
 
 __all__ = [
     "Base",
@@ -35,4 +36,5 @@ __all__ = [
     "ClientSession",
     "ToolCallLog",
     "CallStatus",
+    "WorkerConfig",
 ]

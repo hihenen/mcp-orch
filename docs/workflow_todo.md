@@ -825,9 +825,38 @@
 - commit 5c8dfae - "feat: [TASK_068] Improve Projects page search - replace onChange with button + Enter key"
 - commit 94e6c82 - "feat: [TASK_068] Improve API Keys page search - replace onChange with button + Enter key"
 
+### TASK_075: APScheduler 설정 및 관련 파일 분석 ✅ 완료
+
+**목표**: mcp-orch 프로젝트의 APScheduler 관련 모든 파일 위치 파악 및 구조 분석
+
+- [x] **APScheduler 핵심 서비스 파일 분석**
+  - [x] `/src/mcp_orch/services/scheduler_service.py` - APScheduler 초기화 및 관리 서비스
+  - [x] MemoryJobStore 기본 설정, AsyncIOExecutor 사용
+  - [x] 서버 상태 체크 및 도구 동기화 통합 작업 구현
+- [x] **워커 관리 API 파일 분석**
+  - [x] `/src/mcp_orch/api/workers.py` - 워커 제어 REST API
+  - [x] 시작/정지/재시작, 설정 업데이트, 이력 조회 API
+  - [x] JWT 기반 관리자 권한 체크 구현
+- [x] **애플리케이션 초기화 분석**
+  - [x] `/src/mcp_orch/api/app.py` - lifespan 이벤트에서 스케줄러 자동 시작/정지
+  - [x] 스케줄러 서비스 글로벌 인스턴스 관리
+- [x] **설정 관리 분석**
+  - [x] `/src/mcp_orch/config.py` - 설정 구조 확인 (워커 설정은 런타임에 관리)
+- [x] **프론트엔드 워커 관리 UI 분석**
+  - [x] `/web/src/app/admin/workers/page.tsx` - 워커 관리 메인 페이지
+  - [x] `/web/src/components/admin/WorkerConfigModal.tsx` - 설정 변경 모달
+  - [x] `/web/src/components/admin/WorkerHistoryTable.tsx` - 실행 이력 테이블
+
+**기술적 발견사항**:
+- 🔧 **MemoryJobStore 사용**: 영구 저장소 없이 메모리 기반 작업 스케줄링
+- 🔧 **통합 작업**: 서버 상태 체크와 도구 목록 동기화를 하나의 작업에서 처리
+- 🔧 **런타임 설정**: 설정 변경 시 스케줄러 자동 재시작으로 즉시 반영
+- 🔧 **이력 관리**: 메모리 기반 작업 실행 이력 (최대 100개) 저장
+- 🔧 **관리자 UI**: 실시간 워커 상태 모니터링 및 제어 기능 완비
+
 ## Progress Status
-- Current Progress: TASK_073 완료 - DateTime 처리 가이드라인 문서화, TASK_072 백엔드 표준화 작업 남음
-- Next Task: User, Project 모델의 datetime 필드 UTC 표준화 작업
+- Current Progress: TASK_075 완료 - APScheduler 관련 파일 분석 완료
+- Next Task: 사용자 요청에 따른 새로운 작업 대기
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 

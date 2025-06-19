@@ -17,7 +17,7 @@ from apscheduler import events
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import McpServer, Project
+from ..models import McpServer, Project, WorkerConfig
 from ..models.mcp_server import McpTool
 from ..services.mcp_connection_service import mcp_connection_service
 
@@ -30,19 +30,51 @@ class SchedulerService:
     def __init__(self):
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.is_running = False
-        self.config = {
-            'server_check_interval': 300,  # 5분 (기본값)
-            'coalesce': True,  # 중복 작업 병합
-            'max_instances': 1,  # 작업 인스턴스 수 제한
-        }
+        self.config = WorkerConfig.get_default_config()  # 기본 설정값 사용
         self.job_history: List[Dict] = []
         self.max_history_size = 100
+        self._config_loaded = False
+        
+    async def load_config_from_db(self):
+        """데이터베이스에서 워커 설정 로드"""
+        try:
+            db = next(get_db())
+            try:
+                worker_config = WorkerConfig.load_or_create_config(db)
+                self.config = worker_config.to_dict()
+                self._config_loaded = True
+                logger.info(f"Loaded worker config from database: {self.config}")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to load config from database: {e}")
+            # 기본값 사용
+            self.config = WorkerConfig.get_default_config()
+            logger.info("Using default worker configuration")
+        
+    async def save_config_to_db(self):
+        """현재 설정을 데이터베이스에 저장"""
+        try:
+            db = next(get_db())
+            try:
+                worker_config = WorkerConfig.load_or_create_config(db)
+                worker_config.update_from_dict(self.config)
+                db.commit()
+                logger.info(f"Saved worker config to database: {self.config}")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to save config to database: {e}")
         
     async def initialize(self):
         """스케줄러 초기화"""
         if self.scheduler is not None:
             logger.warning("Scheduler already initialized")
             return
+            
+        # 데이터베이스에서 설정 로드
+        if not self._config_loaded:
+            await self.load_config_from_db()
             
         # Job stores, executors, and job defaults (APScheduler 3.x)
         jobstores = {
@@ -116,11 +148,14 @@ class SchedulerService:
         old_interval = self.config['server_check_interval']
         self.config.update(new_config)
         
+        # 데이터베이스에 설정 저장
+        import asyncio
+        asyncio.create_task(self.save_config_to_db())
+        
         # 간격이 변경되면 스케줄러 재시작
         if self.is_running and old_interval != self.config['server_check_interval']:
             logger.info(f"Interval changed from {old_interval}s to {self.config['server_check_interval']}s")
             # 백그라운드에서 재시작 (블로킹 방지)
-            import asyncio
             asyncio.create_task(self.restart())
             
     def get_status(self) -> Dict:
