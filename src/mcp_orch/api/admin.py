@@ -45,6 +45,7 @@ class SystemStats(BaseModel):
     """시스템 통계"""
     total_users: int
     active_users: int
+    inactive_users: int
     admin_users: int
     total_projects: int
     total_servers: int
@@ -272,9 +273,10 @@ async def get_system_stats(
     """관리자 대시보드용 시스템 통계"""
     try:
         # 사용자 통계
-        total_users = db.query(User).count()
         active_users = db.query(User).filter(User.is_active == True).count()
-        admin_users = db.query(User).filter(User.is_admin == True).count()
+        inactive_users = db.query(User).filter(User.is_active == False).count()
+        total_users = active_users + inactive_users
+        admin_users = db.query(User).filter(User.is_admin == True, User.is_active == True).count()  # 활성 관리자만
         
         # 프로젝트 통계
         total_projects = db.query(Project).count()
@@ -291,6 +293,7 @@ async def get_system_stats(
         return SystemStats(
             total_users=total_users,
             active_users=active_users,
+            inactive_users=inactive_users,
             admin_users=admin_users,
             total_projects=total_projects,
             total_servers=total_servers,

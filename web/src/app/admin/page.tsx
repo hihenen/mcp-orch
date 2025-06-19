@@ -20,6 +20,7 @@ import {
 interface SystemStats {
   total_users: number;
   active_users: number;
+  inactive_users: number;
   admin_users: number;
   total_projects: number;
   total_servers: number;
@@ -54,6 +55,7 @@ export default function AdminPage() {
         setStats({
           total_users: 0,
           active_users: 0,
+          inactive_users: 0,
           admin_users: 0,
           total_projects: 0,
           total_servers: 0,
@@ -138,7 +140,7 @@ export default function AdminPage() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
               <p className="text-xs text-muted-foreground">
-                활성 사용자: {stats?.active_users || 0} / 관리자: {stats?.admin_users || 0}
+                활성: {stats?.active_users || 0} | 비활성: {stats?.inactive_users || 0} | 관리자: {stats?.admin_users || 0}
               </p>
             </CardContent>
           </Card>
