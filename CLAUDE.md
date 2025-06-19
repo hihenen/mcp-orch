@@ -782,6 +782,181 @@ JWT_ALGORITHM=HS256
 
 이 패턴을 따라 새로운 API 엔드포인트를 구현하면 일관된 인증 시스템을 유지할 수 있습니다.
 
+---
+
+# Next.js 15+ 개발 지침
+
+## 프로젝트 환경
+- **Next.js Version**: 15.3.3
+- **React Version**: 19.1.0
+- **NextAuth.js Version**: 5.0.0-beta.28
+
+## Next.js 15+ 주요 변경사항 및 필수 준수 사항
+
+### 1. 동적 API 라우트 파라미터 처리
+**REQUIRED**: Next.js 15에서 `params`는 반드시 `await`로 처리해야 함
+
+#### ❌ 잘못된 방법 (Next.js 14 스타일)
+```typescript
+export const GET = auth(async function GET(req, { params }) {
+  const response = await fetch(`/api/resource/${params.id}`); // 오류 발생
+});
+```
+
+#### ✅ 올바른 방법 (Next.js 15+ 필수)
+```typescript
+export const GET = auth(async function GET(req, { params }) {
+  const { id } = await params; // 반드시 await 사용
+  const response = await fetch(`/api/resource/${id}`);
+});
+```
+
+### 2. 동적 라우트 파일 네이밍
+- `[id]/route.ts` - 단일 동적 파라미터
+- `[...slug]/route.ts` - 캐치올 라우트
+- `[[...slug]]/route.ts` - 옵셔널 캐치올 라우트
+
+### 3. API 라우트 표준 패턴
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
+// GET 요청
+export const GET = auth(async function GET(req, { params }) {
+  try {
+    if (!req.auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 동적 파라미터 처리 (Next.js 15+ 필수)
+    const { id } = await params;
+    
+    // 비즈니스 로직
+    const result = await fetchData(id);
+    
+    return NextResponse.json(result);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+});
+
+// POST 요청
+export const POST = auth(async function POST(req, { params }) {
+  try {
+    if (!req.auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id } = await params; // 필요한 경우에만
+    
+    // 비즈니스 로직
+    const result = await createData(body);
+    
+    return NextResponse.json(result);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+});
+
+// PUT 요청
+export const PUT = auth(async function PUT(req, { params }) {
+  try {
+    if (!req.auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id } = await params;
+    
+    // 비즈니스 로직
+    const result = await updateData(id, body);
+    
+    return NextResponse.json(result);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+});
+
+// DELETE 요청
+export const DELETE = auth(async function DELETE(req, { params }) {
+  try {
+    if (!req.auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    
+    // 비즈니스 로직
+    await deleteData(id);
+    
+    return NextResponse.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+});
+```
+
+### 4. React 19 호환성
+- **Strict Mode**: 기본 활성화
+- **Concurrent Features**: 기본 지원
+- **Server Components**: 기본값으로 서버 컴포넌트 사용
+
+### 5. NextAuth.js 5.0 베타 특성
+- **JWT 토큰**: `getServerJwtToken()` 유틸리티 사용
+- **세션 관리**: `req.auth`로 세션 접근
+- **미들웨어**: `auth()` 래퍼 함수 사용
+
+### 6. TypeScript 5.3+ 설정
+```typescript
+// 타입 안전성을 위한 파라미터 타입 정의
+interface RouteParams {
+  params: Promise<{ [key: string]: string }>;
+}
+
+export const GET = auth(async function GET(
+  req: NextRequest, 
+  context: RouteParams
+) {
+  const { id } = await context.params;
+  // ...
+});
+```
+
+### 7. 개발 환경 검증 체크리스트
+- [ ] `params` 접근 시 `await` 사용 확인
+- [ ] API 라우트에서 `auth()` 래퍼 사용
+- [ ] NextAuth.js v5 패턴 준수
+- [ ] React 19 컴포넌트 패턴 사용
+- [ ] TypeScript strict 모드 호환성
+
+### 8. 마이그레이션 가이드
+기존 Next.js 14 코드를 15로 업그레이드할 때:
+
+1. **모든 동적 라우트에서 `params` await 추가**
+2. **React 19 Strict Mode 이슈 해결**
+3. **NextAuth.js v5 베타 API 사용**
+4. **새로운 에러 처리 패턴 적용**
+
+### 9. 성능 최적화
+- **App Router**: 기본 서버 컴포넌트 활용
+- **Streaming**: Suspense 경계 적절히 설정
+- **Bundle Size**: Dynamic imports 적극 활용
+
+이 지침을 따라 Next.js 15.3.3 환경에서 안정적인 개발을 진행하세요.
+
 # 프론트엔드 개발 지침
 
 ## 컴포넌트 분리 및 구조화 원칙
