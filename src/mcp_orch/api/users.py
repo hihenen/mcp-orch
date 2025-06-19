@@ -293,6 +293,15 @@ class UpdateUserRequest(BaseModel):
     is_admin: Optional[bool] = None
     is_active: Optional[bool] = None
 
+class BulkDeleteRequest(BaseModel):
+    user_ids: List[str]
+
+class BulkDeleteResponse(BaseModel):
+    message: str
+    successful_deletions: List[str]
+    failed_deletions: List[dict]
+    total_processed: int
+
 # 관리자용 사용자 관리 API
 @router.get("/admin", response_model=AdminUserListResponse)
 async def list_users_admin(
@@ -563,4 +572,90 @@ async def delete_user_admin(
         raise HTTPException(
             status_code=500,
             detail=f"사용자 삭제 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.post("/admin/bulk-delete", response_model=BulkDeleteResponse)
+async def bulk_delete_users_admin(
+    request: Request,
+    bulk_delete_data: BulkDeleteRequest,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자용 사용자 일괄 삭제 (소프트 삭제)"""
+    try:
+        user_ids = bulk_delete_data.user_ids
+        successful_deletions = []
+        failed_deletions = []
+        
+        if not user_ids:
+            raise HTTPException(
+                status_code=400,
+                detail="삭제할 사용자 ID가 제공되지 않았습니다."
+            )
+        
+        # 현재 관리자 수 확인
+        admin_count = db.query(User).filter(User.is_admin == True).count()
+        
+        for user_id in user_ids:
+            try:
+                user = db.query(User).filter(User.id == user_id).first()
+                if not user:
+                    failed_deletions.append({
+                        "user_id": user_id,
+                        "error": "사용자를 찾을 수 없습니다."
+                    })
+                    continue
+                
+                # 자기 자신은 삭제할 수 없도록 제한
+                if str(user.id) == str(current_user.id):
+                    failed_deletions.append({
+                        "user_id": user_id,
+                        "user_email": user.email,
+                        "error": "자신의 계정은 삭제할 수 없습니다."
+                    })
+                    continue
+                
+                # 마지막 관리자인 경우 삭제 방지
+                if user.is_admin and admin_count <= 1:
+                    failed_deletions.append({
+                        "user_id": user_id,
+                        "user_email": user.email,
+                        "error": "마지막 관리자는 삭제할 수 없습니다."
+                    })
+                    continue
+                
+                # 관리자 수 업데이트 (다음 반복을 위해)
+                if user.is_admin:
+                    admin_count -= 1
+                
+                # 소프트 삭제 (비활성화)
+                user.is_active = False
+                user.updated_at = datetime.now(timezone.utc)
+                
+                successful_deletions.append(user_id)
+                
+            except Exception as e:
+                failed_deletions.append({
+                    "user_id": user_id,
+                    "error": f"삭제 중 오류 발생: {str(e)}"
+                })
+        
+        # 성공한 변경사항 커밋
+        if successful_deletions:
+            db.commit()
+        
+        return BulkDeleteResponse(
+            message=f"{len(successful_deletions)}명의 사용자가 성공적으로 비활성화되었습니다.",
+            successful_deletions=successful_deletions,
+            failed_deletions=failed_deletions,
+            total_processed=len(user_ids)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"일괄 삭제 중 오류가 발생했습니다: {str(e)}"
         )

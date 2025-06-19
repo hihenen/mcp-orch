@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Users, 
   Search, 
@@ -30,7 +31,8 @@ import {
   Mail,
   User,
   Edit,
-  Trash2
+  Trash2,
+  Trash
 } from 'lucide-react';
 import { UserEditModal } from '@/components/admin/UserEditModal';
 
@@ -56,6 +58,11 @@ export default function UsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState<UserData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // 체크박스 선택 상태 관리
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // fetchUsers 함수를 먼저 정의
   const fetchUsers = async () => {
@@ -220,6 +227,101 @@ export default function UsersPage() {
     }
   };
 
+  // 체크박스 관련 핸들러들
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allUserIds = new Set(users.map(user => user.id));
+      setSelectedUsers(allUserIds);
+    } else {
+      setSelectedUsers(new Set());
+    }
+  };
+
+  // 테스트 계정만 선택하는 함수
+  const handleSelectTestUsers = () => {
+    const testUserIds = new Set(
+      users
+        .filter(user => user.email.includes('test') && user.email.includes('@example.com'))
+        .map(user => user.id)
+    );
+    setSelectedUsers(testUserIds);
+  };
+
+  // 테스트 계정 개수 계산
+  const testUsersCount = users.filter(user => 
+    user.email.includes('test') && user.email.includes('@example.com')
+  ).length;
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    const newSelectedUsers = new Set(selectedUsers);
+    if (checked) {
+      newSelectedUsers.add(userId);
+    } else {
+      newSelectedUsers.delete(userId);
+    }
+    setSelectedUsers(newSelectedUsers);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedUsers.size === 0) {
+      alert('삭제할 사용자를 선택해주세요.');
+      return;
+    }
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    const selectedUserIds = Array.from(selectedUsers);
+
+    try {
+      const response = await fetch('/api/admin/users/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          user_ids: selectedUserIds
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Bulk delete failed');
+      }
+
+      const result = await response.json();
+      
+      // 성공적으로 삭제된 사용자들을 목록에서 제거
+      if (result.successful_deletions.length > 0) {
+        setUsers(users.filter(u => !result.successful_deletions.includes(u.id)));
+        setSelectedUsers(new Set());
+      }
+
+      // 결과 메시지 표시
+      if (result.failed_deletions.length > 0) {
+        const failedMessages = result.failed_deletions.map((failed: any) => 
+          `${failed.user_email || failed.user_id}: ${failed.error}`
+        );
+        alert(`일부 사용자 삭제에 실패했습니다:\n${failedMessages.join('\n')}\n\n성공: ${result.successful_deletions.length}명`);
+      } else {
+        alert(`${result.successful_deletions.length}명의 사용자가 성공적으로 삭제되었습니다.`);
+      }
+
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('일괄 삭제 실패:', error);
+      alert(error instanceof Error ? error.message : '일괄 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  // 전체 선택 상태 계산
+  const isAllSelected = users.length > 0 && selectedUsers.size === users.length;
+  const isPartiallySelected = selectedUsers.size > 0 && selectedUsers.size < users.length;
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -299,10 +401,31 @@ export default function UsersPage() {
           <h2 className="text-xl font-semibold">사용자 관리</h2>
           <p className="text-muted-foreground">시스템 사용자 계정을 관리합니다</p>
         </div>
-        <Button onClick={handleAddUser}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          사용자 추가
-        </Button>
+        <div className="flex gap-2">
+          {testUsersCount > 0 && (
+            <Button 
+              onClick={handleSelectTestUsers}
+              variant="outline"
+              className="border-orange-200 text-orange-700 hover:bg-orange-50"
+            >
+              🧪 테스트 계정 {testUsersCount}명 선택
+            </Button>
+          )}
+          {selectedUsers.size > 0 && (
+            <Button 
+              onClick={handleBulkDelete}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              선택된 {selectedUsers.size}명 삭제
+            </Button>
+          )}
+          <Button onClick={handleAddUser}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            사용자 추가
+          </Button>
+        </div>
       </div>
 
       {/* 통계 카드 */}
@@ -396,6 +519,14 @@ export default function UsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="모든 사용자 선택"
+                      className={isPartiallySelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                    />
+                  </TableHead>
                   <TableHead>사용자</TableHead>
                   <TableHead>역할</TableHead>
                   <TableHead>상태</TableHead>
@@ -408,6 +539,13 @@ export default function UsersPage() {
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedUsers.has(user.id)}
+                        onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
+                        aria-label={`${user.name || user.email} 선택`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -533,6 +671,54 @@ export default function UsersPage() {
               className="bg-red-600 hover:bg-red-700"
             >
               {isDeleting ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 일괄삭제 확인 다이얼로그 */}
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>일괄 삭제 확인</DialogTitle>
+            <DialogDescription>
+              선택된 <strong>{selectedUsers.size}명</strong>의 사용자를 삭제하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-48 overflow-y-auto border rounded-md p-3 bg-muted/50">
+            <div className="text-sm space-y-1">
+              <div className="font-medium text-muted-foreground mb-2">삭제될 사용자 목록:</div>
+              {Array.from(selectedUsers).map(userId => {
+                const user = users.find(u => u.id === userId);
+                return user ? (
+                  <div key={userId} className="flex items-center space-x-2">
+                    <div className="h-2 w-2 rounded-full bg-destructive" />
+                    <span>{user.name || '이름 없음'} ({user.email})</span>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          </div>
+          
+          <div className="text-sm text-muted-foreground bg-orange-50 border border-orange-200 rounded-md p-3">
+            ⚠️ 이 작업은 되돌릴 수 없으며, 선택된 사용자들의 계정이 비활성화됩니다.
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkDeleteDialogOpen(false)}
+              disabled={isBulkDeleting}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={confirmBulkDelete}
+              disabled={isBulkDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isBulkDeleting ? `삭제 중... (${selectedUsers.size}명)` : `${selectedUsers.size}명 삭제`}
             </Button>
           </DialogFooter>
         </DialogContent>
