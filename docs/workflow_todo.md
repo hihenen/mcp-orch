@@ -756,10 +756,10 @@
   - [x] 브라우저 locale 자동 감지 (navigator.language)
   - [x] Intl.DateTimeFormat API 활용한 현지화
   - [x] 타임존 자동 변환 기능
-- [ ] **기존 컴포넌트에 적용**
-  - [ ] 관리자 페이지 날짜 표시 영역 개선
-  - [ ] 사용자 가입일, 마지막 로그인 등 날짜 필드 적용
-  - [ ] 워커 실행 이력, 로그 시간 등 시스템 시간 적용
+- [x] **기존 컴포넌트에 적용**
+  - [x] 관리자 페이지 날짜 표시 영역 개선
+  - [x] 사용자 가입일, 마지막 로그인 등 날짜 필드 적용
+  - [x] 워커 실행 이력, 로그 시간 등 시스템 시간 적용
 - [ ] **사용자 타임존 설정 기능 준비**
   - [ ] 사용자 프로필에 timezone 필드 추가 계획
   - [ ] 선호 날짜 포맷 설정 인터페이스 설계
@@ -835,8 +835,8 @@
 - commit 94e6c82 - "feat: [TASK_068] Improve API Keys page search - replace onChange with button + Enter key"
 
 ## Progress Status
-- Current Progress: TASK_074 완료 - 관리자 페이지 하드코딩된 locale 교체 작업 완료
-- Next Task: 새로운 작업 대기 중
+- Current Progress: TASK_072 진행 - 프론트엔드 날짜 현지화 구현 완료, 백엔드 표준화 계획  
+- Next Task: 백엔드 UTC ISO 8601 포맷 표준화 및 사용자 타임존 설정 준비
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 
