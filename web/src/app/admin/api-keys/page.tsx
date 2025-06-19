@@ -74,7 +74,7 @@ export default function AdminApiKeysPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [expiredOnlyFilter, setExpiredOnlyFilter] = useState(false);
   
   // Modal states
@@ -94,7 +94,7 @@ export default function AdminApiKeysPage() {
         limit: itemsPerPage.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(projectFilter && { project_id: projectFilter }),
-        ...(statusFilter && { is_active: statusFilter }),
+        ...(statusFilter && statusFilter !== 'all' && { is_active: statusFilter }),
         expired_only: expiredOnlyFilter.toString()
       });
 
@@ -327,10 +327,10 @@ export default function AdminApiKeysPage() {
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="true">Active</SelectItem>
                 <SelectItem value="false">Inactive</SelectItem>
               </SelectContent>
@@ -344,12 +344,12 @@ export default function AdminApiKeysPage() {
               <label className="text-sm font-medium">Expired Only</label>
             </div>
 
-            {(searchTerm || statusFilter || expiredOnlyFilter) && (
+            {(searchTerm || statusFilter !== 'all' || expiredOnlyFilter) && (
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm('');
-                  setStatusFilter('');
+                  setStatusFilter('all');
                   setExpiredOnlyFilter(false);
                 }}
               >
