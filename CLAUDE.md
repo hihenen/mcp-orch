@@ -50,9 +50,14 @@
 - ✅ **API Endpoints**: English route names and parameters
 - ✅ **Database Fields**: English column names and enum values
 - ✅ **Error Messages**: All user-facing errors in English
-- ✅ **Comments**: Code comments can be in Korean for development clarity
+- ✅ **Comments**: All code comments MUST be in English
+- ✅ **Variable Names**: All variables, functions, and classes in English
+- ✅ **File Names**: All file and directory names in English
+- ✅ **Git Commits**: Commit messages should be in English (except for specific Korean workflow tags)
 
 ### **Implementation Guidelines**
+
+#### **UI Text Examples**
 ```typescript
 // ✅ Good - English UI
 <Button>Create Team</Button>
@@ -65,10 +70,70 @@
 <p>모든 팀과 프로젝트 관리</p>
 ```
 
+#### **Code and Comments Examples**
+```typescript
+// ✅ Good - English code and comments
+interface UserStats {
+  totalUsers: number;        // Total number of users
+  activeUsers: number;       // Currently active users
+  adminUsers: number;        // Users with admin privileges
+}
+
+const fetchUserStatistics = async () => {
+  // Retrieve user data from the database
+  const users = await getUserData();
+  return calculateStatistics(users);
+};
+
+// ❌ Bad - Korean code and comments
+interface 사용자통계 {
+  총사용자수: number;        // 전체 사용자 수
+  활성사용자수: number;      // 현재 활성 사용자 수
+  관리자수: number;          // 관리자 권한을 가진 사용자 수
+}
+
+const 사용자통계가져오기 = async () => {
+  // 데이터베이스에서 사용자 데이터 가져오기
+  const 사용자목록 = await 사용자데이터가져오기();
+  return 통계계산하기(사용자목록);
+};
+```
+
+#### **File and Directory Naming**
+```bash
+# ✅ Good - English naming
+src/components/admin/UserManagement.tsx
+src/api/admin/user-statistics.ts
+src/types/AdminDashboard.ts
+
+# ❌ Bad - Korean naming
+src/components/관리자/사용자관리.tsx
+src/api/관리자/사용자통계.ts
+src/types/관리자대시보드.ts
+```
+
 ### **Quality Assurance**
-- **Code Review**: All UI text must be verified as English-only
+- **Code Review**: All UI text, comments, and code must be verified as English-only
 - **Testing**: UI language consistency check in all features
 - **Documentation**: API documentation and user guides in English
+- **Variable Naming**: All variables, functions, classes, and file names must be in English
+- **Comment Standards**: All inline comments, JSDoc, and documentation comments in English
+- **Git Standards**: Commit messages should follow English conventions (except workflow tags)
+- **File Organization**: Directory structure and file naming must use English terminology
+
+### **Exceptions and Special Cases**
+- **Workflow Tags**: Korean workflow tags like `[TASK_XXX]` are allowed in commit messages
+- **User Content**: User-generated content (like team names, project descriptions) can be in Korean
+- **Database Content**: Stored user data can be in Korean, but schema/field names must be English
+- **Internal Notes**: Personal development notes in Korean are acceptable, but all shared documentation must be English
+- **Error Logging**: Internal system logs can include Korean context, but user-facing error messages must be English
+
+### **Enforcement Rules**
+- **🚨 ZERO TOLERANCE**: Any Korean UI text discovered must be immediately converted to English
+- **🔍 MANDATORY REVIEW**: All new components and pages must pass English-only validation
+- **📝 REFACTORING REQUIRED**: Existing Korean code/comments must be translated when touched
+- **⚡ IMMEDIATE ACTION**: If Korean UI is found, fix it before proceeding with other tasks
+- **🎯 CONSISTENCY CHECK**: Regularly audit entire codebase for language consistency
 
 ---
 
