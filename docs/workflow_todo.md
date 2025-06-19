@@ -164,11 +164,13 @@
   - [x] admin_teams.py의 API 키 개수 계산 로직 수정
   - [x] 팀 멤버 → 프로젝트 → API 키 경로로 간접 참조 구현
   - [x] 모든 API 키 통계 조회 함수 수정 완료
+  - [x] McpServer.team_id 참조 오류 추가 발견 및 수정
+  - [x] 서버 개수 통계도 project_id 기반으로 수정 완료
 
 **기술적 해결사항**:
-- 🔧 **데이터 구조 분석**: ApiKey는 project_id 기반, team과는 간접 관계
-- 🔧 **쿼리 수정**: TeamMember → ProjectMember → ApiKey 경로로 통계 계산
-- 🔧 **일관성 확보**: 모든 API 키 카운트 함수에 동일한 로직 적용
+- 🔧 **데이터 구조 분석**: ApiKey, McpServer 모두 project_id 기반, team과는 간접 관계
+- 🔧 **쿼리 수정**: TeamMember → ProjectMember → ApiKey/McpServer 경로로 통계 계산
+- 🔧 **일관성 확보**: 모든 통계 카운트 함수에 동일한 로직 적용
 
 **커밋 정보**: 
 - commit [sha] - "fix: [TASK_057] ApiKey team_id 속성 오류 수정 - project_id 기반 통계 계산"

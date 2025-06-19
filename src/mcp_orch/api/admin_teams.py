@@ -165,9 +165,11 @@ async def list_teams_admin(
                 )
             ).count()
             
-            # Get server count
+            # Get server count (through projects owned by team members)
             server_count = db.query(McpServer).filter(
-                McpServer.team_id == team.id
+                McpServer.project_id.in_(
+                    db.query(team_project_ids.c.project_id)
+                )
             ).count()
             
             # Get owner information
