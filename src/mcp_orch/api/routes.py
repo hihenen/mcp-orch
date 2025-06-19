@@ -14,6 +14,8 @@ from .project_favorites import router as project_favorites_router
 from .teams import router as teams_router
 from .organizations import router as organizations_router
 from .users import router as users_router
+from .admin_teams import router as admin_teams_router
+from .admin_projects import router as admin_projects_router
 from .tools import router as tools_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router
@@ -38,6 +40,8 @@ api_router.include_router(project_favorites_router)
 api_router.include_router(teams_router)
 api_router.include_router(organizations_router)
 api_router.include_router(users_router)
+api_router.include_router(admin_teams_router)
+api_router.include_router(admin_projects_router)
 api_router.include_router(tools_router)
 api_router.include_router(servers_router)
 api_router.include_router(server_logs_router)

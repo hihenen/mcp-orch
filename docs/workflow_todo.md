@@ -113,14 +113,16 @@
   - [x] 네비게이션 탭: "개요" → "Overview"
   - [x] 준비중 상태: "준비중" → "Coming Soon"
   - [x] 모든 주석을 영어로 변경
-- [ ] **백엔드 Teams 관리 API 구현**
-  - [ ] Teams 목록 조회 API
-  - [ ] Teams 생성/수정/삭제 API
-  - [ ] Teams 소유권 이전 API
-- [ ] **백엔드 Projects 관리 API 구현**
-  - [ ] Projects 목록 조회 API
-  - [ ] Projects 생성/수정/삭제 API
-  - [ ] Projects 소유권 이전 API
+- [x] **백엔드 Teams 관리 API 구현**
+  - [x] Teams 목록 조회 API (페이지네이션, 검색, 통계 포함)
+  - [x] Teams 생성/수정/삭제 API (소프트 삭제)
+  - [x] Teams 소유권 이전 API
+  - [x] Teams 멤버 관리 API
+- [x] **백엔드 Projects 관리 API 구현**
+  - [x] Projects 목록 조회 API (페이지네이션, 검색, 통계 포함)
+  - [x] Projects 생성/수정/삭제 API (하드 삭제)
+  - [x] Projects 소유권 이전 API
+  - [x] Projects 멤버 관리 API
 - [ ] **Teams 관리 페이지 UI 구현 (영어)**
   - [ ] Teams 목록 테이블
   - [ ] 검색 및 필터링 기능
@@ -131,8 +133,8 @@
   - [ ] 프로젝트 생성/편집 모달
 
 ## Progress Status
-- Current Progress: TASK_055 - AdminLayout 한글 UI 요소를 영어로 변경 ✅ 완료
-- Next Task: 백엔드 Teams 관리 API 구현
+- Current Progress: TASK_055 - 백엔드 Teams/Projects 관리 API 구현 ✅ 완료
+- Next Task: Teams 관리 페이지 UI 구현 (영어)
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 
