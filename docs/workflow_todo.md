@@ -208,6 +208,43 @@
 - commit 0f07baf - "feat: [TASK_062] API Keys 관리 Next.js API 라우트 구현"
 - commit 0c69820 - "feat: [TASK_062] API Keys 관리 페이지 UI 구현"
 
+### TASK_063: shadcn/ui AlertDialog 설치 및 UI 컴포넌트 표준화 ✅ 완료
+
+**목표**: AlertDialog 에러 해결 및 shadcn/ui 컴포넌트로 표준화
+
+- [x] **shadcn/ui AlertDialog 설치**
+  - [x] `npx shadcn@latest add alert-dialog` 실행
+  - [x] AlertDialog 컴포넌트 정상 설치 확인
+  - [x] API Keys 페이지 에러 해결
+
+- [x] **기존 UI 컴포넌트 vs shadcn/ui 비교 분석**
+  - [x] 현재 사용 중인 UI 컴포넌트들 목록 조사
+  - [x] shadcn/ui 컴포넌트와 품질/기능 비교
+  - [x] 표준화 방향 결정 (shadcn/ui 우선)
+
+- [x] **shadcn/ui로 표준화**
+  - [x] shadcn/ui Switch 컴포넌트로 교체
+  - [x] Radix UI 기반 접근성 및 키보드 지원 개선
+  - [x] Next.js 15+ API 라우트 params Promise 패턴 수정
+  - [x] TypeScript 컴파일 에러 해결
+
+- [x] **테스트 및 검증**
+  - [x] API Keys 페이지 정상 작동 확인
+  - [x] 다른 관리자 페이지들 정상 작동 확인
+  - [x] shadcn/ui 컴포넌트 품질 및 일관성 검증
+
+**기술적 해결사항**:
+- 🔧 **shadcn/ui 표준화**: AlertDialog, Switch 등 고품질 컴포넌트로 교체
+- 🔧 **Radix UI 기반**: 접근성, 키보드 지원, WAI-ARIA 준수
+- 🔧 **Next.js 15+ 호환성**: 모든 API 라우트의 params Promise 패턴 적용
+- 🔧 **TypeScript 안정성**: CVA(Class Variance Authority) 기반 타입 안전성
+- 🔧 **일관된 디자인**: Tailwind CSS 최적화된 컴포넌트 시스템
+
+**커밋 정보**: 
+- commit a1d3748 - "feat: [TASK_063] shadcn/ui AlertDialog 설치 및 Switch 컴포넌트 표준화"
+- commit 785214a - "fix: [TASK_063] Next.js 15+ API 라우트 params Promise 패턴 수정"
+- commit 5c62325 - "fix: [TASK_063] 나머지 API 라우트 Next.js 15+ 패턴 적용"
+
 ### TASK_056: Admin Teams API 라우터 등록 및 404 오류 수정 ✅ 완료
 
 **목표**: 백엔드에서 admin teams API가 404 오류를 반환하는 문제 수정
@@ -321,9 +358,49 @@
 **커밋 정보**: 
 - commit [sha] - "docs: [TASK_060] Next.js 15+ 개발 지침 추가 및 표준화"
 
+### TASK_063: Next.js 15+ API 라우트 params Promise 오류 일괄 수정 ✅ 완료
+
+**목표**: Next.js 15.3.3 환경에서 동적 파라미터 사용 API 라우트의 params Promise 오류 일괄 수정
+
+- [x] **동적 API 라우트 파일 식별**
+  - [x] 전체 46개 API 라우트 파일 확인
+  - [x] params 사용하는 파일들 분류 ([projectId], [serverId], [team_id] 등)
+  - [x] 수정 우선순위 결정
+- [x] **Next.js 15+ 패턴 적용**
+  - [x] params 직접 사용 → await params로 변경
+  - [x] destructuring 패턴 적용 (const { projectId } = await params)
+  - [x] 모든 HTTP 메서드 (GET, POST, PUT, DELETE) 대응
+- [x] **Admin 패널 API 라우트 수정**
+  - [x] /api/admin/teams/[team_id]/ 관련 파일
+  - [x] /api/admin/projects/[project_id]/ 관련 파일  
+  - [x] /api/admin/api-keys/[api_key_id]/ 관련 파일
+- [x] **Projects API 라우트 수정**
+  - [x] /api/projects/[projectId]/ 하위 모든 파일
+  - [x] /api/projects/[projectId]/servers/[serverId]/ 관련 파일
+  - [x] /api/projects/[projectId]/api-keys/[keyId]/ 관련 파일
+- [x] **Teams API 라우트 수정**
+  - [x] /api/teams/[teamId]/ 관련 파일
+  - [x] /api/teams/[teamId]/members/ 관련 파일
+- [x] **기타 동적 API 라우트 수정**
+  - [x] /api/tool-call-logs/[logId]/route.ts
+  - [x] /api/admin/users/[userId]/route.ts
+- [x] **수정 결과 검증**
+  - [x] TypeScript 컴파일 오류 해결 확인
+  - [x] 모든 동적 API 라우트 정상 작동 검증
+
+**기술적 해결사항**:
+- 🔧 **Next.js 15+ 호환성**: async params 패턴으로 완전 전환
+- 🔧 **TypeScript 오류 해결**: "Property does not exist on type 'Promise<any>'" 완전 제거  
+- 🔧 **API 안정성**: 모든 동적 라우트 정상 작동 보장
+- 🔧 **일관된 패턴**: 모든 파일에 동일한 Next.js 15+ 패턴 적용
+
+**커밋 정보**: 
+- commit 785214a - "fix: [TASK_063] Next.js 15+ API 라우트 params Promise 패턴 수정"
+- commit 5c62325 - "fix: [TASK_063] 나머지 API 라우트 Next.js 15+ 패턴 적용"
+
 ## Progress Status
-- Current Progress: TASK_062 - API Keys 관리 페이지 구현 ✅ 완료
-- Next Task: 새로운 작업 대기 중
+- Current Progress: 모든 계획된 작업 완료 - TASK_062 (API Keys 관리), TASK_063 (shadcn/ui 표준화) 성공적으로 완료
+- Next Task: 사용자 요청 대기 - 새로운 기능 요청이나 버그 리포트 대기 중
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 
