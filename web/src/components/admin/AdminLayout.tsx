@@ -115,7 +115,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-background">
       {/* Breadcrumb */}
       <div className="border-b bg-muted/30">
-        <div className="container mx-auto px-6 py-2">
+        <div className="max-w-[1600px] mx-auto px-4 py-2">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground flex items-center gap-1">
               <Home className="h-3 w-3" />
@@ -132,7 +132,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Admin Header */}
       <div className="border-b bg-background">
-        <div className="container mx-auto px-6 py-6">
+        <div className="max-w-[1600px] mx-auto px-4 py-6">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
@@ -155,7 +155,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Navigation Tabs */}
       <div className="border-b bg-background">
-        <div className="container mx-auto px-6">
+        <div className="max-w-[1600px] mx-auto px-4">
           <nav className="flex space-x-0">
             {/* Overview Tab */}
             <Link
@@ -220,7 +220,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Page Content */}
-      <div className="container mx-auto px-6 py-6">
+      <div className="max-w-[1600px] mx-auto px-4 py-6">
         {children}
       </div>
     </div>
