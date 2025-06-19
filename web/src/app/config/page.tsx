@@ -247,7 +247,7 @@ export default function ConfigPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="py-6">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin" />
         </div>
@@ -261,7 +261,7 @@ export default function ConfigPage() {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Configuration</h1>
         <p className="text-gray-600 dark:text-gray-400">

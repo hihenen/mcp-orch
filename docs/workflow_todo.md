@@ -566,6 +566,27 @@
 **커밋 정보**:
 - commit 5aeaf86 - "feat: [TASK_067] Add error detail modal with copy functionality for worker history"
 
+### TASK_069: 관리자 페이지 여백 설정 일관성 검토
+
+**목표**: AdminLayout의 여백 설정과 각 관리자 페이지의 여백 설정 일관성 확인 및 최적화
+
+- [ ] **AdminLayout 여백 설정 분석**
+  - [ ] 현재 max-w-[1600px] mx-auto px-4 설정 확인
+  - [ ] children 렌더링 방식 및 레이아웃 구조 파악
+- [ ] **관리자 페이지별 여백 설정 검토**
+  - [ ] /web/src/app/admin/users/page.tsx 여백 설정 확인
+  - [ ] /web/src/app/admin/teams/page.tsx 여백 설정 확인
+  - [ ] /web/src/app/admin/projects/page.tsx 여백 설정 확인
+  - [ ] /web/src/app/admin/api-keys/page.tsx 여백 설정 확인
+- [ ] **불필요한 중복 설정 제거**
+  - [ ] 각 페이지의 container, max-width 중복 설정 식별
+  - [ ] 불필요한 여백/패딩 설정 제거
+  - [ ] AdminLayout과 충돌하는 설정 정리
+- [ ] **일관성 확보 및 최적화**
+  - [ ] 표준 레이아웃 패턴 적용
+  - [ ] 반응형 여백 설정 검증
+  - [ ] 페이지별 콘텐츠 구성 최적화
+
 ### TASK_068: 관리자 페이지 검색 기능 개선 (실시간 → 버튼 + Enter 키) ✅ 완료
 
 **목표**: onChange 실시간 검색을 검색 버튼 + Enter 키 방식으로 변경하여 서버 요청 최적화
@@ -615,8 +636,8 @@
 - commit 94e6c82 - "feat: [TASK_068] Improve API Keys page search - replace onChange with button + Enter key"
 
 ## Progress Status
-- Current Progress: TASK_068 완료 - 관리자 페이지 검색 기능 개선 완료
-- Next Task: 사용자 요청 대기 - 새로운 기능 요청이나 버그 리포트 대기 중
+- Current Progress: TASK_069 계획 완료 - 관리자 페이지 여백 설정 일관성 검토 계획
+- Next Task: TASK_069 실행 대기 - ACT 명령어 대기 중
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 

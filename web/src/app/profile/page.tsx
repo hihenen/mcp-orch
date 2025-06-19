@@ -217,7 +217,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
+    <div className="py-6 space-y-8">
       {/* 헤더 */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">프로필 설정</h1>

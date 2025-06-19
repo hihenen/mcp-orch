@@ -15,7 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center">
+          <div className="max-w-[1600px] mx-auto px-4 flex h-16 items-center">
             <div className="mr-8">
               <Link href="/" className="flex items-center space-x-2">
                 <span className="text-xl font-bold">MCP Orch</span>
@@ -32,7 +32,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Main Content */}
         <main className="flex-1">
-          <div className="container mx-auto px-4 py-6">
+          <div className="max-w-[1600px] mx-auto px-4 py-6">
             {children}
           </div>
         </main>

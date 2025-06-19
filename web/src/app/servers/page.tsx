@@ -57,7 +57,7 @@ export default function ServersPage() {
   if (!canAccessGlobalServers) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-8">
+        <div className="py-8">
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Shield className="w-16 h-16 text-red-400 mb-4" />
@@ -196,7 +196,7 @@ export default function ServersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
+      <div className="py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
             <div className="flex items-center gap-3 mb-2">

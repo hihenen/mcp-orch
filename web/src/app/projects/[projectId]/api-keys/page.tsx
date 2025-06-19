@@ -128,7 +128,7 @@ export default function ProjectApiKeysPage() {
   if (!selectedProject) {
     return (
       <ProjectLayout>
-        <div className="container py-6">
+        <div className="py-6">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-4 text-muted-foreground">프로젝트를 로드하는 중...</p>
@@ -140,7 +140,7 @@ export default function ProjectApiKeysPage() {
 
   return (
     <ProjectLayout>
-      <div className="container py-6 space-y-6">
+      <div className="py-6 space-y-6">
         {/* 헤더 섹션 */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
