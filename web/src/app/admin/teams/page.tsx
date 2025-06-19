@@ -360,7 +360,6 @@ export default function TeamsAdminPage() {
                   <TableRow>
                     <TableHead>Team</TableHead>
                     <TableHead>Owner</TableHead>
-                    <TableHead>Plan</TableHead>
                     <TableHead>Members</TableHead>
                     <TableHead>Projects</TableHead>
                     <TableHead>Status</TableHead>
@@ -398,11 +397,6 @@ export default function TeamsAdminPage() {
                             {team.owner_email || 'No email'}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {team.plan}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">

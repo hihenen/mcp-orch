@@ -175,8 +175,34 @@
 **커밋 정보**: 
 - commit [sha] - "fix: [TASK_057] ApiKey team_id 속성 오류 수정 - project_id 기반 통계 계산"
 
+### TASK_058: Admin Teams UI Plan 필드 제거 및 편집 기능 개선 ✅ 완료
+
+**목표**: Teams 목록과 편집 모달에서 Plan 필드 제거 및 편집 API 정상 작동 확보
+
+- [x] **Teams 목록 테이블에서 Plan 컬럼 제거**
+  - [x] TableHead "Plan" 제거
+  - [x] TableCell Plan 뱃지 제거
+  - [x] 테이블 레이아웃 정리
+- [x] **EditTeamModal에서 Plan 필드 제거**
+  - [x] Plan Select 드롭다운 제거
+  - [x] UpdateTeamForm 인터페이스에서 plan 필드 제거
+  - [x] formData 초기화에서 plan 제거
+  - [x] Select 컴포넌트 import 제거
+- [x] **CreateTeamModal에서 Plan 필드 제거**
+  - [x] Plan Select 드롭다운 제거
+  - [x] CreateTeamForm 인터페이스에서 plan 필드 제거
+  - [x] Grid 레이아웃을 3칸에서 2칸으로 조정
+
+**기술적 해결사항**:
+- 🔧 **UI 간소화**: Plan 관련 UI 요소 완전 제거로 사용자 혼란 방지
+- 🔧 **API 호환성**: 백엔드는 plan 필드를 Optional로 유지하여 호환성 확보
+- 🔧 **레이아웃 최적화**: Grid 구조를 재정렬하여 깔끔한 UI 제공
+
+**커밋 정보**: 
+- commit [sha] - "feat: [TASK_058] Admin Teams UI에서 Plan 필드 제거 및 편집 기능 개선"
+
 ## Progress Status
-- Current Progress: TASK_057 - Admin Teams API ApiKey 모델 참조 오류 수정 ✅ 완료
+- Current Progress: TASK_058 - Admin Teams UI Plan 필드 제거 및 편집 기능 개선 ✅ 완료
 - Next Task: Projects 관리 페이지 UI 구현 (영어)
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS

@@ -7,13 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -34,7 +27,6 @@ interface CreateTeamForm {
   description: string;
   owner_email: string;
   is_personal: boolean;
-  plan: string;
   max_api_keys: number;
   max_members: number;
 }
@@ -45,7 +37,6 @@ export function CreateTeamModal({ isOpen, onClose, onTeamCreated }: CreateTeamMo
     description: '',
     owner_email: '',
     is_personal: false,
-    plan: 'free',
     max_api_keys: 5,
     max_members: 10,
   });
@@ -89,7 +80,6 @@ export function CreateTeamModal({ isOpen, onClose, onTeamCreated }: CreateTeamMo
         description: '',
         owner_email: '',
         is_personal: false,
-        plan: 'free',
         max_api_keys: 5,
         max_members: 10,
       });
@@ -110,7 +100,6 @@ export function CreateTeamModal({ isOpen, onClose, onTeamCreated }: CreateTeamMo
         description: '',
         owner_email: '',
         is_personal: false,
-        plan: 'free',
         max_api_keys: 5,
         max_members: 10,
       });
@@ -176,25 +165,7 @@ export function CreateTeamModal({ isOpen, onClose, onTeamCreated }: CreateTeamMo
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="plan">Plan</Label>
-              <Select
-                value={formData.plan}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, plan: value }))}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="max_api_keys">Max API Keys</Label>
               <Input

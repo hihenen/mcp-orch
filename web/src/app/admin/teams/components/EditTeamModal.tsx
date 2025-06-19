@@ -7,13 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -54,7 +47,6 @@ interface UpdateTeamForm {
   name: string;
   description: string;
   is_active: boolean;
-  plan: string;
   max_api_keys: number;
   max_members: number;
 }
@@ -64,7 +56,6 @@ export function EditTeamModal({ isOpen, onClose, team, onTeamUpdated }: EditTeam
     name: '',
     description: '',
     is_active: true,
-    plan: 'free',
     max_api_keys: 5,
     max_members: 10,
   });
@@ -79,7 +70,6 @@ export function EditTeamModal({ isOpen, onClose, team, onTeamUpdated }: EditTeam
         name: team.name,
         description: team.description || '',
         is_active: team.is_active,
-        plan: team.plan,
         max_api_keys: team.max_api_keys,
         max_members: team.max_members,
       });
@@ -147,36 +137,16 @@ export function EditTeamModal({ isOpen, onClose, team, onTeamUpdated }: EditTeam
 
           {/* Team Info */}
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Team Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter team name"
-                  disabled={loading}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="plan">Plan</Label>
-                <Select
-                  value={formData.plan}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, plan: value }))}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="pro">Pro</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Team Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter team name"
+                disabled={loading}
+                required
+              />
             </div>
 
             <div className="space-y-2">
