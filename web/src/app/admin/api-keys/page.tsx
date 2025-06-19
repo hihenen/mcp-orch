@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Key, Search, Trash2, Settings, Eye, EyeOff, Activity, Clock, Shield } from 'lucide-react';
+import { AlertCircle, Key, Search, Trash2, Settings, Eye, EyeOff, Activity, Clock, Shield, X } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -73,6 +73,7 @@ export default function AdminApiKeysPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expiredOnlyFilter, setExpiredOnlyFilter] = useState(false);
@@ -240,6 +241,24 @@ export default function AdminApiKeysPage() {
     return expiry <= thirtyDaysFromNow && expiry > new Date();
   };
 
+  // Search functions
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   // Load data on mount and when filters change
   useEffect(() => {
     loadApiKeys(1);
@@ -322,12 +341,32 @@ export default function AdminApiKeysPage() {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search API keys..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="pl-10 pr-10"
                 />
+                {searchInput && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
+            
+            <Button
+              onClick={handleSearch}
+              variant="default"
+              size="default"
+              className="px-4"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
