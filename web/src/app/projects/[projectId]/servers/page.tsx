@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDateTime } from '@/lib/date-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -278,7 +279,7 @@ export default function ProjectServersPage() {
       {lastRefresh && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
-          마지막 새로고침: {lastRefresh.toLocaleString('ko-KR')}
+          마지막 새로고침: {formatDateTime(lastRefresh)}
         </div>
       )}
 
@@ -404,7 +405,7 @@ export default function ProjectServersPage() {
                     <div>타입: {server.transportType || server.transport_type || 'stdio'}</div>
                     <div>도구: {server.tools_count || server.availableTools || 0}개</div>
                     {server.last_connected && (
-                      <div>마지막 연결: {new Date(server.last_connected).toLocaleString('ko-KR')}</div>
+                      <div>마지막 연결: {formatDateTime(server.last_connected)}</div>
                     )}
                   </div>
                   

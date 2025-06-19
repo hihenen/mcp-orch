@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDate } from '@/lib/date-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -333,7 +334,7 @@ export default function ProjectApiKeysPage() {
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {apiKey.expires_at 
-                                ? `만료: ${new Date(apiKey.expires_at).toLocaleDateString('ko-KR')}`
+                                ? `만료: ${formatDate(apiKey.expires_at)}`
                                 : '만료 없음'
                               }
                             </div>
@@ -355,7 +356,7 @@ export default function ProjectApiKeysPage() {
                           <td className="p-4">
                             <div className="text-sm">
                               {apiKey.last_used_at 
-                                ? new Date(apiKey.last_used_at).toLocaleDateString('ko-KR')
+                                ? formatDate(apiKey.last_used_at)
                                 : '사용 안함'
                               }
                             </div>
@@ -366,7 +367,7 @@ export default function ProjectApiKeysPage() {
                           <td className="p-4">
                             <div className="text-sm">
                               {apiKey.created_at 
-                                ? new Date(apiKey.created_at).toLocaleDateString('ko-KR')
+                                ? formatDate(apiKey.created_at)
                                 : '-'
                               }
                             </div>

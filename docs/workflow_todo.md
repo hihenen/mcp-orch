@@ -751,11 +751,11 @@
   - [x] 현재 datetime 필드 저장 방식 분석
   - [ ] 모든 datetime 응답을 UTC ISO 8601 포맷으로 표준화
   - [ ] API 응답 형식 일관성 확보
-- [ ] **프론트엔드 날짜 포맷팅 유틸리티 구현**
-  - [ ] `formatDate` 유틸리티 함수 생성
-  - [ ] 브라우저 locale 자동 감지 (navigator.language)
-  - [ ] Intl.DateTimeFormat API 활용한 현지화
-  - [ ] 타임존 자동 변환 기능
+- [x] **프론트엔드 날짜 포맷팅 유틸리티 구현**
+  - [x] `formatDate` 유틸리티 함수 생성
+  - [x] 브라우저 locale 자동 감지 (navigator.language)
+  - [x] Intl.DateTimeFormat API 활용한 현지화
+  - [x] 타임존 자동 변환 기능
 - [ ] **기존 컴포넌트에 적용**
   - [ ] 관리자 페이지 날짜 표시 영역 개선
   - [ ] 사용자 가입일, 마지막 로그인 등 날짜 필드 적용

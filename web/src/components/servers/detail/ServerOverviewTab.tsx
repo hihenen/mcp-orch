@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { ServerTabProps } from './types';
+import { formatDateTime } from '@/lib/date-utils';
 
 export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
   return (
@@ -42,7 +43,7 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
                 <div className="font-medium text-muted-foreground">마지막 연결</div>
                 <div>
                   {server.last_connected 
-                    ? new Date(server.last_connected).toLocaleString('ko-KR')
+                    ? formatDateTime(server.last_connected)
                     : '연결 기록 없음'
                   }
                 </div>
