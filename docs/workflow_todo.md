@@ -170,6 +170,31 @@
 **커밋 정보**: 
 - commit bb016b0 - "feat: [TASK_061] Projects 관리 페이지 UI 구현"
 
+### TASK_062: API Keys 관리 페이지 구현 🚧 진행중
+
+**목표**: 관리자가 모든 API 키를 모니터링하고 관리할 수 있는 기능 구현 (마스킹 처리)
+
+- [x] **백엔드 Admin API Keys 관리 API 구현**
+  - [x] API 키 목록 조회 API (페이지네이션, 검색, 필터링)
+  - [x] API 키 상태 관리 API (활성화/비활성화)
+  - [x] API 키 삭제 API (관리자 전용)
+  - [x] 사용량 통계 조회 API
+- [ ] **API Keys 관리 페이지 메인 UI 구현**
+  - [ ] API 키 목록 테이블 (마스킹 처리)
+  - [ ] 프로젝트별 필터링 기능
+  - [ ] 상태별 필터링 (활성/비활성/만료)
+  - [ ] 통계 대시보드 (총 키 수, 활성 키, 만료 예정)
+- [ ] **보안 및 마스킹 기능**
+  - [ ] API 키 prefix만 표시 (project_abc123***)
+  - [ ] 마지막 사용 IP 표시
+  - [ ] 사용량 제한 표시
+  - [ ] 만료일 관리
+- [ ] **관리 기능 구현**
+  - [ ] 키 활성화/비활성화 토글
+  - [ ] 키 삭제 (확인 모달 포함)
+  - [ ] 사용량 제한 조정
+  - [ ] 만료일 연장
+
 ### TASK_056: Admin Teams API 라우터 등록 및 404 오류 수정 ✅ 완료
 
 **목표**: 백엔드에서 admin teams API가 404 오류를 반환하는 문제 수정
@@ -284,8 +309,8 @@
 - commit [sha] - "docs: [TASK_060] Next.js 15+ 개발 지침 추가 및 표준화"
 
 ## Progress Status
-- Current Progress: TASK_061 - Projects 관리 페이지 UI 구현 ✅ 완료
-- Next Task: 추가 기능 구현 요청 대기
+- Current Progress: TASK_062 - API Keys 관리 페이지 구현 🚧 진행중
+- Next Task: 백엔드 Admin API Keys 관리 API 구현
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 

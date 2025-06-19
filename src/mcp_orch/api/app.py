@@ -34,6 +34,7 @@ from .project_security import router as project_security_router
 from .admin import router as admin_router
 from .admin_teams import router as admin_teams_router
 from .admin_projects import router as admin_projects_router
+from .admin_api_keys import router as admin_api_keys_router
 from .workers import router as workers_router
 from starlette.routing import Mount
 from mcp.server.sse import SseServerTransport
@@ -138,6 +139,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(admin_router)  # 🔧 관리자 API
     app.include_router(admin_teams_router)  # 🔧 관리자 Teams 관리 API
     app.include_router(admin_projects_router)  # 🔧 관리자 Projects 관리 API
+    app.include_router(admin_api_keys_router)  # 🔧 관리자 API Keys 관리 API
     app.include_router(workers_router)  # 🔧 워커 관리 API
     app.include_router(fastmcp_router)
     
