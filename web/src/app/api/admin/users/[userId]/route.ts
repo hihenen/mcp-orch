@@ -5,9 +5,9 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 export const GET = auth(async function GET(req, { params }: RouteParams) {
@@ -17,7 +17,10 @@ export const GET = auth(async function GET(req, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. JWT 토큰 생성 (필수)
+    // 2. Next.js 15+ 필수: params await 처리
+    const { userId } = await params;
+
+    // 3. JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
@@ -25,8 +28,8 @@ export const GET = auth(async function GET(req, { params }: RouteParams) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    // 3. 백엔드 API 호출
-    const response = await fetch(`${BACKEND_URL}/api/users/admin/${params.userId}`, {
+    // 4. 백엔드 API 호출
+    const response = await fetch(`${BACKEND_URL}/api/users/admin/${userId}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
@@ -55,6 +58,9 @@ export const PUT = auth(async function PUT(req, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Next.js 15+ 필수: params await 처리
+    const { userId } = await params;
+
     const body = await req.json();
     const jwtToken = await getServerJwtToken(req as any);
     
@@ -63,7 +69,7 @@ export const PUT = auth(async function PUT(req, { params }: RouteParams) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/users/admin/${params.userId}`, {
+    const response = await fetch(`${BACKEND_URL}/api/users/admin/${userId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -94,6 +100,9 @@ export const DELETE = auth(async function DELETE(req, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Next.js 15+ 필수: params await 처리
+    const { userId } = await params;
+
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
@@ -101,7 +110,7 @@ export const DELETE = auth(async function DELETE(req, { params }: RouteParams) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/users/admin/${params.userId}`, {
+    const response = await fetch(`${BACKEND_URL}/api/users/admin/${userId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

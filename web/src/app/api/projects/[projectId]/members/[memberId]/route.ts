@@ -5,23 +5,23 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     projectId: string;
     memberId: string;
-  };
+  }>;
 }
 
-export const PUT = auth(async function PUT(
-  req: NextRequest & { auth: any },
-  { params }: RouteContext
-) {
+export const PUT = auth(async function PUT(req, { params }: RouteContext) {
   try {
     // 1. NextAuth.js v5 세션 확인
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. JWT 토큰 생성 (필수)
+    // 2. Next.js 15+ 필수: params await 처리
+    const { projectId, memberId } = await params;
+
+    // 3. JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
@@ -34,12 +34,12 @@ export const PUT = auth(async function PUT(
 
     console.log('✅ Using JWT token for PUT member request');
 
-    // 3. 요청 본문 파싱
+    // 4. 요청 본문 파싱
     const body = await req.json();
 
-    // 4. 백엔드 API 호출
+    // 5. 백엔드 API 호출
     const response = await fetch(
-      `${BACKEND_URL}/api/projects/${params.projectId}/members/${params.memberId}`,
+      `${BACKEND_URL}/api/projects/${projectId}/members/${memberId}`,
       {
         method: 'PUT',
         headers: {
@@ -67,17 +67,17 @@ export const PUT = auth(async function PUT(
   }
 });
 
-export const DELETE = auth(async function DELETE(
-  req: NextRequest & { auth: any },
-  { params }: RouteContext
-) {
+export const DELETE = auth(async function DELETE(req, { params }: RouteContext) {
   try {
     // 1. NextAuth.js v5 세션 확인
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. JWT 토큰 생성 (필수)
+    // 2. Next.js 15+ 필수: params await 처리
+    const { projectId, memberId } = await params;
+
+    // 3. JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
@@ -90,9 +90,9 @@ export const DELETE = auth(async function DELETE(
 
     console.log('✅ Using JWT token for DELETE member request');
 
-    // 3. 백엔드 API 호출
+    // 4. 백엔드 API 호출
     const response = await fetch(
-      `${BACKEND_URL}/api/projects/${params.projectId}/members/${params.memberId}`,
+      `${BACKEND_URL}/api/projects/${projectId}/members/${memberId}`,
       {
         method: 'DELETE',
         headers: {

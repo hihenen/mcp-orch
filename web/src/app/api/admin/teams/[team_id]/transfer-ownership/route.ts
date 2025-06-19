@@ -10,6 +10,9 @@ export const POST = auth(async function POST(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Next.js 15+ 필수: params await 처리
+    const { team_id } = await params;
+
     const body = await req.json();
     const jwtToken = await getServerJwtToken(req as any);
     
@@ -18,7 +21,7 @@ export const POST = auth(async function POST(req, { params }) {
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${params.team_id}/transfer-ownership`, {
+    const response = await fetch(`${BACKEND_URL}/api/admin/teams/${team_id}/transfer-ownership`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
