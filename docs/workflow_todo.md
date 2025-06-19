@@ -104,9 +104,35 @@
 - 🔧 **성능 최적화**: 별도 요청 없이 기존 워커에서 통합 처리
 - 🔧 **일관성 보장**: 서버 연결 상태와 도구 정보가 항상 동기화
 
+### TASK_055: 관리자 패널 Teams/Projects 관리 기능 추가 🚧 진행중
+
+**목표**: 관리자 패널에서 Teams와 Projects를 관리하는 기능 추가 및 영어 UI 적용
+
+- [x] **AdminLayout 한글 UI 요소를 영어로 변경**
+  - [x] 로딩 상태 메시지: "로딩 중..." → "Loading...", "권한을 확인하는 중..." → "Checking permissions..."
+  - [x] 네비게이션 탭: "개요" → "Overview"
+  - [x] 준비중 상태: "준비중" → "Coming Soon"
+  - [x] 모든 주석을 영어로 변경
+- [ ] **백엔드 Teams 관리 API 구현**
+  - [ ] Teams 목록 조회 API
+  - [ ] Teams 생성/수정/삭제 API
+  - [ ] Teams 소유권 이전 API
+- [ ] **백엔드 Projects 관리 API 구현**
+  - [ ] Projects 목록 조회 API
+  - [ ] Projects 생성/수정/삭제 API
+  - [ ] Projects 소유권 이전 API
+- [ ] **Teams 관리 페이지 UI 구현 (영어)**
+  - [ ] Teams 목록 테이블
+  - [ ] 검색 및 필터링 기능
+  - [ ] 팀 생성/편집 모달
+- [ ] **Projects 관리 페이지 UI 구현 (영어)**
+  - [ ] Projects 목록 테이블
+  - [ ] 검색 및 필터링 기능
+  - [ ] 프로젝트 생성/편집 모달
+
 ## Progress Status
-- Current Progress: TASK_054 - 관리자 권한 불러오기 문제 진단 및 해결 ✅ 완료
-- Next Task: 사용자 테스트 및 추가 요구사항 확인
+- Current Progress: TASK_055 - AdminLayout 한글 UI 요소를 영어로 변경 ✅ 완료
+- Next Task: 백엔드 Teams 관리 API 구현
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 

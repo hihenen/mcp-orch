@@ -30,6 +30,48 @@
 
 ---
 
+## 🌐 **UI Language Policy (최우선 원칙)**
+
+### **English-First User Interface Standard**
+- **Default Language**: All user interface elements MUST be in English
+- **Global Consistency**: Maintain consistent English terminology across the entire application
+- **Professional Standards**: Follow industry-standard English UI patterns (GitHub, GitLab, etc.)
+
+### **Mandatory English UI Elements**
+- ✅ **All UI Text**: Buttons, labels, headings, descriptions
+- ✅ **Navigation**: Menu items, breadcrumbs, tab names
+- ✅ **Forms**: Input labels, placeholders, validation messages
+- ✅ **Notifications**: Success/error messages, toasts, alerts
+- ✅ **Tables**: Column headers, action buttons, status badges
+- ✅ **Modals**: Titles, content, action buttons
+
+### **Code Standards**
+- ✅ **Component Names**: English naming for all React components
+- ✅ **API Endpoints**: English route names and parameters
+- ✅ **Database Fields**: English column names and enum values
+- ✅ **Error Messages**: All user-facing errors in English
+- ✅ **Comments**: Code comments can be in Korean for development clarity
+
+### **Implementation Guidelines**
+```typescript
+// ✅ Good - English UI
+<Button>Create Team</Button>
+<h1>Admin Panel</h1>
+<p>Manage all teams and projects</p>
+
+// ❌ Bad - Korean UI
+<Button>팀 생성</Button>
+<h1>관리자 패널</h1>
+<p>모든 팀과 프로젝트 관리</p>
+```
+
+### **Quality Assurance**
+- **Code Review**: All UI text must be verified as English-only
+- **Testing**: UI language consistency check in all features
+- **Documentation**: API documentation and user guides in English
+
+---
+
 ## 📋 **Workflow 관리 최우선 원칙**
 이번 프로젝트에서는 **mcp-orch폴더안의 docs/workflow_todo.md를 항상 참조 및 반영하면서 진행**하세요
 

@@ -26,31 +26,31 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session, status } = useSession();
   const { isAdmin } = useAdminPermission();
 
-  // 관리자 권한 체크
+  // Admin permission check
   useEffect(() => {
-    if (status === 'loading') return; // 로딩 중에는 체크하지 않음
+    if (status === 'loading') return; // Don't check during loading
     
     if (!session) {
-      // 세션이 없으면 로그인 페이지로 리다이렉트
+      // Redirect to login page if no session
       router.push('/auth/signin?callbackUrl=' + encodeURIComponent(pathname));
       return;
     }
     
     if (!isAdmin) {
-      // 관리자가 아니면 프로젝트 페이지로 리다이렉트
+      // Redirect to projects page if not admin
       router.push('/projects');
       return;
     }
   }, [session, status, isAdmin, router, pathname]);
 
-  // 로딩 중이거나 권한이 없으면 로딩 표시
+  // Show loading if loading or no permission
   if (status === 'loading' || !session || !isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
           <p className="text-muted-foreground">
-            {status === 'loading' ? '로딩 중...' : '권한을 확인하는 중...'}
+            {status === 'loading' ? 'Loading...' : 'Checking permissions...'}
           </p>
         </div>
       </div>
@@ -59,25 +59,39 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const navigationItems = [
     {
-      label: '사용자 관리',
+      label: 'Users',
       href: '/admin/users',
       icon: Users,
-      description: '사용자 계정 및 권한 관리',
+      description: 'User account and permission management',
       available: true
     },
     {
-      label: '시스템 활동',
+      label: 'Teams',
+      href: '/admin/teams',
+      icon: Users,
+      description: 'Team management and organization',
+      available: true
+    },
+    {
+      label: 'Projects',
+      href: '/admin/projects',
+      icon: Settings,
+      description: 'Project management and oversight',
+      available: true
+    },
+    {
+      label: 'Activity',
       href: '/admin/activity',
       icon: Activity,
-      description: '시스템 로그 및 감사 추적',
+      description: 'System logs and audit trails',
       available: false,
       comingSoon: true
     },
     {
-      label: '워커 관리',
+      label: 'Workers',
       href: '/admin/workers',
       icon: Zap,
-      description: 'APScheduler 백그라운드 워커',
+      description: 'APScheduler background workers',
       available: true
     }
   ];
@@ -91,7 +105,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* 브레드크럼 */}
+      {/* Breadcrumb */}
       <div className="border-b bg-muted/30">
         <div className="container mx-auto px-6 py-2">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -108,7 +122,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      {/* 관리자 헤더 */}
+      {/* Admin Header */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-start justify-between">
@@ -116,7 +130,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className="flex items-center gap-3 mb-2">
                 <Shield className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold text-foreground">
-                  관리자 패널
+                  Admin Panel
                 </h1>
                 <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
                   <Shield className="h-3 w-3 mr-1" />
@@ -124,18 +138,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </Badge>
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                시스템 전체를 관리하고 모니터링할 수 있습니다
+                Manage and monitor the entire system
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 네비게이션 탭 */}
+      {/* Navigation Tabs */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-6">
           <nav className="flex space-x-0">
-            {/* 개요 탭 */}
+            {/* Overview Tab */}
             <Link
               href="/admin"
               className={cn(
@@ -144,13 +158,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50"
               )}
-              title="관리자 대시보드"
+              title="Admin Dashboard"
             >
               <Home className="h-4 w-4" />
-              개요
+              Overview
             </Link>
             
-            {/* 기본 메뉴들 */}
+            {/* Main Menu Items */}
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -163,13 +177,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       "flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium",
                       "border-transparent text-muted-foreground/60 cursor-not-allowed"
                     )}
-                    title={`${item.description} (준비중)`}
+                    title={`${item.description} (Coming Soon)`}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
                     {item.comingSoon && (
                       <Badge variant="outline" className="ml-2 text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                        준비중
+                        Coming Soon
                       </Badge>
                     )}
                   </div>
@@ -197,7 +211,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      {/* 페이지 콘텐츠 */}
+      {/* Page Content */}
       <div className="container mx-auto px-6 py-6">
         {children}
       </div>
