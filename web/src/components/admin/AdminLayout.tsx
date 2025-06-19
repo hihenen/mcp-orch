@@ -1,9 +1,11 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { ReactNode, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { useAdminPermission } from '@/hooks/useAdminPermission';
+import { useSession } from 'next-auth/react';
 import { 
   Users, 
   Settings, 
@@ -20,6 +22,40 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const { isAdmin } = useAdminPermission();
+
+  // 관리자 권한 체크
+  useEffect(() => {
+    if (status === 'loading') return; // 로딩 중에는 체크하지 않음
+    
+    if (!session) {
+      // 세션이 없으면 로그인 페이지로 리다이렉트
+      router.push('/auth/signin?callbackUrl=' + encodeURIComponent(pathname));
+      return;
+    }
+    
+    if (!isAdmin) {
+      // 관리자가 아니면 프로젝트 페이지로 리다이렉트
+      router.push('/projects');
+      return;
+    }
+  }, [session, status, isAdmin, router, pathname]);
+
+  // 로딩 중이거나 권한이 없으면 로딩 표시
+  if (status === 'loading' || !session || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+          <p className="text-muted-foreground">
+            {status === 'loading' ? '로딩 중...' : '권한을 확인하는 중...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const navigationItems = [
     {
