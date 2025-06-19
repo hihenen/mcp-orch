@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,6 +24,32 @@ interface ErrorDetailModalProps {
 
 export function ErrorDetailModal({ open, onClose, jobEntry }: ErrorDetailModalProps) {
   const [copied, setCopied] = useState(false);
+
+  // Keyboard shortcut support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!open) return;
+
+      // Ctrl+C or Cmd+C to copy error message
+      if ((event.ctrlKey || event.metaKey) && event.key === 'c' && jobEntry?.error) {
+        event.preventDefault();
+        handleCopyError();
+      }
+      
+      // Escape to close modal
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, jobEntry?.error, onClose]);
 
   const handleCopyError = async () => {
     if (!jobEntry?.error) return;
@@ -82,6 +108,11 @@ export function ErrorDetailModal({ open, onClose, jobEntry }: ErrorDetailModalPr
           <DialogTitle>Error Details</DialogTitle>
           <DialogDescription>
             Detailed error information for worker execution
+            {jobEntry?.error && (
+              <span className="block text-xs text-muted-foreground mt-1">
+                Press Ctrl+C (Cmd+C) to copy error message • Esc to close
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
