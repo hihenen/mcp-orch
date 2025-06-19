@@ -136,8 +136,25 @@
   - [ ] 검색 및 필터링 기능
   - [ ] 프로젝트 생성/편집 모달
 
+### TASK_056: Admin Teams API 라우터 등록 및 404 오류 수정 ✅ 완료
+
+**목표**: 백엔드에서 admin teams API가 404 오류를 반환하는 문제 수정
+
+- [x] **문제 원인 발견**
+  - [x] app.py에서 admin_teams_router, admin_projects_router가 등록되지 않음
+  - [x] routes.py에는 등록되어 있지만 app.py에서 routes.py를 사용하지 않음
+- [x] **문제 해결**
+  - [x] app.py에 admin_teams_router, admin_projects_router import 추가
+  - [x] app.py에 라우터 등록 코드 추가
+  - [x] API 엔드포인트 활성화 완료
+
+**기술적 해결사항**:
+- 🔧 **라우터 등록**: app.py에 admin_teams_router, admin_projects_router 추가
+- 🔧 **API 경로 활성화**: /api/admin/teams/*, /api/admin/projects/* 엔드포인트 정상 작동
+- 🔧 **개발 환경 수정**: 백엔드 재시작 후 정상 동작 확인
+
 ## Progress Status
-- Current Progress: TASK_055 - Teams 관리 페이지 UI 구현 ✅ 완료
+- Current Progress: TASK_056 - Admin Teams API 라우터 등록 ✅ 완료
 - Next Task: Projects 관리 페이지 UI 구현 (영어)
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
