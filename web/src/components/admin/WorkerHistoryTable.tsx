@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { JobHistoryEntry } from '@/hooks/useWorkerStatus';
 import { RefreshCw, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { ErrorDetailModal } from './ErrorDetailModal';
 
 interface WorkerHistoryTableProps {
   history: JobHistoryEntry[];
@@ -14,6 +16,18 @@ interface WorkerHistoryTableProps {
 }
 
 export function WorkerHistoryTable({ history, isLoading, onRefresh }: WorkerHistoryTableProps) {
+  const [selectedJob, setSelectedJob] = useState<JobHistoryEntry | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleErrorClick = (job: JobHistoryEntry) => {
+    setSelectedJob(job);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
+  };
   const formatDuration = (seconds: number) => {
     if (seconds < 1) return `${Math.round(seconds * 1000)}ms`;
     if (seconds < 60) return `${seconds.toFixed(1)}초`;
@@ -162,8 +176,12 @@ export function WorkerHistoryTable({ history, isLoading, onRefresh }: WorkerHist
                     </TableCell>
                     <TableCell>
                       {entry.error ? (
-                        <div className="max-w-xs">
-                          <p className="text-sm text-red-600 truncate" title={entry.error}>
+                        <div 
+                          className="max-w-xs cursor-pointer hover:bg-muted/50 rounded px-2 py-1 transition-colors"
+                          onClick={() => handleErrorClick(entry)}
+                          title="Click to view full error details"
+                        >
+                          <p className="text-sm text-red-600 truncate">
                             {entry.error}
                           </p>
                         </div>
@@ -178,6 +196,12 @@ export function WorkerHistoryTable({ history, isLoading, onRefresh }: WorkerHist
           </div>
         )}
       </CardContent>
+
+      <ErrorDetailModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        jobEntry={selectedJob}
+      />
     </Card>
   );
 }
