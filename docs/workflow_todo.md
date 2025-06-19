@@ -7,6 +7,50 @@
 
 ## Task List
 
+### TASK_074: 관리자 페이지 하드코딩된 locale 교체 작업 ✅ 완료
+
+**목표**: 관리자 페이지들에서 하드코딩된 locale(ko-KR, en-US)을 새로 만든 date-utils 유틸리티로 교체
+
+- [x] **AdminUsersPage 날짜 포맷팅 교체**
+  - [x] `toLocaleDateString('en-US')` → `formatDateTime(dateString)` 교체
+  - [x] date-utils import 추가
+- [x] **AdminTeamsPage 날짜 포맷팅 교체**
+  - [x] `toLocaleDateString()` → `formatDate(dateString)` 교체
+  - [x] date-utils import 추가
+- [x] **AdminProjectsPage 날짜 포맷팅 교체**
+  - [x] `toLocaleDateString()` → `formatDate(dateString)` 교체
+  - [x] date-utils import 추가
+- [x] **AdminApiKeysPage 날짜 포맷팅 교체**
+  - [x] `toLocaleDateString('en-US')` → `formatDateTime(dateString)` 교체
+  - [x] date-utils import 추가
+- [x] **AdminOverviewPage 날짜 포맷팅 교체**
+  - [x] `toLocaleString('en-US')` → `formatDateTime(dateString)` 교체
+  - [x] date-utils import 추가
+- [x] **WorkersPage 날짜 포맷팅 교체**
+  - [x] `toLocaleString('ko-KR')` → `formatDateTime(dateString)` 교체
+  - [x] date-utils import 추가
+- [x] **WorkerHistoryTable, ErrorDetailModal 컴포넌트 수정**
+  - [x] 관련 날짜 포맷팅 교체
+  - [x] date-utils import 추가
+
+**기술적 해결사항**:
+- 🔧 **브라우저 locale 자동 감지**: navigator.language 기반으로 사용자 locale 자동 설정
+- 🔧 **Intl.DateTimeFormat 표준화**: 모든 날짜 포맷팅을 표준 Web API로 통일
+- 🔧 **하드코딩 제거**: ko-KR, en-US 등 하드코딩된 locale 완전 제거
+- 🔧 **일관된 패턴**: formatDate(날짜만), formatDateTime(날짜+시간) 명확한 구분
+- 🔧 **타임존 지원**: 사용자 브라우저 타임존 자동 반영
+- 🔧 **fallback 처리**: Intl API 실패 시 안전한 기본 포맷 제공
+
+**수정된 파일**:
+- `/web/src/app/admin/users/page.tsx` - formatDateTime으로 교체
+- `/web/src/app/admin/teams/page.tsx` - formatDate로 교체  
+- `/web/src/app/admin/projects/page.tsx` - formatDate로 교체
+- `/web/src/app/admin/api-keys/page.tsx` - formatDateTime으로 교체
+- `/web/src/app/admin/page.tsx` - formatDateTime으로 교체
+- `/web/src/app/admin/workers/page.tsx` - formatDateTime으로 교체
+- `/web/src/components/admin/WorkerHistoryTable.tsx` - formatDateTime으로 교체
+- `/web/src/components/admin/ErrorDetailModal.tsx` - formatDateTime으로 교체
+
 ### TASK_054: 관리자 권한 불러오기 문제 진단 및 해결 ✅ 완료
 
 **목표**: TASK_052 작업 이후 관리자 권한이 불러와지지 않는 문제 해결
@@ -674,6 +718,53 @@
 - 🔧 **코드 품질**: 모든 코드 주석과 에러 메시지를 영어로 표준화
 - 🔧 **지역화**: 날짜 표시 형식을 글로벌 표준 en-US로 변경
 
+### TASK_073: 프로젝트 datetime 필드 현황 분석 및 개선 방안 제시
+
+**목표**: mcp-orch 프로젝트의 datetime 필드 저장/처리/표시 현황을 전면 분석하고 개선 방안 제시
+
+- [x] **SQLAlchemy 모델 datetime 필드 현황 조사**
+  - [x] User 모델의 datetime 필드 분석 (created_at, updated_at, last_login)
+  - [x] Project, Team, McpServer, ApiKey 모델의 datetime 필드 분석
+  - [x] DateTime vs DateTime(timezone=True) 사용 현황 파악
+  - [x] 현재 timezone 정보 포함 여부 확인
+- [ ] **백엔드 API 응답 포맷 분석**
+  - [ ] Pydantic 모델의 datetime 직렬화 방식 확인
+  - [ ] API 응답에서 실제 datetime 포맷 예시 수집
+  - [ ] UTC 저장 여부 및 ISO 8601 준수 확인
+  - [ ] timezone 정보 포함 여부 확인
+- [ ] **프론트엔드 datetime 처리 현황 분석**
+  - [ ] 관리자 페이지의 datetime 표시 방식 조사
+  - [ ] 브라우저에서 현재 표시되는 시간 포맷 확인
+  - [ ] 하드코딩된 한국 시간 처리 찾기
+  - [ ] Next.js 컴포넌트에서 날짜 포맷팅 패턴 조사
+- [ ] **문제점 식별 및 개선 방안 제시**
+  - [ ] UTC 저장이 안 되는 필드 식별
+  - [ ] API 응답 포맷 일관성 문제 파악
+  - [ ] 프론트엔드 현지화 부족 부분 식별
+  - [ ] 종합적인 datetime 표준화 방안 제시
+
+### TASK_072: 날짜 현지화 시스템 구현
+
+**목표**: 백엔드 UTC 저장 표준화 및 프론트엔드 브라우저 locale 기반 날짜 현지화 구현
+
+- [ ] **백엔드 UTC 저장 표준화**
+  - [x] 현재 datetime 필드 저장 방식 분석
+  - [ ] 모든 datetime 응답을 UTC ISO 8601 포맷으로 표준화
+  - [ ] API 응답 형식 일관성 확보
+- [ ] **프론트엔드 날짜 포맷팅 유틸리티 구현**
+  - [ ] `formatDate` 유틸리티 함수 생성
+  - [ ] 브라우저 locale 자동 감지 (navigator.language)
+  - [ ] Intl.DateTimeFormat API 활용한 현지화
+  - [ ] 타임존 자동 변환 기능
+- [ ] **기존 컴포넌트에 적용**
+  - [ ] 관리자 페이지 날짜 표시 영역 개선
+  - [ ] 사용자 가입일, 마지막 로그인 등 날짜 필드 적용
+  - [ ] 워커 실행 이력, 로그 시간 등 시스템 시간 적용
+- [ ] **사용자 타임존 설정 기능 준비**
+  - [ ] 사용자 프로필에 timezone 필드 추가 계획
+  - [ ] 선호 날짜 포맷 설정 인터페이스 설계
+  - [ ] 수동 타임존 선택 옵션 구조 설계
+
 ### TASK_069: 관리자 페이지 여백 설정 일관성 검토
 
 **목표**: AdminLayout의 여백 설정과 각 관리자 페이지의 여백 설정 일관성 확인 및 최적화
@@ -744,8 +835,8 @@
 - commit 94e6c82 - "feat: [TASK_068] Improve API Keys page search - replace onChange with button + Enter key"
 
 ## Progress Status
-- Current Progress: TASK_071 완료 - 관리자 Users 페이지 영어 UI 변환 완료
-- Next Task: TASK_069 계획 완료 - 관리자 페이지 여백 설정 일관성 검토 대기
+- Current Progress: TASK_074 완료 - 관리자 페이지 하드코딩된 locale 교체 작업 완료
+- Next Task: 새로운 작업 대기 중
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
 

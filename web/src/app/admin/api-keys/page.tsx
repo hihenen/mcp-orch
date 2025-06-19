@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface ApiKey {
   id: string;
@@ -215,15 +216,9 @@ export default function AdminApiKeysPage() {
   };
 
   // Format date
-  const formatDate = (dateString?: string) => {
+  const formatDateSafe = (dateString?: string) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTime(dateString);
   };
 
   // Check if key is expired
@@ -515,7 +510,7 @@ export default function AdminApiKeysPage() {
                           
                           <TableCell>
                             <div className="text-sm">
-                              <div>{formatDate(apiKey.last_used_at)}</div>
+                              <div>{formatDateSafe(apiKey.last_used_at)}</div>
                               {apiKey.last_used_ip && (
                                 <div className="text-muted-foreground font-mono">
                                   {apiKey.last_used_ip}

@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Clock, User, MapPin, Code, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ToolCallLog, STATUS_COLORS, CLIENT_TYPE_ICONS, ERROR_CODE_DESCRIPTIONS } from '@/types/tool-call-logs';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface LogItemProps {
   log: ToolCallLog;
@@ -33,14 +34,9 @@ export function LogItem({ log, isExpanded = false, onToggleExpanded }: LogItemPr
   
   // 시간 포맷팅
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString('ko-KR', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+    return formatDateTime(timestamp, { 
+      dateStyle: 'short', 
+      timeStyle: 'medium' 
     });
   };
 

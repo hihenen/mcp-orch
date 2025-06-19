@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/lib/date-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -264,7 +265,7 @@ export function ServerDetailModal({
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">마지막 연결</span>
                       <span className="text-sm font-medium">
-                        {new Date(currentServer.last_connected).toLocaleString('ko-KR')}
+                        {formatDateTime(currentServer.last_connected)}
                       </span>
                     </div>
                   )}
@@ -457,7 +458,7 @@ export function ServerDetailModal({
                             <div className="flex-1 min-w-0">
                               <p className="text-sm">{log.message}</p>
                               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                <span>{new Date(log.timestamp).toLocaleString('ko-KR')}</span>
+                                <span>{formatDateTime(log.timestamp)}</span>
                                 <span>•</span>
                                 <span>{log.source}</span>
                               </div>

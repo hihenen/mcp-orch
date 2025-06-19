@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Settings, Users, Calendar } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { formatDate } from '@/lib/date-utils';
 
 interface Team {
   id: string;
@@ -130,9 +131,6 @@ export default function TeamsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR');
-  };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {

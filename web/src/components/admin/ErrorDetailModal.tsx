@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { JobHistoryEntry } from '@/hooks/useWorkerStatus';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface ErrorDetailModalProps {
   open: boolean;
@@ -122,7 +123,7 @@ export function ErrorDetailModal({ open, onClose, jobEntry }: ErrorDetailModalPr
             <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Execution Time</p>
-                <p className="text-sm">{new Date(jobEntry.timestamp).toLocaleString()}</p>
+                <p className="text-sm">{formatDateTime(jobEntry.timestamp)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>

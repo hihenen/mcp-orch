@@ -37,6 +37,7 @@ import {
 import { CreateTeamModal } from './components/CreateTeamModal';
 import { EditTeamModal } from './components/EditTeamModal';
 import { TransferOwnershipModal } from './components/TransferOwnershipModal';
+import { formatDate } from '@/lib/date-utils';
 
 interface AdminTeamResponse {
   id: string;
@@ -445,7 +446,7 @@ export default function TeamsAdminPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(team.created_at).toLocaleDateString()}
+                          {formatDate(team.created_at)}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

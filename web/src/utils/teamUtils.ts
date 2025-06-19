@@ -1,19 +1,23 @@
 /**
- * 팀 관련 유틸리티 함수들
+ * Team-related utility functions
  */
 
+import { formatDate as formatDateUtil, formatDateTime as formatDateTimeUtil, formatRelativeTime } from '@/lib/date-utils';
+
 /**
- * 날짜 문자열을 한국어 형식으로 포맷팅
+ * Format date string to user's locale format
+ * @deprecated Use formatDate from @/lib/date-utils instead
  */
 export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('ko-KR');
+  return formatDateUtil(dateString);
 };
 
 /**
- * 날짜 시간 문자열을 한국어 형식으로 포맷팅
+ * Format date time string to user's locale format
+ * @deprecated Use formatDateTime from @/lib/date-utils instead
  */
 export const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleString('ko-KR');
+  return formatDateTimeUtil(dateString);
 };
 
 /**
@@ -122,25 +126,9 @@ export const formatFileSize = (bytes: number) => {
 };
 
 /**
- * 상대 시간 표시 (예: "2시간 전")
+ * Display relative time (e.g., "2 hours ago")
+ * @deprecated Use formatRelativeTime from @/lib/date-utils instead
  */
 export const getRelativeTime = (dateString: string) => {
-  const now = new Date();
-  const date = new Date(dateString);
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) {
-    return '방금 전';
-  } else if (diffInSeconds < 3600) {
-    const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes}분 전`;
-  } else if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours}시간 전`;
-  } else if (diffInSeconds < 2592000) {
-    const days = Math.floor(diffInSeconds / 86400);
-    return `${days}일 전`;
-  } else {
-    return formatDate(dateString);
-  }
+  return formatRelativeTime(dateString);
 };

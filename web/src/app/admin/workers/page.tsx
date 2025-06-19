@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';
+import { formatDateTime } from '@/lib/date-utils';
 
 export default function WorkersPage() {
   const { status, history, isLoading, error, actions } = useWorkerStatus();
@@ -55,12 +56,7 @@ export default function WorkersPage() {
     if (diff < 60000) return `${Math.round(diff / 1000)}초 후`;
     if (diff < 3600000) return `${Math.round(diff / 60000)}분 후`;
     
-    return date.toLocaleString('ko-KR', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTime(date);
   };
 
   if (isLoading) {
@@ -314,7 +310,7 @@ export default function WorkersPage() {
                   <dt className="text-muted-foreground">마지막 실행:</dt>
                   <dd>
                     {status.last_execution 
-                      ? new Date(status.last_execution).toLocaleString('ko-KR')
+                      ? formatDateTime(status.last_execution)
                       : '없음'
                     }
                   </dd>

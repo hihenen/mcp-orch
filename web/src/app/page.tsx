@@ -32,6 +32,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatDate } from '@/lib/date-utils';
 
 export default function HomePage() {
   const { data: session, status } = useSession();
@@ -408,7 +409,7 @@ export default function HomePage() {
                   
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    {new Date(project.created_at).toLocaleDateString('ko-KR')}
+                    {formatDate(project.created_at)}
                   </div>
 
                   <div className="pt-2">

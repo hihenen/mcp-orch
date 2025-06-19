@@ -16,6 +16,7 @@ import {
   TrendingUp,
   RefreshCw
 } from 'lucide-react';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface SystemStats {
   total_users: number;  // Active users only (deleted users excluded)
@@ -218,7 +219,7 @@ export default function AdminPage() {
               </Link>
               {stats?.last_worker_run && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Last run: {new Date(stats.last_worker_run).toLocaleString('en-US')}
+                  Last run: {formatDateTime(stats.last_worker_run)}
                 </p>
               )}
             </CardContent>

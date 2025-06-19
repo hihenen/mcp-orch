@@ -36,6 +36,7 @@ import {
   X
 } from 'lucide-react';
 import { UserEditModal } from '@/components/admin/UserEditModal';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface UserData {
   id: string;
@@ -339,15 +340,6 @@ export default function UsersPage() {
   const isAllSelected = users.length > 0 && selectedUsers.size === users.length;
   const isPartiallySelected = selectedUsers.size > 0 && selectedUsers.size < users.length;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   const getRoleBadge = (role: string) => {
     if (role === 'admin') {
@@ -629,12 +621,12 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {formatDate(user.created_at)}
+                        {formatDateTime(user.created_at)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {user.last_login_at ? formatDate(user.last_login_at) : 'None'}
+                        {user.last_login_at ? formatDateTime(user.last_login_at) : 'None'}
                       </div>
                     </TableCell>
                     <TableCell>

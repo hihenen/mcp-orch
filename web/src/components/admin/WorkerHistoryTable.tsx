@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { JobHistoryEntry } from '@/hooks/useWorkerStatus';
 import { RefreshCw, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { ErrorDetailModal } from './ErrorDetailModal';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface WorkerHistoryTableProps {
   history: JobHistoryEntry[];
@@ -35,15 +36,7 @@ export function WorkerHistoryTable({ history, isLoading, onRefresh }: WorkerHist
   };
 
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    return formatDateTime(timestamp);
   };
 
   const getStatusBadge = (status: string) => {

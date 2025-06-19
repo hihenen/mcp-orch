@@ -35,6 +35,7 @@ import {
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { EditProjectModal } from './components/EditProjectModal';
 import { TransferOwnershipModal } from './components/TransferOwnershipModal';
+import { formatDate } from '@/lib/date-utils';
 
 interface AdminProjectResponse {
   id: string;
@@ -438,7 +439,7 @@ export default function ProjectsAdminPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(project.created_at).toLocaleDateString()}
+                          {formatDate(project.created_at)}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
