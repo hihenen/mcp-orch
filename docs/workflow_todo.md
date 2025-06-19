@@ -398,8 +398,41 @@
 - commit 785214a - "fix: [TASK_063] Next.js 15+ API 라우트 params Promise 패턴 수정"
 - commit 5c62325 - "fix: [TASK_063] 나머지 API 라우트 Next.js 15+ 패턴 적용"
 
+### TASK_064: API Keys 페이지 Select 컴포넌트 빈 문자열 value 오류 수정 ✅ 완료
+
+**목표**: AdminApiKeysPage에서 Radix UI Select 컴포넌트의 빈 문자열 value 오류 해결
+
+- [x] **오류 발생 지점 식별**
+  - [x] AdminApiKeysPage 333번 줄 `<SelectItem value="">All Status</SelectItem>` 확인
+  - [x] Radix UI Select에서 빈 문자열 value 사용 금지 정책 파악
+  - [x] statusFilter 상태 관리 분석
+
+- [x] **Select 컴포넌트 수정**
+  - [x] 빈 문자열 `value=""` 대신 `value="all"` 사용
+  - [x] placeholder 속성으로 기본 표시 텍스트 설정
+  - [x] statusFilter 초기값을 'all'로 변경
+
+- [x] **필터링 로직 업데이트**
+  - [x] loadApiKeys 함수에서 'all' 값 처리 추가
+  - [x] statusFilter !== 'all' 조건으로 필터링 적용
+  - [x] Clear Filters 버튼 조건 및 리셋 로직 수정
+
+- [x] **테스트 및 검증**
+  - [x] Select 컴포넌트 정상 작동 확인
+  - [x] 필터링 기능 정상 작동 확인
+  - [x] Radix UI 표준 준수 확인
+
+**기술적 해결사항**:
+- 🔧 **Radix UI 표준 준수**: 빈 문자열 value 대신 의미있는 'all' 값 사용
+- 🔧 **상태 관리 개선**: statusFilter 초기값과 리셋 로직 일관성 확보
+- 🔧 **필터링 로직 최적화**: 'all' 상태에서는 필터 조건을 API에 전달하지 않음
+- 🔧 **사용자 경험**: placeholder와 Clear Filters 버튼 동작 개선
+
+**커밋 정보**: 
+- commit 86b8311 - "fix: [TASK_064] API Keys 페이지 Select 컴포넌트 빈 문자열 value 오류 수정"
+
 ## Progress Status
-- Current Progress: 모든 계획된 작업 완료 - TASK_062 (API Keys 관리), TASK_063 (shadcn/ui 표준화) 성공적으로 완료
+- Current Progress: TASK_064 완료 - API Keys 페이지 Radix UI Select 컴포넌트 오류 수정 완료
 - Next Task: 사용자 요청 대기 - 새로운 기능 요청이나 버그 리포트 대기 중
 - Last Update: 2025-06-19
 - Automatic Check Status: PASS
