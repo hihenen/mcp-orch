@@ -32,7 +32,8 @@ import {
   User,
   Edit,
   Trash2,
-  Trash
+  Trash,
+  X
 } from 'lucide-react';
 import { UserEditModal } from '@/components/admin/UserEditModal';
 
@@ -50,6 +51,7 @@ interface UserData {
 export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   
   // 모달 상태 관리
@@ -91,12 +93,9 @@ export default function UsersPage() {
     }
   };
 
-  // 실제 API에서 사용자 데이터 로드
+  // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    // 검색어 변경 시 약간의 지연을 두고 API 호출
-    const timeoutId = setTimeout(fetchUsers, searchTerm ? 500 : 0);
-    
-    return () => clearTimeout(timeoutId);
+    fetchUsers();
   }, [searchTerm]);
 
   // API에서 이미 검색이 처리되므로 필터링 불필요
@@ -123,6 +122,24 @@ export default function UsersPage() {
     setEditingUser(null);
     // 사용자 목록 새로고침
     fetchUsers();
+  };
+
+  // 검색 실행 함수
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  // Enter 키 처리
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // 검색 초기화
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
   };
 
   const handleToggleRole = async (user: UserData) => {
@@ -507,12 +524,31 @@ export default function UsersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="사용자 이름 또는 이메일로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                placeholder="Search users by name or email..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                className="pl-9 pr-10"
               />
+              {searchInput && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-9 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+            <Button
+              onClick={handleSearch}
+              variant="default"
+              size="default"
+              className="px-4"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
           </div>
 
           <div className="rounded-md border">
