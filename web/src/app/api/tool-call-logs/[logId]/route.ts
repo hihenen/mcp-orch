@@ -11,6 +11,9 @@ export const GET = auth(async function GET(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Next.js 15+ 필수: params await 처리
+    const { logId } = await params;
+
     // JWT 토큰 생성 (필수)
     const jwtToken = await getServerJwtToken(req as any);
     
@@ -24,7 +27,6 @@ export const GET = auth(async function GET(req, { params }) {
     // URL 쿼리 파라미터를 백엔드로 전달
     const url = new URL(req.url);
     const searchParams = url.searchParams;
-    const logId = params.logId;
     const backendUrl = `${BACKEND_URL}/api/tool-call-logs/${logId}?${searchParams.toString()}`;
 
     const response = await fetch(backendUrl, {
