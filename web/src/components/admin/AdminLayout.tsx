@@ -12,7 +12,8 @@ import {
   Activity, 
   Zap,
   Home,
-  Shield
+  Shield,
+  Key
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -77,6 +78,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       href: '/admin/projects',
       icon: Settings,
       description: 'Project management and oversight',
+      available: true
+    },
+    {
+      label: 'API Keys',
+      href: '/admin/api-keys',
+      icon: Key,
+      description: 'API key monitoring and management',
       available: true
     },
     {
