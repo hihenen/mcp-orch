@@ -53,6 +53,7 @@ class UserResponse(BaseModel):
     id: UUID
     name: str
     email: EmailStr
+    is_admin: bool = False  # 관리자 권한 필드 추가
 
     class Config:
         from_attributes = True
