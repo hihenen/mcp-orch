@@ -94,9 +94,13 @@ export default function AdminApiKeysPage() {
         limit: itemsPerPage.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(projectFilter && { project_id: projectFilter }),
-        ...(statusFilter && statusFilter !== 'all' && { is_active: statusFilter }),
         expired_only: expiredOnlyFilter.toString()
       });
+
+      // Only add is_active filter if statusFilter is not 'all'
+      if (statusFilter && statusFilter !== 'all') {
+        params.append('is_active', statusFilter);
+      }
 
       const response = await fetch(`/api/admin/api-keys?${params}`);
       
