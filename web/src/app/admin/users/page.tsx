@@ -54,19 +54,19 @@ export default function UsersPage() {
   const [searchInput, setSearchInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   
-  // 모달 상태 관리
+  // Modal state management
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState<UserData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // 체크박스 선택 상태 관리
+  // Checkbox selection state management
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  // fetchUsers 함수를 먼저 정의
+  // Define fetchUsers function first
   const fetchUsers = async () => {
     setIsLoading(true);
     
@@ -86,22 +86,22 @@ export default function UsersPage() {
       const data = await response.json();
       setUsers(data.users || []);
     } catch (error) {
-      console.error('사용자 목록 로드 실패:', error);
+      console.error('Failed to load user list:', error);
       setUsers([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 컴포넌트 마운트 시 초기 데이터 로드
+  // Load initial data on component mount
   useEffect(() => {
     fetchUsers();
   }, [searchTerm]);
 
-  // API에서 이미 검색이 처리되므로 필터링 불필요
+  // No filtering needed as search is already handled by API
   const filteredUsers = users;
 
-  // 사용자 처리 핸들러들
+  // User handling functions
   const handleAddUser = () => {
     setEditingUser(null);
     setEditModalOpen(true);
@@ -120,23 +120,23 @@ export default function UsersPage() {
   const handleUserSaved = () => {
     setEditModalOpen(false);
     setEditingUser(null);
-    // 사용자 목록 새로고침
+    // Refresh user list
     fetchUsers();
   };
 
-  // 검색 실행 함수
+  // Search execution function
   const handleSearch = () => {
     setSearchTerm(searchInput);
   };
 
-  // Enter 키 처리
+  // Handle Enter key
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
   };
 
-  // 검색 초기화
+  // Clear search
   const handleClearSearch = () => {
     setSearchInput('');
     setSearchTerm('');
@@ -146,11 +146,11 @@ export default function UsersPage() {
     const newRole = user.role === 'admin' ? 'user' : 'admin';
     const isDowngrading = user.role === 'admin' && newRole === 'user';
     
-    // 자신의 관리자 권한 해제 방지 확인이 필요하다면 서버에서 처리됨
+    // Preventing self-admin privilege removal is handled by server if needed
     if (isDowngrading) {
       const confirmed = window.confirm(
-        `${user.name || user.email}의 관리자 권한을 해제하시겠습니까?\n` +
-        '이 작업은 즉시 적용됩니다.'
+        `Remove admin privileges for ${user.name || user.email}?\n` +
+        'This action will be applied immediately.'
       );
       if (!confirmed) return;
     }
@@ -172,11 +172,11 @@ export default function UsersPage() {
         throw new Error(error.error || 'Failed to update user role');
       }
 
-      // 사용자 목록 새로고침
+      // Refresh user list
       fetchUsers();
     } catch (error) {
-      console.error('역할 변경 실패:', error);
-      alert(error instanceof Error ? error.message : '역할 변경에 실패했습니다.');
+      console.error('Failed to change role:', error);
+      alert(error instanceof Error ? error.message : 'Failed to change role.');
     }
   };
 
@@ -186,8 +186,8 @@ export default function UsersPage() {
     
     if (isDeactivating) {
       const confirmed = window.confirm(
-        `${user.name || user.email} 계정을 비활성화하시겠습니까?\n` +
-        '비활성화된 사용자는 로그인할 수 없습니다.'
+        `Deactivate ${user.name || user.email} account?\n` +
+        'Deactivated users cannot log in.'
       );
       if (!confirmed) return;
     }
@@ -209,11 +209,11 @@ export default function UsersPage() {
         throw new Error(error.error || 'Failed to update user status');
       }
 
-      // 사용자 목록 새로고침
+      // Refresh user list
       fetchUsers();
     } catch (error) {
-      console.error('상태 변경 실패:', error);
-      alert(error instanceof Error ? error.message : '상태 변경에 실패했습니다.');
+      console.error('Failed to change status:', error);
+      alert(error instanceof Error ? error.message : 'Failed to change status.');
     }
   };
 
@@ -232,19 +232,19 @@ export default function UsersPage() {
         throw new Error(error.error || 'Failed to delete user');
       }
 
-      // 사용자 목록에서 제거
+      // Remove from user list
       setUsers(users.filter(u => u.id !== deletingUser.id));
       setDeleteDialogOpen(false);
       setDeletingUser(null);
     } catch (error) {
-      console.error('사용자 삭제 실패:', error);
-      alert(error instanceof Error ? error.message : '사용자 삭제에 실패했습니다.');
+      console.error('Failed to delete user:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete user.');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // 체크박스 관련 핸들러들
+  // Checkbox-related handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const allUserIds = new Set(users.map(user => user.id));
@@ -254,7 +254,7 @@ export default function UsersPage() {
     }
   };
 
-  // 테스트 계정만 선택하는 함수
+  // Function to select only test accounts
   const handleSelectTestUsers = () => {
     const testUserIds = new Set(
       users
@@ -264,7 +264,7 @@ export default function UsersPage() {
     setSelectedUsers(testUserIds);
   };
 
-  // 테스트 계정 개수 계산
+  // Calculate test account count
   const testUsersCount = users.filter(user => 
     user.email.includes('test') && user.email.includes('@example.com')
   ).length;
@@ -281,7 +281,7 @@ export default function UsersPage() {
 
   const handleBulkDelete = () => {
     if (selectedUsers.size === 0) {
-      alert('삭제할 사용자를 선택해주세요.');
+      alert('Please select users to delete.');
       return;
     }
     setBulkDeleteDialogOpen(true);
@@ -310,37 +310,37 @@ export default function UsersPage() {
 
       const result = await response.json();
       
-      // 성공적으로 삭제된 사용자들을 목록에서 제거
+      // Remove successfully deleted users from list
       if (result.successful_deletions.length > 0) {
         setUsers(users.filter(u => !result.successful_deletions.includes(u.id)));
         setSelectedUsers(new Set());
       }
 
-      // 결과 메시지 표시
+      // Display result message
       if (result.failed_deletions.length > 0) {
         const failedMessages = result.failed_deletions.map((failed: any) => 
           `${failed.user_email || failed.user_id}: ${failed.error}`
         );
-        alert(`일부 사용자 삭제에 실패했습니다:\n${failedMessages.join('\n')}\n\n성공: ${result.successful_deletions.length}명`);
+        alert(`Some user deletions failed:\n${failedMessages.join('\n')}\n\nSuccessful: ${result.successful_deletions.length} users`);
       } else {
-        alert(`${result.successful_deletions.length}명의 사용자가 성공적으로 삭제되었습니다.`);
+        alert(`${result.successful_deletions.length} users were successfully deleted.`);
       }
 
       setBulkDeleteDialogOpen(false);
     } catch (error) {
-      console.error('일괄 삭제 실패:', error);
-      alert(error instanceof Error ? error.message : '일괄 삭제 중 오류가 발생했습니다.');
+      console.error('Bulk delete failed:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred during bulk deletion.');
     } finally {
       setIsBulkDeleting(false);
     }
   };
 
-  // 전체 선택 상태 계산
+  // Calculate select all state
   const isAllSelected = users.length > 0 && selectedUsers.size === users.length;
   const isPartiallySelected = selectedUsers.size > 0 && selectedUsers.size < users.length;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -354,14 +354,14 @@ export default function UsersPage() {
       return (
         <Badge className="bg-red-100 text-red-800 border-red-200">
           <Settings className="h-3 w-3 mr-1" />
-          관리자
+          Admin
         </Badge>
       );
     }
     return (
       <Badge variant="outline">
         <User className="h-3 w-3 mr-1" />
-        사용자
+        User
       </Badge>
     );
   };
@@ -370,13 +370,13 @@ export default function UsersPage() {
     if (status === 'active') {
       return (
         <Badge className="bg-green-100 text-green-800 border-green-200">
-          활성
+          Active
         </Badge>
       );
     }
     return (
       <Badge variant="secondary">
-        비활성
+        Inactive
       </Badge>
     );
   };
@@ -386,8 +386,8 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">사용자 관리</h2>
-            <p className="text-muted-foreground">시스템 사용자 계정을 관리합니다</p>
+            <h2 className="text-xl font-semibold">User Management</h2>
+            <p className="text-muted-foreground">Manage system user accounts</p>
           </div>
         </div>
         
@@ -412,11 +412,11 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">사용자 관리</h2>
-          <p className="text-muted-foreground">시스템 사용자 계정을 관리합니다</p>
+          <h2 className="text-xl font-semibold">User Management</h2>
+          <p className="text-muted-foreground">Manage system user accounts</p>
         </div>
         <div className="flex gap-2">
           {testUsersCount > 0 && (
@@ -425,7 +425,7 @@ export default function UsersPage() {
               variant="outline"
               className="border-orange-200 text-orange-700 hover:bg-orange-50"
             >
-              🧪 테스트 계정 {testUsersCount}명 선택
+              🧪 Select {testUsersCount} test accounts
             </Button>
           )}
           {selectedUsers.size > 0 && (
@@ -435,34 +435,34 @@ export default function UsersPage() {
               className="bg-red-600 hover:bg-red-700"
             >
               <Trash className="h-4 w-4 mr-2" />
-              선택된 {selectedUsers.size}명 삭제
+              Delete {selectedUsers.size} selected
             </Button>
           )}
           <Button onClick={handleAddUser}>
             <UserPlus className="h-4 w-4 mr-2" />
-            사용자 추가
+            Add User
           </Button>
         </div>
       </div>
 
-      {/* 통계 카드 */}
+      {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">총 사용자</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{users.length}</div>
             <p className="text-xs text-muted-foreground">
-              등록된 전체 사용자
+              All registered users
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">활성 사용자</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -470,14 +470,14 @@ export default function UsersPage() {
               {users.filter(u => u.status === 'active').length}
             </div>
             <p className="text-xs text-muted-foreground">
-              현재 활성 상태 사용자
+              Currently active users
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">관리자</CardTitle>
+            <CardTitle className="text-sm font-medium">Admins</CardTitle>
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -485,14 +485,14 @@ export default function UsersPage() {
               {users.filter(u => u.role === 'admin').length}
             </div>
             <p className="text-xs text-muted-foreground">
-              관리자 권한 사용자
+              Users with admin privileges
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">신규 가입</CardTitle>
+            <CardTitle className="text-sm font-medium">New Signups</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -505,18 +505,18 @@ export default function UsersPage() {
               }).length}
             </div>
             <p className="text-xs text-muted-foreground">
-              최근 7일 내 가입
+              Joined in last 7 days
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* 검색 및 필터 */}
+      {/* Search and Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>사용자 목록</CardTitle>
+          <CardTitle>User List</CardTitle>
           <CardDescription>
-            시스템에 등록된 모든 사용자를 관리할 수 있습니다. 역할과 상태를 클릭하여 바로 변경할 수 있습니다.
+            Manage all users registered in the system. Click on roles and status to change them directly.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -559,17 +559,17 @@ export default function UsersPage() {
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={handleSelectAll}
-                      aria-label="모든 사용자 선택"
+                      aria-label="Select all users"
                       className={isPartiallySelected ? 'data-[state=checked]:bg-primary/50' : ''}
                     />
                   </TableHead>
-                  <TableHead>사용자</TableHead>
-                  <TableHead>역할</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>프로젝트</TableHead>
-                  <TableHead>가입일</TableHead>
-                  <TableHead>마지막 로그인</TableHead>
-                  <TableHead className="w-[70px]">작업</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Projects</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Last Login</TableHead>
+                  <TableHead className="w-[70px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -579,7 +579,7 @@ export default function UsersPage() {
                       <Checkbox
                         checked={selectedUsers.has(user.id)}
                         onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
-                        aria-label={`${user.name || user.email} 선택`}
+                        aria-label={`Select ${user.name || user.email}`}
                       />
                     </TableCell>
                     <TableCell>
@@ -588,7 +588,7 @@ export default function UsersPage() {
                           <User className="h-4 w-4" />
                         </div>
                         <div>
-                          <div className="font-medium">{user.name || '이름 없음'}</div>
+                          <div className="font-medium">{user.name || 'No name'}</div>
                           <div className="text-sm text-muted-foreground flex items-center">
                             <Mail className="h-3 w-3 mr-1" />
                             {user.email}
@@ -605,7 +605,7 @@ export default function UsersPage() {
                           onClick={() => handleToggleRole(user)}
                           className="h-6 px-2 text-xs"
                         >
-                          {user.role === 'admin' ? '↓ 일반' : '↑ 관리자'}
+                          {user.role === 'admin' ? '↓ User' : '↑ Admin'}
                         </Button>
                       </div>
                     </TableCell>
@@ -618,13 +618,13 @@ export default function UsersPage() {
                           onClick={() => handleToggleStatus(user)}
                           className="h-6 px-2 text-xs"
                         >
-                          {user.status === 'active' ? '비활성화' : '활성화'}
+                          {user.status === 'active' ? 'Deactivate' : 'Activate'}
                         </Button>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {user.projects_count}개 프로젝트
+                        {user.projects_count} projects
                       </div>
                     </TableCell>
                     <TableCell>
@@ -634,7 +634,7 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {user.last_login_at ? formatDate(user.last_login_at) : '없음'}
+                        {user.last_login_at ? formatDate(user.last_login_at) : 'None'}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -647,14 +647,14 @@ export default function UsersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEditUser(user)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            편집
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDeleteUser(user)}
                             className="text-red-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            삭제
+                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -668,13 +668,13 @@ export default function UsersPage() {
           {filteredUsers.length === 0 && (
             <div className="text-center py-8">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">검색 결과가 없습니다.</p>
+              <p className="text-muted-foreground">No search results found.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 사용자 편집/추가 모달 */}
+      {/* User Edit/Add Modal */}
       <UserEditModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
@@ -682,15 +682,15 @@ export default function UsersPage() {
         onSaved={handleUserSaved}
       />
 
-      {/* 삭제 확인 다이얼로그 */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>사용자 삭제 확인</DialogTitle>
+            <DialogTitle>Confirm User Deletion</DialogTitle>
             <DialogDescription>
-              정말로 <strong>{deletingUser?.name || deletingUser?.email}</strong> 사용자를 삭제하시겠습니까?
+              Are you sure you want to delete user <strong>{deletingUser?.name || deletingUser?.email}</strong>?
               <br />
-              이 작업은 되돌릴 수 없으며, 사용자 계정이 비활성화됩니다.
+              This action cannot be undone and will deactivate the user account.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -699,38 +699,38 @@ export default function UsersPage() {
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
-              취소
+              Cancel
             </Button>
             <Button
               onClick={confirmDeleteUser}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isDeleting ? '삭제 중...' : '삭제'}
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 일괄삭제 확인 다이얼로그 */}
+      {/* Bulk Delete Confirmation Dialog */}
       <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>일괄 삭제 확인</DialogTitle>
+            <DialogTitle>Confirm Bulk Deletion</DialogTitle>
             <DialogDescription>
-              선택된 <strong>{selectedUsers.size}명</strong>의 사용자를 삭제하시겠습니까?
+              Are you sure you want to delete <strong>{selectedUsers.size} selected users</strong>?
             </DialogDescription>
           </DialogHeader>
           
           <div className="max-h-48 overflow-y-auto border rounded-md p-3 bg-muted/50">
             <div className="text-sm space-y-1">
-              <div className="font-medium text-muted-foreground mb-2">삭제될 사용자 목록:</div>
+              <div className="font-medium text-muted-foreground mb-2">Users to be deleted:</div>
               {Array.from(selectedUsers).map(userId => {
                 const user = users.find(u => u.id === userId);
                 return user ? (
                   <div key={userId} className="flex items-center space-x-2">
                     <div className="h-2 w-2 rounded-full bg-destructive" />
-                    <span>{user.name || '이름 없음'} ({user.email})</span>
+                    <span>{user.name || 'No name'} ({user.email})</span>
                   </div>
                 ) : null;
               })}
@@ -738,7 +738,7 @@ export default function UsersPage() {
           </div>
           
           <div className="text-sm text-muted-foreground bg-orange-50 border border-orange-200 rounded-md p-3">
-            ⚠️ 이 작업은 되돌릴 수 없으며, 선택된 사용자들의 계정이 비활성화됩니다.
+            ⚠️ This action cannot be undone and will deactivate the selected user accounts.
           </div>
 
           <DialogFooter>
@@ -747,14 +747,14 @@ export default function UsersPage() {
               onClick={() => setBulkDeleteDialogOpen(false)}
               disabled={isBulkDeleting}
             >
-              취소
+              Cancel
             </Button>
             <Button
               onClick={confirmBulkDelete}
               disabled={isBulkDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isBulkDeleting ? `삭제 중... (${selectedUsers.size}명)` : `${selectedUsers.size}명 삭제`}
+              {isBulkDeleting ? `Deleting... (${selectedUsers.size} users)` : `Delete ${selectedUsers.size} users`}
             </Button>
           </DialogFooter>
         </DialogContent>
