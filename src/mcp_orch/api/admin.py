@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models import McpServer
+from ..models import McpServer, User, Project, ProjectServer
 from .jwt_auth import get_user_from_jwt_token
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -39,6 +39,21 @@ class McpServerUpdate(BaseModel):
     """MCP 서버 업데이트"""
     is_enabled: bool
     reason: Optional[str] = None
+
+
+class SystemStats(BaseModel):
+    """시스템 통계"""
+    total_users: int
+    active_users: int
+    admin_users: int
+    total_projects: int
+    total_servers: int
+    active_servers: int
+    worker_status: str
+    last_worker_run: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
 
 
 async def get_admin_user(request: Request, db: Session = Depends(get_db)):
@@ -246,4 +261,53 @@ async def get_system_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve system status"
+        )
+
+
+@router.get("/stats", response_model=SystemStats)
+async def get_system_stats(
+    current_user = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자 대시보드용 시스템 통계"""
+    try:
+        # 사용자 통계
+        total_users = db.query(User).count()
+        active_users = db.query(User).filter(User.is_active == True).count()
+        admin_users = db.query(User).filter(User.is_admin == True).count()
+        
+        # 프로젝트 통계
+        total_projects = db.query(Project).count()
+        
+        # MCP 서버 통계 (전체 서버와 프로젝트 서버 모두 포함)
+        total_mcp_servers = db.query(McpServer).count()
+        active_mcp_servers = db.query(McpServer).filter(McpServer.is_enabled == True).count()
+        
+        total_project_servers = db.query(ProjectServer).count()
+        active_project_servers = db.query(ProjectServer).filter(ProjectServer.is_enabled == True).count()
+        
+        total_servers = total_mcp_servers + total_project_servers
+        active_servers = active_mcp_servers + active_project_servers
+        
+        # TODO: 실제 워커 상태 체크 로직 구현
+        # 현재는 기본값으로 실행 중으로 설정
+        worker_status = "running"
+        last_worker_run = datetime.utcnow().isoformat()
+        
+        return SystemStats(
+            total_users=total_users,
+            active_users=active_users,
+            admin_users=admin_users,
+            total_projects=total_projects,
+            total_servers=total_servers,
+            active_servers=active_servers,
+            worker_status=worker_status,
+            last_worker_run=last_worker_run
+        )
+        
+    except Exception as e:
+        logger.error(f"Error retrieving system stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve system statistics"
         )
