@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ..database import get_db
-from ..models import McpServer, User, Project, ProjectServer
+from ..models import McpServer, User, Project
 from .jwt_auth import get_user_from_jwt_token
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -279,15 +279,9 @@ async def get_system_stats(
         # 프로젝트 통계
         total_projects = db.query(Project).count()
         
-        # MCP 서버 통계 (전체 서버와 프로젝트 서버 모두 포함)
-        total_mcp_servers = db.query(McpServer).count()
-        active_mcp_servers = db.query(McpServer).filter(McpServer.is_enabled == True).count()
-        
-        total_project_servers = db.query(ProjectServer).count()
-        active_project_servers = db.query(ProjectServer).filter(ProjectServer.is_enabled == True).count()
-        
-        total_servers = total_mcp_servers + total_project_servers
-        active_servers = active_mcp_servers + active_project_servers
+        # MCP 서버 통계 (프로젝트별 서버들)
+        total_servers = db.query(McpServer).count()
+        active_servers = db.query(McpServer).filter(McpServer.is_enabled == True).count()
         
         # TODO: 실제 워커 상태 체크 로직 구현
         # 현재는 기본값으로 실행 중으로 설정
