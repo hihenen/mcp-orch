@@ -152,9 +152,17 @@ async def list_teams_admin(
                 )
             ).distinct(ProjectMember.project_id).count()
             
-            # Get API key count
+            # Get API key count (through projects owned by team members)
+            team_project_ids = db.query(ProjectMember.project_id).filter(
+                ProjectMember.user_id.in_(
+                    db.query(TeamMember.user_id).filter(TeamMember.team_id == team.id)
+                )
+            ).distinct().subquery()
+            
             api_key_count = db.query(ApiKey).filter(
-                ApiKey.team_id == team.id
+                ApiKey.project_id.in_(
+                    db.query(team_project_ids.c.project_id)
+                )
             ).count()
             
             # Get server count
@@ -241,8 +249,17 @@ async def get_team_admin(
             )
         ).distinct(ProjectMember.project_id).count()
         
+        # Get API key count (through projects owned by team members)
+        team_project_ids = db.query(ProjectMember.project_id).filter(
+            ProjectMember.user_id.in_(
+                db.query(TeamMember.user_id).filter(TeamMember.team_id == team.id)
+            )
+        ).distinct().subquery()
+        
         api_key_count = db.query(ApiKey).filter(
-            ApiKey.team_id == team.id
+            ApiKey.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            )
         ).count()
         
         server_count = db.query(McpServer).filter(
@@ -429,8 +446,17 @@ async def update_team_admin(
             )
         ).distinct(ProjectMember.project_id).count()
         
+        # Get API key count (through projects owned by team members)
+        team_project_ids = db.query(ProjectMember.project_id).filter(
+            ProjectMember.user_id.in_(
+                db.query(TeamMember.user_id).filter(TeamMember.team_id == team.id)
+            )
+        ).distinct().subquery()
+        
         api_key_count = db.query(ApiKey).filter(
-            ApiKey.team_id == team.id
+            ApiKey.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            )
         ).count()
         
         server_count = db.query(McpServer).filter(
