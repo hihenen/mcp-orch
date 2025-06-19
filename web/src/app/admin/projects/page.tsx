@@ -29,7 +29,8 @@ import {
   Key,
   Users,
   Shield,
-  Globe
+  Globe,
+  X
 } from 'lucide-react';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { EditProjectModal } from './components/EditProjectModal';
@@ -75,6 +76,7 @@ export default function ProjectsAdminPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProjects, setTotalProjects] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [perPage] = useState(20);
   
   // Modal states
@@ -130,15 +132,23 @@ export default function ProjectsAdminPage() {
     }
   }, [session, currentPage, searchTerm]);
 
-  // Search handler with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1); // Reset to first page on search
-      fetchProjects();
-    }, 500);
+  // Search functions
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+    setCurrentPage(1); // Reset to first page on search
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
 
   // Event handlers
   const handleCreateProject = () => {
@@ -291,12 +301,31 @@ export default function ProjectsAdminPage() {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search projects by name, description, or slug..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="pl-8 pr-10"
                 />
+                {searchInput && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
+            <Button
+              onClick={handleSearch}
+              variant="default"
+              size="default"
+              className="px-4"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
           </div>
         </CardContent>
       </Card>
