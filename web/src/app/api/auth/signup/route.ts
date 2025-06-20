@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // FastAPI 백엔드로 회원가입 요청
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const backendUrl = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000'
     const response = await fetch(`${backendUrl}/api/users/signup`, {
       method: 'POST',
       headers: {

@@ -21,7 +21,7 @@ export async function GET(
     const favoriteType = searchParams.get('favorite_type')
 
     // 백엔드 API 호출
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
+    const backendUrl = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000'
     let url = `${backendUrl}/api/projects/${projectId}/favorites`
     
     if (favoriteType) {
@@ -71,7 +71,7 @@ export async function POST(
     const body = await request.json()
 
     // 백엔드 API 호출
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
+    const backendUrl = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000'
     const response = await fetch(`${backendUrl}/api/projects/${projectId}/favorites`, {
       method: 'POST',
       headers: {
@@ -125,7 +125,7 @@ export async function DELETE(
     }
 
     // 백엔드 API 호출
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
+    const backendUrl = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000'
     const response = await fetch(
       `${backendUrl}/api/projects/${projectId}/favorites?favorite_type=${favoriteType}&target_id=${targetId}`,
       {
