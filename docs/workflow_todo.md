@@ -39,6 +39,8 @@
 
 **커밋 정보**: 
 - commit 689459e - "feat: [TASK_081] JWT 환경변수 최적화 완료"
+- commit f1f10ae - "fix: [TASK_081] 테스트 토큰 생성 스크립트 AUTH_SECRET 사용"
+- commit 97c7a2d - "vibe: [ENV] API 환경변수 표준화"
 
 ### TASK_074: 관리자 페이지 하드코딩된 locale 교체 작업 ✅ 완료
 
@@ -1076,10 +1078,13 @@
 - 🔧 **코드 정리**: 백엔드에서 환경변수 직접 참조 개선 필요
 
 ## Progress Status
-- Current Progress: TASK_081 완료 - JWT 환경변수 최적화 완료
-- Next Task: TASK_079 - MCP 도구 실행 초기화 로직 통일 구현
+- Current Progress: TASK_081 완료 - JWT 환경변수 최적화 및 테스트 스크립트 최종 정리 완료
+- Next Task: 새로운 사용자 요청 대기
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
+- Recent Commits: 
+  - f1f10ae - "fix: [TASK_081] 테스트 토큰 생성 스크립트 AUTH_SECRET 사용"
+  - 97c7a2d - "vibe: [ENV] API 환경변수 표준화"
 
 ## 핵심 기술 인사이트
 
