@@ -14,7 +14,7 @@ from sqlalchemy import and_, or_
 from pydantic import BaseModel, Field
 
 from ..database import get_db
-from ..models import Project, ProjectMember, User, McpServer, ProjectRole
+from ..models import Project, ProjectMember, User, McpServer, ProjectRole, ServerLog, LogLevel, LogCategory
 from ..models.mcp_server import McpServerStatus
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
@@ -832,3 +832,107 @@ async def execute_project_server_tool(
             error=str(e),
             executed_at=datetime.utcnow().isoformat()
         )
+
+
+# 로그 관련 Pydantic 모델
+class ServerLogResponse(BaseModel):
+    """서버 로그 응답 모델"""
+    id: str
+    level: str
+    category: str
+    message: str
+    details: Optional[str] = None
+    timestamp: datetime
+    source: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/projects/{project_id}/servers/{server_id}/logs", response_model=List[ServerLogResponse])
+async def get_server_logs(
+    project_id: UUID,
+    server_id: UUID,
+    request: Request,
+    level: Optional[str] = None,
+    category: Optional[str] = None,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """서버 연결 로그 조회"""
+    current_user = await get_user_from_jwt_token(request, db)
+    
+    # 프로젝트 권한 확인
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id,
+            ProjectMember.is_active == True
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this project"
+        )
+    
+    # 서버 존재 확인
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id,
+            McpServer.is_enabled == True
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # 로그 쿼리 구성
+    query = db.query(ServerLog).filter(
+        and_(
+            ServerLog.server_id == server_id,
+            ServerLog.project_id == project_id
+        )
+    )
+    
+    # 필터링 적용
+    if level:
+        try:
+            log_level = LogLevel(level.lower())
+            query = query.filter(ServerLog.level == log_level)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid log level: {level}"
+            )
+    
+    if category:
+        try:
+            log_category = LogCategory(category.lower())
+            query = query.filter(ServerLog.category == log_category)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid log category: {category}"
+            )
+    
+    # 최신순으로 정렬하고 제한
+    logs = query.order_by(ServerLog.timestamp.desc()).limit(limit).all()
+    
+    return [
+        ServerLogResponse(
+            id=str(log.id),
+            level=log.level.value,
+            category=log.category.value,
+            message=log.message,
+            details=log.details,
+            timestamp=log.timestamp,
+            source=log.source
+        )
+        for log in logs
+    ]
