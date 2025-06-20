@@ -7,6 +7,28 @@
 
 ## 최근 완료된 주요 작업
 
+### TASK_086: editingServer 상태 타입 정의 문제 수정 ✅ 완료
+
+**목표**: server_type 필드가 React 상태에서 손실되는 문제 해결
+
+- [x] **데이터 흐름 분석**
+  - [x] 서버 상세 페이지에서 편집 다이얼로그 열 때 server_type 필드 누락 발견
+  - [x] handleEditServer 함수가 호출되지 않고 직접 editServer 객체 생성하는 패턴 확인
+- [x] **서버 상세 페이지 수정**
+  - [x] editServer 객체에 server_type과 serverType 필드 추가
+  - [x] transport 필드명 수정 (transportType → transport_type)
+
+**기술적 해결사항**:
+- 🔧 **누락된 필드 추가**: 서버 상세 페이지의 editServer 객체에 `server_type` 필드 포함
+- 🔧 **필드명 일치**: `transport_type` (백엔드) 사용하도록 수정
+- 🔧 **양방향 호환성**: `serverType`과 `server_type` 모두 설정
+
+**수정된 파일**:
+- `/web/src/app/projects/[projectId]/servers/[serverId]/page.tsx` - editServer 객체에 server_type 필드 추가
+
+**커밋 정보**: 
+- commit bd6dab0 - "fix: [TASK_086] Add server_type field to editServer object in server detail page"
+
 ### TASK_085: Connection Mode 드롭다운 인터페이스 문제 수정 ✅ 완료
 
 **목표**: editServer 인터페이스에 server_type 필드 추가하여 백엔드 호환성 확보
@@ -171,8 +193,8 @@
 - **코드 리뷰의 중요성**: 기존 구현 상태 정확히 파악 후 작업 진행
 
 ## Progress Status
-- Current Progress: TASK_085 완료 - Connection Mode 드롭다운 인터페이스 문제 수정 완료
-- Next Task: 사용자 테스트 및 추가 이슈 대응
+- Current Progress: TASK_086 완료 - editingServer 상태 타입 정의 문제 수정 완료
+- Next Task: 사용자 테스트 및 Connection Mode 드롭다운 최종 검증
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 - Recent Commits: 
