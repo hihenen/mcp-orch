@@ -958,37 +958,55 @@
 **커밋 정보**: 
 - commit 8ebb9a2 - "feat: [TASK_077] Complete English UI text conversion for server detail page"
 
-### TASK_078: MCP 연결 'Client not initialized yet' 오류 진단 및 수정
+### TASK_078: MCP 도구 실행 'Client not initialized yet' 오류 진단 및 분석 ✅ 완료
 
-**목표**: MCP 프로토콜의 정확한 초기화 순서 구현으로 tools/list 요청 시 발생하는 오류 해결
+**목표**: MCP 도구 실행 시 "Client not initialized yet" 오류 분석 및 해결 방안 제시
 
 **🔍 문제 분석 완료**:
-- **mcp-orch 구현**: initialize 요청 → 응답 수신 → 즉시 tools/list 요청 (잘못된 순서)
-- **MCP Inspector 성공 방식**: MCP SDK가 initialize 과정을 완전 자동화
-- **핵심 차이**: mcp-orch는 수동 구현, Inspector는 SDK 자동화
-- **root cause**: initialized notification 대기 없이 tools/list 즉시 요청
+- [x] **도구 실행 API 엔드포인트 위치 파악**
+  - [x] `/api/mcp-sse/{project_id}/{server_name}/messages` (POST 엔드포인트)
+  - [x] `mcp_sse_transport.py`의 `handle_tool_call` 메서드에서 처리
+  - [x] `mcp_connection_service.py`의 `call_tool` 메서드로 실제 도구 호출
+- [x] **도구 실행 MCP 연결 방식 분석**
+  - [x] 도구 목록 조회와 **동일한 세션 사용 안함** - 매번 새로운 프로세스 생성
+  - [x] 도구 실행 시에도 `initialize → initialized → tools/call` 순서 필요
+  - [x] `call_tool`에서는 `initialized notification` 전송 없이 `tools/call` 즉시 호출
+- [x] **핵심 문제점 식별**
+  - [x] **도구 목록 조회**: `_get_tools_sequential`에서 `initialized notification` 전송함 (L316-323)
+  - [x] **도구 실행**: `call_tool`에서 `initialized notification` 전송 없음 ❌
+  - [x] **일관성 부족**: 동일한 MCP 프로토콜이지만 다른 초기화 로직 사용
 
 **🎯 해결 방안**:
-1. **MCP SDK 방식 도입**: @modelcontextprotocol/sdk 패키지 사용 고려
-2. **수동 구현 개선**: initialized notification 명시적 대기 구현  
-3. **프로토콜 순서 준수**: initialize → initialized → tools/list 순서 보장
+1. **도구 실행 초기화 로직 통일**: `call_tool`에도 `_get_tools_sequential`과 동일한 initialized notification 로직 적용
+2. **프로토콜 순서 표준화**: 모든 MCP 요청에서 `initialize → initialized → 실제_요청` 순서 보장
+3. **기존 성공 패턴 재사용**: `_get_tools_sequential` L315-324의 성공적인 initialized notification 로직 활용
 
-- [ ] **MCP Inspector 성공 패턴 심층 분석**
-  - [ ] @modelcontextprotocol/sdk의 client.connect() 내부 구현 조사
-  - [ ] MCP 프로토콜 표준 문서 확인 (initialize/initialized 차이)
-  - [ ] Inspector가 tools/list를 언제 호출하는지 정확한 타이밍 파악
-- [ ] **mcp-orch 현재 구현 문제점 정확한 식별**  
-  - [ ] _get_tools_sequential에서 initialized notification 누락 확인
-  - [ ] initialize 응답과 initialized notification의 차이점 명확화
-  - [ ] 현재 2초 sleep이 임시방편인지 검증
-- [ ] **올바른 MCP 프로토콜 순서 구현**
-  - [ ] initialized notification 명시적 대기 로직 추가
-  - [ ] 프로토콜 표준에 맞는 요청 순서 보장
-  - [ ] JDBC 등 resource_connection 서버 테스트 및 검증
+**기술적 해결사항**:
+- 🔧 **문제 위치 특정**: `mcp_connection_service.py`의 `call_tool` 메서드 (L576-624)
+- 🔧 **성공 패턴 발견**: `_get_tools_sequential`의 initialized notification 처리 (L315-324)
+- 🔧 **해결 전략**: 기존 작동하는 로직을 도구 실행에도 적용
+- 🔧 **일관성 확보**: 도구 목록 조회와 도구 실행에서 동일한 MCP 초기화 순서 사용
+
+### TASK_079: MCP 도구 실행 초기화 로직 통일 구현
+
+**목표**: call_tool 메서드에 _get_tools_sequential과 동일한 initialized notification 로직 적용
+
+- [ ] **call_tool 메서드 초기화 로직 수정**
+  - [ ] initialize 응답 후 initialized notification 전송 로직 추가
+  - [ ] _get_tools_sequential의 L315-324 패턴을 call_tool에 적용
+  - [ ] 기존 초기화 코드 (L576-624)를 순차적 처리로 변경
+- [ ] **프로토콜 순서 표준화**
+  - [ ] initialize 요청 → 응답 대기 → initialized notification → tools/call 순서 보장
+  - [ ] 타임아웃 처리 및 에러 핸들링 개선
+  - [ ] 로그 메시지로 각 단계 추적 가능하도록 구현
+- [ ] **테스트 및 검증**
+  - [ ] JDBC 등 resource_connection 서버로 도구 실행 테스트
+  - [ ] 기존 api_wrapper 서버들의 정상 작동 확인
+  - [ ] "Client not initialized yet" 오류 해결 검증
 
 ## Progress Status
-- Current Progress: TASK_078 진행 중 - MCP 연결 문제 분석 완료, 해결 방안 설계 중
-- Next Task: MCP 프로토콜 순서 올바른 구현
+- Current Progress: TASK_078 완료 - MCP 도구 실행 오류 분석 완료, TASK_079 진행 중
+- Next Task: TASK_079 - call_tool 메서드 초기화 로직 통일 구현
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 

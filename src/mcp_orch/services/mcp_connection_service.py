@@ -610,6 +610,17 @@ class McpConnectionService:
                             response = json.loads(line_text)
                             if response.get('id') == 1 and 'result' in response:
                                 logger.info(f"✅ MCP server {server_id} initialized successfully")
+                                
+                                # MCP 프로토콜 표준: initialized notification 전송
+                                initialized_message = {
+                                    "jsonrpc": "2.0",
+                                    "method": "notifications/initialized"
+                                }
+                                initialized_json = json.dumps(initialized_message) + '\n'
+                                process.stdin.write(initialized_json.encode())
+                                await process.stdin.drain()
+                                logger.info("📤 Sent initialized notification for tool call (MCP protocol standard)")
+                                
                                 init_completed = True
                                 break
                             elif response.get('id') == 1 and 'error' in response:

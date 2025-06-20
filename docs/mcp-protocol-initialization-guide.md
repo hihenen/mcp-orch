@@ -96,11 +96,45 @@ INFO     📤 Sent tools/list request, waiting for response...
 INFO     📋 Tools response: {'jsonrpc': '2.0', 'id': 2, 'result': {'tools': [...]}}
 ```
 
-## Applying to Other Server Types
+## Implementation Status
 
-### Current Status
-- ✅ `resource_connection`: Fixed with this implementation
-- 🔄 `api_wrapper`: Currently working but may need this fix in the future
+### Fixed Components
+- ✅ **Tool List Retrieval** (`_get_tools_sequential`): Fixed for `resource_connection` type
+- ✅ **Tool Execution** (`call_tool`): Fixed for all server types
+- 🔄 `api_wrapper` **Tool List**: Currently working but may need this fix in the future
+
+### Tool Execution Fix
+After fixing tool list retrieval, tool execution was also showing "Client not initialized yet" errors. The same fix was applied to the `call_tool` function:
+
+**Location**: `mcp_connection_service.py` - `call_tool()` function, around line 612-625
+
+**Before Fix**:
+```python
+if response.get('id') == 1 and 'result' in response:
+    logger.info(f"✅ MCP server {server_id} initialized successfully")
+    init_completed = True
+    break
+# Immediately proceeds to tool call → ERROR
+```
+
+**After Fix**:
+```python
+if response.get('id') == 1 and 'result' in response:
+    logger.info(f"✅ MCP server {server_id} initialized successfully")
+    
+    # MCP 프로토콜 표준: initialized notification 전송
+    initialized_message = {
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+    }
+    initialized_json = json.dumps(initialized_message) + '\n'
+    process.stdin.write(initialized_json.encode())
+    await process.stdin.drain()
+    logger.info("📤 Sent initialized notification for tool call (MCP protocol standard)")
+    
+    init_completed = True
+    break
+```
 
 ### How to Apply to `api_wrapper` Type
 
@@ -164,5 +198,6 @@ if response.get('id') == 1 and 'result' in response:
 - `/web/src/components/servers/detail/` - Frontend components that display tools
 
 ## Commit Information
-- Fixed in commit: [commit-hash] - "fix: [TASK_XXX] Add MCP protocol initialized notification for resource_connection servers"
-- Documentation: [commit-hash] - "docs: Add MCP protocol initialization guide"
+- Tool List Fix: `7121fd7` - "fix: [TASK_078] Add MCP protocol initialized notification for resource_connection servers"
+- Tool Execution Fix: [next-commit] - "fix: [TASK_079] Add MCP protocol initialized notification for tool execution"
+- Documentation: `7121fd7` - "docs: Add MCP protocol initialization guide"

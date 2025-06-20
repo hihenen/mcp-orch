@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+  postgresql:
+    image: docker.io/bitnami/postgresql:16.4.0
+    ports:
+      - '5432:5432'
+    volumes:
+     - './postgresql_data:/bitnami/postgresql'
+    environment:
+      #- 'ALLOW_EMPTY_PASSWORD=yes'
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=1234
+      - POSTGRESQL_DATABASE=postgres
+
+#volumes:
+ # postgresql_data:
+   # driver: local
