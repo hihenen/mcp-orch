@@ -25,7 +25,8 @@ function IndividualServerForm({
   newEnvValue, 
   setNewEnvValue, 
   addEnvVar, 
-  removeEnvVar 
+  removeEnvVar,
+  showResourceConnectionHint
 }: {
   formData: ServerConfig;
   updateField: (field: keyof ServerConfig, value: any) => void;
@@ -39,6 +40,7 @@ function IndividualServerForm({
   setNewEnvValue: (value: string) => void;
   addEnvVar: () => void;
   removeEnvVar: (key: string) => void;
+  showResourceConnectionHint: boolean;
 }) {
   return (
     <div className="space-y-6">
@@ -774,6 +776,7 @@ export function AddServerDialog({
                   setNewEnvValue={setNewEnvValue}
                   addEnvVar={addEnvVar}
                   removeEnvVar={removeEnvVar}
+                  showResourceConnectionHint={showResourceConnectionHint}
                 />
               </form>
             </TabsContent>
