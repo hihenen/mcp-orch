@@ -90,6 +90,7 @@ export default function ProjectServersPage() {
       name: server.name,
       description: server.description,
       transport: server.transportType || server.transport_type || 'stdio',
+      server_type: server.server_type || 'api_wrapper',
       command: server.command || '',
       args: server.args || [],
       env: server.env || {},
