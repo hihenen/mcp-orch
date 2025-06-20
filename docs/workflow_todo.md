@@ -7,6 +7,41 @@
 
 ## 최근 완료된 주요 작업
 
+### TASK_087: MCP 연결 실패 로그 수집 및 조회 기능 구현 ✅ 완료
+
+**목표**: MCP 서버 연결 실패 시 로그를 수집하여 관리자가 웹 UI에서 확인할 수 있도록 구현
+
+- [x] **백엔드 로그 수집 시스템**
+  - [x] MCP 연결 서비스에 로그 저장 기능 추가
+  - [x] 실패 시 stderr, 명령어, 환경변수 등 상세 정보 수집
+  - [x] 기존 ServerLog 모델 활용하여 데이터베이스 저장
+- [x] **API 구현**
+  - [x] 서버 로그 조회 API 엔드포인트 생성
+  - [x] 레벨, 카테고리 필터링 지원
+  - [x] JWT 인증 적용
+- [x] **프론트엔드 UI**
+  - [x] 연결 로그 전용 컴포넌트 생성
+  - [x] 실시간 로그 조회 및 새로고침 기능
+  - [x] 레벨/카테고리 필터링 UI
+  - [x] 상세 정보 확장/축소 기능
+  - [x] 서버 상세 페이지 Logs 탭에 통합
+
+**기술적 해결사항**:
+- 🔧 **로그 수집**: MCP 연결 실패 시 stderr 캡처 및 JSON 형태 상세 정보 저장
+- 🔧 **실시간 조회**: 웹 UI에서 필터링을 통한 실시간 로그 조회 가능
+- 🔧 **관리자 지원**: 연결 문제 원인 파악을 위한 상세 에러 정보 제공
+
+**수정된 파일**:
+- `/src/mcp_orch/services/mcp_connection_service.py` - 로그 저장 메서드 및 실패 시 로그 수집 추가
+- `/src/mcp_orch/api/project_servers.py` - 서버 로그 조회 API 엔드포인트 추가
+- `/web/src/app/api/projects/[projectId]/servers/[serverId]/logs/route.ts` - JWT 인증 적용
+- `/web/src/components/servers/detail/ServerConnectionLogs.tsx` - 연결 로그 UI 컴포넌트 생성
+- `/web/src/components/servers/detail/ServerLogsTab.tsx` - 연결 로그와 도구 호출 로그 탭 구분
+
+**커밋 정보**: 
+- commit 510c415 - "feat: [TASK_087] Add MCP connection log collection"
+- commit 4df8df0 - "feat: [TASK_087] Add frontend MCP connection logs UI"
+
 ### TASK_086: editingServer 상태 타입 정의 문제 수정 ✅ 완료
 
 **목표**: server_type 필드가 React 상태에서 손실되는 문제 해결
@@ -192,9 +227,31 @@
 - **단계적 구현**: 복잡한 기능도 단계별로 나누어 안정적 구현
 - **코드 리뷰의 중요성**: 기존 구현 상태 정확히 파악 후 작업 진행
 
+### TASK_088: 서버 로그 조회 API AttributeError 문제 해결 ✅ 완료
+
+**목표**: ProjectMember.is_active 속성 오류로 인한 서버 로그 조회 실패 문제 해결
+
+- [x] **문제 분석**
+  - [x] project_servers.py:870에서 ProjectMember.is_active 속성 오류 확인
+  - [x] ProjectMember 모델에 is_active 필드 존재 여부 확인
+  - [x] 다른 API에서 권한 확인 방식 비교 분석
+- [x] **문제 해결**
+  - [x] 불필요한 is_active 조건 제거
+  - [x] 다른 API와 일관된 권한 확인 로직 적용
+  - [x] 수정사항 테스트 및 검증
+
+**기술적 해결사항**:
+- 🚨 **문제**: ProjectMember 모델에 is_active 필드가 정의되어 있지 않음
+- 🔍 **원인**: 다른 API들은 is_active 조건 없이 권한 확인 중
+- ✅ **해결**: 불필요한 is_active 조건 제거하여 일관성 확보
+- 🔧 **수정사항**: project_servers.py:870 line의 ProjectMember 권한 확인 로직에서 `ProjectMember.is_active == True` 조건 제거
+
+**수정된 파일**:
+- `/src/mcp_orch/api/project_servers.py` - 서버 로그 조회 API 권한 확인 로직 수정
+
 ## Progress Status
-- Current Progress: TASK_086 완료 - editingServer 상태 타입 정의 문제 수정 완료
-- Next Task: 사용자 테스트 및 Connection Mode 드롭다운 최종 검증
+- Current Progress: TASK_088 완료 - 서버 로그 조회 API AttributeError 문제 해결 완료
+- Next Task: 대기 중 - 다음 작업 요청 대기
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 - Recent Commits: 

@@ -866,8 +866,7 @@ async def get_server_logs(
     project_member = db.query(ProjectMember).filter(
         and_(
             ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-            ProjectMember.is_active == True
+            ProjectMember.user_id == current_user.id
         )
     ).first()
     
