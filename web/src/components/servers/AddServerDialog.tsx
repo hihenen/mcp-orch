@@ -476,6 +476,10 @@ export function AddServerDialog({
   // 편집 모드일 때 폼 데이터 초기화
   useEffect(() => {
     if (editServer) {
+      console.log('🔍 EditServer received:', editServer);
+      console.log('🔍 editServer.serverType:', editServer.serverType);
+      console.log('🔍 editServer.server_type:', editServer.server_type);
+      
       const serverConfig = {
         name: editServer.name,
         description: editServer.description || '',
@@ -486,6 +490,8 @@ export function AddServerDialog({
         env: editServer.env || {},
         cwd: editServer.cwd || ''
       };
+      
+      console.log('🔍 Final serverConfig.serverType:', serverConfig.serverType);
       
       setFormData(serverConfig);
       

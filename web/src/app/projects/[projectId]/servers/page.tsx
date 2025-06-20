@@ -85,7 +85,11 @@ export default function ProjectServersPage() {
 
   // 서버 편집 시작
   const handleEditServer = (server: any) => {
-    setEditingServer({
+    console.log('🔍 handleEditServer received server:', server);
+    console.log('🔍 server.server_type:', server.server_type);
+    console.log('🔍 server.transport_type:', server.transport_type);
+    
+    const editingServerData = {
       id: server.id,
       name: server.name,
       description: server.description,
@@ -95,7 +99,10 @@ export default function ProjectServersPage() {
       args: server.args || [],
       env: server.env || {},
       cwd: server.cwd || ''
-    });
+    };
+    
+    console.log('🔍 Setting editingServer to:', editingServerData);
+    setEditingServer(editingServerData);
   };
 
   // 서버 삭제 다이얼로그 열기
