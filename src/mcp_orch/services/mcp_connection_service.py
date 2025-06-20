@@ -311,8 +311,16 @@ class McpConnectionService:
                                 if response.get('id') == 1 and 'result' in response:
                                     init_response_received = True
                                     logger.info("✅ Initialize response received")
-                                    # JDBC 서버 초기화 완료 대기 (Client not initialized yet 에러 방지)
-                                    await asyncio.sleep(2)
+                                    
+                                    # MCP 프로토콜 표준: initialized notification 전송
+                                    initialized_message = {
+                                        "jsonrpc": "2.0",
+                                        "method": "notifications/initialized"
+                                    }
+                                    initialized_json = json.dumps(initialized_message) + '\n'
+                                    process.stdin.write(initialized_json.encode())
+                                    await process.stdin.drain()
+                                    logger.info("📤 Sent initialized notification (MCP protocol standard)")
                                     break
                             except json.JSONDecodeError:
                                 logger.warning(f"⚠️ Failed to parse init JSON: {line[:100]}")

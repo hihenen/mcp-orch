@@ -958,9 +958,37 @@
 **커밋 정보**: 
 - commit 8ebb9a2 - "feat: [TASK_077] Complete English UI text conversion for server detail page"
 
+### TASK_078: MCP 연결 'Client not initialized yet' 오류 진단 및 수정
+
+**목표**: MCP 프로토콜의 정확한 초기화 순서 구현으로 tools/list 요청 시 발생하는 오류 해결
+
+**🔍 문제 분석 완료**:
+- **mcp-orch 구현**: initialize 요청 → 응답 수신 → 즉시 tools/list 요청 (잘못된 순서)
+- **MCP Inspector 성공 방식**: MCP SDK가 initialize 과정을 완전 자동화
+- **핵심 차이**: mcp-orch는 수동 구현, Inspector는 SDK 자동화
+- **root cause**: initialized notification 대기 없이 tools/list 즉시 요청
+
+**🎯 해결 방안**:
+1. **MCP SDK 방식 도입**: @modelcontextprotocol/sdk 패키지 사용 고려
+2. **수동 구현 개선**: initialized notification 명시적 대기 구현  
+3. **프로토콜 순서 준수**: initialize → initialized → tools/list 순서 보장
+
+- [ ] **MCP Inspector 성공 패턴 심층 분석**
+  - [ ] @modelcontextprotocol/sdk의 client.connect() 내부 구현 조사
+  - [ ] MCP 프로토콜 표준 문서 확인 (initialize/initialized 차이)
+  - [ ] Inspector가 tools/list를 언제 호출하는지 정확한 타이밍 파악
+- [ ] **mcp-orch 현재 구현 문제점 정확한 식별**  
+  - [ ] _get_tools_sequential에서 initialized notification 누락 확인
+  - [ ] initialize 응답과 initialized notification의 차이점 명확화
+  - [ ] 현재 2초 sleep이 임시방편인지 검증
+- [ ] **올바른 MCP 프로토콜 순서 구현**
+  - [ ] initialized notification 명시적 대기 로직 추가
+  - [ ] 프로토콜 표준에 맞는 요청 순서 보장
+  - [ ] JDBC 등 resource_connection 서버 테스트 및 검증
+
 ## Progress Status
-- Current Progress: TASK_077 완료 - 서버 상세 페이지 로딩 최적화 및 영어 UI 변환 완전 구현 완료
-- Next Task: 새로운 사용자 요청 대기
+- Current Progress: TASK_078 진행 중 - MCP 연결 문제 분석 완료, 해결 방안 설계 중
+- Next Task: MCP 프로토콜 순서 올바른 구현
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 
