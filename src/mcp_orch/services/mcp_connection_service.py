@@ -12,7 +12,7 @@ from datetime import datetime
 from uuid import UUID
 from sqlalchemy.orm import Session
 
-from ..models import McpServer, ToolCallLog, CallStatus, ClientSession
+from ..models import McpServer, ToolCallLog, CallStatus, ClientSession, ServerLog, LogLevel, LogCategory
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,27 @@ class McpConnectionService:
     
     def __init__(self):
         self.active_connections: Dict[str, Any] = {}
+    
+    def _save_connection_log(self, db: Session, server_id: str, project_id: str, 
+                           level: LogLevel, category: LogCategory, message: str, 
+                           details: Optional[str] = None) -> None:
+        """MCP 연결 로그를 데이터베이스에 저장"""
+        try:
+            log_entry = ServerLog(
+                server_id=UUID(server_id),
+                project_id=UUID(project_id),
+                level=level,
+                category=category,
+                message=message,
+                details=details,
+                source="mcp_connection_service"
+            )
+            db.add(log_entry)
+            db.commit()
+            logger.debug(f"Connection log saved: {message}")
+        except Exception as e:
+            logger.error(f"Failed to save connection log: {e}")
+            db.rollback()
     
     async def check_server_status(self, server_id: str, server_config: Dict) -> str:
         """개별 MCP 서버 상태 확인 (실시간)"""
@@ -127,7 +148,7 @@ class McpConnectionService:
             logger.error(f"MCP connection test failed: {e}")
             return False
     
-    async def get_server_tools(self, server_id: str, server_config: Dict) -> List[Dict]:
+    async def get_server_tools(self, server_id: str, server_config: Dict, db: Optional[Session] = None, project_id: Optional[str] = None) -> List[Dict]:
         """MCP 서버의 도구 목록 조회"""
         try:
             logger.info(f"🔧 Getting tools for server {server_id}")
@@ -141,7 +162,7 @@ class McpConnectionService:
             logger.info(f"🎯 Server type: {server_type}")
             
             if server_type == 'resource_connection':
-                return await self._get_tools_sequential(server_id, server_config)
+                return await self._get_tools_sequential(server_id, server_config, db, project_id)
             else:
                 return await self._get_tools_standard(server_id, server_config)
                 
@@ -246,7 +267,7 @@ class McpConnectionService:
             logger.error(f"❌ Error getting standard tools for server {server_id}: {e}")
             return []
     
-    async def _get_tools_sequential(self, server_id: str, server_config: Dict) -> List[Dict]:
+    async def _get_tools_sequential(self, server_id: str, server_config: Dict, db: Optional[Session] = None, project_id: Optional[str] = None) -> List[Dict]:
         """Resource Connection 서버용 순차 도구 조회 (JDBC 등)"""
         try:
             command = server_config.get('command', '')
@@ -400,13 +421,62 @@ class McpConnectionService:
                 return tools
                 
             except Exception as e:
-                logger.error(f"❌ Error in sequential tools query: {e}")
+                error_msg = f"❌ Error in sequential tools query: {e}"
+                logger.error(error_msg)
+                
+                # 로그 저장
+                if db and project_id:
+                    try:
+                        # stderr 캡처
+                        stderr_output = ""
+                        if process.stderr:
+                            stderr_data = await process.stderr.read()
+                            stderr_output = stderr_data.decode('utf-8', errors='ignore')
+                        
+                        details = json.dumps({
+                            "command": command,
+                            "args": args,
+                            "error": str(e),
+                            "stderr": stderr_output[:1000] if stderr_output else None,
+                            "timeout": timeout
+                        })
+                        
+                        self._save_connection_log(
+                            db, server_id, project_id, 
+                            LogLevel.ERROR, LogCategory.CONNECTION,
+                            f"Sequential tools query failed: {str(e)[:200]}",
+                            details
+                        )
+                    except Exception as log_error:
+                        logger.error(f"Failed to save error log: {log_error}")
+                
                 process.kill()
                 await process.wait()
                 return []
                 
         except Exception as e:
-            logger.error(f"❌ Error getting sequential tools for server {server_id}: {e}")
+            error_msg = f"❌ Error getting sequential tools for server {server_id}: {e}"
+            logger.error(error_msg)
+            
+            # 로그 저장
+            if db and project_id:
+                try:
+                    details = json.dumps({
+                        "command": command,
+                        "args": args,
+                        "error": str(e),
+                        "timeout": timeout
+                    })
+                    
+                    self._save_connection_log(
+                        db, server_id, project_id,
+                        LogLevel.ERROR, LogCategory.CONNECTION,
+                        f"Sequential tools setup failed: {str(e)[:200]}",
+                        details
+                    )
+                except Exception as log_error:
+                    logger.error(f"Failed to save error log: {log_error}")
+            
             return []
     
     async def refresh_all_servers(self, db: Session) -> Dict[str, Dict]:

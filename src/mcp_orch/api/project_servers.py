@@ -221,7 +221,7 @@ async def get_project_server_detail(
                 unique_server_id = mcp_connection_service._generate_unique_server_id(server)
                 server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
                 if server_status == "online":
-                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
+                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
                     tools_count = len(tools)
                     print(f"✅ Retrieved {tools_count} tools for server {server.name}")
         except Exception as e:
@@ -606,7 +606,7 @@ async def refresh_project_servers_status(
                 # 도구 목록 조회 (온라인인 경우에만)
                 tools = []
                 if status_result == "online":
-                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
+                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
                     server.status = McpServerStatus.ACTIVE
                     server.last_used_at = datetime.utcnow()
                     server.last_error = None
@@ -710,7 +710,7 @@ async def refresh_project_server_status(
         # 도구 목록 조회 (온라인인 경우에만)
         tools = []
         if status_result == "online":
-            tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
+            tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
             # 상태를 active로 업데이트
             server.status = McpServerStatus.ACTIVE
             server.last_used_at = datetime.utcnow()
