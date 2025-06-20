@@ -1070,6 +1070,7 @@ class ServerUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     transport: Optional[str] = None
+    server_type: Optional[str] = None
     command: Optional[str] = None
     args: Optional[List[str]] = None
     env: Optional[dict] = None
@@ -1081,6 +1082,7 @@ class ServerResponse(BaseModel):
     name: str
     description: Optional[str]
     transport_type: str
+    server_type: str
     command: str
     args: List[str]
     env: dict
@@ -1164,6 +1166,7 @@ async def list_project_servers(
             name=server.name,
             description=server.description,
             transport_type=server.transport_type or "stdio",
+            server_type=server.server_type or "api_wrapper",
             command=server.command or "",
             args=server.args or [],
             env=server.env or {},
@@ -1219,44 +1222,66 @@ async def get_project_server_detail(
     # DB 기반으로 서버 상태 확인
     server_status = "offline"
     tools_count = 0
+    tools = []
     
     # 서버가 비활성화된 경우
     if not server.is_enabled:
         server_status = "disabled"
     else:
-        # 실시간 상태 확인
-        tools = []
+        # 실시간 상태 확인 (타임아웃 시에도 기본 정보는 유지)
         try:
             server_config = mcp_connection_service._build_server_config_from_db(server)
             if server_config:
                 # 프로젝트별 고유 서버 식별자 생성
                 unique_server_id = mcp_connection_service._generate_unique_server_id(server)
-                server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
-                if server_status == "online":
-                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config)
-                    tools_count = len(tools)
-                    print(f"✅ Retrieved {tools_count} tools for server {server.name}")
+                
+                # 타임아웃을 짧게 설정하여 빠른 응답
+                import asyncio
+                try:
+                    server_status = await asyncio.wait_for(
+                        mcp_connection_service.check_server_status(unique_server_id, server_config),
+                        timeout=10.0  # 10초 타임아웃
+                    )
+                    if server_status == "online":
+                        tools = await asyncio.wait_for(
+                            mcp_connection_service.get_server_tools(unique_server_id, server_config),
+                            timeout=15.0  # 15초 타임아웃
+                        )
+                        tools_count = len(tools)
+                        logger.info(f"✅ Retrieved {tools_count} tools for server {server.name}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"⏰ Server status check timeout for {server.name}")
+                    server_status = "timeout"
+                    tools = []
+                    tools_count = 0
+                    logger.info(f"Server {server.name} timed out, but returning basic info with timeout status")
+            else:
+                server_status = "not_configured"
         except Exception as e:
-            print(f"Error checking server status: {e}")
+            logger.error(f"❌ Error checking server status for {server.name}: {e}")
             server_status = "error"
+            tools = []
+            tools_count = 0
     
-    return {
-        "id": str(server.id),
-        "name": server.name,
-        "description": server.description,
-        "transport_type": server.transport_type or "stdio",
-        "command": server.command or "",
-        "args": server.args or [],
-        "env": server.env or {},
-        "cwd": server.cwd,
-        "disabled": not server.is_enabled,
-        "status": server_status,
-        "tools_count": tools_count,
-        "tools": tools if server_status == "online" else [],
-        "last_connected": server.last_used_at,
-        "created_at": server.created_at,
-        "updated_at": server.updated_at
-    }
+    # 항상 기본 서버 정보는 반환 (상태와 관계없이)
+    return ServerResponse(
+        id=str(server.id),
+        name=server.name,
+        description=server.description,
+        transport_type=server.transport_type or "stdio",
+        server_type=server.server_type or "api_wrapper",
+        command=server.command or "",
+        args=server.args or [],
+        env=server.env or {},
+        cwd=server.cwd,
+        disabled=not server.is_enabled,
+        status=server_status,
+        tools_count=tools_count,
+        tools=tools,
+        last_connected=server.last_used_at,
+        created_at=server.created_at,
+        updated_at=server.updated_at
+    )
 
 
 @router.post("/projects/{project_id}/servers", response_model=ServerResponse)
@@ -1322,6 +1347,7 @@ async def create_project_server(
         name=new_server.name,
         description=new_server.description,
         transport_type=new_server.transport_type or "stdio",
+        server_type=new_server.server_type or "api_wrapper",
         command=new_server.command or "",
         args=new_server.args or [],
         env=new_server.env or {},
@@ -1344,6 +1370,9 @@ async def update_project_server(
     db: Session = Depends(get_db)
 ):
     """프로젝트 서버 정보 수정 (Owner/Developer만 가능)"""
+    
+    logger.info(f"🚨 PROJECTS.PY UPDATE_PROJECT_SERVER CALLED! project_id={project_id}, server_id={server_id}")
+    logger.info(f"🚨 Server data received: {server_data}")
     
     # 프로젝트 권한 확인 (Owner 또는 Developer)
     project_member = db.query(ProjectMember).filter(
@@ -1394,19 +1423,31 @@ async def update_project_server(
             )
     
     # 서버 정보 업데이트
+    logger.info(f"🚨 Current server: name={server.name}, server_type={server.server_type}")
     if server_data.name is not None:
+        logger.info(f"🚨 Updating name: {server.name} -> {server_data.name}")
         server.name = server_data.name
     if server_data.description is not None:
+        logger.info(f"🚨 Updating description: {server.description} -> {server_data.description}")
         server.description = server_data.description
     if server_data.transport is not None:
+        logger.info(f"🚨 Updating transport: {server.transport_type} -> {server_data.transport}")
         server.transport_type = server_data.transport
+    if server_data.server_type is not None:
+        logger.info(f"🚨 🎯 CRITICAL: Updating server_type from '{server.server_type}' to '{server_data.server_type}'")
+        server.server_type = server_data.server_type
+        logger.info(f"🚨 🎯 CRITICAL: After assignment, server.server_type = '{server.server_type}'")
     if server_data.command is not None:
+        logger.info(f"🚨 Updating command: {server.command} -> {server_data.command}")
         server.command = server_data.command
     if server_data.args is not None:
+        logger.info(f"🚨 Updating args: {server.args} -> {server_data.args}")
         server.args = server_data.args
     if server_data.env is not None:
+        logger.info(f"🚨 Updating env: {server.env} -> {server_data.env}")
         server.env = server_data.env
     if server_data.cwd is not None:
+        logger.info(f"🚨 Updating cwd: {server.cwd} -> {server_data.cwd}")
         server.cwd = server_data.cwd
     
     server.updated_at = datetime.utcnow()
@@ -1419,6 +1460,7 @@ async def update_project_server(
         name=server.name,
         description=server.description,
         transport_type=server.transport_type or "stdio",
+        server_type=server.server_type or "api_wrapper",
         command=server.command or "",
         args=server.args or [],
         env=server.env or {},

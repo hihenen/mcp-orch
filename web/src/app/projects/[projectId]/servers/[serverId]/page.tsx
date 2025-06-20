@@ -72,11 +72,43 @@ export default function ProjectServerDetailPage() {
     }
   }, [projectId, loadProject]);
 
-  // 로딩 상태
-  if (isLoading) {
+  // 초기 로딩 상태 (기본 정보도 없는 경우만)
+  if (isLoading && !server) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="animate-pulse">
+          {/* 서버 헤더 스켈레톤 */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="h-8 bg-gray-200 rounded w-48"></div>
+              <div className="h-6 bg-gray-200 rounded w-20"></div>
+            </div>
+            <div className="flex space-x-2">
+              <div className="h-10 bg-gray-200 rounded w-24"></div>
+              <div className="h-10 bg-gray-200 rounded w-24"></div>
+            </div>
+          </div>
+          
+          {/* 탭 네비게이션 스켈레톤 */}
+          <div className="flex space-x-4 mb-6">
+            <div className="h-10 bg-gray-200 rounded w-20"></div>
+            <div className="h-10 bg-gray-200 rounded w-20"></div>
+            <div className="h-10 bg-gray-200 rounded w-24"></div>
+            <div className="h-10 bg-gray-200 rounded w-16"></div>
+            <div className="h-10 bg-gray-200 rounded w-16"></div>
+          </div>
+          
+          {/* 컨텐츠 스켈레톤 */}
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          </div>
+        </div>
+        
+        <div className="text-center text-sm text-muted-foreground mt-4">
+          Loading server information...
+        </div>
       </div>
     );
   }
@@ -85,8 +117,8 @@ export default function ProjectServerDetailPage() {
   if (!server) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold mb-4">서버를 찾을 수 없습니다</h1>
-        <p className="text-muted-foreground mb-6">요청하신 서버가 존재하지 않거나 접근 권한이 없습니다.</p>
+        <h1 className="text-2xl font-bold mb-4">Server Not Found</h1>
+        <p className="text-muted-foreground mb-6">The requested server does not exist or you don't have access to it.</p>
       </div>
     );
   }
@@ -112,23 +144,23 @@ export default function ProjectServerDetailPage() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Server className="h-4 w-4" />
-            개요
+            Overview
           </TabsTrigger>
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Wrench className="h-4 w-4" />
-            도구
+            Tools
           </TabsTrigger>
           <TabsTrigger value="usage" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
-            사용 현황
+            Usage
           </TabsTrigger>
           <TabsTrigger value="logs" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            로그
+            Logs
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
-            설정
+            Settings
           </TabsTrigger>
         </TabsList>
 

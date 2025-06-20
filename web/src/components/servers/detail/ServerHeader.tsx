@@ -52,7 +52,7 @@ export function ServerHeader({
           <Link href={`/projects/${projectId}/servers`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              뒤로
+              Back
             </Button>
           </Link>
           <div>
@@ -60,19 +60,27 @@ export function ServerHeader({
               <h1 className="text-3xl font-bold">{server.name}</h1>
               <Badge variant={
                 server.status === 'online' ? 'default' : 
+                server.status === 'loading' ? 'secondary' :
                 server.status === 'timeout' ? 'destructive' : 'secondary'
               }>
-                {server.status === 'online' ? '온라인' : 
-                 server.status === 'offline' ? '오프라인' :
-                 server.status === 'connecting' ? '연결 중' : 
-                 server.status === 'timeout' ? '연결 타임아웃' : '에러'}
+                {server.status === 'online' ? 'Online' : 
+                 server.status === 'offline' ? 'Offline' :
+                 server.status === 'connecting' ? 'Connecting' : 
+                 server.status === 'loading' ? 'Loading Details...' :
+                 server.status === 'timeout' ? 'Connection Timeout' : 'Error'}
               </Badge>
+              {server.status === 'loading' && (
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600"></div>
+                  <span className="text-xs text-muted-foreground">Loading connection details</span>
+                </div>
+              )}
               {server.disabled && (
-                <Badge variant="outline">비활성화</Badge>
+                <Badge variant="outline">Disabled</Badge>
               )}
             </div>
             <p className="text-muted-foreground mt-1">
-              {server.description || '설명 없음'}
+              {server.description || 'No description'}
             </p>
           </div>
         </div>
@@ -85,7 +93,7 @@ export function ServerHeader({
               className="text-red-600 hover:text-red-700"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              연결 재시도
+              Retry Connection
             </Button>
           )}
           <Button 
@@ -94,45 +102,45 @@ export function ServerHeader({
             className="text-blue-600 hover:text-blue-700"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            상태 새로고침
+            Refresh Status
           </Button>
           <Button 
             variant="outline"
             onClick={onToggleServer}
             disabled={!canEdit}
             className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
-            title={!canEdit ? "서버를 제어할 권한이 없습니다. (Owner 또는 Developer만 가능)" : undefined}
+            title={!canEdit ? "You don't have permission to control this server. (Owner or Developer only)" : undefined}
           >
             {server.disabled ? <Play className="h-4 w-4 mr-2" /> : <Pause className="h-4 w-4 mr-2" />}
-            {server.disabled ? '활성화' : '비활성화'}
+            {server.disabled ? 'Enable' : 'Disable'}
           </Button>
           <Button 
             variant="outline" 
             onClick={onRestartServer}
             disabled={!canEdit}
-            title={!canEdit ? "서버를 재시작할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 재시작"}
+            title={!canEdit ? "You don't have permission to restart this server. (Owner or Developer only)" : "Restart Server"}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            재시작
+            Restart
           </Button>
           <Button 
             variant="outline"
             onClick={onEditServer}
             disabled={!canEdit}
-            title={!canEdit ? "이 서버를 편집할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 설정 편집"}
+            title={!canEdit ? "You don't have permission to edit this server. (Owner or Developer only)" : "Edit Server Settings"}
           >
             <Edit className="h-4 w-4 mr-2" />
-            편집
+            Edit
           </Button>
           <Button 
             variant="outline" 
             onClick={onDeleteServer}
             disabled={!canEdit}
             className="text-red-600 hover:text-red-700"
-            title={!canEdit ? "이 서버를 삭제할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 삭제"}
+            title={!canEdit ? "You don't have permission to delete this server. (Owner or Developer only)" : "Delete Server"}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            삭제
+            Delete
           </Button>
         </div>
       </div>

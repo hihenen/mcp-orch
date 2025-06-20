@@ -19,7 +19,8 @@ export interface ServerDetail {
   description?: string;
   status: 'online' | 'offline' | 'connecting' | 'error' | 'timeout';
   disabled: boolean;
-  transportType: string;
+  transport_type: string;
+  server_type?: string;
   command?: string;
   args?: string[];
   env?: Record<string, string>;
@@ -27,6 +28,8 @@ export interface ServerDetail {
   tools_count?: number;
   tools?: Tool[];
   last_connected?: string;
+  created_at?: string;
+  updated_at?: string;
   lastError?: string;
 }
 

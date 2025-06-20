@@ -336,6 +336,10 @@ async def update_project_server(
 ):
     """프로젝트 서버 정보 수정 (Owner/Developer만 가능)"""
     
+    logger.info(f"🔥 UPDATE_PROJECT_SERVER FUNCTION CALLED! project_id={project_id}, server_id={server_id}")
+    logger.info(f"🔥 Request user: {current_user.email if current_user else 'None'}")
+    logger.info(f"🔥 Server data received: {server_data}")
+    
     # 프로젝트 권한 확인 (Owner 또는 Developer)
     project_member = db.query(ProjectMember).filter(
         and_(
@@ -349,6 +353,7 @@ async def update_project_server(
     ).first()
     
     if not project_member:
+        logger.error(f"🔥 Permission denied for user {current_user.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only project owners and developers can update servers"
@@ -363,10 +368,13 @@ async def update_project_server(
     ).first()
     
     if not server:
+        logger.error(f"🔥 Server not found: {server_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Server not found"
         )
+    
+    logger.info(f"🔥 Found server: {server.name}, current server_type: {server.server_type}")
     
     # 서버 이름 중복 확인 (다른 서버와)
     if server_data.name and server_data.name != server.name:
@@ -387,27 +395,38 @@ async def update_project_server(
     # 서버 정보 업데이트
     logger.info(f"🔧 Updating server {server.name} with data: {server_data}")
     if server_data.name is not None:
+        logger.info(f"🔥 Updating name: {server.name} -> {server_data.name}")
         server.name = server_data.name
     if server_data.description is not None:
+        logger.info(f"🔥 Updating description: {server.description} -> {server_data.description}")
         server.description = server_data.description
     if server_data.transport is not None:
+        logger.info(f"🔥 Updating transport: {server.transport_type} -> {server_data.transport}")
         server.transport_type = server_data.transport
     if server_data.server_type is not None:
-        logger.info(f"🔧 Setting server_type from '{server.server_type}' to '{server_data.server_type}'")
+        logger.info(f"🔥 🎯 CRITICAL: Updating server_type from '{server.server_type}' to '{server_data.server_type}'")
         server.server_type = server_data.server_type
+        logger.info(f"🔥 🎯 CRITICAL: After assignment, server.server_type = '{server.server_type}'")
     if server_data.command is not None:
+        logger.info(f"🔥 Updating command: {server.command} -> {server_data.command}")
         server.command = server_data.command
     if server_data.args is not None:
+        logger.info(f"🔥 Updating args: {server.args} -> {server_data.args}")
         server.args = server_data.args
     if server_data.env is not None:
+        logger.info(f"🔥 Updating env: {server.env} -> {server_data.env}")
         server.env = server_data.env
     if server_data.cwd is not None:
+        logger.info(f"🔥 Updating cwd: {server.cwd} -> {server_data.cwd}")
         server.cwd = server_data.cwd
     
     server.updated_at = datetime.utcnow()
     
+    logger.info(f"🔥 🎯 BEFORE COMMIT: server.server_type = '{server.server_type}'")
     db.commit()
+    logger.info(f"🔥 🎯 AFTER COMMIT: committed to database")
     db.refresh(server)
+    logger.info(f"🔥 🎯 AFTER REFRESH: server.server_type = '{server.server_type}'")
     
     return ServerResponse(
         id=str(server.id),

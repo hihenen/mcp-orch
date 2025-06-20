@@ -311,6 +311,8 @@ class McpConnectionService:
                                 if response.get('id') == 1 and 'result' in response:
                                     init_response_received = True
                                     logger.info("✅ Initialize response received")
+                                    # JDBC 서버 초기화 완료 대기 (Client not initialized yet 에러 방지)
+                                    await asyncio.sleep(2)
                                     break
                             except json.JSONDecodeError:
                                 logger.warning(f"⚠️ Failed to parse init JSON: {line[:100]}")
