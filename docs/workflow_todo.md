@@ -2,10 +2,43 @@
 
 ## Metadata
 - Status: In Progress
-- Last Update: 2025-06-19
+- Last Update: 2025-06-20
 - Automatic Check Status: PASS
 
 ## Task List
+
+### TASK_081: JWT 환경변수 최적화 ✅ 완료
+
+**목표**: JWT 시크릿 환경변수를 완전 최적화하여 프론트엔드/백엔드 단일 AUTH_SECRET 사용
+
+- [x] **JWT_SECRET 환경변수 제거**
+  - [x] config.py에서 jwt_secret 필드 및 검증 로직 완전 제거
+  - [x] .env 및 .env.example에서 JWT_SECRET 항목 삭제
+- [x] **백엔드 NEXTAUTH_SECRET → AUTH_SECRET 변경**
+  - [x] jwt_auth.py의 모든 NEXTAUTH_SECRET 참조를 AUTH_SECRET으로 교체
+  - [x] users.py의 JWT 토큰 생성 로직에서 AUTH_SECRET 사용
+- [x] **환경변수 파일 표준화**
+  - [x] .env 파일에서 중복 JWT 시크릿 제거
+  - [x] .env.example 파일 정리 및 표준화
+  - [x] Docker Compose 설정에서 단일 AUTH_SECRET 사용
+
+**기술적 해결사항**:
+- 🔧 **단일 시크릿**: 프론트엔드와 백엔드에서 동일한 AUTH_SECRET 사용
+- 🔧 **불필요한 변수 제거**: JWT_SECRET은 실제로 사용되지 않아 완전 제거
+- 🔧 **설정 시스템 개선**: config.py에서 사용되지 않는 jwt_secret 필드 제거
+- 🔧 **Docker 환경 최적화**: 컨테이너 환경에서도 단일 AUTH_SECRET 사용
+- 🔧 **코드 일관성**: 모든 JWT 처리에서 동일한 환경변수 사용
+
+**수정된 파일**:
+- `/src/mcp_orch/config.py` - jwt_secret 필드 및 관련 로직 제거
+- `/src/mcp_orch/api/jwt_auth.py` - NEXTAUTH_SECRET → AUTH_SECRET 교체
+- `/src/mcp_orch/api/users.py` - NEXTAUTH_SECRET → AUTH_SECRET 교체
+- `/.env` - JWT_SECRET 제거, NEXTAUTH_SECRET → AUTH_SECRET
+- `/.env.example` - JWT_SECRET 제거, NEXTAUTH_SECRET → AUTH_SECRET
+- `/docker-compose.yml` - JWT_SECRET, NEXTAUTH_SECRET → AUTH_SECRET 통일
+
+**커밋 정보**: 
+- commit 689459e - "feat: [TASK_081] JWT 환경변수 최적화 완료"
 
 ### TASK_074: 관리자 페이지 하드코딩된 locale 교체 작업 ✅ 완료
 
@@ -1043,7 +1076,7 @@
 - 🔧 **코드 정리**: 백엔드에서 환경변수 직접 참조 개선 필요
 
 ## Progress Status
-- Current Progress: TASK_080 완료 - JWT 환경변수 분석 및 최적화 방안 제시 완료
+- Current Progress: TASK_081 완료 - JWT 환경변수 최적화 완료
 - Next Task: TASK_079 - MCP 도구 실행 초기화 로직 통일 구현
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
