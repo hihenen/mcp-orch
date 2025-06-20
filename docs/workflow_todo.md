@@ -7,6 +7,24 @@
 
 ## 최근 완료된 주요 작업
 
+### TASK_085: Connection Mode 드롭다운 인터페이스 문제 수정 ✅ 완료
+
+**목표**: editServer 인터페이스에 server_type 필드 추가하여 백엔드 호환성 확보
+
+- [x] **TypeScript 인터페이스 수정**
+  - [x] AddServerDialog의 editServer 인터페이스에 server_type 필드 추가
+  - [x] 백엔드에서 전달하는 server_type 값이 무시되지 않도록 수정
+
+**기술적 해결사항**:
+- 🔧 **인터페이스 호환성**: `serverType`(프론트엔드) + `server_type`(백엔드) 양방향 지원
+- 🔧 **필드 매핑**: useEffect에서 이미 두 필드 모두 처리하고 있어 추가 수정 불필요
+
+**수정된 파일**:
+- `/web/src/components/servers/AddServerDialog.tsx` - editServer 인터페이스에 server_type 필드 추가
+
+**커밋 정보**: 
+- commit 679bc39 - "fix: [TASK_085] Add server_type field to editServer interface for backend compatibility"
+
 ### TASK_083: MCP 서버 설정 편집 Connection Mode 드롭다운 문제 수정 ✅ 완료
 
 **목표**: Resource Connection 서버 편집 시 Connection Mode가 올바르게 표시되도록 수정
@@ -141,8 +159,8 @@
 - **코드 리뷰의 중요성**: 기존 구현 상태 정확히 파악 후 작업 진행
 
 ## Progress Status
-- Current Progress: TASK_082 분석 진행 - MCP Orch Tools 탭 비어있는 문제 분석 시작
-- Next Task: 백엔드 Tools API 분석 및 최근 커밋 영향 검토
+- Current Progress: TASK_085 완료 - Connection Mode 드롭다운 인터페이스 문제 수정 완료
+- Next Task: 사용자 테스트 및 추가 이슈 대응
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 - Recent Commits: 
