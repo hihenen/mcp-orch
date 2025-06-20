@@ -559,6 +559,10 @@ class McpConnectionService:
                 raise ValueError("Server command not configured")
             
             logger.info(f"🔧 Calling tool {tool_name} on server {server_id} with arguments: {arguments}")
+            logger.info(f"🔍 Server command: {command}")
+            logger.info(f"🔍 Server args: {args}")
+            logger.info(f"🔍 Server env: {env}")
+            logger.info(f"🔍 Server timeout: {timeout}")
             
             # 환경 변수 설정
             import os
@@ -645,6 +649,8 @@ class McpConnectionService:
                 }
             }
             
+            logger.info(f"🔍 Sending tool call message: {json.dumps(tool_call_message, indent=2)}")
+            
             tool_call_json = json.dumps(tool_call_message) + '\n'
             process.stdin.write(tool_call_json.encode())
             await process.stdin.drain()
@@ -664,10 +670,13 @@ class McpConnectionService:
                 remaining_lines = stdout_data.decode().strip().split('\n') if stdout_data else []
                 result = None
                 
+                logger.info(f"🔍 Processing {len(remaining_lines)} response lines from MCP server")
                 for line in remaining_lines:
                     if line.strip():
+                        logger.info(f"🔍 Raw response line: {line.strip()}")
                         try:
                             response = json.loads(line)
+                            logger.info(f"🔍 Parsed JSON response: {json.dumps(response, indent=2)}")
                             if response.get('id') == 2:
                                 if 'result' in response:
                                     result = response['result']
@@ -681,6 +690,10 @@ class McpConnectionService:
                                     break
                                 elif 'error' in response:
                                     error = response['error']
+                                    logger.error(f"🔍 MCP Tool Error Details - Full error object: {error}")
+                                    logger.error(f"🔍 MCP Tool Error Details - Error message: {error.get('message', 'No message')}")
+                                    logger.error(f"🔍 MCP Tool Error Details - Error code: {error.get('code', 'No code')}")
+                                    logger.error(f"🔍 MCP Tool Error Details - Error data: {error.get('data', 'No data')}")
                                     error_message = f"Tool error: {error.get('message', 'Unknown error')}"
                                     error_code = str(error.get('code', 'TOOL_ERROR'))
                                     
@@ -711,7 +724,12 @@ class McpConnectionService:
                 if stderr_data:
                     stderr_text = stderr_data.decode().strip()
                     if stderr_text:
-                        logger.warning(f"Tool call stderr: {stderr_text}")
+                        logger.error(f"🔍 MCP Server stderr output: {stderr_text}")
+                        # stderr에 오류 정보가 있다면 더 구체적인 에러 메시지로 사용
+                        if "error" in stderr_text.lower() or "exception" in stderr_text.lower():
+                            logger.error(f"🔍 Potential error found in stderr: {stderr_text}")
+                else:
+                    logger.info("🔍 No stderr output from MCP server")
                 
                 if result is None:
                     error_message = f"No valid response received for tool call {tool_name}"
