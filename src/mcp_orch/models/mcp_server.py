@@ -42,6 +42,7 @@ class McpServer(Base):
     timeout = Column(Integer, default=60, nullable=False)
     auto_approve = Column(JSON, default=list, nullable=False)  # Auto-approved tools
     transport_type = Column(String(50), default="stdio", nullable=False)
+    server_type = Column(String(50), default="api_wrapper", nullable=False, comment="MCP server type: api_wrapper (default) or resource_connection")
     
     # Status and control
     status = Column(SQLEnum(McpServerStatus), default=McpServerStatus.INACTIVE, nullable=False)
@@ -93,6 +94,7 @@ class McpServer(Base):
             "timeout": self.timeout,
             "autoApprove": self.auto_approve,
             "transportType": self.transport_type,
+            "serverType": self.server_type,
             "disabled": not self.is_enabled
         }
 

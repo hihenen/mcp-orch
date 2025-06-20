@@ -136,12 +136,28 @@ class McpConnectionService:
                 logger.info("⚠️ Server is disabled, returning empty tools")
                 return []
             
+            # 서버 타입에 따라 도구 조회 방식 분기
+            server_type = server_config.get('serverType', 'api_wrapper')
+            logger.info(f"🎯 Server type: {server_type}")
+            
+            if server_type == 'resource_connection':
+                return await self._get_tools_sequential(server_id, server_config)
+            else:
+                return await self._get_tools_standard(server_id, server_config)
+                
+        except Exception as e:
+            logger.error(f"❌ Error getting tools for server {server_id}: {e}")
+            return []
+    
+    async def _get_tools_standard(self, server_id: str, server_config: Dict) -> List[Dict]:
+        """표준 API Wrapper 서버용 도구 조회 (기존 방식)"""
+        try:
             command = server_config.get('command', '')
             args = server_config.get('args', [])
             env = server_config.get('env', {})
-            timeout = server_config.get('timeout', 10)  # 실시간 조회를 위해 더 짧은 타임아웃
+            timeout = server_config.get('timeout', 10)
             
-            logger.info(f"🔍 Tools command: {command} {' '.join(args)}")
+            logger.info(f"🔍 Standard tools command: {command} {' '.join(args)}")
             
             if not command:
                 logger.warning("❌ No command specified for tools query")
@@ -155,7 +171,7 @@ class McpConnectionService:
                 "params": {}
             }
             
-            # 프로세스 실행 (PATH 환경변수 상속 - 449a99f 핵심 개선사항)
+            # 프로세스 실행
             import os
             full_env = os.environ.copy()
             full_env.update(env)
@@ -168,7 +184,7 @@ class McpConnectionService:
                 env=full_env
             )
             
-            # 초기화 후 도구 목록 요청
+            # 초기화 후 도구 목록 요청 (기존 방식)
             init_message = {
                 "jsonrpc": "2.0",
                 "id": 1,
@@ -196,13 +212,13 @@ class McpConnectionService:
                 
                 tools = []
                 response_lines = stdout_data.decode().strip().split('\n')
-                logger.info(f"📥 Tools response lines: {len(response_lines)}")
+                logger.info(f"📥 Standard tools response lines: {len(response_lines)}")
                 
                 for line in response_lines:
                     if line.strip():
                         try:
                             response = json.loads(line)
-                            logger.info(f"📋 Tools response: {response}")
+                            logger.info(f"📋 Standard tools response: {response}")
                             if response.get('id') == 2 and 'result' in response:
                                 tools_data = response['result'].get('tools', [])
                                 logger.info(f"🔧 Found {len(tools_data)} tools in response")
@@ -227,7 +243,149 @@ class McpConnectionService:
                 return []
                 
         except Exception as e:
-            logger.error(f"❌ Error getting tools for server {server_id}: {e}")
+            logger.error(f"❌ Error getting standard tools for server {server_id}: {e}")
+            return []
+    
+    async def _get_tools_sequential(self, server_id: str, server_config: Dict) -> List[Dict]:
+        """Resource Connection 서버용 순차 도구 조회 (JDBC 등)"""
+        try:
+            command = server_config.get('command', '')
+            args = server_config.get('args', [])
+            env = server_config.get('env', {})
+            timeout = server_config.get('timeout', 30)  # 더 긴 타임아웃
+            
+            logger.info(f"🔍 Sequential tools command: {command} {' '.join(args)}")
+            
+            if not command:
+                logger.warning("❌ No command specified for sequential tools query")
+                return []
+            
+            # 프로세스 실행
+            import os
+            full_env = os.environ.copy()
+            full_env.update(env)
+            
+            process = await asyncio.create_subprocess_exec(
+                command, *args,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=full_env
+            )
+            
+            try:
+                # 1단계: 초기화 요청
+                init_message = {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {},
+                        "clientInfo": {"name": "mcp-orch", "version": "1.0.0"}
+                    }
+                }
+                
+                init_json = json.dumps(init_message) + '\n'
+                process.stdin.write(init_json.encode())
+                await process.stdin.drain()
+                
+                logger.info("📤 Sent initialize request, waiting for response...")
+                
+                # 초기화 응답 대기
+                init_response_received = False
+                response_buffer = ""
+                
+                # 스트림에서 응답 읽기
+                while not init_response_received:
+                    try:
+                        line_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=10)
+                        if not line_bytes:
+                            break
+                        
+                        line = line_bytes.decode().strip()
+                        if line:
+                            try:
+                                response = json.loads(line)
+                                logger.info(f"📋 Init response: {response}")
+                                if response.get('id') == 1 and 'result' in response:
+                                    init_response_received = True
+                                    logger.info("✅ Initialize response received")
+                                    break
+                            except json.JSONDecodeError:
+                                logger.warning(f"⚠️ Failed to parse init JSON: {line[:100]}")
+                                continue
+                    except asyncio.TimeoutError:
+                        logger.warning("⏰ Timeout waiting for init response")
+                        break
+                
+                if not init_response_received:
+                    logger.warning("❌ Failed to receive initialize response")
+                    process.kill()
+                    await process.wait()
+                    return []
+                
+                # 2단계: 도구 목록 요청
+                tools_message = {
+                    "jsonrpc": "2.0",
+                    "id": 2,
+                    "method": "tools/list",
+                    "params": {}
+                }
+                
+                tools_json = json.dumps(tools_message) + '\n'
+                process.stdin.write(tools_json.encode())
+                await process.stdin.drain()
+                
+                logger.info("📤 Sent tools/list request, waiting for response...")
+                
+                # 도구 응답 대기
+                tools = []
+                tools_response_received = False
+                
+                while not tools_response_received:
+                    try:
+                        line_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=15)
+                        if not line_bytes:
+                            break
+                        
+                        line = line_bytes.decode().strip()
+                        if line:
+                            try:
+                                response = json.loads(line)
+                                logger.info(f"📋 Tools response: {response}")
+                                if response.get('id') == 2 and 'result' in response:
+                                    tools_data = response['result'].get('tools', [])
+                                    logger.info(f"🔧 Found {len(tools_data)} tools in sequential response")
+                                    for tool in tools_data:
+                                        tools.append({
+                                            'name': tool.get('name', ''),
+                                            'description': tool.get('description', ''),
+                                            'schema': tool.get('inputSchema', {})
+                                        })
+                                    tools_response_received = True
+                                    break
+                            except json.JSONDecodeError:
+                                logger.warning(f"⚠️ Failed to parse tools JSON: {line[:100]}")
+                                continue
+                    except asyncio.TimeoutError:
+                        logger.warning("⏰ Timeout waiting for tools response")
+                        break
+                
+                process.stdin.close()
+                await process.wait()
+                
+                logger.info(f"✅ Returning {len(tools)} tools from sequential query for server {server_id}")
+                return tools
+                
+            except Exception as e:
+                logger.error(f"❌ Error in sequential tools query: {e}")
+                process.kill()
+                await process.wait()
+                return []
+                
+        except Exception as e:
+            logger.error(f"❌ Error getting sequential tools for server {server_id}: {e}")
             return []
     
     async def refresh_all_servers(self, db: Session) -> Dict[str, Dict]:
@@ -299,6 +457,7 @@ class McpConnectionService:
                 'env': db_server.env or {},
                 'timeout': 60,  # 기본 타임아웃
                 'transportType': db_server.transport_type or 'stdio',
+                'serverType': db_server.server_type or 'api_wrapper',
                 'disabled': not db_server.is_enabled
             }
             

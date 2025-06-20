@@ -80,6 +80,32 @@ function IndividualServerForm({
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="serverType">Connection Mode</Label>
+          <Select value={formData.serverType} onValueChange={(value: 'api_wrapper' | 'resource_connection') => {
+            updateField('serverType', value);
+            setShowResourceConnectionHint(false); // 선택하면 힌트 숨김
+          }}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="api_wrapper">API Wrapper (Default)</SelectItem>
+              <SelectItem value="resource_connection">Resource Connection</SelectItem>
+            </SelectContent>
+          </Select>
+          {showResourceConnectionHint && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-xs text-blue-800">
+                💡 <strong>Detected database/JDBC server:</strong> Consider using "Resource Connection" mode for better tool discovery.
+              </p>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Use "Resource Connection" for database servers (JDBC, SQL) that need sequential initialization.
+          </p>
+        </div>
       </div>
 
       {/* 실행 설정 */}
@@ -314,6 +340,7 @@ interface ServerConfig {
   name: string;
   description: string;
   transport: 'stdio' | 'sse';
+  serverType: 'api_wrapper' | 'resource_connection';
   command: string;
   args: string[];
   env: Record<string, string>;
@@ -331,6 +358,7 @@ interface AddServerDialogProps {
     name: string;
     description?: string;
     transport?: 'stdio' | 'sse';
+    serverType?: 'api_wrapper' | 'resource_connection';
     command: string;
     args?: string[];
     env?: Record<string, string>;
@@ -356,6 +384,7 @@ export function AddServerDialog({
     name: '',
     description: '',
     transport: 'stdio',
+    serverType: 'api_wrapper',
     command: '',
     args: [],
     env: {},
@@ -369,10 +398,28 @@ export function AddServerDialog({
   const [newArg, setNewArg] = useState('');
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvValue, setNewEnvValue] = useState('');
+  
+  // 자동 감지 힌트 상태
+  const [showResourceConnectionHint, setShowResourceConnectionHint] = useState(false);
 
   // 입력값 업데이트
   const updateField = (field: keyof ServerConfig, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // 자동 감지 힌트: command 변경 시 JDBC/DB 관련 키워드 확인
+    if (field === 'command' && typeof value === 'string') {
+      const command = value.toLowerCase();
+      const args = formData.args.join(' ').toLowerCase();
+      const isResourceConnection = 
+        command.includes('jdbc') || 
+        command.includes('jbang') || 
+        args.includes('jdbc') ||
+        args.includes('database') ||
+        args.includes('db') ||
+        args.includes('sql');
+      
+      setShowResourceConnectionHint(isResourceConnection && formData.serverType === 'api_wrapper');
+    }
   };
 
   // 인자 추가
@@ -429,6 +476,7 @@ export function AddServerDialog({
         name: editServer.name,
         description: editServer.description || '',
         transport: editServer.transport || 'stdio',
+        serverType: editServer.serverType || 'api_wrapper',
         command: editServer.command,
         args: editServer.args || [],
         env: editServer.env || {},
@@ -481,6 +529,8 @@ export function AddServerDialog({
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
+            transport: formData.transport,
+            server_type: formData.serverType,
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -508,6 +558,7 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport_type: formData.transport,
+            server_type: formData.serverType,
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -579,6 +630,8 @@ export function AddServerDialog({
           body: JSON.stringify({
             name: serverName,
             description: server.description || '',
+            transport: server.type === 'sse' ? 'sse' : 'stdio',
+            server_type: server.server_type || 'api_wrapper',
             command: server.command,
             args: server.args || [],
             env: server.env || {},
@@ -627,6 +680,7 @@ export function AddServerDialog({
               name: serverName,
               description: server.description || `${serverName} MCP 서버`,
               transport_type: server.type === 'sse' ? 'sse' : 'stdio',
+              server_type: server.server_type || 'api_wrapper',
               command: server.command,
               args: server.args || [],
               env: server.env || {},

@@ -28,6 +28,7 @@ class ServerCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     transport: str = Field(default="stdio")
+    server_type: str = Field(default="api_wrapper")
     command: str = Field(..., min_length=1)
     args: List[str] = Field(default_factory=list)
     env: dict = Field(default_factory=dict)
@@ -38,6 +39,7 @@ class ServerUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     transport: Optional[str] = None
+    server_type: Optional[str] = None
     command: Optional[str] = None
     args: Optional[List[str]] = None
     env: Optional[dict] = None
@@ -49,6 +51,7 @@ class ServerResponse(BaseModel):
     name: str
     description: Optional[str]
     transport_type: str
+    server_type: str
     command: str
     args: List[str]
     env: dict
@@ -148,6 +151,7 @@ async def list_project_servers(
             name=server.name,
             description=server.description,
             transport_type=server.transport_type or "stdio",
+            server_type=server.server_type or "api_wrapper",
             command=server.command or "",
             args=server.args or [],
             env=server.env or {},
@@ -229,6 +233,7 @@ async def get_project_server_detail(
         "name": server.name,
         "description": server.description,
         "transport_type": server.transport_type or "stdio",
+        "server_type": server.server_type or "api_wrapper",
         "command": server.command or "",
         "args": server.args or [],
         "env": server.env or {},
@@ -290,6 +295,7 @@ async def create_project_server(
         name=server_data.name,
         description=server_data.description,
         transport_type=server_data.transport,
+        server_type=server_data.server_type,
         command=server_data.command,
         args=server_data.args,
         env=server_data.env,
@@ -306,6 +312,7 @@ async def create_project_server(
         name=new_server.name,
         description=new_server.description,
         transport_type=new_server.transport_type or "stdio",
+        server_type=new_server.server_type or "api_wrapper",
         command=new_server.command or "",
         args=new_server.args or [],
         env=new_server.env or {},
@@ -384,6 +391,8 @@ async def update_project_server(
         server.description = server_data.description
     if server_data.transport is not None:
         server.transport_type = server_data.transport
+    if server_data.server_type is not None:
+        server.server_type = server_data.server_type
     if server_data.command is not None:
         server.command = server_data.command
     if server_data.args is not None:
@@ -403,6 +412,7 @@ async def update_project_server(
         name=server.name,
         description=server.description,
         transport_type=server.transport_type or "stdio",
+        server_type=server.server_type or "api_wrapper",
         command=server.command or "",
         args=server.args or [],
         env=server.env or {},
