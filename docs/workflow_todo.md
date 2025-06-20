@@ -119,6 +119,18 @@
 
 ## 대기 중인 작업
 
+### TASK_086: AddServerDialog editServer 데이터 흐름 문제 분석
+**목표**: editServer.serverType과 editServer.server_type이 모두 undefined로 나오는 문제의 데이터 흐름 분석 및 해결
+
+- [ ] **데이터 흐름 분석**
+  - [ ] page.tsx에서 AddServerDialog로 전달되는 editingServer의 실제 출처 확인
+  - [ ] 편집 다이얼로그가 열리는 모든 경로 파악 (카드 클릭, 드롭다운 메뉴, 상세 모달 등)
+  - [ ] 각 경로에서 handleEditServer 호출 상태 검증
+- [ ] **문제점 식별 및 해결**
+  - [ ] handleEditServer 함수가 호출되지 않는 원인 파악
+  - [ ] 편집 다이얼로그 데이터 바인딩 문제 해결
+  - [ ] server_type 필드 누락 문제 해결
+
 ### TASK_079: MCP 도구 실행 초기화 로직 통일 구현
 **목표**: call_tool 메서드에 _get_tools_sequential과 동일한 initialized notification 로직 적용
 - [ ] call_tool 메서드 초기화 로직 수정

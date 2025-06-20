@@ -95,6 +95,7 @@ export default function ProjectServersPage() {
       description: server.description,
       transport: server.transportType || server.transport_type || 'stdio',
       server_type: server.server_type || 'api_wrapper',
+      serverType: server.server_type || 'api_wrapper',  // 프론트엔드 필드도 추가
       command: server.command || '',
       args: server.args || [],
       env: server.env || {},
@@ -102,6 +103,8 @@ export default function ProjectServersPage() {
     };
     
     console.log('🔍 Setting editingServer to:', editingServerData);
+    console.log('🔍 editingServerData.server_type:', editingServerData.server_type);
+    console.log('🔍 editingServerData.serverType:', editingServerData.serverType);
     setEditingServer(editingServerData);
   };
 
