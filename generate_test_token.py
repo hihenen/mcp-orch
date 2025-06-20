@@ -8,8 +8,8 @@ import json
 from datetime import datetime, timezone, timedelta
 from jose import jwt
 
-# NextAuth.js JWT 설정 (jwt_auth.py와 동일)
-NEXTAUTH_SECRET = os.getenv("NEXTAUTH_SECRET", "your-secret-key-here-change-in-production")
+# JWT 설정 (jwt_auth.py와 동일)
+AUTH_SECRET = os.getenv("AUTH_SECRET", "your-secret-key-here-change-in-production")
 ALGORITHM = "HS256"
 
 def generate_test_token():
@@ -28,7 +28,7 @@ def generate_test_token():
     }
     
     # JWT 토큰 생성
-    token = jwt.encode(payload, NEXTAUTH_SECRET, algorithm=ALGORITHM)
+    token = jwt.encode(payload, AUTH_SECRET, algorithm=ALGORITHM)
     
     return token, payload
 
