@@ -545,6 +545,9 @@ class McpConnectionService:
             'ip_address': ip_address
         }
         
+        # stderr 오류 정보 초기화 (변수 참조 오류 방지)
+        stderr_error_info = None
+        
         try:
             # 서버가 비활성화된 경우
             if server_config.get('disabled', False):
@@ -732,7 +735,6 @@ class McpConnectionService:
                             continue
                 
                 # stderr에서 오류 메시지 확인 및 실제 오류 정보 추출
-                stderr_error_info = None
                 if stderr_data:
                     stderr_text = stderr_data.decode().strip()
                     if stderr_text:
