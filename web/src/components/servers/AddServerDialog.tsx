@@ -363,6 +363,7 @@ interface AddServerDialogProps {
     description?: string;
     transport?: 'stdio' | 'sse';
     serverType?: 'api_wrapper' | 'resource_connection';
+    server_type?: 'api_wrapper' | 'resource_connection';  // 백엔드 호환성
     command: string;
     args?: string[];
     env?: Record<string, string>;
