@@ -1,0 +1,83 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+LICENSE
+
+# Environment
+.env
+.env.local
+.env.production
+.env.example
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+postgresql_data/
+
+# Cache
+.cache/
+.npm/
+.yarn/
+.pytest_cache/
+
+# Test
+test-results/
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Local development
+mcp-config.json
+*.local

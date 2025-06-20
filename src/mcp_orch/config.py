@@ -23,6 +23,17 @@ class ServerConfig(BaseModel):
     log_level: str = "INFO"
 
 
+class DatabaseConfig(BaseModel):
+    """데이터베이스 설정"""
+    host: str = "localhost"
+    port: int = 5432
+    user: str = "postgres"
+    password: str = "1234"
+    name: str = "mcp_orch"
+    url: Optional[str] = None
+    sql_echo: bool = False
+
+
 class SecurityConfig(BaseModel):
     """보안 설정"""
     enable_auth: bool = True
@@ -95,6 +106,9 @@ class Settings(BaseSettings):
     
     # 서버 설정
     server: ServerConfig = Field(default_factory=ServerConfig)
+    
+    # 데이터베이스 설정
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     
     # 보안 설정
     security: SecurityConfig = Field(default_factory=SecurityConfig)
@@ -196,23 +210,25 @@ class Settings(BaseSettings):
         # 환경 변수 매핑
         env_mapping = {
             # 서버 설정
-            "PROXY_PORT": ("server", "port"),
-            "SERVER_MODE": ("server", "mode"),
-            "LOG_LEVEL": ("server", "log_level"),
+            "SERVER__PORT": ("server", "port"),
+            "SERVER__HOST": ("server", "host"),
+            "SERVER__MODE": ("server", "mode"),
+            "SERVER__LOG_LEVEL": ("server", "log_level"),
+            
+            # 데이터베이스 설정
+            "DB_HOST": ("database", "host"),
+            "DB_PORT": ("database", "port"),
+            "DB_USER": ("database", "user"),
+            "DB_PASSWORD": ("database", "password"),
+            "DB_NAME": ("database", "name"),
+            "DATABASE_URL": ("database", "url"),
+            "SQL_ECHO": ("database", "sql_echo"),
             
             # 보안 설정
-            "API_KEY": ("security", "api_keys"),
+            "SECURITY__ENABLE_AUTH": ("security", "enable_auth"),
             "JWT_SECRET": ("security", "jwt_secret"),
             "INITIAL_ADMIN_EMAIL": ("security", "initial_admin_email"),
             "INITIAL_ADMIN_PASSWORD": ("security", "initial_admin_password"),
-            
-            # LLM 설정
-            "LLM_PROVIDER": ("llm", "provider"),
-            "AZURE_AI_ENDPOINT": ("llm", "azure", "endpoint"),
-            "AZURE_AI_API_KEY": ("llm", "azure", "api_key"),
-            "AWS_REGION": ("llm", "bedrock", "region"),
-            "OPENAI_API_KEY": ("llm", "openai", "api_key"),
-            "ANTHROPIC_API_KEY": ("llm", "anthropic", "api_key"),
         }
         
         kwargs = {}
@@ -239,6 +255,7 @@ class Settings(BaseSettings):
         """설정을 딕셔너리로 변환"""
         return {
             "server": self.server.model_dump(),
+            "database": self.database.model_dump(exclude={"password"}),
             "security": self.security.model_dump(exclude={"jwt_secret"}),
             "llm": self.llm.model_dump(exclude={"azure__api_key", "openai__api_key", "anthropic__api_key"}),
             "execution": self.execution.model_dump(),
