@@ -203,6 +203,61 @@ uv run python test_mcp_proxy_mode.py
    - `uv run mcp-orch list-tools`로 도구 목록 확인
    - 로그 레벨을 DEBUG로 설정하여 상세 로그 확인
 
+## Docker 배포
+
+### 환경변수 설정
+
+1. **환경변수 파일 생성**
+   ```bash
+   # .env.example을 복사하여 .env 생성
+   cp .env.example .env
+   
+   # 필요한 값들 수정
+   vi .env
+   ```
+
+2. **주요 환경변수**
+   ```bash
+   # 보안 (프로덕션에서는 반드시 변경)
+   AUTH_SECRET=your-strong-secret-key
+   
+   # 데이터베이스
+   DB_PASSWORD=your-db-password
+   
+   # 관리자 계정
+   INITIAL_ADMIN_EMAIL=admin@yourdomain.com
+   INITIAL_ADMIN_PASSWORD=your-admin-password
+   
+   # API URL (프로덕션 배포 시)
+   NEXT_PUBLIC_MCP_API_URL_DOCKER=https://api.yourdomain.com
+   ```
+
+### Docker Compose 실행
+
+```bash
+# 전체 스택 실행 (PostgreSQL + Backend + Frontend)
+docker-compose up -d
+
+# 로그 확인
+docker-compose logs -f
+
+# 서비스 중지
+docker-compose down
+```
+
+### 접속 정보
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **PostgreSQL**: localhost:5432
+
+### 구조
+
+현재 구조는 로컬 개발과 Docker 배포를 모두 지원합니다:
+
+- **로컬 개발**: `web/.env.local`과 루트 `.env` 각각 사용
+- **Docker 배포**: 루트 `.env` 하나로 모든 환경변수 관리
+
 ## 라이선스
 
 MIT License

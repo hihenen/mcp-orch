@@ -47,12 +47,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL_DOCKER:-http://mcp-orch-backend:8000}
     container_name: mcp-orch-frontend
     ports:
       - "3000:3000"
     environment:
       - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-here-change-in-production}
-      - NEXT_PUBLIC_MCP_API_URL=http://mcp-orch-backend:8000
+      - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL_DOCKER:-http://mcp-orch-backend:8000}
     depends_on:
       - mcp-orch-backend
     restart: unless-stopped
