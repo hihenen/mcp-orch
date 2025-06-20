@@ -305,6 +305,7 @@ class McpConnectionService:
                         
                         line = line_bytes.decode().strip()
                         if line:
+                            logger.info(f"🔍 Raw stdout line: {line}")
                             try:
                                 response = json.loads(line)
                                 logger.info(f"📋 Init response: {response}")
@@ -328,6 +329,16 @@ class McpConnectionService:
                     except asyncio.TimeoutError:
                         logger.warning("⏰ Timeout waiting for init response")
                         break
+                
+                # stderr 출력도 확인
+                if not init_response_received:
+                    try:
+                        stderr_data = await process.stderr.read()
+                        if stderr_data:
+                            stderr_text = stderr_data.decode().strip()
+                            logger.error(f"❌ stderr output: {stderr_text}")
+                    except Exception as e:
+                        logger.error(f"Error reading stderr: {e}")
                 
                 if not init_response_received:
                     logger.warning("❌ Failed to receive initialize response")
