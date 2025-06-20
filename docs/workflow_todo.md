@@ -5,7 +5,30 @@
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 
-## 현재 진행 중인 작업
+## 최근 완료된 주요 작업
+
+### TASK_083: MCP 서버 설정 편집 Connection Mode 드롭다운 문제 수정 ✅ 완료
+
+**목표**: Resource Connection 서버 편집 시 Connection Mode가 올바르게 표시되도록 수정
+
+- [x] **누락된 필드 추가**
+  - [x] handleEditServer 함수에서 server_type 필드 전달 누락 문제 해결
+  - [x] resetForm 함수에서 serverType 필드 초기화 추가
+- [x] **필드 매핑 호환성 개선**  
+  - [x] useEffect에서 serverType과 server_type 필드 모두 지원
+  - [x] 편집 모드에서 올바른 Connection Mode 값 표시
+
+**기술적 해결사항**:
+- 🔧 **필드 매핑**: `server_type` (백엔드) ↔ `serverType` (프론트엔드) 양방향 지원
+- 🔧 **편집 모드 개선**: Resource Connection 서버 편집 시 올바른 기본값 표시
+- 🔧 **폼 초기화**: resetForm에서 모든 필수 필드 포함하도록 수정
+
+**수정된 파일**:
+- `/web/src/app/projects/[projectId]/servers/page.tsx` - handleEditServer 함수 server_type 필드 추가
+- `/web/src/components/servers/AddServerDialog.tsx` - 폼 초기화 및 필드 매핑 개선
+
+**커밋 정보**: 
+- commit 0d5a90b - "fix: [TASK_083] Fix Connection Mode dropdown default value in server edit"
 
 ### TASK_082: MCP Orch Tools 탭 비어있는 문제 분석 및 해결 ✅ 완료
 
