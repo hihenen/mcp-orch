@@ -35,8 +35,7 @@ services:
       - DB_NAME=${DB_NAME:-mcp_orch}
       - SERVER__HOST=0.0.0.0
       - SERVER__PORT=8000
-      - JWT_SECRET=${JWT_SECRET:-your-secret-key-here-change-in-production}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here-change-in-production}
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-here-change-in-production}
       - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-admin@example.com}
       - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-change-me}
     depends_on:
@@ -52,7 +51,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here-change-in-production}
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-here-change-in-production}
       - NEXT_PUBLIC_MCP_API_URL=http://mcp-orch-backend:8000
     depends_on:
       - mcp-orch-backend

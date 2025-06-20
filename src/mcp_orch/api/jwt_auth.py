@@ -23,7 +23,7 @@ from ..config import settings
 logger = logging.getLogger(__name__)
 
 # NextAuth.js JWT 설정
-NEXTAUTH_SECRET = os.getenv("NEXTAUTH_SECRET", "your-secret-key-here-change-in-production")
+AUTH_SECRET = os.getenv("AUTH_SECRET", "your-secret-key-here-change-in-production")
 ALGORITHM = "HS256"
 
 security = HTTPBearer()
@@ -87,7 +87,7 @@ def verify_jwt_token(token: str) -> Optional[JWTUser]:
                 )
             else:
                 # 일반 JWT 토큰 처리 (프로덕션 환경)
-                jwt_secret = settings.security.jwt_secret if settings else NEXTAUTH_SECRET
+                jwt_secret = AUTH_SECRET
                 payload = jwt.decode(
                     token,
                     key=jwt_secret,
@@ -306,7 +306,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
                         )
                     else:
                         # 일반 JWT 토큰 처리 (프로덕션 환경)
-                        jwt_secret = self.settings.security.jwt_secret if self.settings else NEXTAUTH_SECRET
+                        jwt_secret = AUTH_SECRET
                         payload = jwt.decode(
                             token,
                             key=jwt_secret,

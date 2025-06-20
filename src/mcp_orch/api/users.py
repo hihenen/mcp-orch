@@ -13,7 +13,7 @@ from ..models.user import User
 from .jwt_auth import get_user_from_jwt_token
 
 # JWT 설정
-NEXTAUTH_SECRET = os.getenv("NEXTAUTH_SECRET", "your-secret-key-here-change-in-production")
+AUTH_SECRET = os.getenv("AUTH_SECRET", "your-secret-key-here-change-in-production")
 ALGORITHM = "HS256"
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -206,7 +206,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             })
         
         # JWT 토큰 생성
-        token = jwt.encode(token_payload, NEXTAUTH_SECRET, algorithm=ALGORITHM)
+        token = jwt.encode(token_payload, AUTH_SECRET, algorithm=ALGORITHM)
 
         # 기존 스키마와 호환성을 위한 임시 응답 구조
         class TempOrgResponse:

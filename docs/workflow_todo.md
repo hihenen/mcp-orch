@@ -1004,9 +1004,47 @@
   - [ ] 기존 api_wrapper 서버들의 정상 작동 확인
   - [ ] "Client not initialized yet" 오류 해결 검증
 
+### TASK_080: JWT 환경변수 사용 현황 분석 및 최적화 ✅ 완료
+
+**목표**: NEXTAUTH_SECRET과 JWT_SECRET 환경변수의 실제 사용 여부 분석하여 불필요한 변수 제거
+
+- [x] **NextAuth.js 설정 파일 분석**
+  - [x] `/web/src/lib/auth.ts`에서 `AUTH_SECRET` 사용 확인 (L45)
+  - [x] `/web/src/lib/jwt-utils.ts`에서 `AUTH_SECRET` 사용 확인 (L80)
+  - [x] **NEXTAUTH_SECRET은 NextAuth.js에서 사용되지 않음** ❌
+- [x] **백엔드 JWT 설정 분석**
+  - [x] `config.py`에서 `JWT_SECRET` 설정 확인하지만 실제 사용 안됨
+  - [x] `jwt_auth.py`와 `users.py`에서 `NEXTAUTH_SECRET` 직접 사용
+  - [x] 백엔드는 `settings.security.jwt_secret` 대신 `NEXTAUTH_SECRET` 환경변수 직접 참조
+- [x] **인증 시스템 흐름 분석**
+  - [x] **프론트엔드**: NextAuth.js → `AUTH_SECRET` 사용
+  - [x] **백엔드**: JWT 검증 시 `NEXTAUTH_SECRET` 사용
+  - [x] **문제**: 프론트엔드와 백엔드가 다른 환경변수 사용 ❌
+- [x] **환경변수 최적화 제안**
+  - [x] `JWT_SECRET`은 config.py에만 정의되고 실제 사용 안됨 → **제거 가능**
+  - [x] `AUTH_SECRET`과 `NEXTAUTH_SECRET` 통일 필요
+  - [x] 백엔드 코드를 `AUTH_SECRET` 사용하도록 수정 권장
+
+**🚨 발견된 문제점**:
+1. **환경변수 불일치**: 프론트엔드(`AUTH_SECRET`) vs 백엔드(`NEXTAUTH_SECRET`)
+2. **미사용 변수**: `JWT_SECRET`이 config.py에 정의되지만 실제 사용 안됨
+3. **설정 무시**: 백엔드가 `settings.security.jwt_secret` 대신 환경변수 직접 참조
+
+**🎯 최적화 방안**:
+1. **AUTH_SECRET로 통일**: NextAuth.js v5 표준 환경변수 사용
+2. **JWT_SECRET 제거**: config.py와 .env에서 제거 가능
+3. **백엔드 수정**: `NEXTAUTH_SECRET` → `AUTH_SECRET` 변경
+4. **설정 활용**: `settings.security.jwt_secret` 사용하도록 개선
+
+**기술적 해결사항**:
+- 🔧 **불일치 발견**: 프론트엔드와 백엔드 JWT 시크릿 키 환경변수 다름
+- 🔧 **미사용 식별**: JWT_SECRET 완전 미사용 확인
+- 🔧 **표준화 필요**: NextAuth.js v5 AUTH_SECRET 표준 준수 권장
+- 🔧 **코드 정리**: 백엔드에서 환경변수 직접 참조 개선 필요
+
 ## Progress Status
-- Current Progress: TASK_078 완료 - MCP 도구 실행 오류 분석 완료, TASK_079 진행 중
-- Next Task: TASK_079 - call_tool 메서드 초기화 로직 통일 구현
+- Current Progress: TASK_080 완료 - JWT 환경변수 분석 및 최적화 방안 제시 완료
+- Next Task: TASK_079 - MCP 도구 실행 초기화 로직 통일 구현
 - Last Update: 2025-06-20
 - Automatic Check Status: PASS
 
