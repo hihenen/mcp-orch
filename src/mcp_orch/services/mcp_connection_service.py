@@ -694,7 +694,16 @@ class McpConnectionService:
                                     logger.error(f"🔍 MCP Tool Error Details - Error message: {error.get('message', 'No message')}")
                                     logger.error(f"🔍 MCP Tool Error Details - Error code: {error.get('code', 'No code')}")
                                     logger.error(f"🔍 MCP Tool Error Details - Error data: {error.get('data', 'No data')}")
-                                    error_message = f"Tool error: {error.get('message', 'Unknown error')}"
+                                    
+                                    # "Internal error"인 경우 stderr에서 실제 오류 추출 시도
+                                    original_error_message = error.get('message', 'Unknown error')
+                                    if original_error_message == "Internal error" and stderr_error_info:
+                                        # stderr에서 추출한 실제 오류 메시지 사용
+                                        error_message = f"Tool error: {stderr_error_info}"
+                                        logger.info(f"🔄 Replaced 'Internal error' with stderr info: {stderr_error_info}")
+                                    else:
+                                        error_message = f"Tool error: {original_error_message}"
+                                    
                                     error_code = str(error.get('code', 'TOOL_ERROR'))
                                     
                                     # 초기화 관련 에러 특별 처리
@@ -702,6 +711,8 @@ class McpConnectionService:
                                         error_code = "INITIALIZATION_INCOMPLETE"
                                     elif error.get('code') == -32602:
                                         error_code = "INVALID_PARAMETERS"
+                                    elif error.get('code') == -32603 and stderr_error_info:
+                                        error_code = "DATABASE_ERROR"
                                     
                                     # 실행 시간 계산 및 ERROR 로그 저장
                                     execution_time = time.time() - start_time
@@ -720,14 +731,25 @@ class McpConnectionService:
                         except json.JSONDecodeError:
                             continue
                 
-                # stderr에서 오류 메시지 확인
+                # stderr에서 오류 메시지 확인 및 실제 오류 정보 추출
+                stderr_error_info = None
                 if stderr_data:
                     stderr_text = stderr_data.decode().strip()
                     if stderr_text:
                         logger.error(f"🔍 MCP Server stderr output: {stderr_text}")
-                        # stderr에 오류 정보가 있다면 더 구체적인 에러 메시지로 사용
-                        if "error" in stderr_text.lower() or "exception" in stderr_text.lower():
-                            logger.error(f"🔍 Potential error found in stderr: {stderr_text}")
+                        
+                        # 데이터베이스 관련 오류 패턴 검출
+                        if any(pattern in stderr_text for pattern in [
+                            "ORA-", "SQLException", "Connection refused", "Authentication failed",
+                            "Access denied", "Unknown host", "Connection timeout", "FATAL:", "ERROR:"
+                        ]):
+                            stderr_error_info = self._extract_meaningful_error(stderr_text)
+                            logger.error(f"🔍 Extracted meaningful error: {stderr_error_info}")
+                        
+                        # 일반적인 오류 패턴 검출
+                        elif "error" in stderr_text.lower() or "exception" in stderr_text.lower():
+                            stderr_error_info = self._extract_meaningful_error(stderr_text)
+                            logger.error(f"🔍 Potential error found in stderr: {stderr_error_info}")
                 else:
                     logger.info("🔍 No stderr output from MCP server")
                 
@@ -846,6 +868,75 @@ class McpConnectionService:
         except Exception as e:
             logger.error(f"❌ Failed to save ToolCallLog: {e}")
             db.rollback()
+
+    def _extract_meaningful_error(self, stderr_text: str) -> str:
+        """stderr에서 의미있는 오류 메시지 추출"""
+        try:
+            # Oracle 오류 패턴 (ORA-XXXXX)
+            import re
+            
+            # ORA-XXXXX 패턴 검출
+            ora_match = re.search(r'ORA-\d{5}[^.]*', stderr_text)
+            if ora_match:
+                ora_error = ora_match.group(0)
+                # 친화적인 메시지로 변환
+                if "ORA-01017" in ora_error:
+                    return "Database authentication failed - invalid username/password. Please check your Oracle credentials."
+                elif "ORA-12541" in ora_error:
+                    return "Database connection failed - TNS listener error. Please check the hostname and port."
+                elif "ORA-12154" in ora_error:
+                    return "Database connection failed - TNS could not resolve service name."
+                else:
+                    return f"Database error: {ora_error}"
+            
+            # PostgreSQL 오류 패턴
+            if "FATAL:" in stderr_text:
+                fatal_match = re.search(r'FATAL:\s*([^\n]+)', stderr_text)
+                if fatal_match:
+                    return f"Database connection failed: {fatal_match.group(1)}"
+            
+            # MySQL 오류 패턴
+            if "Access denied" in stderr_text:
+                return "Database authentication failed - access denied. Please check your credentials."
+            
+            # 일반적인 연결 오류
+            if "Connection refused" in stderr_text:
+                return "Database connection failed - connection refused. Please check if the database server is running."
+            elif "Connection timeout" in stderr_text:
+                return "Database connection failed - connection timeout. Please check network connectivity."
+            elif "Unknown host" in stderr_text:
+                return "Database connection failed - unknown host. Please check the hostname."
+            
+            # SQLException 패턴
+            sql_exception = re.search(r'SQLException[^\n]*([^\n]+)', stderr_text)
+            if sql_exception:
+                return f"Database error: {sql_exception.group(0)}"
+            
+            # Exception 패턴에서 메시지 추출
+            exception_match = re.search(r'Exception[^\n]*:([^\n]+)', stderr_text)
+            if exception_match:
+                return f"Error: {exception_match.group(1).strip()}"
+            
+            # 에러 키워드가 포함된 줄 추출
+            lines = stderr_text.split('\n')
+            for line in lines:
+                if any(keyword in line.lower() for keyword in ['error', 'exception', 'failed', 'denied']):
+                    # 로그 레벨 제거하고 핵심 메시지만 추출
+                    clean_line = re.sub(r'^\d{4}-\d{2}-\d{2}.*?\s+', '', line)
+                    clean_line = re.sub(r'^(ERROR|WARN|INFO|DEBUG)\s*:?\s*', '', clean_line, flags=re.IGNORECASE)
+                    if len(clean_line.strip()) > 10:  # 의미있는 길이의 메시지만
+                        return clean_line.strip()
+            
+            # 마지막 수단: stderr 전체에서 첫 번째 에러 라인
+            error_lines = [line for line in lines if 'error' in line.lower()]
+            if error_lines:
+                return error_lines[0].strip()
+            
+            return stderr_text.strip()[:200]  # 최대 200자로 제한
+            
+        except Exception as e:
+            logger.warning(f"Failed to extract meaningful error: {e}")
+            return stderr_text.strip()[:200]
 
 
 # 전역 서비스 인스턴스
