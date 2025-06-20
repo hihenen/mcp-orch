@@ -385,6 +385,7 @@ async def update_project_server(
             )
     
     # 서버 정보 업데이트
+    logger.info(f"🔧 Updating server {server.name} with data: {server_data}")
     if server_data.name is not None:
         server.name = server_data.name
     if server_data.description is not None:
@@ -392,6 +393,7 @@ async def update_project_server(
     if server_data.transport is not None:
         server.transport_type = server_data.transport
     if server_data.server_type is not None:
+        logger.info(f"🔧 Setting server_type from '{server.server_type}' to '{server_data.server_type}'")
         server.server_type = server_data.server_type
     if server_data.command is not None:
         server.command = server_data.command

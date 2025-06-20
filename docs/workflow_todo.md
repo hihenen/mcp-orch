@@ -884,10 +884,46 @@
 - 🔧 **요청 대기**: 각 요청마다 개별 타임아웃 설정으로 응답 대기
 - 🔧 **동적 도구**: 실제 JDBC 서버는 연결 설정에 따라 동적으로 도구 생성
 
+### TASK_050: MCP 서버 도구 조회 모드 선택 기능 구현 ✅ 완료
+
+**목표**: JDBC MCP 서버 등 리소스 연결 서버를 위한 순차적 도구 조회 모드 구현
+
+- [x] **server_type 필드 추가**
+  - [x] McpServer 모델에 server_type 필드 추가 (api_wrapper/resource_connection)
+  - [x] 데이터베이스 마이그레이션 생성 및 적용
+  - [x] 기존 서버들을 api_wrapper로 기본 설정
+- [x] **백엔드 API 수정**
+  - [x] ServerCreate, ServerUpdate, ServerResponse 모델에 server_type 필드 추가
+  - [x] project_servers.py의 모든 API 응답에 server_type 필드 포함
+  - [x] mcp_connection_service에서 서버 타입별 도구 조회 로직 분기
+- [x] **순차적 도구 조회 구현**
+  - [x] _get_tools_sequential 함수 구현 (Resource Connection용)
+  - [x] _get_tools_standard 함수 분리 (API Wrapper용)
+  - [x] initialize 응답 대기 후 tools/list 요청하는 순차 처리
+- [x] **프론트엔드 UI 구현**
+  - [x] AddServerDialog에 Server Type 선택 필드 추가
+  - [x] JDBC/database 키워드 감지 시 자동 힌트 표시
+  - [x] 서버 생성/수정/일괄추가에서 server_type 전송
+- [x] **데이터베이스 마이그레이션 적용**
+  - [x] 백엔드 시작 시 마이그레이션 미적용으로 인한 hang 문제 진단
+  - [x] `uv run alembic upgrade head` 실행하여 server_type 컬럼 추가
+  - [x] 마이그레이션 상태 확인: 725cb65d62b1 → d5972937e80e 성공적 적용
+
+**기술적 해결사항**:
+- 🔧 **서버 타입 분기**: api_wrapper(기본) vs resource_connection 모드
+- 🔧 **순차 처리**: initialize → 응답 대기 → tools/list 순서 보장
+- 🔧 **호환성 유지**: 기존 서버들은 api_wrapper로 설정하여 영향 없음
+- 🔧 **자동 감지**: JDBC, database 키워드로 리소스 연결 모드 힌트 제공
+- 🔧 **타임아웃 조정**: 리소스 연결 서버는 더 긴 타임아웃(30초) 적용
+- 🔧 **마이그레이션 문제 해결**: 올바른 PostgreSQL URL 사용하여 백엔드 시작 이슈 해결
+
+**커밋 정보**: 
+- commit 454bc34 - "feat: [TASK_050] Complete server_type field implementation for MCP connection modes"
+
 ## Progress Status
-- Current Progress: TASK_076 완료 - MCP Inspector JDBC 연결 분석 완료
-- Next Task: 사용자 요청에 따른 새로운 작업 대기
-- Last Update: 2025-06-19
+- Current Progress: TASK_050 완료 - 백엔드 시작 문제 해결 및 MCP 서버 도구 조회 모드 기능 완전 구현
+- Next Task: 사용자가 백엔드를 재시작하여 정상 작동 확인
+- Last Update: 2025-06-20
 - Automatic Check Status: PASS
 
 ## 핵심 기술 인사이트
