@@ -24,65 +24,73 @@ MCP Orchestrator is a comprehensive **project-based MCP server management platfo
 - **🏗️ Enterprise Ready**: Self-hosted deployment with scalable architecture
 - **🔌 Full MCP Compatibility**: Standard MCP protocol with SSE transport support
 
-## Installation
+## Quick Start (30 seconds!)
 
 ```bash
-# Clone repository
-git clone git@github.com:hihenen/mcp-orch.git
+# Clone the repository
+git clone https://github.com/fnf-ea/mcp-orch.git
 cd mcp-orch
 
-# Install dependencies
-uv sync
+# One-click setup with interactive deployment selection
+./scripts/quickstart.sh
 ```
 
-## Quick Start
+**That's it!** The script will guide you through choosing the best deployment option for your needs.
 
-### Option 1: Web Interface (Recommended)
+## Deployment Options
+
+### 🎯 Option 1: Hybrid (Recommended)
+**PostgreSQL (Docker) + Backend (Native) + Frontend (Docker)**
 
 ```bash
-# Install and start with web interface
-uv sync
-uv run mcp-orch serve
+# Quick start
+./scripts/quickstart-hybrid.sh
 
-# Access web interface
-open http://localhost:3000
+# With frontend
+./scripts/quickstart-hybrid.sh --with-frontend
 ```
 
-1. **Create a Project** through the web UI
-2. **Add MCP Servers** with point-and-click configuration
-3. **Invite Team Members** and set permissions
-4. **Generate API Keys** for secure access
-5. **Copy Configuration** for your AI tools (Cursor, Cline, Claude)
+✅ **Best for most users**
+- Optimal MCP server compatibility 
+- Stable PostgreSQL database
+- Fast development and debugging
+- Easy troubleshooting
 
-### Option 2: CLI Configuration (Advanced)
+### 🐳 Option 2: Full Docker  
+**Complete containerized environment**
 
 ```bash
-# Initialize with CLI
-uv run mcp-orch init
-
-# Edit mcp-config.json
-{
-  "mcpServers": {
-    "brave-search": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
-
-# Start server
-uv run mcp-orch serve
+# All services in Docker
+docker-compose up -d
 ```
 
-### 🚀 What You Get
+✅ **Best for production**
+- Complete isolation
+- Consistent deployment
+- Easy scaling
+- Enterprise-ready
 
-- **Web Dashboard**: `http://localhost:3000` - Manage projects, teams, servers
-- **API Endpoint**: `http://localhost:8000` - Secure MCP server access
-- **Project URLs**: `http://localhost:8000/projects/{project-id}/sse`
-- **Team Collaboration**: Real-time member management and activity tracking
+### 🛠️ Option 3: Development
+**SQLite + Native execution**
+
+```bash
+# Development environment
+./scripts/dev-setup.sh
+```
+
+✅ **Best for development**
+- Fastest setup
+- Minimal dependencies
+- Direct debugging
+- Local development
+
+## What You Get
+
+- **🌐 Web Dashboard**: `http://localhost:3000` - Intuitive project and team management
+- **🔧 Backend API**: `http://localhost:8000` - Secure MCP server orchestration
+- **📊 Project URLs**: `http://localhost:8000/projects/{project-id}/sse` - Direct AI tool integration
+- **👥 Team Collaboration**: Real-time member management and activity tracking
+- **📈 Monitoring** (Optional): Grafana dashboards and Prometheus metrics
 
 ## Usage
 
@@ -277,60 +285,61 @@ uv run python test_mcp_proxy_mode.py
    - Check tool list with `uv run mcp-orch list-tools`
    - Set log level to DEBUG for detailed logs
 
-## Docker Deployment
+## Advanced Configuration
 
-### Environment Variables Setup
+### Adding Monitoring Stack
 
-1. **Create Environment File**
-   ```bash
-   # Copy .env.example to create .env
-   cp .env.example .env
-   
-   # Edit required values
-   vi .env
-   ```
-
-2. **Key Environment Variables**
-   ```bash
-   # Security (Must change in production)
-   AUTH_SECRET=your-strong-secret-key
-   
-   # Database
-   DB_PASSWORD=your-db-password
-   
-   # Admin Account
-   INITIAL_ADMIN_EMAIL=admin@yourdomain.com
-   INITIAL_ADMIN_PASSWORD=your-admin-password
-   
-   # API URL (For production deployment)
-   NEXT_PUBLIC_MCP_API_URL_DOCKER=https://api.yourdomain.com
-   ```
-
-### Docker Compose Execution
+Add Prometheus and Grafana for system monitoring:
 
 ```bash
-# Run full stack (PostgreSQL + Backend + Frontend)
-docker-compose up -d
+# Start monitoring services (optional)
+docker-compose -f docker-compose.monitoring.yml up -d
 
-# Check logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+# Access dashboards
+open http://localhost:3001  # Grafana (admin/admin)
+open http://localhost:9090  # Prometheus
 ```
 
-### Access Information
+### Environment Variables
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **PostgreSQL**: localhost:5432
+Each deployment option uses different environment configurations:
 
-### Structure
+1. **Hybrid Deployment**: `.env` (based on `.env.hybrid.example`)
+2. **Full Docker**: `.env` (based on `.env.example`)  
+3. **Development**: Auto-generated `.env` with SQLite
 
-The current structure supports both local development and Docker deployment:
+### Key Environment Variables
+```bash
+# Security (Change in production!)
+AUTH_SECRET=your-strong-secret-key
+JWT_SECRET=your-jwt-secret-key
 
-- **Local Development**: Uses separate `web/.env.local` and root `.env`
-- **Docker Deployment**: Manages all environment variables with single root `.env`
+# Database (Hybrid/Docker)
+DATABASE_URL=postgresql://user:pass@localhost:5432/mcp_orch
+
+# Development (SQLite)
+DATABASE_URL=sqlite:///./mcp_orch_dev.db
+
+# Admin Account
+INITIAL_ADMIN_EMAIL=admin@example.com
+INITIAL_ADMIN_PASSWORD=your-secure-password
+```
+
+### Service Management
+
+```bash
+# Stop all services
+docker-compose down
+docker-compose -f docker-compose.hybrid.yml down
+docker-compose -f docker-compose.monitoring.yml down
+
+# View logs
+docker-compose logs -f
+docker logs mcp-orch-postgres
+
+# Health check
+./scripts/health-check.sh
+```
 
 ## 📋 License and Contributing
 

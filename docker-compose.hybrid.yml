@@ -1,12 +1,13 @@
-# MCP Orchestrator - Hybrid Deployment
-# Database: Docker PostgreSQL
-# Backend: Native installation (for MCP server compatibility)
-# Frontend: Docker container
+# MCP Orchestrator - Hybrid Deployment (Recommended)
+# Database: Docker PostgreSQL (isolated and reliable)
+# Backend: Native installation (optimal MCP server compatibility) 
+# Frontend: Docker container (consistent environment)
+# Monitoring: Separate docker-compose.monitoring.yml
 
 version: '3.8'
 
 services:
-  # Database only - Backend runs natively
+  # PostgreSQL Database - Core infrastructure
   postgresql:
     image: postgres:15
     container_name: mcp-orch-postgres
@@ -26,19 +27,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Redis for session store (Enterprise)
-  redis:
-    image: redis:7-alpine
-    container_name: mcp-orch-redis
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    profiles:
-      - enterprise
-
-  # Frontend container
+  # Frontend Web Interface
   frontend:
     build:
       context: ./web
@@ -56,60 +45,38 @@ services:
     profiles:
       - frontend
 
-  # Monitoring stack (Enterprise)
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: mcp-orch-prometheus
+  # Redis for session store (Optional - Enterprise)
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-orch-redis
     ports:
-      - "9090:9090"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
+      - redis_data:/data
     restart: unless-stopped
     profiles:
       - enterprise
-      - monitoring
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: mcp-orch-grafana
-    ports:
-      - "3001:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./configs/grafana/provisioning:/etc/grafana/provisioning
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-    restart: unless-stopped
-    profiles:
-      - enterprise
-      - monitoring
 
 volumes:
   postgresql_data:
     driver: local
   redis_data:
     driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
 
 # Usage Examples:
 # 
-# Minimal (Database only):
+# Quick Start (Database only - Backend runs natively):
 # docker-compose -f docker-compose.hybrid.yml up -d postgresql
+# uv run mcp-orch serve
 #
 # Standard (Database + Frontend):  
 # docker-compose -f docker-compose.hybrid.yml --profile frontend up -d
+# uv run mcp-orch serve
 #
-# Enterprise (All services):
-# docker-compose -f docker-compose.hybrid.yml --profile enterprise --profile frontend --profile monitoring up -d
+# With Monitoring (add monitoring stack):
+# docker-compose -f docker-compose.hybrid.yml --profile frontend up -d
+# docker-compose -f docker-compose.monitoring.yml up -d
+# uv run mcp-orch serve
+#
+# Enterprise (with Redis):
+# docker-compose -f docker-compose.hybrid.yml --profile frontend --profile enterprise up -d
