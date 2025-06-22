@@ -1,0 +1,174 @@
+# MCP Orchestrator - Enterprise Configuration
+# Ideal for: Large organizations with enterprise requirements
+
+database:
+  # High-availability database setup
+  url: "${DATABASE_URL}"
+  pool_size: 50
+  max_overflow: 100
+  pool_pre_ping: true
+  pool_recycle: 1800
+  connection_timeout: 30
+  
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  workers: 16
+  max_request_size: "100MB"
+  
+security:
+  # Enhanced security for enterprise
+  jwt_secret: "${JWT_SECRET}"
+  jwt_algorithm: "RS256"  # RSA for enterprise
+  jwt_expiration_hours: 2
+  session_timeout_hours: 4
+  enforce_https: true
+  
+# SSO Configuration (Enterprise Feature)
+sso:
+  enabled: true
+  provider: "saml"  # saml, oidc, ldap
+  saml:
+    metadata_url: "${SAML_METADATA_URL}"
+    entity_id: "${SAML_ENTITY_ID}"
+    acs_url: "${SAML_ACS_URL}"
+  oidc:
+    client_id: "${OIDC_CLIENT_ID}"
+    client_secret: "${OIDC_CLIENT_SECRET}"
+    discovery_url: "${OIDC_DISCOVERY_URL}"
+  ldap:
+    server: "${LDAP_SERVER}"
+    bind_dn: "${LDAP_BIND_DN}"
+    bind_password: "${LDAP_BIND_PASSWORD}"
+    user_search: "${LDAP_USER_SEARCH}"
+    
+frontend:
+  url: "${FRONTEND_URL}"
+  
+logging:
+  level: "INFO"
+  file: "/var/log/mcp-orchestrator/backend.log"
+  rotation:
+    max_size: "100MB"
+    backup_count: 20
+  structured: true
+  format: "json"
+  
+# Enhanced audit logging
+audit:
+  enabled: true
+  file: "/var/log/mcp-orchestrator/audit.log"
+  include_requests: true
+  include_responses: false
+  retention_days: 365
+    
+mcp:
+  # Enterprise MCP settings
+  allow_host_commands: true
+  workspace_dir: "/var/lib/mcp-orchestrator/workspaces"
+  timeout_seconds: 300
+  max_concurrent_servers: 500
+  cleanup_interval_hours: 12
+  resource_limits:
+    max_memory_mb: 1024
+    max_cpu_percent: 80
+  
+# Health check configuration
+health:
+  enabled: true
+  endpoint: "/health"
+  database_check: true
+  external_dependencies_check: true
+  
+# Advanced security settings
+security_headers:
+  enabled: true
+  hsts: true
+  hsts_max_age: 31536000
+  content_security_policy: true
+  frame_options: "DENY"
+  content_type_options: true
+  
+# CORS settings for enterprise
+cors:
+  allow_origins: ["${FRONTEND_URL}"]
+  allow_credentials: true
+  max_age: 3600
+  
+# Enterprise features
+features:
+  user_registration: false  # SSO-only
+  team_creation: true
+  project_limit_per_user: -1  # Unlimited
+  member_limit_per_project: -1  # Unlimited
+  api_rate_limiting: true
+  audit_logging: true
+  advanced_permissions: true
+  
+# Advanced monitoring and metrics
+monitoring:
+  metrics_enabled: true
+  prometheus_endpoint: "/metrics"
+  health_check_interval: 15
+  custom_metrics: true
+  alerting:
+    enabled: true
+    webhook_url: "${ALERT_WEBHOOK_URL}"
+    
+# Performance monitoring
+performance:
+  apm_enabled: true
+  apm_service_name: "mcp-orchestrator"
+  trace_sampling_rate: 0.1
+  
+# High availability configuration
+ha:
+  enabled: true
+  load_balancer: true
+  session_store: "redis"
+  redis_url: "${REDIS_URL}"
+  
+# Backup configuration
+backup:
+  enabled: true
+  s3_bucket: "${BACKUP_S3_BUCKET}"
+  retention_days: 90
+  encryption: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  
+# Email configuration
+email:
+  smtp_server: "${SMTP_SERVER}"
+  smtp_port: 587
+  smtp_username: "${SMTP_USERNAME}"
+  smtp_password: "${SMTP_PASSWORD}"
+  from_address: "${EMAIL_FROM_ADDRESS}"
+  templates_dir: "/etc/mcp-orchestrator/email-templates"
+  
+# Integration with external systems
+integrations:
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+  teams:
+    enabled: true
+    webhook_url: "${TEAMS_WEBHOOK_URL}"
+  jira:
+    enabled: false
+    server_url: "${JIRA_SERVER_URL}"
+    username: "${JIRA_USERNAME}"
+    api_token: "${JIRA_API_TOKEN}"
+    
+# Compliance and governance
+compliance:
+  data_retention_days: 2555  # 7 years
+  gdpr_compliance: true
+  export_user_data: true
+  delete_user_data: true
+  
+# License management (Enterprise)
+license:
+  key: "${ENTERPRISE_LICENSE_KEY}"
+  validation_url: "https://license.mcp-orchestrator.dev/validate"
+  features: ["sso", "advanced_monitoring", "audit_logs", "premium_support"]

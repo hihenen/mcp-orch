@@ -1,0 +1,37 @@
+# MCP Orchestrator - Minimal Configuration
+# Ideal for: Local development, testing, small teams
+
+database:
+  # SQLite for simplicity
+  url: "sqlite:///./mcp_orch.db"
+  
+server:
+  host: "127.0.0.1"
+  port: 8000
+  debug: true
+  
+security:
+  # Generate with: openssl rand -hex 32
+  jwt_secret: "your-jwt-secret-here"
+  jwt_algorithm: "HS256"
+  jwt_expiration_hours: 24
+  
+frontend:
+  url: "http://localhost:3000"
+  
+logging:
+  level: "DEBUG"
+  file: "./logs/backend.log"
+  
+mcp:
+  # Allow MCP servers to execute system commands
+  allow_host_commands: true
+  workspace_dir: "./workspaces"
+  timeout_seconds: 30
+  
+# Features enabled in minimal mode
+features:
+  user_registration: true
+  team_creation: true
+  project_limit_per_user: 10
+  member_limit_per_project: 5

@@ -1,0 +1,91 @@
+# MCP Orchestrator - Production Configuration
+# Ideal for: Production deployments with external databases
+
+database:
+  # External database (AWS RDS, Aurora, Supabase, etc.)
+  # url: "postgresql://user:pass@your-rds-endpoint.amazonaws.com:5432/mcp_orch"
+  url: "${DATABASE_URL}"
+  pool_size: 20
+  max_overflow: 40
+  pool_pre_ping: true
+  pool_recycle: 3600
+  
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  workers: 8
+  
+security:
+  # Use environment variable for production
+  jwt_secret: "${JWT_SECRET}"
+  jwt_algorithm: "HS256"
+  jwt_expiration_hours: 4
+  session_timeout_hours: 8
+  
+frontend:
+  # Production frontend URL
+  url: "${FRONTEND_URL}"
+  
+logging:
+  level: "INFO"
+  file: "/var/log/mcp-orchestrator/backend.log"
+  rotation:
+    max_size: "50MB"
+    backup_count: 10
+  structured: true
+  format: "json"
+    
+mcp:
+  # Production MCP settings
+  allow_host_commands: true
+  workspace_dir: "/var/lib/mcp-orchestrator/workspaces"
+  timeout_seconds: 120
+  max_concurrent_servers: 100
+  cleanup_interval_hours: 24
+  
+# Health check configuration
+health:
+  enabled: true
+  endpoint: "/health"
+  database_check: true
+  
+# Security settings
+security_headers:
+  enabled: true
+  hsts: true
+  content_security_policy: true
+  
+# CORS settings for production
+cors:
+  allow_origins: ["${FRONTEND_URL}"]
+  allow_credentials: true
+  
+# Features enabled in production mode
+features:
+  user_registration: false  # Admin-only user creation
+  team_creation: true
+  project_limit_per_user: 100
+  member_limit_per_project: 100
+  api_rate_limiting: true
+  audit_logging: true
+  
+# Monitoring and metrics
+monitoring:
+  metrics_enabled: true
+  prometheus_endpoint: "/metrics"
+  health_check_interval: 30
+  
+# Backup configuration
+backup:
+  enabled: true
+  s3_bucket: "${BACKUP_S3_BUCKET}"
+  retention_days: 30
+  
+# Email configuration (optional)
+email:
+  smtp_server: "${SMTP_SERVER}"
+  smtp_port: 587
+  smtp_username: "${SMTP_USERNAME}"
+  smtp_password: "${SMTP_PASSWORD}"
+  from_address: "${EMAIL_FROM_ADDRESS}"

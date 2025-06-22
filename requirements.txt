@@ -1,0 +1,46 @@
+# MCP Orchestrator Requirements
+# Generated from pyproject.toml for pip compatibility
+
+# Core Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+gunicorn>=21.2.0
+
+# Async HTTP
+aiohttp>=3.9.0
+httpx>=0.25.0
+sse-starlette>=1.6.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.10
+
+# Authentication & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.1.2
+pyjwt>=2.8.0
+email-validator>=2.2.0
+
+# MCP Protocol
+mcp>=1.9.1
+fastmcp>=2.8.0
+
+# Configuration & CLI
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+typer>=0.9.0
+
+# Development & Monitoring
+rich>=13.7.0
+watchfiles>=0.21.0
+apscheduler>=3.10.4
+
+# Utilities
+python-multipart>=0.0.6
+asyncio-mqtt>=0.13.0
+greenlet>=2.0.0
+psutil>=5.9.0

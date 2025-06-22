@@ -1,0 +1,115 @@
+# MCP Orchestrator - Hybrid Deployment
+# Database: Docker PostgreSQL
+# Backend: Native installation (for MCP server compatibility)
+# Frontend: Docker container
+
+version: '3.8'
+
+services:
+  # Database only - Backend runs natively
+  postgresql:
+    image: postgres:15
+    container_name: mcp-orch-postgres
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+      - ./configs/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=${DB_USER:-mcp_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-mcp_password}
+      - POSTGRES_DB=${DB_NAME:-mcp_orch}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mcp_user} -d ${DB_NAME:-mcp_orch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis for session store (Enterprise)
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-orch-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles:
+      - enterprise
+
+  # Frontend container
+  frontend:
+    build:
+      context: ./web
+      dockerfile: ../Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
+    container_name: mcp-orch-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NEXTAUTH_URL=http://localhost:${FRONTEND_PORT:-3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here}
+      - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
+    restart: unless-stopped
+    profiles:
+      - frontend
+
+  # Monitoring stack (Enterprise)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mcp-orch-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    profiles:
+      - enterprise
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mcp-orch-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    restart: unless-stopped
+    profiles:
+      - enterprise
+      - monitoring
+
+volumes:
+  postgresql_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# Usage Examples:
+# 
+# Minimal (Database only):
+# docker-compose -f docker-compose.hybrid.yml up -d postgresql
+#
+# Standard (Database + Frontend):  
+# docker-compose -f docker-compose.hybrid.yml --profile frontend up -d
+#
+# Enterprise (All services):
+# docker-compose -f docker-compose.hybrid.yml --profile enterprise --profile frontend --profile monitoring up -d

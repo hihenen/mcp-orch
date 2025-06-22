@@ -1,0 +1,55 @@
+# MCP Orchestrator - Standard Configuration  
+# Ideal for: Small to medium teams, production deployments
+
+database:
+  # PostgreSQL via Docker or local installation
+  url: "postgresql://mcp_user:mcp_password@localhost:5432/mcp_orch"
+  pool_size: 10
+  max_overflow: 20
+  
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  workers: 4
+  
+security:
+  # Generate with: openssl rand -hex 32
+  jwt_secret: "your-jwt-secret-here"
+  jwt_algorithm: "HS256"
+  jwt_expiration_hours: 8
+  
+frontend:
+  url: "http://localhost:3000"
+  
+logging:
+  level: "INFO"
+  file: "/var/log/mcp-orchestrator/backend.log"
+  rotation:
+    max_size: "10MB"
+    backup_count: 5
+    
+mcp:
+  # Allow MCP servers to execute system commands
+  allow_host_commands: true
+  workspace_dir: "/var/lib/mcp-orchestrator/workspaces"
+  timeout_seconds: 60
+  max_concurrent_servers: 20
+  
+# Health check configuration
+health:
+  enabled: true
+  endpoint: "/health"
+  
+# Features enabled in standard mode
+features:
+  user_registration: true
+  team_creation: true
+  project_limit_per_user: 50
+  member_limit_per_project: 20
+  api_rate_limiting: true
+  
+# Optional monitoring
+monitoring:
+  metrics_enabled: false
+  prometheus_endpoint: "/metrics"

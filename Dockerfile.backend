@@ -1,0 +1,39 @@
+# MCP Orch Backend Dockerfile
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies including uv
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install uv
+
+# Copy uv configuration files first for better caching
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev
+
+# Copy source code
+COPY src/ ./src/
+
+# Install the package in development mode using uv
+RUN uv pip install --system -e .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash mcporch
+RUN chown -R mcporch:mcporch /app
+USER mcporch
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the application using uv
+CMD ["uv", "run", "python", "-m", "mcp_orch.main"]

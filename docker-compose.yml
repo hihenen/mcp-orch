@@ -1,0 +1,62 @@
+services:
+  postgresql:
+    image: docker.io/bitnami/postgresql:16.4.0
+    container_name: mcp-orch-postgres
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgresql_data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_USERNAME=${DB_USER:-postgres}
+      - POSTGRESQL_PASSWORD=${DB_PASSWORD:-1234}
+      - POSTGRESQL_DATABASE=${DB_NAME:-mcp_orch}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-mcp_orch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mcp-orch-backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: mcp-orch-backend
+    ports:
+      - "${SERVER__PORT:-8000}:8000"
+    environment:
+      - ENV=production
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-1234}
+      - DB_NAME=${DB_NAME:-mcp_orch}
+      - SERVER__HOST=0.0.0.0
+      - SERVER__PORT=8000
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-here-change-in-production}
+      - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-admin@example.com}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-change-me}
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mcp-orch-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL_DOCKER:-http://mcp-orch-backend:8000}
+    container_name: mcp-orch-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-here-change-in-production}
+      - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL_DOCKER:-http://mcp-orch-backend:8000}
+    depends_on:
+      - mcp-orch-backend
+    restart: unless-stopped
+
+volumes:
+  postgresql_data:
+    driver: local

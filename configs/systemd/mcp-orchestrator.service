@@ -1,0 +1,67 @@
+[Unit]
+Description=MCP Orchestrator Backend Service
+Documentation=https://github.com/your-org/mcp-orchestrator
+After=network.target postgresql.service
+Wants=network-online.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=mcp-orch
+Group=mcp-orch
+WorkingDirectory=/opt/mcp-orchestrator
+
+# Environment
+EnvironmentFile=/opt/mcp-orchestrator/config/.env
+Environment="PYTHONPATH=/opt/mcp-orchestrator"
+Environment="PATH=/opt/mcp-orchestrator/venv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Start command - use gunicorn for production
+ExecStart=/opt/mcp-orchestrator/venv/bin/gunicorn \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --workers ${WORKERS:-4} \
+    --bind 0.0.0.0:${SERVER__PORT:-8000} \
+    --timeout ${TIMEOUT:-120} \
+    --keepalive 5 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level ${LOG_LEVEL:-info} \
+    src.mcp_orch.api.app:app
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=200
+StartLimitBurst=5
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+PrivateMounts=true
+
+# Allow writing to specific directories
+ReadWritePaths=/var/log/mcp-orchestrator
+ReadWritePaths=/var/lib/mcp-orchestrator
+ReadWritePaths=/tmp
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mcp-orchestrator
+
+[Install]
+WantedBy=multi-user.target
