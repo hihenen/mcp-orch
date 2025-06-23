@@ -166,9 +166,12 @@ class McpConnectionService:
                 logger.info("⚠️ Server is disabled, returning empty tools")
                 return []
             
-            # Resource Connection 모드로 도구 조회 (단일 모드)
-            logger.info(f"🎯 Using Resource Connection mode for tools discovery (MCP Standard)")
-            return await self._get_tools_sequential(server_id, server_config, db, project_id)
+            # MCP 세션 매니저를 통한 도구 조회 (진정한 Resource Connection)
+            logger.info(f"🎯 Using MCP Session Manager for tools discovery (True Resource Connection)")
+            from .mcp_session_manager import get_session_manager
+            
+            session_manager = await get_session_manager()
+            return await session_manager.get_server_tools(server_id, server_config)
                 
         except Exception as e:
             logger.error(f"❌ Error getting tools for server {server_id}: {e}")
@@ -646,11 +649,14 @@ class McpConnectionService:
             if server_config.get('disabled', False):
                 raise ValueError(f"Server {server_id} is disabled")
             
-            # Resource Connection 모드로 도구 호출 (단일 모드)
-            logger.info(f"🎯 Tool call using Resource Connection mode (MCP Standard)")
-            return await self._call_tool_resource_connection(
-                server_id, server_config, tool_name, arguments, session_id, 
-                converted_project_id, user_agent, ip_address, db, log_data, start_time
+            # MCP 세션 매니저를 통한 도구 호출 (진정한 Resource Connection)
+            logger.info(f"🎯 Tool call using MCP Session Manager (True Resource Connection)")
+            from .mcp_session_manager import get_session_manager
+            
+            session_manager = await get_session_manager()
+            return await session_manager.call_tool(
+                server_id, server_config, tool_name, arguments, session_id,
+                converted_project_id, user_agent, ip_address, db
             )
             
             

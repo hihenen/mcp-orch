@@ -75,6 +75,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to start scheduler service: {e}")
     
+    # MCP 세션 매니저 초기화
+    from ..services.mcp_session_manager import get_session_manager
+    try:
+        session_manager = await get_session_manager()
+        logger.info("MCP Session Manager started")
+    except Exception as e:
+        logger.error(f"Failed to start MCP Session Manager: {e}")
+    
     yield
     
     # 종료 시
@@ -86,6 +94,14 @@ async def lifespan(app: FastAPI):
         logger.info("Scheduler service stopped")
     except Exception as e:
         logger.error(f"Error stopping scheduler service: {e}")
+    
+    # MCP 세션 매니저 정지
+    from ..services.mcp_session_manager import shutdown_session_manager
+    try:
+        await shutdown_session_manager()
+        logger.info("MCP Session Manager stopped")
+    except Exception as e:
+        logger.error(f"Error stopping MCP Session Manager: {e}")
     
     await controller.shutdown()
 
