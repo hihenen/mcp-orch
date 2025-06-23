@@ -651,6 +651,18 @@ class McpConnectionService:
             if server_config.get('disabled', False):
                 raise ValueError(f"Server {server_id} is disabled")
             
+            # 서버 타입 확인 (API Wrapper vs Resource Connection)
+            server_type = server_config.get('serverType', 'api_wrapper')
+            logger.info(f"🎯 Tool call server type: {server_type}")
+            
+            # Resource Connection 모드는 별도 처리
+            if server_type == 'resource_connection':
+                return await self._call_tool_resource_connection(
+                    server_id, server_config, tool_name, arguments, session_id, 
+                    converted_project_id, user_agent, ip_address, db, log_data, start_time
+                )
+            
+            # 기존 API Wrapper 모드 (기존 코드 그대로 유지)
             command = server_config.get('command', '')
             args = server_config.get('args', [])
             env = server_config.get('env', {})
@@ -1254,6 +1266,273 @@ class McpConnectionService:
         except Exception as e:
             logger.warning(f"Failed to extract meaningful error: {e}")
             return stderr_text.strip()[:200]
+
+
+    async def _call_tool_resource_connection(
+        self,
+        server_id: str,
+        server_config: Dict,
+        tool_name: str,
+        arguments: Dict,
+        session_id: Optional[str],
+        project_id: Optional[UUID],
+        user_agent: Optional[str],
+        ip_address: Optional[str],
+        db: Optional[Session],
+        log_data: Dict,
+        start_time: float
+    ) -> Any:
+        """Resource Connection 모드 전용 tool 호출 (Quarkus 초기화 대기 포함)"""
+        import os
+        import json
+        import asyncio
+        
+        stderr_error_info = None
+        
+        try:
+            command = server_config.get('command', '')
+            args = server_config.get('args', [])
+            env = server_config.get('env', {})
+            timeout = server_config.get('timeout', 60)
+            
+            if not command:
+                raise ValueError("Server command not configured")
+            
+            logger.info(f"🔧 [Resource Connection] Calling tool {tool_name} on server {server_id}")
+            logger.info(f"🔍 [Resource Connection] Server command: {command}")
+            logger.info(f"🔍 [Resource Connection] Server args: {args}")
+            
+            # 환경 변수 설정
+            full_env = os.environ.copy()
+            full_env.update(env)
+            
+            # 프로세스 생성
+            process = await asyncio.create_subprocess_exec(
+                command, *args,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=full_env
+            )
+            logger.info(f"✅ [Resource Connection] Subprocess created with PID: {process.pid}")
+            
+            # Resource Connection 모드: Quarkus 서버 완전 초기화 대기
+            await self._wait_for_quarkus_startup(process, server_id)
+            
+            # 초기화 메시지 전송
+            init_message = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "mcp-orch", "version": "1.0.0"}
+                }
+            }
+            
+            init_json = json.dumps(init_message) + '\n'
+            process.stdin.write(init_json.encode())
+            await process.stdin.drain()
+            
+            # 초기화 응답 대기
+            init_completed = False
+            init_timeout = 30
+            start_init_time = time.time()
+            
+            while time.time() - start_init_time < init_timeout:
+                if process.stdout.at_eof():
+                    break
+                    
+                try:
+                    line = await asyncio.wait_for(process.stdout.readline(), timeout=1.0)
+                    if not line:
+                        break
+                    
+                    line_text = line.decode().strip()
+                    if line_text:
+                        try:
+                            response = json.loads(line_text)
+                            if response.get('id') == 1 and 'result' in response:
+                                logger.info(f"✅ [Resource Connection] MCP server {server_id} initialized successfully")
+                                
+                                # initialized notification 전송
+                                initialized_message = {
+                                    "jsonrpc": "2.0",
+                                    "method": "notifications/initialized"
+                                }
+                                initialized_json = json.dumps(initialized_message) + '\n'
+                                process.stdin.write(initialized_json.encode())
+                                await process.stdin.drain()
+                                logger.info("📤 [Resource Connection] Sent initialized notification")
+                                
+                                init_completed = True
+                                break
+                            elif response.get('id') == 1 and 'error' in response:
+                                error = response['error']
+                                raise ValueError(f"MCP initialization failed: {error.get('message', 'Unknown error')}")
+                        except json.JSONDecodeError:
+                            continue
+                except asyncio.TimeoutError:
+                    continue
+            
+            if not init_completed:
+                raise ValueError(f"[Resource Connection] MCP server {server_id} initialization timeout")
+            
+            # Tool 호출
+            tool_call_message = {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": tool_name,
+                    "arguments": arguments
+                }
+            }
+            
+            tool_call_json = json.dumps(tool_call_message) + '\n'
+            logger.info(f"🔍 [Resource Connection] Sending tool call message: {tool_call_message}")
+            
+            process.stdin.write(tool_call_json.encode())
+            await process.stdin.drain()
+            
+            # Tool 응답 대기 (나머지 기존 로직과 동일)
+            responses = []
+            tool_timeout = timeout
+            start_tool_time = time.time()
+            
+            while time.time() - start_tool_time < tool_timeout:
+                if process.stdout.at_eof():
+                    break
+                    
+                try:
+                    line = await asyncio.wait_for(process.stdout.readline(), timeout=1.0)
+                    if not line:
+                        break
+                    
+                    line_text = line.decode().strip()
+                    if line_text:
+                        responses.append(line_text)
+                        try:
+                            response = json.loads(line_text)
+                            if response.get('id') == 2:
+                                # Tool 응답 받음
+                                if 'result' in response:
+                                    result = response['result']
+                                    execution_time = time.time() - start_time
+                                    
+                                    # 성공 로그 저장
+                                    if db:
+                                        await self._save_tool_execution_log(
+                                            db=db,
+                                            log_data={**log_data, 'result': result, 'execution_time': execution_time},
+                                            success=True
+                                        )
+                                    
+                                    logger.info(f"✅ [Resource Connection] Tool {tool_name} executed successfully in {execution_time:.2f}s")
+                                    return result
+                                elif 'error' in response:
+                                    error = response['error']
+                                    execution_time = time.time() - start_time
+                                    
+                                    # 에러 로그 저장
+                                    if db:
+                                        await self._save_tool_execution_log(
+                                            db=db,
+                                            log_data={**log_data, 'error': error, 'execution_time': execution_time},
+                                            success=False
+                                        )
+                                    
+                                    raise ToolExecutionError(
+                                        message=f"Tool execution failed: {error.get('message', 'Unknown error')}",
+                                        error_code=str(error.get('code', 'UNKNOWN')),
+                                        details=error
+                                    )
+                        except json.JSONDecodeError:
+                            continue
+                except asyncio.TimeoutError:
+                    continue
+            
+            # 응답 타임아웃
+            execution_time = time.time() - start_time
+            error_message = f"[Resource Connection] Tool {tool_name} execution timeout after {execution_time:.2f}s"
+            
+            if db:
+                await self._save_tool_execution_log(
+                    db=db,
+                    log_data={**log_data, 'execution_time': execution_time},
+                    success=False
+                )
+            
+            raise ToolExecutionError(
+                message=error_message,
+                error_code='TIMEOUT',
+                details={'execution_time': execution_time}
+            )
+            
+        except Exception as e:
+            execution_time = time.time() - start_time
+            
+            if db and 'log_data' in locals():
+                await self._save_tool_execution_log(
+                    db=db,
+                    log_data={**log_data, 'execution_time': execution_time},
+                    success=False
+                )
+            
+            if isinstance(e, ToolExecutionError):
+                raise
+            else:
+                raise ToolExecutionError(
+                    message=f"[Resource Connection] Unexpected error: {str(e)}",
+                    error_code='SYSTEM_ERROR',
+                    details={'execution_time': execution_time}
+                )
+        finally:
+            try:
+                if 'process' in locals() and process and process.returncode is None:
+                    process.terminate()
+                    await asyncio.wait_for(process.wait(), timeout=5)
+            except:
+                pass
+
+    async def _wait_for_quarkus_startup(self, process, server_id: str, max_wait: int = 15):
+        """Quarkus 서버 완전 시작 대기 (Resource Connection 모드 전용)"""
+        logger.info(f"⏳ [Resource Connection] Waiting for Quarkus server {server_id} to fully start...")
+        
+        start_time = time.time()
+        quarkus_started = False
+        
+        while time.time() - start_time < max_wait:
+            try:
+                # stderr에서 Quarkus 시작 메시지 확인
+                if process.stderr.at_eof():
+                    break
+                
+                stderr_line = await asyncio.wait_for(process.stderr.readline(), timeout=0.5)
+                if stderr_line:
+                    stderr_text = stderr_line.decode().strip()
+                    
+                    # Quarkus 시작 완료 메시지 확인
+                    if "started in" in stderr_text and "Listening on:" in stderr_text:
+                        logger.info(f"✅ [Resource Connection] Quarkus server started: {stderr_text}")
+                        quarkus_started = True
+                        
+                        # 추가 안전 대기 (CDI 컨텍스트 완전 초기화)
+                        await asyncio.sleep(2.0)
+                        logger.info(f"✅ [Resource Connection] Additional safety wait completed for CDI context")
+                        break
+                        
+            except asyncio.TimeoutError:
+                continue
+            except Exception as e:
+                logger.warning(f"⚠️ [Resource Connection] Error while waiting for Quarkus startup: {e}")
+                continue
+        
+        if not quarkus_started:
+            logger.warning(f"⚠️ [Resource Connection] Quarkus startup message not detected within {max_wait}s, proceeding anyway")
+        else:
+            logger.info(f"🎉 [Resource Connection] Quarkus server {server_id} is ready for tool calls")
 
 
 # 전역 서비스 인스턴스
