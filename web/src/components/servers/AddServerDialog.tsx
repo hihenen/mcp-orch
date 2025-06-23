@@ -231,6 +231,7 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 300,
     "type": "stdio",
+    "compatibility_mode": "api_wrapper",
     "command": "npx",
     "args": [
       "-y",
@@ -245,6 +246,7 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 60,
     "type": "stdio",
+    "compatibility_mode": "api_wrapper",
     "command": "npx",
     "args": [
       "-y",
@@ -258,6 +260,7 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 30,
     "type": "stdio",
+    "compatibility_mode": "api_wrapper",
     "command": "npx",
     "args": [
       "-y",
@@ -266,6 +269,19 @@ function JsonBulkAddForm({
     "env": {
       "GITHUB_TOKEN": "your-github-token-here"
     }
+  },
+  "database-jdbc": {
+    "disabled": false,
+    "timeout": 60,
+    "type": "stdio",
+    "compatibility_mode": "resource_connection",
+    "command": "jbang",
+    "args": [
+      "run",
+      "jdbc@quarkiverse/quarkus-mcp-servers",
+      "jdbc:postgresql://localhost:5432/mydb"
+    ],
+    "description": "Database JDBC 서버 예시"
   }
 }`;
 
@@ -691,7 +707,7 @@ export function AddServerDialog({
               name: serverName,
               description: server.description || `${serverName} MCP 서버`,
               transport_type: server.type || 'stdio',
-              compatibility_mode: server.compatibility_mode || 'api_wrapper',
+              compatibility_mode: server.compatibility_mode || (server.type === 'sse' ? 'api_wrapper' : 'resource_connection'),
               command: server.command,
               args: server.args || [],
               env: server.env || {},
