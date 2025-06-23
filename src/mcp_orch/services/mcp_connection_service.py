@@ -1423,10 +1423,12 @@ class McpConnectionService:
                                     
                                     # 성공 로그 저장
                                     if db:
-                                        await self._save_tool_execution_log(
+                                        await self._save_tool_call_log(
                                             db=db,
-                                            log_data={**log_data, 'result': result, 'execution_time': execution_time},
-                                            success=True
+                                            log_data=log_data,
+                                            execution_time=execution_time,
+                                            status=CallStatus.SUCCESS,
+                                            output_data=result
                                         )
                                     
                                     logger.info(f"✅ [Resource Connection] Tool {tool_name} executed successfully in {execution_time:.2f}s")
@@ -1437,10 +1439,13 @@ class McpConnectionService:
                                     
                                     # 에러 로그 저장
                                     if db:
-                                        await self._save_tool_execution_log(
+                                        await self._save_tool_call_log(
                                             db=db,
-                                            log_data={**log_data, 'error': error, 'execution_time': execution_time},
-                                            success=False
+                                            log_data=log_data,
+                                            execution_time=execution_time,
+                                            status=CallStatus.FAILED,
+                                            error_message=error.get('message', 'Unknown error'),
+                                            error_code=str(error.get('code', 'UNKNOWN'))
                                         )
                                     
                                     raise ToolExecutionError(
@@ -1458,10 +1463,13 @@ class McpConnectionService:
             error_message = f"[Resource Connection] Tool {tool_name} execution timeout after {execution_time:.2f}s"
             
             if db:
-                await self._save_tool_execution_log(
+                await self._save_tool_call_log(
                     db=db,
-                    log_data={**log_data, 'execution_time': execution_time},
-                    success=False
+                    log_data=log_data,
+                    execution_time=execution_time,
+                    status=CallStatus.TIMEOUT,
+                    error_message=error_message,
+                    error_code='TIMEOUT'
                 )
             
             raise ToolExecutionError(
@@ -1474,10 +1482,13 @@ class McpConnectionService:
             execution_time = time.time() - start_time
             
             if db and 'log_data' in locals():
-                await self._save_tool_execution_log(
+                await self._save_tool_call_log(
                     db=db,
-                    log_data={**log_data, 'execution_time': execution_time},
-                    success=False
+                    log_data=log_data,
+                    execution_time=execution_time,
+                    status=CallStatus.FAILED,
+                    error_message=str(e),
+                    error_code='SYSTEM_ERROR'
                 )
             
             if isinstance(e, ToolExecutionError):
