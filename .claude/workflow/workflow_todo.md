@@ -58,11 +58,29 @@
   - [x] .env.example 파일에 설정 예시 추가
   - [x] 영어 주석으로 설명 제공
 
+### TASK_046: 프로젝트 CHANGELOG.md 생성 및 기존 변경사항 정리
+- [x] CHANGELOG.md 파일 생성
+  - [x] Keep a Changelog 표준 형식 적용
+  - [x] Semantic Versioning 연동
+  - [x] 영어 문서화
+- [x] 기존 TASK 변경사항 정리
+  - [x] TASK_043: API Wrapper 제거 및 단일 모드 전환
+  - [x] TASK_044: 진정한 MCP 표준 Resource Connection 구현
+  - [x] TASK_045: 환경변수 설정 지원 추가
+- [x] 버전 분류 및 체계화
+  - [x] v0.1.0: 초기 구현
+  - [x] v0.2.0: MCP 표준 준수 및 세션 관리 개선
+  - [x] Unreleased: 최신 환경변수 기능
+- [x] 가이드라인 및 사용법 문서화
+  - [x] 카테고리별 변경사항 분류
+  - [x] TASK 참조 시스템 연동
+  - [x] 버전 형식 설명
+
 ## Progress Status
-- Current Progress: TASK_045 - MCP 세션 매니저 환경변수 설정 지원 완료
+- Current Progress: TASK_046 - 프로젝트 CHANGELOG.md 생성 및 변경사항 정리 완료
 - Next Task: 완료됨
 - Last Update: 2025-01-23
-- Automatic Check Feedback: 환경변수 기반 설정으로 배포 환경별 최적화 가능
+- Automatic Check Feedback: 체계적인 변경사항 추적으로 프로젝트 관리 개선
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
@@ -76,3 +94,5 @@
 - MCP Python SDK 패턴을 따르면 표준 준수와 성능 향상 모두 달성 가능
 - 환경변수 설정은 배포 환경별 최적화에 핵심적
 - 세션 타임아웃과 정리 주기의 분리된 설정이 운영 유연성 제공
+- CHANGELOG.md 도입으로 체계적인 변경사항 추적 가능
+- Keep a Changelog 표준으로 개발자/사용자 친화적 문서화 실현
