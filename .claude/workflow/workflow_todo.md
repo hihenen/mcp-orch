@@ -76,11 +76,28 @@
   - [x] TASK 참조 시스템 연동
   - [x] 버전 형식 설명
 
+### TASK_047: CLAUDE.md 지침에 CHANGELOG.md 업데이트 의무화 및 커밋 워크플로우 개선
+- [x] 기존 커밋 규칙에 CHANGELOG 의무화 추가
+  - [x] ENFORCEMENT RULE에 CHANGELOG 업데이트 단계 포함
+  - [x] MANDATORY PRE-COMMIT CHECKLIST 확장
+  - [x] CHANGELOG.md Update Rules 상세 가이드라인
+- [x] ABSOLUTE PROHIBITIONS에 문서화 부채 금지 추가
+  - [x] "NEVER commit without updating CHANGELOG.md first" 규칙
+  - [x] PRE-FLIGHT CHECKS에 CHANGELOG 검증 단계
+  - [x] FORCE EXECUTION COMMANDS 업데이트
+- [x] 새로운 CHANGELOG.md DOCUMENTATION ENFORCEMENT 섹션
+  - [x] MANDATORY CHANGELOG WORKFLOW 정의
+  - [x] 업데이트 규칙 및 카테고리 표준화
+  - [x] 문서화 품질 기준 설정
+- [x] 실제 적용 및 검증
+  - [x] TASK_047 변경사항을 CHANGELOG.md에 먼저 반영
+  - [x] 새로운 워크플로우 따라 커밋 실행
+
 ## Progress Status
-- Current Progress: TASK_046 - 프로젝트 CHANGELOG.md 생성 및 변경사항 정리 완료
+- Current Progress: TASK_047 - CHANGELOG.md 의무화 및 커밋 워크플로우 개선 완료
 - Next Task: 완료됨
 - Last Update: 2025-01-23
-- Automatic Check Feedback: 체계적인 변경사항 추적으로 프로젝트 관리 개선
+- Automatic Check Feedback: 강제적 문서화로 변경사항 추적성과 코드 품질 향상
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
@@ -96,3 +113,5 @@
 - 세션 타임아웃과 정리 주기의 분리된 설정이 운영 유연성 제공
 - CHANGELOG.md 도입으로 체계적인 변경사항 추적 가능
 - Keep a Changelog 표준으로 개발자/사용자 친화적 문서화 실현
+- 강제적 CHANGELOG 업데이트로 문서화 부채 방지
+- 커밋과 문서화의 동기화로 릴리즈 준비 간소화

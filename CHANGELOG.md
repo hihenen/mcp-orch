@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_047] CHANGELOG workflow integration to commit process
+  - Mandatory CHANGELOG.md updates before every functional unit commit
+  - Pre-commit checklist enforcement with documentation requirements
+  - Comprehensive CHANGELOG documentation standards and categories
+  - Integration with existing Git commit enforcement system
+  - Zero-tolerance policy for documentation debt
+- [TASK_046] Comprehensive project CHANGELOG.md
+  - Keep a Changelog standard format implementation
+  - Semantic versioning integration with clear version categorization
+  - TASK reference system linking changes to workflow documentation
+  - English documentation with usage guidelines
 - [TASK_045] Environment variable configuration support for MCP Session Manager
   - `MCP_SESSION_TIMEOUT_MINUTES` - Configure session timeout (default: 30 minutes)
   - `MCP_SESSION_CLEANUP_INTERVAL_MINUTES` - Configure cleanup interval (default: 5 minutes)
