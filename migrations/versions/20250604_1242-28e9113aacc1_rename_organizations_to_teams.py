@@ -1,7 +1,7 @@
 """rename_organizations_to_teams
 
 Revision ID: 28e9113aacc1
-Revises: 8e62b636d0b5
+Revises: 87865a36c440
 Create Date: 2025-06-04 12:42:52.261172
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '28e9113aacc1'
-down_revision: Union[str, None] = '8e62b636d0b5'
+down_revision: Union[str, None] = '87865a36c440'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
