@@ -653,34 +653,32 @@ async def get_project_cline_config(
     
     for server in servers:
         server_key = f"project-{project_id}-{server.name}"
-        mcp_servers[server_key] = {
-            "command": "node",
-            "args": ["-e", f"""
-const fetch = require('node-fetch');
-const EventSource = require('eventsource');
-
-// SSE 연결 설정
-const sse = new EventSource('{base_url}/projects/{project_id}/servers/{server.name}/sse', {{
-    headers: {{
-        'Authorization': 'Bearer {api_key.key_prefix}...'
-    }}
-}});
-
-sse.onmessage = function(event) {{
-    console.log('SSE message:', event.data);
-}};
-
-sse.onerror = function(error) {{
-    console.error('SSE error:', error);
-}};
-"""],
-            "env": {
-                "PROJECT_ID": str(project_id),
-                "SERVER_NAME": server.name,
-                "API_KEY": f"{api_key.key_prefix}...",
-                "BASE_URL": base_url
+        
+        # server_type에 따라 다른 설정 생성
+        if server.server_type == "resource_connection":
+            # Resource Connection 모드 - 기존 stdio 방식 유지
+            mcp_servers[server_key] = {
+                "type": "stdio",
+                "server_type": "resource_connection",
+                "command": server.command,
+                "args": server.args if server.args else [],
+                "env": server.env if server.env else {},
+                "timeout": 60,
+                "disabled": False
             }
-        }
+        else:
+            # API Wrapper 모드 (기본값) - SSE 방식
+            mcp_servers[server_key] = {
+                "type": "sse",
+                "server_type": "api_wrapper", 
+                "url": f"{base_url}/projects/{project_id}/servers/{server.name}/sse",
+                "headers": {
+                    "Authorization": f"Bearer {api_key.key_prefix}...",
+                    "Content-Type": "application/json"
+                },
+                "timeout": 60,
+                "disabled": False
+            }
     
     cline_config = {
         "mcpServers": mcp_servers

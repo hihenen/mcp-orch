@@ -691,7 +691,7 @@ export function AddServerDialog({
               name: serverName,
               description: server.description || `${serverName} MCP 서버`,
               transport_type: server.type === 'sse' ? 'sse' : 'stdio',
-              server_type: server.server_type || 'api_wrapper',
+              server_type: server.server_type || (server.type === 'sse' ? 'api_wrapper' : 'resource_connection'),
               command: server.command,
               args: server.args || [],
               env: server.env || {},
