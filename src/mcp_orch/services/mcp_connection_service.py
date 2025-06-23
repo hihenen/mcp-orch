@@ -166,14 +166,9 @@ class McpConnectionService:
                 logger.info("⚠️ Server is disabled, returning empty tools")
                 return []
             
-            # 서버 타입에 따라 도구 조회 방식 분기
-            server_type = server_config.get('serverType', 'api_wrapper')
-            logger.info(f"🎯 Server type: {server_type}")
-            
-            if server_type == 'resource_connection':
-                return await self._get_tools_sequential(server_id, server_config, db, project_id)
-            else:
-                return await self._get_tools_standard(server_id, server_config)
+            # Resource Connection 모드로 도구 조회 (단일 모드)
+            logger.info(f"🎯 Using Resource Connection mode for tools discovery (MCP Standard)")
+            return await self._get_tools_sequential(server_id, server_config, db, project_id)
                 
         except Exception as e:
             logger.error(f"❌ Error getting tools for server {server_id}: {e}")
@@ -557,7 +552,7 @@ class McpConnectionService:
                 'env': db_server.env or {},
                 'timeout': 60,  # 기본 타임아웃
                 'transportType': db_server.transport_type or 'stdio',
-                'serverType': db_server.compatibility_mode or 'api_wrapper',
+                'serverType': 'resource_connection',
                 'disabled': not db_server.is_enabled
             }
             
@@ -651,33 +646,13 @@ class McpConnectionService:
             if server_config.get('disabled', False):
                 raise ValueError(f"Server {server_id} is disabled")
             
-            # 서버 타입 확인 (API Wrapper vs Resource Connection)
-            server_type = server_config.get('serverType', 'api_wrapper')
-            logger.info(f"🎯 Tool call server type: {server_type}")
+            # Resource Connection 모드로 도구 호출 (단일 모드)
+            logger.info(f"🎯 Tool call using Resource Connection mode (MCP Standard)")
+            return await self._call_tool_resource_connection(
+                server_id, server_config, tool_name, arguments, session_id, 
+                converted_project_id, user_agent, ip_address, db, log_data, start_time
+            )
             
-            # Resource Connection 모드는 별도 처리
-            if server_type == 'resource_connection':
-                return await self._call_tool_resource_connection(
-                    server_id, server_config, tool_name, arguments, session_id, 
-                    converted_project_id, user_agent, ip_address, db, log_data, start_time
-                )
-            
-            # 기존 API Wrapper 모드 (기존 코드 그대로 유지)
-            command = server_config.get('command', '')
-            args = server_config.get('args', [])
-            env = server_config.get('env', {})
-            timeout = server_config.get('timeout', 60)
-            
-            if not command:
-                raise ValueError("Server command not configured")
-            
-            logger.info(f"🔧 Calling tool {tool_name} on server {server_id} with arguments: {arguments}")
-            logger.info(f"🔍 Server command: {command}")
-            logger.info(f"🔍 Server args: {args}")
-            logger.info(f"🔍 Server env: {env}")
-            logger.info(f"🔍 Server timeout: {timeout}")
-            logger.info(f"🔍 Working directory: {os.getcwd()}")
-            logger.info(f"🔍 Full command that will be executed: {command} {' '.join(args)}")
             
             # 환경 변수 설정
             full_env = os.environ.copy()

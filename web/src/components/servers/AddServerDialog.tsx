@@ -26,8 +26,6 @@ function IndividualServerForm({
   setNewEnvValue, 
   addEnvVar, 
   removeEnvVar,
-  showResourceConnectionHint,
-  setShowResourceConnectionHint
 }: {
   formData: ServerConfig;
   updateField: (field: keyof ServerConfig, value: any) => void;
@@ -41,8 +39,6 @@ function IndividualServerForm({
   setNewEnvValue: (value: string) => void;
   addEnvVar: () => void;
   removeEnvVar: (key: string) => void;
-  showResourceConnectionHint: boolean;
-  setShowResourceConnectionHint: (value: boolean) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -85,31 +81,7 @@ function IndividualServerForm({
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="compatibilityMode">Compatibility Mode</Label>
-          <Select value={formData.compatibilityMode} onValueChange={(value: 'api_wrapper' | 'resource_connection') => {
-            updateField('compatibilityMode', value);
-            setShowResourceConnectionHint(false); // Hide hint when selected
-          }}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="api_wrapper">API Wrapper (Default)</SelectItem>
-              <SelectItem value="resource_connection">Resource Connection</SelectItem>
-            </SelectContent>
-          </Select>
-          {showResourceConnectionHint && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-xs text-blue-800">
-                💡 <strong>Detected database/JDBC server:</strong> Consider using "Resource Connection" mode for better tool discovery.
-              </p>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Use "Resource Connection" for database servers (JDBC, SQL) that need sequential initialization.
-          </p>
-        </div>
+        {/* Compatibility Mode는 Resource Connection으로 고정됨 */}
       </div>
 
       {/* Execution Settings */}
@@ -231,7 +203,7 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 300,
     "type": "stdio",
-    "compatibility_mode": "api_wrapper",
+    "compatibility_mode": "resource_connection",
     "command": "npx",
     "args": [
       "-y",
@@ -246,7 +218,7 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 60,
     "type": "stdio",
-    "compatibility_mode": "api_wrapper",
+    "compatibility_mode": "resource_connection",
     "command": "npx",
     "args": [
       "-y",
@@ -260,7 +232,7 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 30,
     "type": "stdio",
-    "compatibility_mode": "api_wrapper",
+    "compatibility_mode": "resource_connection",
     "command": "npx",
     "args": [
       "-y",
@@ -360,7 +332,6 @@ interface ServerConfig {
   name: string;
   description: string;
   transport: 'stdio' | 'sse';
-  compatibilityMode: 'api_wrapper' | 'resource_connection';
   command: string;
   args: string[];
   env: Record<string, string>;
@@ -378,7 +349,6 @@ interface AddServerDialogProps {
     name: string;
     description?: string;
     transport?: 'stdio' | 'sse';
-    compatibilityMode?: 'api_wrapper' | 'resource_connection';
     command: string;
     args?: string[];
     env?: Record<string, string>;
@@ -404,7 +374,6 @@ export function AddServerDialog({
     name: '',
     description: '',
     transport: 'stdio',
-    compatibilityMode: 'api_wrapper',
     command: '',
     args: [],
     env: {},
@@ -419,27 +388,10 @@ export function AddServerDialog({
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvValue, setNewEnvValue] = useState('');
   
-  // 자동 감지 힌트 상태
-  const [showResourceConnectionHint, setShowResourceConnectionHint] = useState(false);
 
   // 입력값 업데이트
   const updateField = (field: keyof ServerConfig, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // 자동 감지 힌트: command 변경 시 JDBC/DB 관련 키워드 확인
-    if (field === 'command' && typeof value === 'string') {
-      const command = value.toLowerCase();
-      const args = formData.args.join(' ').toLowerCase();
-      const isResourceConnection = 
-        command.includes('jdbc') || 
-        command.includes('jbang') || 
-        args.includes('jdbc') ||
-        args.includes('database') ||
-        args.includes('db') ||
-        args.includes('sql');
-      
-      setShowResourceConnectionHint(isResourceConnection && formData.compatibilityMode === 'api_wrapper');
-    }
   };
 
   // 인자 추가
@@ -478,7 +430,7 @@ export function AddServerDialog({
         disabled: false,
         timeout: 30,
         type: serverConfig.transport === 'sse' ? 'sse' : 'stdio',
-        compatibility_mode: serverConfig.compatibilityMode || 'api_wrapper',
+        compatibility_mode: 'resource_connection',
         command: serverConfig.command,
         args: serverConfig.args || [],
         ...(Object.keys(serverConfig.env || {}).length > 0 && { env: serverConfig.env }),
@@ -493,21 +445,15 @@ export function AddServerDialog({
   // 편집 모드일 때 폼 데이터 초기화
   useEffect(() => {
     if (editServer) {
-      console.log('🔍 EditServer received:', editServer);
-      console.log('🔍 editServer.compatibilityMode:', editServer.compatibilityMode);
-      
       const serverConfig = {
         name: editServer.name,
         description: editServer.description || '',
         transport: editServer.transport || 'stdio',
-        compatibilityMode: editServer.compatibilityMode || 'api_wrapper',
         command: editServer.command,
         args: editServer.args || [],
         env: editServer.env || {},
         cwd: editServer.cwd || ''
       };
-      
-      console.log('🔍 Final serverConfig.compatibilityMode:', serverConfig.compatibilityMode);
       
       setFormData(serverConfig);
       
@@ -525,7 +471,6 @@ export function AddServerDialog({
       name: '',
       description: '',
       transport: 'stdio',
-      compatibilityMode: 'api_wrapper',
       command: '',
       args: [],
       env: {},
@@ -557,7 +502,7 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport: formData.transport,
-            compatibility_mode: formData.compatibilityMode,
+            compatibility_mode: 'resource_connection',
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -585,7 +530,7 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport_type: formData.transport,
-            compatibility_mode: formData.compatibilityMode,
+            compatibility_mode: 'resource_connection',
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -639,12 +584,12 @@ export function AddServerDialog({
         throw new Error('Invalid MCP settings format.');
       }
 
-      // 🔧 모든 서버에 compatibility_mode가 없으면 기본값 추가
+      // 🔧 모든 서버에 compatibility_mode를 resource_connection으로 설정
       const normalizedServers = Object.fromEntries(
         Object.entries(mcpServers).map(([serverName, serverConfig]: [string, any]) => {
           const normalizedConfig = {
             ...serverConfig,
-            compatibility_mode: serverConfig.compatibility_mode || 'api_wrapper'
+            compatibility_mode: 'resource_connection'
           };
           return [serverName, normalizedConfig];
         })
@@ -678,7 +623,7 @@ export function AddServerDialog({
             name: serverName,
             description: server.description || '',
             transport: server.type === 'sse' ? 'sse' : 'stdio',
-            compatibility_mode: server.compatibility_mode || 'api_wrapper',
+            compatibility_mode: 'resource_connection',
             command: server.command,
             args: server.args || [],
             env: server.env || {},
@@ -699,7 +644,7 @@ export function AddServerDialog({
           name: serverName,
           description: server.description || '',
           transport: server.type === 'sse' ? 'sse' : 'stdio',
-          compatibilityMode: server.compatibility_mode || 'api_wrapper',
+          compatibilityMode: 'resource_connection',
           command: server.command || '',
           args: server.args || [],
           env: server.env || {},
@@ -728,7 +673,7 @@ export function AddServerDialog({
               name: serverName,
               description: server.description || `${serverName} MCP server`,
               transport_type: server.type || 'stdio',
-              compatibility_mode: server.compatibility_mode || 'api_wrapper',
+              compatibility_mode: 'resource_connection',
               command: server.command,
               args: server.args || [],
               env: server.env || {},
@@ -749,7 +694,7 @@ export function AddServerDialog({
             name: serverName,
             description: server.description || `${serverName} MCP 서버`,
             transport: server.type === 'sse' ? 'sse' : 'stdio',
-            compatibilityMode: server.compatibility_mode || 'api_wrapper',
+            compatibilityMode: 'resource_connection',
             command: server.command,
             args: server.args || [],
             env: server.env || {},
@@ -823,8 +768,6 @@ export function AddServerDialog({
                   setNewEnvValue={setNewEnvValue}
                   addEnvVar={addEnvVar}
                   removeEnvVar={removeEnvVar}
-                  showResourceConnectionHint={showResourceConnectionHint}
-                  setShowResourceConnectionHint={setShowResourceConnectionHint}
                 />
               </form>
             </TabsContent>
