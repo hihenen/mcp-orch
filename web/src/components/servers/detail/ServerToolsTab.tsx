@@ -20,7 +20,7 @@ export function ServerToolsTab({
   const [tools, setTools] = useState<Tool[]>([]);
   const [toolsLoading, setToolsLoading] = useState(false);
 
-  // 도구 목록 로드
+  // Load tools list
   const loadTools = async () => {
     if (!projectId || !serverId) return;
     
@@ -46,7 +46,7 @@ export function ServerToolsTab({
     }
   };
 
-  // 도구 테스트 핸들러
+  // Tool test handler
   const handleTestTool = (tool: Tool) => {
     const mcpTool: MCPTool = {
       id: `${server.id}-${tool.name}`,
@@ -59,7 +59,7 @@ export function ServerToolsTab({
     onTestTool(mcpTool);
   };
 
-  // 컴포넌트 마운트 시 도구 목록 로드
+  // Load tools list when component mounts
   useEffect(() => {
     if (server && server.status === 'online') {
       loadTools();
@@ -71,9 +71,9 @@ export function ServerToolsTab({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>사용 가능한 도구</CardTitle>
+            <CardTitle>Available Tools</CardTitle>
             <CardDescription>
-              이 서버에서 제공하는 MCP 도구 목록입니다.
+              List of MCP tools provided by this server.
             </CardDescription>
           </div>
           <Button 
@@ -82,7 +82,7 @@ export function ServerToolsTab({
             disabled={toolsLoading || server?.status !== 'online'}
           >
             <RotateCcw className={`h-4 w-4 mr-2 ${toolsLoading ? 'animate-spin' : ''}`} />
-            새로고침
+            Refresh
           </Button>
         </div>
       </CardHeader>
@@ -90,25 +90,25 @@ export function ServerToolsTab({
         {server?.status !== 'online' ? (
           <div className="text-center py-8 text-muted-foreground">
             <Wrench className="h-12 w-12 mx-auto mb-4" />
-            <p>서버가 오프라인 상태입니다</p>
-            <p className="text-sm mt-2">서버를 온라인 상태로 만든 후 도구 목록을 확인할 수 있습니다.</p>
+            <p>Server is offline</p>
+            <p className="text-sm mt-2">You can check the tool list after bringing the server online.</p>
           </div>
         ) : toolsLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-            <p>도구 목록을 불러오는 중...</p>
+            <p>Loading tool list...</p>
           </div>
         ) : tools.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Wrench className="h-12 w-12 mx-auto mb-4" />
-            <p>사용 가능한 도구가 없습니다</p>
-            <p className="text-sm mt-2">이 서버에서 제공하는 도구가 없거나 도구 목록을 불러올 수 없습니다.</p>
+            <p>No available tools</p>
+            <p className="text-sm mt-2">This server provides no tools or the tool list cannot be loaded.</p>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-muted-foreground">
-                총 {tools.length}개의 도구가 사용 가능합니다.
+                Total {tools.length} tools available.
               </p>
             </div>
             
@@ -120,15 +120,15 @@ export function ServerToolsTab({
                       <div className="flex items-center gap-2 mb-2">
                         <Wrench className="h-4 w-4 text-blue-600" />
                         <h4 className="font-medium text-sm">{tool.name}</h4>
-                        <Badge variant="outline" className="text-xs">도구</Badge>
+                        <Badge variant="outline" className="text-xs">Tool</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">
-                        {tool.description || '설명이 제공되지 않았습니다.'}
+                        {tool.description || 'No description provided.'}
                       </p>
                       
                       {tool.schema && (
                         <div className="space-y-2">
-                          <h5 className="text-xs font-medium text-muted-foreground">매개변수</h5>
+                          <h5 className="text-xs font-medium text-muted-foreground">Parameters</h5>
                           <div className="bg-muted p-3 rounded text-xs font-mono">
                             {tool.schema.properties ? (
                               <div className="space-y-1">
@@ -138,7 +138,7 @@ export function ServerToolsTab({
                                     <span className="text-muted-foreground">:</span>
                                     <span className="text-green-600">{prop.type || 'any'}</span>
                                     {tool.schema.required?.includes(key) && (
-                                      <Badge variant="destructive" className="text-xs px-1 py-0">필수</Badge>
+                                      <Badge variant="destructive" className="text-xs px-1 py-0">Required</Badge>
                                     )}
                                     {prop.description && (
                                       <span className="text-muted-foreground text-xs">- {prop.description}</span>
@@ -147,7 +147,7 @@ export function ServerToolsTab({
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground">매개변수 정보 없음</span>
+                              <span className="text-muted-foreground">No parameter information</span>
                             )}
                           </div>
                         </div>
@@ -161,7 +161,7 @@ export function ServerToolsTab({
                         onClick={() => handleTestTool(tool)}
                       >
                         <Play className="h-3 w-3 mr-1" />
-                        테스트
+                        Test
                       </Button>
                     </div>
                   </div>

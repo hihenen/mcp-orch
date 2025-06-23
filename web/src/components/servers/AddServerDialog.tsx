@@ -167,21 +167,21 @@ function IndividualServerForm({
         </div>
       </div>
 
-      {/* 환경 변수 */}
+      {/* Environment Variables */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium">환경 변수</h3>
+        <h3 className="text-sm font-medium">Environment Variables</h3>
         
         <div className="flex gap-2">
           <Input
             value={newEnvKey}
             onChange={(e) => setNewEnvKey(e.target.value)}
-            placeholder="변수명"
+            placeholder="Variable Name"
             className="flex-1"
           />
           <Input
             value={newEnvValue}
             onChange={(e) => setNewEnvValue(e.target.value)}
-            placeholder="값"
+            placeholder="Value"
             className="flex-1"
             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addEnvVar())}
           />
@@ -210,7 +210,7 @@ function IndividualServerForm({
   );
 }
 
-// JSON 편집/추가 폼 컴포넌트
+// JSON editing/adding form component
 function JsonBulkAddForm({ 
   jsonConfig, 
   setJsonConfig, 
@@ -281,7 +281,7 @@ function JsonBulkAddForm({
       "jdbc@quarkiverse/quarkus-mcp-servers",
       "jdbc:postgresql://localhost:5432/mydb"
     ],
-    "description": "Database JDBC 서버 예시"
+    "description": "Database JDBC server example"
   }
 }`;
 
@@ -290,7 +290,7 @@ function JsonBulkAddForm({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">
-            {isEditMode ? '서버 설정 JSON 편집' : 'MCP 설정 JSON'}
+            {isEditMode ? 'Edit Server Settings JSON' : 'MCP Settings JSON'}
           </h3>
           {!isEditMode && (
             <Button 
@@ -299,20 +299,20 @@ function JsonBulkAddForm({
               size="sm"
               onClick={() => setJsonConfig(exampleConfig)}
             >
-              예시 불러오기
+              Load Example
             </Button>
           )}
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="jsonConfig">JSON 설정 *</Label>
+          <Label htmlFor="jsonConfig">JSON Settings *</Label>
           <Textarea
             id="jsonConfig"
             value={jsonConfig}
             onChange={(e) => setJsonConfig(e.target.value)}
             placeholder={isEditMode ? 
-              "현재 서버 설정이 JSON 형식으로 표시됩니다. 필요한 부분을 수정하세요..." : 
-              "서버 설정 JSON을 붙여넣으세요..."
+              "Current server settings are displayed in JSON format. Modify the necessary parts..." : 
+              "Paste your server settings JSON here..."
             }
             rows={15}
             className="font-mono text-sm"
@@ -320,22 +320,22 @@ function JsonBulkAddForm({
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">사용 방법</h4>
+          <h4 className="font-medium text-blue-900 mb-2">Usage Instructions</h4>
           <ul className="text-sm text-blue-700 space-y-1">
             {isEditMode ? (
               <>
-                <li>• 현재 서버 설정이 JSON 형식으로 표시됩니다</li>
-                <li>• 필요한 부분을 직접 수정하고 저장하세요</li>
-                <li>• 서버 이름, 명령어, 환경변수 등을 편집할 수 있습니다</li>
-                <li>• JSON 형식이 유효한지 확인해주세요</li>
+                <li>• Current server settings are displayed in JSON format</li>
+                <li>• Directly modify the necessary parts and save</li>
+                <li>• You can edit server name, command, environment variables, etc.</li>
+                <li>• Please ensure the JSON format is valid</li>
               </>
             ) : (
               <>
-                <li>• 기존 MCP 설정 또는 서버 설정만 붙여넣으세요</li>
-                <li>• "예시 불러오기" 버튼으로 간단한 형식을 확인하세요</li>
-                <li>• "서버명": {`{"disabled": false, "command": "npx", ...}`} 형식 지원</li>
-                <li>• mcpServers 래퍼가 있어도 자동으로 처리됩니다</li>
-                <li>• 여러 서버를 한 번에 추가할 수 있습니다</li>
+                <li>• Paste existing MCP settings or server configurations only</li>
+                <li>• Use "Load Example" button to see the simple format</li>
+                <li>• Supports "serverName": {`{"disabled": false, "command": "npx", ...}`} format</li>
+                <li>• mcpServers wrapper is automatically handled</li>
+                <li>• Multiple servers can be added at once</li>
               </>
             )}
           </ul>
@@ -347,8 +347,8 @@ function JsonBulkAddForm({
           className="w-full"
         >
           {isLoading ? 
-            (isEditMode ? '서버 수정 중...' : '서버 추가 중...') : 
-            (isEditMode ? 'JSON 설정으로 서버 수정' : 'JSON에서 서버 일괄 추가')
+            (isEditMode ? 'Updating Server...' : 'Adding Servers...') : 
+            (isEditMode ? 'Update Server with JSON Settings' : 'Bulk Add Servers from JSON')
           }
         </Button>
       </div>
@@ -541,7 +541,7 @@ export function AddServerDialog({
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.command.trim()) {
-      alert("입력 오류: 서버 이름과 명령어는 필수입니다.");
+      alert("Input Error: Server name and command are required.");
       return;
     }
 
@@ -568,14 +568,14 @@ export function AddServerDialog({
         
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || '서버 수정 실패');
+          throw new Error(errorData.error || 'Server update failed');
         }
 
         const result = await response.json();
         console.log('서버 수정 성공:', result);
         
         onServerUpdated?.(formData);
-        alert(`서버 수정 완료: ${formData.name} 서버가 성공적으로 수정되었습니다.`);
+        alert(`Server Update Completed: ${formData.name} server has been successfully updated.`);
       } else {
         // 서버 추가 API 호출
         const response = await fetch(`/api/projects/${projectId}/servers`, {
@@ -596,14 +596,14 @@ export function AddServerDialog({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || '서버 추가 실패');
+          throw new Error(errorData.error || 'Server addition failed');
         }
 
         const result = await response.json();
         console.log('서버 추가 성공:', result);
         
         onServerAdded(formData);
-        alert(`서버 추가 완료: ${formData.name} 서버가 성공적으로 추가되었습니다.`);
+        alert(`Server Addition Completed: ${formData.name} server has been successfully added.`);
       }
 
       resetForm();
@@ -611,7 +611,7 @@ export function AddServerDialog({
       
     } catch (error) {
       console.error(`서버 ${isEditMode ? '수정' : '추가'} 오류:`, error);
-      alert(`서버 ${isEditMode ? '수정' : '추가'} 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
+      alert(`Server ${isEditMode ? 'Update' : 'Addition'} Failed: ${error instanceof Error ? error.message : 'An unknown error occurred.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -620,7 +620,7 @@ export function AddServerDialog({
   // JSON 추가/수정 처리
   const handleJsonSubmit = async () => {
     if (!jsonConfig.trim()) {
-      alert('JSON 설정을 입력해주세요.');
+      alert('Please enter JSON settings.');
       return;
     }
 
@@ -636,7 +636,7 @@ export function AddServerDialog({
         // 새로운 형식: 서버 설정만 있음 - 자동으로 래퍼 추가
         mcpServers = config;
       } else {
-        throw new Error('올바른 MCP 설정 형식이 아닙니다.');
+        throw new Error('Invalid MCP settings format.');
       }
 
       // 🔧 모든 서버에 compatibility_mode가 없으면 기본값 추가
@@ -665,7 +665,7 @@ export function AddServerDialog({
       if (isEditMode && editServer) {
         const servers = Object.entries(mcpServers);
         if (servers.length !== 1) {
-          throw new Error('편집 모드에서는 하나의 서버 설정만 입력해주세요.');
+          throw new Error('In edit mode, please enter only one server configuration.');
         }
 
         const [serverName, serverConfig] = servers[0];
@@ -689,7 +689,7 @@ export function AddServerDialog({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || '서버 수정 실패');
+          throw new Error(errorData.error || 'Server update failed');
         }
 
         const result = await response.json();
@@ -706,7 +706,7 @@ export function AddServerDialog({
           cwd: server.cwd || ''
         });
         
-        alert(`서버 수정 완료: ${serverName} 서버가 성공적으로 수정되었습니다.`);
+        alert(`Server Update Completed: ${serverName} server has been successfully updated.`);
         onOpenChange(false);
         return;
       }
@@ -726,7 +726,7 @@ export function AddServerDialog({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               name: serverName,
-              description: server.description || `${serverName} MCP 서버`,
+              description: server.description || `${serverName} MCP server`,
               transport_type: server.type || 'stdio',
               compatibility_mode: server.compatibility_mode || 'api_wrapper',
               command: server.command,
@@ -739,7 +739,7 @@ export function AddServerDialog({
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || '서버 추가 실패');
+            throw new Error(errorData.error || 'Server addition failed');
           }
 
           successCount++;
@@ -758,24 +758,24 @@ export function AddServerDialog({
 
         } catch (error) {
           errorCount++;
-          errors.push(`${serverName}: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+          errors.push(`${serverName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
 
       // 결과 메시지
       if (successCount > 0 && errorCount === 0) {
-        alert(`성공: ${successCount}개 서버가 모두 추가되었습니다.`);
+        alert(`Success: All ${successCount} servers have been added.`);
         setJsonConfig('');
         onOpenChange(false);
       } else if (successCount > 0 && errorCount > 0) {
-        alert(`부분 성공: ${successCount}개 서버 추가 성공, ${errorCount}개 실패\n\n실패 목록:\n${errors.join('\n')}`);
+        alert(`Partial Success: ${successCount} servers added successfully, ${errorCount} failed\n\nFailed servers:\n${errors.join('\n')}`);
       } else {
-        alert(`실패: 모든 서버 추가에 실패했습니다.\n\n오류 목록:\n${errors.join('\n')}`);
+        alert(`Failed: All server additions failed.\n\nError list:\n${errors.join('\n')}`);
       }
 
     } catch (error) {
       console.error('JSON 파싱 오류:', error);
-      alert(`JSON 형식 오류: ${error instanceof Error ? error.message : '올바른 JSON 형식이 아닙니다.'}`);
+      alert(`JSON Format Error: ${error instanceof Error ? error.message : 'Invalid JSON format.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -785,11 +785,11 @@ export function AddServerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'MCP 서버 설정 편집' : '새 MCP 서버 추가'}</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit MCP Server Settings' : 'Add New MCP Server'}</DialogTitle>
           <DialogDescription>
             {isEditMode 
-              ? '서버 설정을 수정합니다. 변경할 필드를 수정해주세요.'
-              : '프로젝트에 새로운 MCP 서버를 추가합니다. 모든 필드를 정확히 입력해주세요.'
+              ? 'Modify server settings. Please update the fields you want to change.'
+              : 'Add a new MCP server to the project. Please enter all fields accurately.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -799,11 +799,11 @@ export function AddServerDialog({
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="individual" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              {isEditMode ? '개별 편집' : '개별 추가'}
+              {isEditMode ? 'Individual Edit' : 'Individual Add'}
             </TabsTrigger>
             <TabsTrigger value="json" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              {isEditMode ? 'JSON 편집' : 'JSON 추가'}
+              {isEditMode ? 'JSON Edit' : 'JSON Add'}
             </TabsTrigger>
           </TabsList>
 
@@ -843,14 +843,14 @@ export function AddServerDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            Cancel
           </Button>
-          {/* JSON 탭이 아닐 때만 제출 버튼 표시 */}
+          {/* Show submit button only when not in JSON tab */}
           {(isEditMode || activeTab === 'individual') && (
             <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
               {isLoading 
-                ? (isEditMode ? '수정 중...' : '추가 중...') 
-                : (isEditMode ? '서버 수정' : '서버 추가')
+                ? (isEditMode ? 'Updating...' : 'Adding...') 
+                : (isEditMode ? 'Update Server' : 'Add Server')
               }
             </Button>
           )}

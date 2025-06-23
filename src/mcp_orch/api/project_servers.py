@@ -5,7 +5,7 @@ MCP 서버 CRUD, 상태 관리, 토글 기능
 
 from typing import List, Optional, Union
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
@@ -947,3 +947,251 @@ async def get_server_logs(
         )
         for log in logs
     ]
+
+
+# Usage Statistics API Endpoints
+
+class UsageSession(BaseModel):
+    """Usage session response model"""
+    id: str
+    client_name: str
+    status: str  # 'active' or 'inactive'
+    last_activity: str
+    created_at: str
+
+class UsageStats(BaseModel):
+    """Usage statistics response model"""
+    total_calls: int
+    successful_calls: int
+    failed_calls: int
+    average_response_time: float
+
+class ToolCall(BaseModel):
+    """Tool call response model"""
+    id: str
+    tool_name: str
+    client_name: str
+    status: str  # 'success' or 'error'
+    response_time: float
+    called_at: str
+    error_message: Optional[str] = None
+
+
+@router.get("/projects/{project_id}/servers/{server_id}/sessions", response_model=List[UsageSession])
+async def get_server_sessions(
+    project_id: UUID,
+    server_id: UUID,
+    current_user: User = Depends(get_current_user_for_project_servers),
+    db: Session = Depends(get_db)
+):
+    """Get active client sessions for a server"""
+    
+    # Project access check
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # Server existence check
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # For now, return mock data. In real implementation, this would query session tracking tables
+    mock_sessions = [
+        {
+            "id": "session_1",
+            "client_name": "Cline",
+            "status": "active",
+            "last_activity": (datetime.utcnow() - timedelta(minutes=2)).isoformat(),
+            "created_at": (datetime.utcnow() - timedelta(hours=1)).isoformat()
+        },
+        {
+            "id": "session_2", 
+            "client_name": "Cursor",
+            "status": "inactive",
+            "last_activity": (datetime.utcnow() - timedelta(hours=1)).isoformat(),
+            "created_at": (datetime.utcnow() - timedelta(hours=2)).isoformat()
+        }
+    ]
+    
+    return [UsageSession(**session) for session in mock_sessions]
+
+
+@router.get("/projects/{project_id}/servers/{server_id}/stats", response_model=UsageStats)
+async def get_server_stats(
+    project_id: UUID,
+    server_id: UUID,
+    current_user: User = Depends(get_current_user_for_project_servers),
+    db: Session = Depends(get_db)
+):
+    """Get usage statistics for a server"""
+    
+    # Project access check
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # Server existence check
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # For now, return mock statistics. In real implementation, this would query tool call logs
+    from ..models.tool_call_log import ToolCallLog
+    
+    # Get tool call statistics from the database
+    try:
+        # Total calls
+        total_calls = db.query(ToolCallLog).filter(
+            and_(
+                ToolCallLog.server_id == server_id,
+                ToolCallLog.project_id == project_id
+            )
+        ).count()
+        
+        # Successful calls
+        successful_calls = db.query(ToolCallLog).filter(
+            and_(
+                ToolCallLog.server_id == server_id,
+                ToolCallLog.project_id == project_id,
+                ToolCallLog.success == True
+            )
+        ).count()
+        
+        # Failed calls
+        failed_calls = total_calls - successful_calls
+        
+        # Average response time
+        avg_response_time = 0.0
+        if total_calls > 0:
+            response_times = db.query(ToolCallLog.response_time).filter(
+                and_(
+                    ToolCallLog.server_id == server_id,
+                    ToolCallLog.project_id == project_id,
+                    ToolCallLog.response_time.isnot(None)
+                )
+            ).all()
+            
+            if response_times:
+                avg_response_time = sum(rt[0] for rt in response_times if rt[0]) / len(response_times)
+        
+        return UsageStats(
+            total_calls=total_calls,
+            successful_calls=successful_calls,
+            failed_calls=failed_calls,
+            average_response_time=round(avg_response_time, 2)
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting server stats: {e}")
+        # Return default stats if there's an error
+        return UsageStats(
+            total_calls=0,
+            successful_calls=0,
+            failed_calls=0,
+            average_response_time=0.0
+        )
+
+
+@router.get("/projects/{project_id}/servers/{server_id}/calls", response_model=List[ToolCall])
+async def get_server_tool_calls(
+    project_id: UUID,
+    server_id: UUID,
+    limit: int = 10,
+    current_user: User = Depends(get_current_user_for_project_servers),
+    db: Session = Depends(get_db)
+):
+    """Get recent tool calls for a server"""
+    
+    # Project access check
+    project_member = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == current_user.id
+        )
+    ).first()
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or access denied"
+        )
+    
+    # Server existence check
+    server = db.query(McpServer).filter(
+        and_(
+            McpServer.id == server_id,
+            McpServer.project_id == project_id
+        )
+    ).first()
+    
+    if not server:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Server not found"
+        )
+    
+    # Get recent tool calls from the database
+    try:
+        from ..models.tool_call_log import ToolCallLog
+        
+        tool_calls = db.query(ToolCallLog).filter(
+            and_(
+                ToolCallLog.server_id == server_id,
+                ToolCallLog.project_id == project_id
+            )
+        ).order_by(ToolCallLog.called_at.desc()).limit(limit).all()
+        
+        return [
+            ToolCall(
+                id=str(call.id),
+                tool_name=call.tool_name,
+                client_name=call.client_name or "Unknown",
+                status="success" if call.success else "error",
+                response_time=call.response_time or 0.0,
+                called_at=call.called_at.isoformat() if call.called_at else datetime.utcnow().isoformat(),
+                error_message=call.error_message if not call.success else None
+            )
+            for call in tool_calls
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting server tool calls: {e}")
+        # Return empty list if there's an error
+        return []

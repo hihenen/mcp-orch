@@ -19,48 +19,48 @@ export function ServerSettingsTab({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>서버 설정</CardTitle>
+        <CardTitle>Server Settings</CardTitle>
         <CardDescription>
-          서버 구성을 수정하고 관리할 수 있습니다.
+          Modify and manage server configuration.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div>
-              <h4 className="font-medium">서버 편집</h4>
+              <h4 className="font-medium">Edit Server</h4>
               <p className="text-sm text-muted-foreground">
-                서버 설정을 수정합니다.
+                Modify server settings and configuration.
               </p>
             </div>
             <Button 
               variant="outline"
               onClick={onEditServer}
               disabled={!canEdit}
-              title={!canEdit ? "이 서버를 편집할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 설정 편집"}
+              title={!canEdit ? "You don't have permission to edit this server. (Owner or Developer only)" : "Edit server settings"}
             >
               <Edit className="h-4 w-4 mr-2" />
-              편집
+              Edit
             </Button>
           </div>
           
           <div className="border-t pt-4">
-            <h4 className="font-medium text-red-600 mb-2">위험 구역</h4>
+            <h4 className="font-medium text-red-600 mb-2">Danger Zone</h4>
             <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
               <div>
-                <h5 className="font-medium">서버 삭제</h5>
+                <h5 className="font-medium">Delete Server</h5>
                 <p className="text-sm text-muted-foreground">
-                  이 서버를 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+                  Permanently delete this server. This action cannot be undone.
                 </p>
               </div>
               <Button 
                 variant="destructive" 
                 onClick={onDeleteServer}
                 disabled={!canEdit}
-                title={!canEdit ? "이 서버를 삭제할 권한이 없습니다. (Owner 또는 Developer만 가능)" : "서버 삭제"}
+                title={!canEdit ? "You don't have permission to delete this server. (Owner or Developer only)" : "Delete server"}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                삭제
+                Delete
               </Button>
             </div>
           </div>

@@ -191,7 +191,7 @@ class McpServer(Base):
             "timeout": self.timeout,
             "autoApprove": self.auto_approve,
             "transportType": self.transport_type,
-            "serverType": self.server_type,
+            "serverType": self.compatibility_mode,
             "disabled": not self.is_enabled
         }
 

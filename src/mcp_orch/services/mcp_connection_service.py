@@ -557,7 +557,7 @@ class McpConnectionService:
                 'env': db_server.env or {},
                 'timeout': 60,  # 기본 타임아웃
                 'transportType': db_server.transport_type or 'stdio',
-                'serverType': db_server.server_type or 'api_wrapper',
+                'serverType': db_server.compatibility_mode or 'api_wrapper',
                 'disabled': not db_server.is_enabled
             }
             

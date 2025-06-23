@@ -13,26 +13,26 @@ export function ServerLogsTab({ server, projectId, serverId }: ServerTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
+      {/* Header */}
       <Card>
         <CardHeader>
-          <CardTitle>서버 로그</CardTitle>
+          <CardTitle>Server Logs</CardTitle>
           <CardDescription>
-            {server.name} 서버의 연결 로그와 도구 호출 로그를 확인할 수 있습니다.
+            View connection logs and tool call logs for {server.name} server.
           </CardDescription>
         </CardHeader>
       </Card>
 
-      {/* 로그 탭 */}
+      {/* Log Tabs */}
       <Tabs value={activeLogTab} onValueChange={setActiveLogTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="connection" className="flex items-center gap-2">
             <Network className="h-4 w-4" />
-            연결 로그
+            Connection Logs
           </TabsTrigger>
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Wrench className="h-4 w-4" />
-            도구 호출 로그
+            Tool Call Logs
           </TabsTrigger>
         </TabsList>
 
