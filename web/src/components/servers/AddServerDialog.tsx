@@ -707,7 +707,7 @@ export function AddServerDialog({
               name: serverName,
               description: server.description || `${serverName} MCP 서버`,
               transport_type: server.type || 'stdio',
-              compatibility_mode: server.compatibility_mode || (server.type === 'sse' ? 'api_wrapper' : 'resource_connection'),
+              compatibility_mode: server.compatibility_mode || 'api_wrapper',
               command: server.command,
               args: server.args || [],
               env: server.env || {},
