@@ -235,7 +235,7 @@ export default function ProjectServerDetailPage() {
             name: server.name,
             description: server.description || '',
             transport: (server.transport_type as 'stdio' | 'sse') || 'stdio',
-            serverType: (server.server_type as 'api_wrapper' | 'resource_connection') || 'api_wrapper',
+            serverType: (server.compatibility_mode as 'api_wrapper' | 'resource_connection') || 'api_wrapper',
             command: server.command || '',
             args: server.args || [],
             env: server.env || {},

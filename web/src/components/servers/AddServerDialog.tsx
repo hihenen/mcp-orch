@@ -86,9 +86,9 @@ function IndividualServerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="serverType">Connection Mode</Label>
-          <Select value={formData.serverType} onValueChange={(value: 'api_wrapper' | 'resource_connection') => {
-            updateField('serverType', value);
+          <Label htmlFor="compatibilityMode">Connection Mode</Label>
+          <Select value={formData.compatibilityMode} onValueChange={(value: 'api_wrapper' | 'resource_connection') => {
+            updateField('compatibilityMode', value);
             setShowResourceConnectionHint(false); // Hide hint when selected
           }}>
             <SelectTrigger>
@@ -344,7 +344,7 @@ interface ServerConfig {
   name: string;
   description: string;
   transport: 'stdio' | 'sse';
-  serverType: 'api_wrapper' | 'resource_connection';
+  compatibilityMode: 'api_wrapper' | 'resource_connection';
   command: string;
   args: string[];
   env: Record<string, string>;
@@ -362,7 +362,7 @@ interface AddServerDialogProps {
     name: string;
     description?: string;
     transport?: 'stdio' | 'sse';
-    serverType?: 'api_wrapper' | 'resource_connection';
+    compatibilityMode?: 'api_wrapper' | 'resource_connection';
     command: string;
     args?: string[];
     env?: Record<string, string>;
@@ -388,7 +388,7 @@ export function AddServerDialog({
     name: '',
     description: '',
     transport: 'stdio',
-    serverType: 'api_wrapper',
+    compatibilityMode: 'api_wrapper',
     command: '',
     args: [],
     env: {},
@@ -422,7 +422,7 @@ export function AddServerDialog({
         args.includes('db') ||
         args.includes('sql');
       
-      setShowResourceConnectionHint(isResourceConnection && formData.serverType === 'api_wrapper');
+      setShowResourceConnectionHint(isResourceConnection && formData.compatibilityMode === 'api_wrapper');
     }
   };
 
@@ -477,20 +477,20 @@ export function AddServerDialog({
   useEffect(() => {
     if (editServer) {
       console.log('🔍 EditServer received:', editServer);
-      console.log('🔍 editServer.serverType:', editServer.serverType);
+      console.log('🔍 editServer.compatibilityMode:', editServer.compatibilityMode);
       
       const serverConfig = {
         name: editServer.name,
         description: editServer.description || '',
         transport: editServer.transport || 'stdio',
-        serverType: editServer.serverType || 'api_wrapper',
+        compatibilityMode: editServer.compatibilityMode || 'api_wrapper',
         command: editServer.command,
         args: editServer.args || [],
         env: editServer.env || {},
         cwd: editServer.cwd || ''
       };
       
-      console.log('🔍 Final serverConfig.serverType:', serverConfig.serverType);
+      console.log('🔍 Final serverConfig.compatibilityMode:', serverConfig.compatibilityMode);
       
       setFormData(serverConfig);
       
@@ -508,7 +508,7 @@ export function AddServerDialog({
       name: '',
       description: '',
       transport: 'stdio',
-      serverType: 'api_wrapper',
+      compatibilityMode: 'api_wrapper',
       command: '',
       args: [],
       env: {},
@@ -540,7 +540,7 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport: formData.transport,
-            server_type: formData.serverType,
+            compatibility_mode: formData.compatibilityMode,
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -568,7 +568,7 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport_type: formData.transport,
-            server_type: formData.serverType,
+            compatibility_mode: formData.compatibilityMode,
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -641,7 +641,7 @@ export function AddServerDialog({
             name: serverName,
             description: server.description || '',
             transport: server.type === 'sse' ? 'sse' : 'stdio',
-            server_type: server.server_type || 'api_wrapper',
+            compatibility_mode: server.compatibility_mode || 'api_wrapper',
             command: server.command,
             args: server.args || [],
             env: server.env || {},
@@ -662,7 +662,7 @@ export function AddServerDialog({
           name: serverName,
           description: server.description || '',
           transport: server.type === 'sse' ? 'sse' : 'stdio',
-          serverType: server.server_type || 'api_wrapper',
+          compatibilityMode: server.compatibility_mode || 'api_wrapper',
           command: server.command || '',
           args: server.args || [],
           env: server.env || {},
@@ -690,8 +690,8 @@ export function AddServerDialog({
             body: JSON.stringify({
               name: serverName,
               description: server.description || `${serverName} MCP 서버`,
-              transport_type: server.type === 'sse' ? 'sse' : 'stdio',
-              server_type: server.server_type || (server.type === 'sse' ? 'api_wrapper' : 'resource_connection'),
+              transport_type: server.type || 'stdio',
+              compatibility_mode: server.compatibility_mode || 'api_wrapper',
               command: server.command,
               args: server.args || [],
               env: server.env || {},
@@ -712,7 +712,7 @@ export function AddServerDialog({
             name: serverName,
             description: server.description || `${serverName} MCP 서버`,
             transport: server.type === 'sse' ? 'sse' : 'stdio',
-            serverType: server.server_type || 'api_wrapper',
+            compatibilityMode: server.compatibility_mode || 'api_wrapper',
             command: server.command,
             args: server.args || [],
             env: server.env || {},

@@ -86,7 +86,7 @@ export default function ProjectServersPage() {
   // Start server editing
   const handleEditServer = (server: any) => {
     console.log('🔍 handleEditServer received server:', server);
-    console.log('🔍 server.server_type:', server.server_type);
+    console.log('🔍 server.compatibility_mode:', server.compatibility_mode);
     console.log('🔍 server.transport_type:', server.transport_type);
     
     const editingServerData = {
@@ -94,8 +94,8 @@ export default function ProjectServersPage() {
       name: server.name,
       description: server.description,
       transport: server.transportType || server.transport_type || 'stdio',
-      server_type: server.server_type || 'api_wrapper',
-      serverType: server.server_type || 'api_wrapper',  // 프론트엔드 필드도 추가
+      compatibility_mode: server.compatibility_mode || 'api_wrapper',
+      serverType: server.compatibility_mode || 'api_wrapper',  // 프론트엔드 필드도 추가
       command: server.command || '',
       args: server.args || [],
       env: server.env || {},
@@ -103,7 +103,7 @@ export default function ProjectServersPage() {
     };
     
     console.log('🔍 Setting editingServer to:', editingServerData);
-    console.log('🔍 editingServerData.server_type:', editingServerData.server_type);
+    console.log('🔍 editingServerData.compatibility_mode:', editingServerData.compatibility_mode);
     console.log('🔍 editingServerData.serverType:', editingServerData.serverType);
     setEditingServer(editingServerData);
   };

@@ -1092,7 +1092,7 @@ class ServerUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     transport: Optional[str] = None
-    server_type: Optional[str] = None
+    compatibility_mode: Optional[str] = None
     command: Optional[str] = None
     args: Optional[List[str]] = None
     env: Optional[dict] = None
@@ -1104,7 +1104,7 @@ class ServerResponse(BaseModel):
     name: str
     description: Optional[str]
     transport_type: str
-    server_type: str
+    compatibility_mode: str
     command: str
     args: List[str]
     env: dict
@@ -1188,7 +1188,7 @@ async def list_project_servers(
             name=server.name,
             description=server.description,
             transport_type=server.transport_type or "stdio",
-            server_type=server.server_type or "api_wrapper",
+            compatibility_mode=server.compatibility_mode or "api_wrapper",
             command=server.command or "",
             args=server.args or [],
             env=server.env or {},
@@ -1291,7 +1291,7 @@ async def get_project_server_detail(
         name=server.name,
         description=server.description,
         transport_type=server.transport_type or "stdio",
-        server_type=server.server_type or "api_wrapper",
+        compatibility_mode=server.compatibility_mode or "api_wrapper",
         command=server.command or "",
         args=server.args or [],
         env=server.env or {},
@@ -1369,7 +1369,7 @@ async def create_project_server(
         name=new_server.name,
         description=new_server.description,
         transport_type=new_server.transport_type or "stdio",
-        server_type=new_server.server_type or "api_wrapper",
+        compatibility_mode=new_server.compatibility_mode or "api_wrapper",
         command=new_server.command or "",
         args=new_server.args or [],
         env=new_server.env or {},
@@ -1445,7 +1445,7 @@ async def update_project_server(
             )
     
     # 서버 정보 업데이트
-    logger.info(f"🚨 Current server: name={server.name}, server_type={server.server_type}")
+    logger.info(f"🚨 Current server: name={server.name}, compatibility_mode={server.compatibility_mode}")
     if server_data.name is not None:
         logger.info(f"🚨 Updating name: {server.name} -> {server_data.name}")
         server.name = server_data.name
@@ -1455,10 +1455,10 @@ async def update_project_server(
     if server_data.transport is not None:
         logger.info(f"🚨 Updating transport: {server.transport_type} -> {server_data.transport}")
         server.transport_type = server_data.transport
-    if server_data.server_type is not None:
-        logger.info(f"🚨 🎯 CRITICAL: Updating server_type from '{server.server_type}' to '{server_data.server_type}'")
-        server.server_type = server_data.server_type
-        logger.info(f"🚨 🎯 CRITICAL: After assignment, server.server_type = '{server.server_type}'")
+    if server_data.compatibility_mode is not None:
+        logger.info(f"🚨 🎯 CRITICAL: Updating compatibility_mode from '{server.compatibility_mode}' to '{server_data.compatibility_mode}'")
+        server.compatibility_mode = server_data.compatibility_mode
+        logger.info(f"🚨 🎯 CRITICAL: After assignment, server.compatibility_mode = '{server.compatibility_mode}'")
     if server_data.command is not None:
         logger.info(f"🚨 Updating command: {server.command} -> {server_data.command}")
         server.command = server_data.command
@@ -1482,7 +1482,7 @@ async def update_project_server(
         name=server.name,
         description=server.description,
         transport_type=server.transport_type or "stdio",
-        server_type=server.server_type or "api_wrapper",
+        compatibility_mode=server.compatibility_mode or "api_wrapper",
         command=server.command or "",
         args=server.args or [],
         env=server.env or {},

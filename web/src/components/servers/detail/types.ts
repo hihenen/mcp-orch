@@ -20,7 +20,7 @@ export interface ServerDetail {
   status: 'online' | 'offline' | 'connecting' | 'error' | 'timeout';
   disabled: boolean;
   transport_type: string;
-  server_type?: string;
+  compatibility_mode?: string;
   command?: string;
   args?: string[];
   env?: Record<string, string>;
