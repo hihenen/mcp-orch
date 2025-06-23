@@ -87,6 +87,32 @@ class MCPServerConfig(BaseModel):
     disabled: bool = False
 
 
+class MCPSessionConfig(BaseModel):
+    """
+    MCP Session Manager Configuration
+    
+    Controls the behavior of persistent MCP server sessions including:
+    - How long to keep unused sessions alive
+    - How frequently to check for expired sessions
+    """
+    
+    # Session timeout: How long to keep unused sessions alive (in minutes)
+    # Environment variable: MCP_SESSION_TIMEOUT_MINUTES
+    # Default: 30 minutes
+    session_timeout_minutes: int = Field(
+        default=30,
+        description="Session timeout in minutes - sessions unused for this duration will be terminated"
+    )
+    
+    # Cleanup interval: How often to check for expired sessions (in minutes)
+    # Environment variable: MCP_SESSION_CLEANUP_INTERVAL_MINUTES  
+    # Default: 5 minutes
+    cleanup_interval_minutes: int = Field(
+        default=5,
+        description="Cleanup interval in minutes - how often to check for expired sessions"
+    )
+
+
 class Settings(BaseSettings):
     """
     애플리케이션 설정
@@ -111,6 +137,9 @@ class Settings(BaseSettings):
     
     # MCP 서버 설정
     mcp_servers: Dict[str, MCPServerConfig] = Field(default_factory=dict)
+    
+    # MCP 세션 매니저 설정
+    mcp_session: MCPSessionConfig = Field(default_factory=MCPSessionConfig)
     
     # 설정 파일 경로
     config_file: Optional[Path] = None

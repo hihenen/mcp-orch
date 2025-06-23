@@ -78,7 +78,8 @@ async def lifespan(app: FastAPI):
     # MCP 세션 매니저 초기화
     from ..services.mcp_session_manager import get_session_manager
     try:
-        session_manager = await get_session_manager()
+        # Pass MCP session configuration from app settings
+        session_manager = await get_session_manager(settings.mcp_session)
         logger.info("MCP Session Manager started")
     except Exception as e:
         logger.error(f"Failed to start MCP Session Manager: {e}")

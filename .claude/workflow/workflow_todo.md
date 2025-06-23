@@ -34,13 +34,35 @@
   - [x] 새로운 세션 매니저 통합
   - [x] 도구 호출 시 기존 세션 재사용
   - [x] FastAPI lifespan 관리 추가
-- [ ] 테스트 및 검증
+- [x] 테스트 및 검증
+  - [x] 도구 스키마 정보 누락 문제 수정
+  - [x] inputSchema -> schema 변환 로직 추가
+
+### TASK_045: MCP 세션 매니저에 환경변수 설정 지원 추가
+- [x] MCPSessionConfig 클래스 생성
+  - [x] session_timeout_minutes 설정 (기본: 30분)
+  - [x] cleanup_interval_minutes 설정 (기본: 5분)
+  - [x] 영어 주석 및 설명 추가
+- [x] 환경변수 지원 구현
+  - [x] MCP_SESSION_TIMEOUT_MINUTES 환경변수
+  - [x] MCP_SESSION_CLEANUP_INTERVAL_MINUTES 환경변수
+  - [x] 기본값 fallback 로직
+- [x] McpSessionManager 업데이트
+  - [x] 설정 기반 초기화
+  - [x] 동적 타임아웃 및 정리 간격 적용
+  - [x] 초기화 로그에 설정값 표시
+- [x] FastAPI 앱 통합
+  - [x] app.py에서 설정 전달
+  - [x] Settings 클래스에 mcp_session 필드 추가
+- [x] 환경변수 문서화
+  - [x] .env.example 파일에 설정 예시 추가
+  - [x] 영어 주석으로 설명 제공
 
 ## Progress Status
-- Current Progress: TASK_044 - 진정한 MCP 표준 Resource Connection 구현 진행 중
-- Next Task: 테스트 및 검증
+- Current Progress: TASK_045 - MCP 세션 매니저 환경변수 설정 지원 완료
+- Next Task: 완료됨
 - Last Update: 2025-01-23
-- Automatic Check Feedback: 새로운 세션 매니저 구현 완료, 테스트 필요
+- Automatic Check Feedback: 환경변수 기반 설정으로 배포 환경별 최적화 가능
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
@@ -49,3 +71,8 @@
 - UI가 단순화되어 사용자 경험 개선
 - 모든 서버가 MCP 표준을 준수하게 됨
 - Resource Connection 모드는 데이터베이스 서버 등에 최적화됨
+- 새로운 세션 매니저는 진정한 세션 재사용을 구현
+- 도구 스키마 정보 변환이 UI 호환성에 중요함
+- MCP Python SDK 패턴을 따르면 표준 준수와 성능 향상 모두 달성 가능
+- 환경변수 설정은 배포 환경별 최적화에 핵심적
+- 세션 타임아웃과 정리 주기의 분리된 설정이 운영 유연성 제공

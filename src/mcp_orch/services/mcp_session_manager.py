@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from ..models import McpServer, ToolCallLog, CallStatus, ClientSession, ServerLog, LogLevel, LogCategory
+from ..config import MCPSessionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +44,38 @@ class ToolExecutionError(Exception):
 
 
 class McpSessionManager:
-    """MCP 서버 세션 관리자 - MCP Python SDK 패턴 기반"""
+    """
+    MCP Server Session Manager - Based on MCP Python SDK patterns
     
-    def __init__(self, session_timeout_minutes: int = 30):
+    Manages persistent connections to MCP servers with configurable timeouts
+    and automatic cleanup of expired sessions.
+    """
+    
+    def __init__(self, config: Optional[MCPSessionConfig] = None):
+        """
+        Initialize MCP Session Manager
+        
+        Args:
+            config: MCP session configuration. If None, uses default values with environment variable support.
+        """
+        if config is None:
+            # Load configuration with environment variable support
+            import os
+            config = MCPSessionConfig(
+                session_timeout_minutes=int(os.getenv('MCP_SESSION_TIMEOUT_MINUTES', '30')),
+                cleanup_interval_minutes=int(os.getenv('MCP_SESSION_CLEANUP_INTERVAL_MINUTES', '5'))
+            )
+            
+        self.config = config
         self.sessions: Dict[str, McpSession] = {}
-        self.session_timeout = timedelta(minutes=session_timeout_minutes)
+        self.session_timeout = timedelta(minutes=config.session_timeout_minutes)
+        self.cleanup_interval = timedelta(minutes=config.cleanup_interval_minutes)
         self._cleanup_task: Optional[asyncio.Task] = None
         self._message_id_counter = 0
+        
+        logger.info(f"🔧 MCP Session Manager initialized:")
+        logger.info(f"   Session timeout: {config.session_timeout_minutes} minutes")
+        logger.info(f"   Cleanup interval: {config.cleanup_interval_minutes} minutes")
         
     async def start_manager(self):
         """세션 매니저 시작 - 정리 작업 스케줄링"""
@@ -345,7 +371,17 @@ class McpSessionManager:
                 error_msg = response['error'].get('message', 'Unknown error')
                 raise Exception(f"Tools list failed: {error_msg}")
             
-            tools = response.get('result', {}).get('tools', [])
+            raw_tools = response.get('result', {}).get('tools', [])
+            
+            # 도구 데이터 정규화 (기존 구현과 호환성 유지)
+            tools = []
+            for tool in raw_tools:
+                normalized_tool = {
+                    'name': tool.get('name', ''),
+                    'description': tool.get('description', ''),
+                    'schema': tool.get('inputSchema', {})  # inputSchema -> schema 변환
+                }
+                tools.append(normalized_tool)
             
             # 캐시에 저장
             session.tools_cache = tools
@@ -437,10 +473,16 @@ class McpSessionManager:
             logger.error(f"❌ Error closing session for {session.server_id}: {e}")
     
     async def _cleanup_expired_sessions(self) -> None:
-        """만료된 세션 정리 (백그라운드 작업)"""
+        """
+        Clean up expired sessions (background task)
+        
+        Runs periodically based on cleanup_interval_minutes configuration
+        """
         while True:
             try:
-                await asyncio.sleep(300)  # 5분마다 실행
+                # Use configured cleanup interval (convert minutes to seconds)
+                cleanup_seconds = int(self.cleanup_interval.total_seconds())
+                await asyncio.sleep(cleanup_seconds)
                 
                 now = datetime.utcnow()
                 expired_sessions = []
@@ -501,11 +543,19 @@ class McpSessionManager:
 # 글로벌 세션 매니저 인스턴스
 _session_manager: Optional[McpSessionManager] = None
 
-async def get_session_manager() -> McpSessionManager:
-    """글로벌 세션 매니저 인스턴스 가져오기"""
+async def get_session_manager(config: Optional[MCPSessionConfig] = None) -> McpSessionManager:
+    """
+    Get global session manager instance
+    
+    Args:
+        config: MCP session configuration. If None, uses environment variables or defaults.
+    
+    Returns:
+        McpSessionManager: The global session manager instance
+    """
     global _session_manager
     if _session_manager is None:
-        _session_manager = McpSessionManager()
+        _session_manager = McpSessionManager(config)
         await _session_manager.start_manager()
     return _session_manager
 
