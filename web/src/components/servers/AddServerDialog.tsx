@@ -638,6 +638,26 @@ export function AddServerDialog({
         throw new Error('올바른 MCP 설정 형식이 아닙니다.');
       }
 
+      // 🔧 모든 서버에 compatibility_mode가 없으면 기본값 추가
+      const normalizedServers = Object.fromEntries(
+        Object.entries(mcpServers).map(([serverName, serverConfig]: [string, any]) => {
+          const normalizedConfig = {
+            ...serverConfig,
+            compatibility_mode: serverConfig.compatibility_mode || 'api_wrapper'
+          };
+          return [serverName, normalizedConfig];
+        })
+      );
+      
+      // 정규화된 설정으로 JSON 텍스트 업데이트 (사용자가 다음에 저장할 수 있도록)
+      const updatedConfig = config.mcpServers ? 
+        { mcpServers: normalizedServers } : 
+        normalizedServers;
+      setJsonConfig(JSON.stringify(updatedConfig, null, 2));
+      
+      // 정규화된 서버 객체 사용
+      mcpServers = normalizedServers;
+
       setIsLoading(true);
 
       // 편집 모드일 때
