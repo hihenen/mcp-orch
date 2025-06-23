@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_048] Remove unnecessary compatibility_mode field from JSON settings
+  - Remove compatibility_mode field from server creation and update APIs
+  - Simplify Cline configuration generation to single Resource Connection mode
+  - Clean up database model default to use resource_connection consistently
+  - Eliminate conditional logic for compatibility mode selection
 - [TASK_047] CHANGELOG workflow integration to commit process
   - Mandatory CHANGELOG.md updates before every functional unit commit
   - Pre-commit checklist enforcement with documentation requirements

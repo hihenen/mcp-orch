@@ -93,11 +93,29 @@
   - [x] TASK_047 변경사항을 CHANGELOG.md에 먼저 반영
   - [x] 새로운 워크플로우 따라 커밋 실행
 
+### TASK_048: JSON 설정에서 불필요한 compatibility_mode 필드 제거
+- [x] 데이터베이스 모델 수정
+  - [x] McpServer 모델에서 compatibility_mode 기본값을 resource_connection으로 변경
+  - [x] 모델 주석 업데이트로 단일 모드 명시
+- [x] API Pydantic 모델 정리
+  - [x] ServerCreate에서 compatibility_mode 필드 제거
+  - [x] ServerUpdate에서 compatibility_mode 필드 제거
+  - [x] ServerResponse에서 compatibility_mode 필드 제거
+- [x] API 로직 단순화
+  - [x] 서버 생성 시 compatibility_mode 설정 제거
+  - [x] 서버 업데이트 시 compatibility_mode 조건부 로직 제거
+  - [x] 서버 응답에서 compatibility_mode 필드 제거
+  - [x] 디버그 로그에서 compatibility_mode 참조 정리
+- [x] Cline 설정 생성 단순화
+  - [x] project_sse.py에서 조건부 로직 제거
+  - [x] 단일 Resource Connection 모드로 설정 통일
+  - [x] stdio 타입으로 고정 설정
+
 ## Progress Status
-- Current Progress: TASK_047 - CHANGELOG.md 의무화 및 커밋 워크플로우 개선 완료
+- Current Progress: TASK_048 - JSON 설정에서 불필요한 compatibility_mode 필드 제거 완료
 - Next Task: 완료됨
 - Last Update: 2025-01-23
-- Automatic Check Feedback: 강제적 문서화로 변경사항 추적성과 코드 품질 향상
+- Automatic Check Feedback: 단일 모드 전환으로 설정 단순화 및 사용자 경험 개선
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
@@ -115,3 +133,5 @@
 - Keep a Changelog 표준으로 개발자/사용자 친화적 문서화 실현
 - 강제적 CHANGELOG 업데이트로 문서화 부채 방지
 - 커밋과 문서화의 동기화로 릴리즈 준비 간소화
+- 단일 모드 전환으로 코드베이스 단순화 및 유지보수성 향상
+- JSON 설정에서 불필요한 필드 제거로 사용자 혼란 방지

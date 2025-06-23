@@ -28,7 +28,6 @@ class ServerCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     transport: str = Field(default="stdio")
-    compatibility_mode: str = Field(default="api_wrapper")
     command: str = Field(..., min_length=1)
     args: List[str] = Field(default_factory=list)
     env: dict = Field(default_factory=dict)
@@ -39,7 +38,6 @@ class ServerUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     transport: Optional[str] = None
-    compatibility_mode: Optional[str] = None
     command: Optional[str] = None
     args: Optional[List[str]] = None
     env: Optional[dict] = None
@@ -51,7 +49,6 @@ class ServerResponse(BaseModel):
     name: str
     description: Optional[str]
     transport_type: str
-    compatibility_mode: str
     command: str
     args: List[str]
     env: dict
@@ -151,7 +148,6 @@ async def list_project_servers(
             name=server.name,
             description=server.description,
             transport_type=server.transport_type or "stdio",
-            compatibility_mode=server.compatibility_mode or "api_wrapper",
             command=server.command or "",
             args=server.args or [],
             env=server.env or {},
@@ -233,7 +229,6 @@ async def get_project_server_detail(
         "name": server.name,
         "description": server.description,
         "transport_type": server.transport_type or "stdio",
-        "compatibility_mode": server.compatibility_mode or "api_wrapper",
         "command": server.command or "",
         "args": server.args or [],
         "env": server.env or {},
@@ -295,7 +290,6 @@ async def create_project_server(
         name=server_data.name,
         description=server_data.description,
         transport_type=server_data.transport,
-        compatibility_mode=server_data.compatibility_mode,
         command=server_data.command,
         args=server_data.args,
         env=server_data.env,
@@ -312,7 +306,6 @@ async def create_project_server(
         name=new_server.name,
         description=new_server.description,
         transport_type=new_server.transport_type or "stdio",
-        compatibility_mode=new_server.compatibility_mode or "api_wrapper",
         command=new_server.command or "",
         args=new_server.args or [],
         env=new_server.env or {},
@@ -374,7 +367,7 @@ async def update_project_server(
             detail="Server not found"
         )
     
-    logger.info(f"🔥 Found server: {server.name}, current compatibility_mode: {server.compatibility_mode}")
+    logger.info(f"🔥 Found server: {server.name} for update")
     
     # 서버 이름 중복 확인 (다른 서버와)
     if server_data.name and server_data.name != server.name:
@@ -403,10 +396,6 @@ async def update_project_server(
     if server_data.transport is not None:
         logger.info(f"🔥 Updating transport: {server.transport_type} -> {server_data.transport}")
         server.transport_type = server_data.transport
-    if server_data.compatibility_mode is not None:
-        logger.info(f"🔥 🎯 CRITICAL: Updating compatibility_mode from '{server.compatibility_mode}' to '{server_data.compatibility_mode}'")
-        server.compatibility_mode = server_data.compatibility_mode
-        logger.info(f"🔥 🎯 CRITICAL: After assignment, server.compatibility_mode = '{server.compatibility_mode}'")
     if server_data.command is not None:
         logger.info(f"🔥 Updating command: {server.command} -> {server_data.command}")
         server.command = server_data.command
@@ -422,18 +411,16 @@ async def update_project_server(
     
     server.updated_at = datetime.utcnow()
     
-    logger.info(f"🔥 🎯 BEFORE COMMIT: server.compatibility_mode = '{server.compatibility_mode}'")
+    logger.info(f"🔥 Committing server updates to database")
     db.commit()
-    logger.info(f"🔥 🎯 AFTER COMMIT: committed to database")
+    logger.info(f"🔥 Server updates committed successfully")
     db.refresh(server)
-    logger.info(f"🔥 🎯 AFTER REFRESH: server.compatibility_mode = '{server.compatibility_mode}'")
     
     return ServerResponse(
         id=str(server.id),
         name=server.name,
         description=server.description,
         transport_type=server.transport_type or "stdio",
-        compatibility_mode=server.compatibility_mode or "api_wrapper",
         command=server.command or "",
         args=server.args or [],
         env=server.env or {},

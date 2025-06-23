@@ -654,31 +654,15 @@ async def get_project_cline_config(
     for server in servers:
         server_key = f"project-{project_id}-{server.name}"
         
-        # compatibility_mode에 따라 다른 설정 생성
-        if server.compatibility_mode == "resource_connection":
-            # Resource Connection 모드 - 기존 stdio 방식 유지
-            mcp_servers[server_key] = {
-                "type": "stdio",
-                "compatibility_mode": "resource_connection",
-                "command": server.command,
-                "args": server.args if server.args else [],
-                "env": server.env if server.env else {},
-                "timeout": 60,
-                "disabled": False
-            }
-        else:
-            # API Wrapper 모드 (기본값) - SSE 방식
-            mcp_servers[server_key] = {
-                "type": "sse",
-                "compatibility_mode": "api_wrapper", 
-                "url": f"{base_url}/projects/{project_id}/servers/{server.name}/sse",
-                "headers": {
-                    "Authorization": f"Bearer {api_key.key_prefix}...",
-                    "Content-Type": "application/json"
-                },
-                "timeout": 60,
-                "disabled": False
-            }
+        # Single Resource Connection mode - stdio 방식 (단일 모드)
+        mcp_servers[server_key] = {
+            "type": "stdio",
+            "command": server.command,
+            "args": server.args if server.args else [],
+            "env": server.env if server.env else {},
+            "timeout": 60,
+            "disabled": False
+        }
     
     cline_config = {
         "mcpServers": mcp_servers
