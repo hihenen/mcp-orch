@@ -478,6 +478,7 @@ export function AddServerDialog({
         disabled: false,
         timeout: 30,
         type: serverConfig.transport === 'sse' ? 'sse' : 'stdio',
+        compatibility_mode: serverConfig.compatibilityMode || 'api_wrapper',
         command: serverConfig.command,
         args: serverConfig.args || [],
         ...(Object.keys(serverConfig.env || {}).length > 0 && { env: serverConfig.env }),
