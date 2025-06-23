@@ -66,6 +66,24 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3 text-sm">
+              <div>
+                <div className="font-medium text-muted-foreground">Compatibility Mode</div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    server.compatibility_mode === 'resource_connection' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {server.compatibility_mode === 'resource_connection' ? 'Resource Connection' : 'API Wrapper'}
+                  </span>
+                  {server.compatibility_mode === 'resource_connection' && (
+                    <span className="text-xs text-muted-foreground">
+                      (Sequential initialization for databases)
+                    </span>
+                  )}
+                </div>
+              </div>
+
               {server.command && (
                 <div>
                   <div className="font-medium text-muted-foreground">Command</div>

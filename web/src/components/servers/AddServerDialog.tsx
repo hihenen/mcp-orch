@@ -86,7 +86,7 @@ function IndividualServerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="compatibilityMode">Connection Mode</Label>
+          <Label htmlFor="compatibilityMode">Compatibility Mode</Label>
           <Select value={formData.compatibilityMode} onValueChange={(value: 'api_wrapper' | 'resource_connection') => {
             updateField('compatibilityMode', value);
             setShowResourceConnectionHint(false); // Hide hint when selected
