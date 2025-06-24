@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_060] Fix Alembic migration error with missing mcp_servers table (2025-06-25)
+  - Replace invalid ALTER-only migration with comprehensive initial schema migration
+  - Add conditional logic to support both fresh installations and existing databases
+  - Create complete database schema including all tables, relationships, and constraints
+  - Resolve "relation mcp_servers does not exist" error during database initialization
+
 ### Changed
 - [TASK_059] Improve Docker container security with non-root user patterns (2025-06-25)
   - Update Dockerfile.backend to use standard addgroup/adduser pattern with gid 1001 and uid 1001
