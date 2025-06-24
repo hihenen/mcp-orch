@@ -111,11 +111,27 @@
   - [x] 단일 Resource Connection 모드로 설정 통일
   - [x] stdio 타입으로 고정 설정
 
+### TASK_049: 프론트엔드 JSON 편집 대화상자에서 compatibility_mode 자동 추가 로직 제거
+- [x] JSON 예시 설정 정리
+  - [x] exampleConfig에서 compatibility_mode 필드 제거
+  - [x] 모든 서버 예시(excel-mcp-server, brave-search, github-server, database-jdbc)에서 제거
+- [x] 자동 주입 로직 제거
+  - [x] JSON 파싱 시 compatibility_mode 강제 추가 로직 제거
+  - [x] normalizedServers 처리에서 compatibility_mode 설정 제거
+- [x] API 호출 정리
+  - [x] 개별 서버 폼에서 compatibility_mode 전송 제거
+  - [x] JSON 서버 생성 시 compatibility_mode 전송 제거  
+  - [x] 서버 수정 시 compatibility_mode 전송 제거
+- [x] 콜백 및 응답 객체 정리
+  - [x] onServerAdded 콜백에서 compatibilityMode 필드 제거
+  - [x] onServerUpdated 콜백에서 compatibilityMode 필드 제거
+  - [x] convertServerToJson에서 compatibility_mode 제거
+
 ## Progress Status
-- Current Progress: TASK_048 - JSON 설정에서 불필요한 compatibility_mode 필드 제거 완료
+- Current Progress: TASK_049 - 프론트엔드 JSON 편집에서 compatibility_mode 자동 추가 로직 제거 완료
 - Next Task: 완료됨
 - Last Update: 2025-01-23
-- Automatic Check Feedback: 단일 모드 전환으로 설정 단순화 및 사용자 경험 개선
+- Automatic Check Feedback: JSON 편집기 단순화로 사용자 혼란 완전 제거
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
@@ -135,3 +151,5 @@
 - 커밋과 문서화의 동기화로 릴리즈 준비 간소화
 - 단일 모드 전환으로 코드베이스 단순화 및 유지보수성 향상
 - JSON 설정에서 불필요한 필드 제거로 사용자 혼란 방지
+- 프론트엔드 자동 주입 로직 제거로 JSON 편집기 투명성 확보
+- 백엔드-프론트엔드 일관성 확보로 예측 가능한 동작 보장

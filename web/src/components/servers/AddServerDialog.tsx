@@ -203,7 +203,6 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 300,
     "type": "stdio",
-    "compatibility_mode": "resource_connection",
     "command": "npx",
     "args": [
       "-y",
@@ -218,7 +217,6 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 60,
     "type": "stdio",
-    "compatibility_mode": "resource_connection",
     "command": "npx",
     "args": [
       "-y",
@@ -232,7 +230,6 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 30,
     "type": "stdio",
-    "compatibility_mode": "resource_connection",
     "command": "npx",
     "args": [
       "-y",
@@ -246,7 +243,6 @@ function JsonBulkAddForm({
     "disabled": false,
     "timeout": 60,
     "type": "stdio",
-    "compatibility_mode": "resource_connection",
     "command": "jbang",
     "args": [
       "run",
@@ -430,7 +426,6 @@ export function AddServerDialog({
         disabled: false,
         timeout: 30,
         type: serverConfig.transport === 'sse' ? 'sse' : 'stdio',
-        compatibility_mode: 'resource_connection',
         command: serverConfig.command,
         args: serverConfig.args || [],
         ...(Object.keys(serverConfig.env || {}).length > 0 && { env: serverConfig.env }),
@@ -502,7 +497,6 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport: formData.transport,
-            compatibility_mode: 'resource_connection',
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -530,7 +524,6 @@ export function AddServerDialog({
             name: formData.name,
             description: formData.description,
             transport_type: formData.transport,
-            compatibility_mode: 'resource_connection',
             command: formData.command,
             args: formData.args,
             env: formData.env,
@@ -584,25 +577,7 @@ export function AddServerDialog({
         throw new Error('Invalid MCP settings format.');
       }
 
-      // 🔧 모든 서버에 compatibility_mode를 resource_connection으로 설정
-      const normalizedServers = Object.fromEntries(
-        Object.entries(mcpServers).map(([serverName, serverConfig]: [string, any]) => {
-          const normalizedConfig = {
-            ...serverConfig,
-            compatibility_mode: 'resource_connection'
-          };
-          return [serverName, normalizedConfig];
-        })
-      );
-      
-      // 정규화된 설정으로 JSON 텍스트 업데이트 (사용자가 다음에 저장할 수 있도록)
-      const updatedConfig = config.mcpServers ? 
-        { mcpServers: normalizedServers } : 
-        normalizedServers;
-      setJsonConfig(JSON.stringify(updatedConfig, null, 2));
-      
-      // 정규화된 서버 객체 사용
-      mcpServers = normalizedServers;
+      // JSON 설정 그대로 사용 (compatibility_mode 자동 추가 제거)
 
       setIsLoading(true);
 
@@ -623,7 +598,6 @@ export function AddServerDialog({
             name: serverName,
             description: server.description || '',
             transport: server.type === 'sse' ? 'sse' : 'stdio',
-            compatibility_mode: 'resource_connection',
             command: server.command,
             args: server.args || [],
             env: server.env || {},
@@ -644,7 +618,6 @@ export function AddServerDialog({
           name: serverName,
           description: server.description || '',
           transport: server.type === 'sse' ? 'sse' : 'stdio',
-          compatibilityMode: 'resource_connection',
           command: server.command || '',
           args: server.args || [],
           env: server.env || {},
@@ -673,7 +646,6 @@ export function AddServerDialog({
               name: serverName,
               description: server.description || `${serverName} MCP server`,
               transport_type: server.type || 'stdio',
-              compatibility_mode: 'resource_connection',
               command: server.command,
               args: server.args || [],
               env: server.env || {},
@@ -694,7 +666,6 @@ export function AddServerDialog({
             name: serverName,
             description: server.description || `${serverName} MCP 서버`,
             transport: server.type === 'sse' ? 'sse' : 'stdio',
-            compatibilityMode: 'resource_connection',
             command: server.command,
             args: server.args || [],
             env: server.env || {},

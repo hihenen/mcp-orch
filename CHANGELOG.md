@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_052] Establish English-only CHANGELOG documentation standard (2025-06-24)
+  - Enforce English language requirement for all CHANGELOG entries
+  - Remove AI agent workflow and configuration changes from changelog scope
+  - Standardize technical documentation language for international collaboration
+- [TASK_051] Integrate mcp-time tool for accurate date/time management (2025-06-24)
+  - Add Asia/Seoul timezone-based current date/time query functionality
+  - Enable automatic precise timestamp application in CHANGELOG.md updates
+  - Improve AI agent time recognition accuracy
 - [TASK_050] Add CHANGELOG.md link to README.md
   - Include changelog link in main navigation links
   - Provide easy access to project change history
@@ -22,24 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Simplify Cline configuration generation to single Resource Connection mode
   - Clean up database model default to use resource_connection consistently
   - Eliminate conditional logic for compatibility mode selection
-- [TASK_047] CHANGELOG workflow integration to commit process
-  - Mandatory CHANGELOG.md updates before every functional unit commit
-  - Pre-commit checklist enforcement with documentation requirements
-  - Comprehensive CHANGELOG documentation standards and categories
-  - Integration with existing Git commit enforcement system
-  - Zero-tolerance policy for documentation debt
-- [TASK_046] Comprehensive project CHANGELOG.md
-  - Keep a Changelog standard format implementation
-  - Semantic versioning integration with clear version categorization
-  - TASK reference system linking changes to workflow documentation
-  - English documentation with usage guidelines
 - [TASK_045] Environment variable configuration support for MCP Session Manager
   - `MCP_SESSION_TIMEOUT_MINUTES` - Configure session timeout (default: 30 minutes)
   - `MCP_SESSION_CLEANUP_INTERVAL_MINUTES` - Configure cleanup interval (default: 5 minutes)
   - English documentation and comprehensive comments
   - Updated `.env.example` with MCP session configuration
 
-## [0.2.0] - 2025-01-23
+## [0.2.0] - 2025-06-23
 
 ### Added
 - [TASK_044] True MCP standard Resource Connection implementation
@@ -67,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatibility mode selection from server configuration UI
 - Redundant server type management logic
 
-## [0.1.0] - 2025-01-20
+## [0.1.0] - 2025-06-22
 
 ### Added
 - Initial MCP Orch implementation
