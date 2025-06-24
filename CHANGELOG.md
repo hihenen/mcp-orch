@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_054] Clean up CHANGELOG entries to focus on technical changes (2025-06-24)
+  - Remove platform-specific marketing language from changelog entries
+  - Focus on concrete technical improvements and organizational changes
+  - Maintain clear and factual documentation standards
+- [TASK_053] Migrate workflow management to .tasks/ directory (2025-06-24)
+  - Rename .claude/workflow/ to .tasks/ for cleaner project structure
+  - Consolidate workflow_todo.md to workflow.md for simplified management
+  - Update all CLAUDE.md references to new .tasks/workflow.md path
+  - Improve workflow file organization and accessibility
 - [TASK_052] Establish English-only CHANGELOG documentation standard (2025-06-24)
   - Enforce English language requirement for all CHANGELOG entries
   - Remove AI agent workflow and configuration changes from changelog scope
