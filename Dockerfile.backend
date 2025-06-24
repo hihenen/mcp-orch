@@ -23,8 +23,9 @@ COPY src/ ./src/
 # Install the package in development mode using uv
 RUN uv pip install --system -e .
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash mcporch
+# Don't run production as root
+RUN addgroup --system --gid 1001 mcporch
+RUN adduser --system --uid 1001 mcporch
 RUN chown -R mcporch:mcporch /app
 USER mcporch
 

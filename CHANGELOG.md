@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_059] Improve Docker container security with non-root user patterns (2025-06-25)
+  - Update Dockerfile.backend to use standard addgroup/adduser pattern with gid 1001 and uid 1001
+  - Maintain existing nextjs user pattern in Dockerfile.frontend following Next.js best practices
+  - Remove Docker Compose user overrides in favor of Dockerfile-based user management
+  - Improve container security and portability across different host environments
+
 ### Fixed
 - [TASK_064] Fix Docker network CIDR conflicts by configuring custom 10.123.0.0/16 subnet (2025-06-24)
   - Add custom network configuration to all docker-compose files to avoid corporate network conflicts
