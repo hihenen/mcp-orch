@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improve user onboarding experience with friendly feedback messages
 
 ### Fixed
+- [TASK_058] Fix toast system compatibility by switching to Sonner (2025-06-24)
+  - Replace custom useToast hook with Sonner toast library for consistent functionality
+  - Update signup and signin pages to use Sonner toast.success() methods
+  - Remove debugging code and clean up test toast implementations
+  - Ensure proper toast display across all authentication flows
+
+### Fixed
 - [TASK_057] Fix project creation team selection to show only user's teams (2025-06-24)
   - Replace hardcoded dummy teams with actual user team API integration
   - Update TeamStore to use /api/teams endpoint with NextAuth.js session authentication

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function SignUpPage() {
@@ -22,15 +22,6 @@ export default function SignUpPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  
-  console.log('🔍 Sonner toast loaded:', { toast })
-
-  // Test toast system on component mount
-  useEffect(() => {
-    console.log('🧪 Testing toast system...')
-    // Uncomment below line to test toast immediately
-    // toast.success("Toast system working!")
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -77,15 +68,11 @@ export default function SignUpPage() {
         throw new Error(data.message || 'An error occurred during signup.')
       }
 
-      console.log('🎉 Signup successful, showing toast...')
-      
-      // Show success toast using Sonner
+      // Show success toast
       toast.success(`🎉 회원가입 완료! ${formData.name}님, 환영합니다!`, {
         description: "새 계정이 성공적으로 생성되었습니다.",
         duration: 5000,
       })
-      
-      console.log('✅ Toast called successfully')
 
       // Store success message for login page
       sessionStorage.setItem('signup-success', JSON.stringify({
@@ -196,21 +183,6 @@ export default function SignUpPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign Up
-            </Button>
-            
-            {/* Test Toast Button - Remove after debugging */}
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full" 
-              onClick={() => {
-                console.log('🧪 Test toast button clicked')
-                toast.success("테스트 토스트", {
-                  description: "토스트 시스템이 정상 작동 중입니다!",
-                })
-              }}
-            >
-              테스트 토스트
             </Button>
           </form>
 
