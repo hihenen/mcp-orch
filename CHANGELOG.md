@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_055] Fix project creation 500 error due to missing slug field (2025-06-24)
+  - Add automatic slug generation function for new projects
+  - Implement Unicode normalization and URL-friendly slug conversion
+  - Add unique slug constraint enforcement with collision handling
+  - Resolve NOT NULL constraint violation in projects.slug column
+
 ### Added
 - [TASK_054] Clean up CHANGELOG entries to focus on technical changes (2025-06-24)
   - Remove platform-specific marketing language from changelog entries

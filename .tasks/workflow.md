@@ -127,11 +127,22 @@
   - [x] onServerUpdated 콜백에서 compatibilityMode 필드 제거
   - [x] convertServerToJson에서 compatibility_mode 제거
 
+### TASK_055: Project 모델 slug 필드 NOT NULL 제약 조건 위반 문제 해결
+- [ ] 문제 분석 완료 (Project 생성 시 slug 필드 누락으로 인한 NOT NULL 제약 조건 위반)
+- [ ] 해결 방안 구현
+  - [ ] 프로젝트 이름 기반 slug 자동 생성 함수 작성
+  - [ ] create_project API에서 slug 생성 로직 추가
+  - [ ] 중복 방지를 위한 고유성 보장 로직 추가
+- [ ] 테스트 및 검증
+  - [ ] 새 프로젝트 생성 테스트
+  - [ ] slug 중복 처리 테스트
+- [ ] CHANGELOG.md 업데이트
+
 ## Progress Status
-- Current Progress: TASK_053 - .claude/workflow를 .tasks/로 이름 변경 및 단일 파일로 관리 완료
-- Next Task: 대기 중
+- Current Progress: TASK_055 - Project 모델 slug 필드 NOT NULL 제약 조건 위반 문제 분석 완료
+- Next Task: slug 자동 생성 로직 구현
 - Last Update: 2025-06-24
-- Automatic Check Feedback: 플랫폼 중립적 워크플로우 관리 시스템으로 전환 완료
+- Automatic Check Feedback: 프로젝트 생성 시 slug 누락으로 인한 데이터베이스 제약 조건 위반 확인
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
