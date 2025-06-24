@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 
 export default function SignInPage() {
   const [email, setEmail] = useState('')
@@ -17,6 +18,34 @@ export default function SignInPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
+
+  // Check for signup success message
+  useEffect(() => {
+    const signupSuccess = sessionStorage.getItem('signup-success')
+    if (signupSuccess) {
+      try {
+        const data = JSON.parse(signupSuccess)
+        const timeElapsed = Date.now() - data.timestamp
+        
+        // Show message if less than 10 minutes old
+        if (timeElapsed < 10 * 60 * 1000) {
+          toast({
+            title: "가입 완료! 🎉",
+            description: `${data.name}님, 이제 새 계정으로 로그인해주세요.`,
+            variant: "default",
+            duration: 4000,
+          })
+        }
+        
+        // Clean up
+        sessionStorage.removeItem('signup-success')
+      } catch (e) {
+        console.error('Error parsing signup success data:', e)
+        sessionStorage.removeItem('signup-success')
+      }
+    }
+  }, [toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,6 +64,19 @@ export default function SignInPage() {
       } else {
         // Refresh session info and navigate to projects page
         await getSession()
+        
+        // Check if this is the first login from signup
+        const urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.get('from') === 'signup') {
+          // Show welcome toast for first login
+          toast({
+            title: "첫 로그인 성공! 🚀",
+            description: "MCP Orchestrator에 오신 것을 환영합니다! 이제 프로젝트를 시작해보세요.",
+            variant: "default",
+            duration: 6000,
+          })
+        }
+        
         router.push('/projects')
         router.refresh()
       }

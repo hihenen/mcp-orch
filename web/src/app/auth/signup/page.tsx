@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CheckCircle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -67,8 +69,24 @@ export default function SignUpPage() {
         throw new Error(data.message || 'An error occurred during signup.')
       }
 
-      // Navigate to login page on successful signup
-      router.push('/auth/signin?message=Signup completed. Please sign in.')
+      // Show success toast
+      toast({
+        title: "🎉 회원가입 완료!",
+        description: `${formData.name}님, 환영합니다! 새 계정이 성공적으로 생성되었습니다.`,
+        variant: "default",
+        duration: 5000,
+      })
+
+      // Store success message for login page
+      sessionStorage.setItem('signup-success', JSON.stringify({
+        name: formData.name,
+        timestamp: Date.now()
+      }))
+
+      // Navigate to login page after a brief delay
+      setTimeout(() => {
+        router.push('/auth/signin?from=signup')
+      }, 1500)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred during signup.')
     } finally {

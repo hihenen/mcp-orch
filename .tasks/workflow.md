@@ -153,11 +153,35 @@
   - [x] API: `/api/projects` POST 엔드포인트 
   - [x] 백엔드: FastAPI로 JWT 인증 후 프로젝트 생성
 
+### TASK_057: Next.js 애플리케이션 로그인/가입 플로우 분석
+- [x] NextAuth.js 설정 및 콜백 분석
+  - [x] `/lib/auth.ts` - NextAuth.js v5 Credentials provider 사용
+  - [x] JWT 전략 및 24시간 세션 설정
+  - [x] redirect callback에서 로그인 후 `/projects`로 리다이렉트
+  - [x] FastAPI 백엔드와 JWT 토큰 기반 인증 연동
+- [x] 기존 토스트 알림 시스템 확인
+  - [x] Radix UI `@radix-ui/react-toast` 사용 중
+  - [x] Sonner 라이브러리도 설치됨 (`package.json`에 sonner v2.0.5)
+  - [x] `useToast` 훅과 `toast` 함수 구현됨 (`/hooks/use-toast.ts`)
+  - [x] `<Toaster />` 컴포넌트가 `layout.tsx`에 전역 설치됨
+- [x] 로그인/가입 페이지 및 컴포넌트 위치 파악
+  - [x] `/auth/signin/page.tsx` - 로그인 페이지 (상태 기반 에러 처리)
+  - [x] `/auth/signup/page.tsx` - 회원가입 페이지 (성공 시 `/auth/signin`로 리다이렉트)
+  - [x] `/api/auth/signup/route.ts` - Next.js API 로우트로 FastAPI로 요청 전달
+  - [x] FastAPI `/api/users/signup` 엔드포인트 - 실제 사용자 생성
+- [x] 신규 사용자 등록 vs 기존 사용자 로그인 감지 방법 분석
+  - [x] 현재는 분리된 플로우: 회원가입은 `/auth/signup`, 로그인은 `/auth/signin`
+  - [x] FastAPI에서 이메일 중복 검사로 신규/기존 사용자 구분
+  - [x] 회원가입 성공 시 NextAuth.js 세션 생성 전에 다른 페이지로 이동
+- [ ] 신규 사용자 가입 성공 토스트 구현 위치 제안
+  - [ ] 토스트 구현 옵션 및 최적 위치 결정
+  - [ ] 구현 방안 다이어그램 작성
+
 ## Progress Status
-- Current Progress: TASK_056 - Next.js 프론트엔드 Create New Project 컴포넌트 분석 완료
-- Next Task: TASK_055 slug 자동 생성 로직 구현
+- Current Progress: TASK_057 - Next.js 로그인/가입 플로우 분석 완료
+- Next Task: 신규 사용자 가입 성공 토스트 구현 옵션 결정
 - Last Update: 2025-06-24
-- Automatic Check Feedback: 프로젝트 생성 UI 컴포넌트 4개 위치 파악 및 팀 선택 기능 분석 완료
+- Automatic Check Feedback: NextAuth.js 설정, 토스트 시스템, 회원가입/로그인 페이지, 인증 플로우 분석 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
