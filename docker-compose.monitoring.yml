@@ -53,6 +53,10 @@ volumes:
 networks:
   mcp-monitoring:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.123.0.0/16
+          gateway: 10.123.0.1
 
 # Usage:
 # Start monitoring stack: docker-compose -f docker-compose.monitoring.yml up -d

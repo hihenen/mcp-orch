@@ -16,6 +16,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - mcp-orch-network
 
   mcp-orch-backend:
     build: 
@@ -40,6 +42,8 @@ services:
       postgresql:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - mcp-orch-network
 
   mcp-orch-frontend:
     build:
@@ -56,7 +60,17 @@ services:
     depends_on:
       - mcp-orch-backend
     restart: unless-stopped
+    networks:
+      - mcp-orch-network
 
 volumes:
   postgresql_data:
     driver: local
+
+networks:
+  mcp-orch-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.123.0.0/16
+          gateway: 10.123.0.1

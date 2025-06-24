@@ -25,6 +25,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - mcp-orch-network
 
   # Frontend Web Interface
   frontend:
@@ -41,6 +43,8 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here}
       - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
     restart: unless-stopped
+    networks:
+      - mcp-orch-network
     profiles:
       - frontend
 
@@ -53,6 +57,8 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    networks:
+      - mcp-orch-network
     profiles:
       - enterprise
 
@@ -61,6 +67,14 @@ volumes:
     driver: local
   redis_data:
     driver: local
+
+networks:
+  mcp-orch-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.123.0.0/16
+          gateway: 10.123.0.1
 
 # Usage Examples:
 # 
