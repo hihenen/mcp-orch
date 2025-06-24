@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_050] Add CHANGELOG.md link to README.md
+  - Include changelog link in main navigation links
+  - Provide easy access to project change history
+  - Improve project documentation discoverability
+- [TASK_049] Remove compatibility_mode auto-injection from frontend JSON editor
+  - Remove compatibility_mode from JSON examples in AddServerDialog
+  - Eliminate automatic compatibility_mode injection in JSON parsing logic
+  - Clean up server creation and update API calls to not send compatibility_mode
+  - Simplify server configuration objects in frontend callbacks
 - [TASK_048] Remove unnecessary compatibility_mode field from JSON settings
   - Remove compatibility_mode field from server creation and update APIs
   - Simplify Cline configuration generation to single Resource Connection mode

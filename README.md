@@ -2,7 +2,7 @@
 
 **MCP Proxy Compatible Server** - Serve multiple MCP servers on a single port via SSE
 
-> **📖 [한국어 버전](./README_KOR.md)** | **🌏 English Version**
+> **📖 [한국어 버전](./README_KOR.md)** | **🌏 English Version** | **📋 [Changelog](./CHANGELOG.md)**
 
 ## Overview
 
