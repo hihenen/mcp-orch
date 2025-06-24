@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_061] Fix Alembic database connection issues with environment variable support (2025-06-24)
+  - Update alembic.ini to use mcp_orch user instead of postgres
+  - Add DATABASE_URL environment variable override in migrations/env.py
+  - Resolve password authentication failures during database migrations
+  - Improve migration configuration flexibility for different deployment scenarios
+
 ### Changed
 - [TASK_060] Standardize database user to mcp_orch for consistency (2025-06-24)
   - Update .env.example and .env.hybrid.example to use DB_USER=mcp_orch
