@@ -66,7 +66,7 @@ while true; do
                 cp .env.example .env 2>/dev/null || echo "# Docker 환경 변수" > .env
             fi
             echo "Docker Compose로 모든 서비스 시작 중..."
-            docker-compose up -d
+            docker compose up -d
             echo -e "${GREEN}✅ Full Docker 환경 시작 완료!${NC}"
             echo "🌐 Frontend: http://localhost:3000"
             echo "🔧 Backend API: http://localhost:8000"
@@ -89,6 +89,6 @@ echo ""
 echo -e "${BLUE}📚 추가 리소스:${NC}"
 echo "  • 문서: README.md"
 echo "  • 설정 가이드: docs/"
-echo "  • 모니터링 추가: docker-compose -f docker-compose.monitoring.yml up -d"
+echo "  • 모니터링 추가: docker compose -f docker-compose.monitoring.yml up -d"
 echo ""
 echo -e "${YELLOW}💡 팁: 각 배포 옵션에 대한 자세한 정보는 README.md를 참고하세요!${NC}"

@@ -85,7 +85,7 @@ pnpm install
 pnpm dev
 
 # Full stack with Docker
-docker-compose up
+docker compose up
 ```
 
 ### Environment Configuration

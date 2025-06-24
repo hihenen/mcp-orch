@@ -61,7 +61,7 @@ cd mcp-orch
 
 ```bash
 # All services in Docker
-docker-compose up -d
+docker compose up -d
 ```
 
 ✅ **Best for production**
@@ -293,7 +293,7 @@ Add Prometheus and Grafana for system monitoring:
 
 ```bash
 # Start monitoring services (optional)
-docker-compose -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose.monitoring.yml up -d
 
 # Access dashboards
 open http://localhost:3001  # Grafana (admin/admin)
@@ -329,12 +329,12 @@ INITIAL_ADMIN_PASSWORD=your-secure-password
 
 ```bash
 # Stop all services
-docker-compose down
-docker-compose -f docker-compose.hybrid.yml down
-docker-compose -f docker-compose.monitoring.yml down
+docker compose down
+docker compose -f docker-compose.hybrid.yml down
+docker compose -f docker-compose.monitoring.yml down
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 docker logs mcp-orch-postgres
 
 # Health check

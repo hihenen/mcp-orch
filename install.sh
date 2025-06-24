@@ -156,7 +156,7 @@ services:
     container_name: mcp-orch-postgres
     environment:
       POSTGRES_DB: mcp_orch
-      POSTGRES_USER: mcp_user
+      POSTGRES_USER: mcp_orch
       POSTGRES_PASSWORD: mcp_password
     ports:
       - "5432:5432"
@@ -167,8 +167,8 @@ services:
 volumes:
   postgres_data:
 EOF
-            docker-compose -f docker-compose.db.yml up -d
-            DATABASE_URL="postgresql://mcp_user:mcp_password@localhost:5432/mcp_orch"
+            docker compose -f docker-compose.db.yml up -d
+            DATABASE_URL="postgresql://mcp_orch:mcp_password@localhost:5432/mcp_orch"
             print_success "PostgreSQL started with Docker"
             ;;
         "external")
@@ -358,7 +358,7 @@ start_services() {
             print_success "Backend service started"
             
             if [[ "$DB_TYPE" == "docker_postgres" ]]; then
-                docker-compose -f docker-compose.db.yml up -d
+                docker compose -f docker-compose.db.yml up -d
                 print_success "Database service started"
             fi
             

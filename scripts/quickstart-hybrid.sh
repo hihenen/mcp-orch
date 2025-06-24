@@ -44,7 +44,7 @@ check_requirements() {
     fi
     
     # Docker Compose 확인
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null 2>&1; then
+    if ! docker compose version &> /dev/null 2>&1; then
         log_error "Docker Compose가 설치되어 있지 않습니다."
         exit 1
     fi
@@ -83,12 +83,12 @@ setup_environment() {
 start_database() {
     log_info "PostgreSQL 데이터베이스 시작 중..."
     
-    docker-compose -f docker-compose.hybrid.yml up -d postgresql
+    docker compose -f docker-compose.hybrid.yml up -d postgresql
     
     # 데이터베이스 준비 대기
     log_info "데이터베이스 준비 대기 중..."
     for i in {1..30}; do
-        if docker exec mcp-orch-postgres pg_isready -U mcp_user -d mcp_orch &> /dev/null; then
+        if docker exec mcp-orch-postgres pg_isready -U mcp_orch -d mcp_orch &> /dev/null; then
             log_success "PostgreSQL 데이터베이스 준비 완료"
             break
         fi
@@ -104,7 +104,7 @@ start_database() {
 start_frontend() {
     if [ "$1" = "--with-frontend" ] || [ "$1" = "-f" ]; then
         log_info "Frontend 컨테이너 시작 중..."
-        docker-compose -f docker-compose.hybrid.yml --profile frontend up -d
+        docker compose -f docker-compose.hybrid.yml --profile frontend up -d
         log_success "Frontend 컨테이너 시작 완료"
         log_info "Frontend URL: http://localhost:3000"
     else
@@ -134,7 +134,7 @@ run_migrations() {
     if ! uv run alembic current &> /dev/null; then
         log_warning "마이그레이션 상태를 확인할 수 없습니다. 초기화를 진행합니다..."
         # Docker에서 alembic_version 테이블 초기화
-        docker exec mcp-orch-postgres psql -U mcp_user -d mcp_orch -c "DELETE FROM alembic_version;" 2>/dev/null || true
+        docker exec mcp-orch-postgres psql -U mcp_orch -d mcp_orch -c "DELETE FROM alembic_version;" 2>/dev/null || true
     fi
     
     uv run alembic upgrade head
@@ -161,7 +161,7 @@ show_startup_info() {
     echo "🔧 유용한 명령어들:"
     echo "  • 도구 목록: uv run mcp-orch list-tools"
     echo "  • 서버 목록: uv run mcp-orch list-servers"
-    echo "  • 서비스 중지: docker-compose -f docker-compose.hybrid.yml down"
+    echo "  • 서비스 중지: docker compose -f docker-compose.hybrid.yml down"
 }
 
 # 메인 실행

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_060] Standardize database user to mcp_orch for consistency (2025-06-24)
+  - Update .env.example and .env.hybrid.example to use DB_USER=mcp_orch
+  - Update docker-compose.yml and docker-compose.hybrid.yml default values
+  - Update installation and setup scripts to use consistent database user naming
+  - Update DATABASE_URL examples to reflect unified user naming convention
+- [TASK_058] Update all Docker Compose commands to V2 syntax (2025-06-24)
+  - Replace `docker-compose` with `docker compose` across all scripts, documentation and configuration files
+  - Update deployment scripts (quickstart.sh, setup-standard.sh, setup-production.sh, quickstart-hybrid.sh)
+  - Update documentation files (README.md, README_KOR.md, troubleshooting.md, database-configuration.md)
+  - Update installation script (install.sh) for improved Docker Compose V2 compatibility
+  - Ensure consistency with modern Docker Compose V2 standard syntax
+
 ### Added
 - [TASK_056] Add success toast messages for user registration completion (2025-06-24)
   - Display celebration toast immediately after successful signup

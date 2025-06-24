@@ -309,13 +309,13 @@ uv run python test_mcp_proxy_mode.py
 
 ```bash
 # 전체 스택 실행 (PostgreSQL + Backend + Frontend)
-docker-compose up -d
+docker compose up -d
 
 # 로그 확인
-docker-compose logs -f
+docker compose logs -f
 
 # 서비스 중지
-docker-compose down
+docker compose down
 ```
 
 ### 접속 정보

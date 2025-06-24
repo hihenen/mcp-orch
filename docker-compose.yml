@@ -7,11 +7,11 @@ services:
     volumes:
       - postgresql_data:/bitnami/postgresql
     environment:
-      - POSTGRESQL_USERNAME=${DB_USER:-postgres}
+      - POSTGRESQL_USERNAME=${DB_USER:-mcp_orch}
       - POSTGRESQL_PASSWORD=${DB_PASSWORD:-1234}
       - POSTGRESQL_DATABASE=${DB_NAME:-mcp_orch}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-mcp_orch}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mcp_orch} -d ${DB_NAME:-mcp_orch}"]
       interval: 10s
       timeout: 5s
       retries: 5

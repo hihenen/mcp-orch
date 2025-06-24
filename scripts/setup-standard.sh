@@ -63,8 +63,8 @@ if [ ! -f ".env" ]; then
 # Generated on $(date)
 
 # Database
-DATABASE_URL=postgresql://mcp_user:${DB_PASSWORD}@localhost:5432/mcp_orch
-DB_USER=mcp_user
+DATABASE_URL=postgresql://mcp_orch:${DB_PASSWORD}@localhost:5432/mcp_orch
+DB_USER=mcp_orch
 DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=mcp_orch
 DB_HOST=localhost
@@ -111,17 +111,17 @@ SELECT 'CREATE DATABASE mcp_orch'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mcp_orch')\gexec
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE mcp_orch TO mcp_user;
+GRANT ALL PRIVILEGES ON DATABASE mcp_orch TO mcp_orch;
 EOF
 
 # Start PostgreSQL with Docker
 echo -e "${BLUE}Starting PostgreSQL with Docker...${NC}"
-docker-compose -f docker-compose.hybrid.yml up -d postgresql
+docker compose -f docker-compose.hybrid.yml up -d postgresql
 
 # Wait for PostgreSQL to be ready
 echo -e "${BLUE}Waiting for PostgreSQL to be ready...${NC}"
 for i in {1..30}; do
-    if docker-compose -f docker-compose.hybrid.yml exec -T postgresql pg_isready -U mcp_user -d mcp_orch &> /dev/null; then
+    if docker compose -f docker-compose.hybrid.yml exec -T postgresql pg_isready -U mcp_orch -d mcp_orch &> /dev/null; then
         echo -e "${GREEN}✅ PostgreSQL is ready${NC}"
         break
     fi
@@ -192,10 +192,10 @@ echo "1. Review and update .env file (especially admin credentials)"
 echo "2. Start the backend: sudo systemctl start mcp-orchestrator"
 echo "3. Enable auto-start: sudo systemctl enable mcp-orchestrator"
 echo "4. Build frontend: cd web && pnpm install && pnpm build"
-echo "5. Start frontend: docker-compose -f docker-compose.hybrid.yml --profile frontend up -d"
+echo "5. Start frontend: docker compose -f docker-compose.hybrid.yml --profile frontend up -d"
 echo ""
 echo -e "${BLUE}Useful commands:${NC}"
 echo "- View logs: sudo journalctl -u mcp-orchestrator -f"
 echo "- Check status: sudo systemctl status mcp-orchestrator"
 echo "- Restart: sudo systemctl restart mcp-orchestrator"
-echo "- Stop database: docker-compose -f docker-compose.hybrid.yml down"
+echo "- Stop database: docker compose -f docker-compose.hybrid.yml down"

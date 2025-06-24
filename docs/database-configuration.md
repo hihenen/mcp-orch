@@ -133,18 +133,18 @@ POSTGRES_PASSWORD=$(openssl rand -base64 32)
 #### Service Management
 ```bash
 # Start PostgreSQL
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # Check status
-docker-compose ps
+docker compose ps
 docker logs mcp-orch-postgres
 
 # Stop PostgreSQL
-docker-compose down
+docker compose down
 
 # Reset database (⚠️ WARNING: Data loss)
-docker-compose down -v
-docker-compose up -d postgres
+docker compose down -v
+docker compose up -d postgres
 ```
 
 #### Database Operations

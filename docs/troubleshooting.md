@@ -103,8 +103,8 @@ cat .env | grep DATABASE
 **Solutions:**
 ```bash
 # Reset database
-docker-compose down -v
-docker-compose up -d postgres
+docker compose down -v
+docker compose up -d postgres
 sleep 10
 python -m mcp_orch.database migrate
 
@@ -184,8 +184,8 @@ docker build -t mcp-orch-frontend ./web
 **Solutions:**
 ```bash
 # Rebuild and restart
-docker-compose build frontend
-docker-compose up -d frontend
+docker compose build frontend
+docker compose up -d frontend
 
 # Check resources
 docker stats
@@ -194,8 +194,8 @@ df -h
 
 # Clean up and restart
 docker system prune -f
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ---
@@ -1268,11 +1268,11 @@ restart_services() {
     
     # Stop services
     systemctl stop mcp-orchestrator
-    docker-compose down
+    docker compose down
     
     # Wait and start
     sleep 10
-    docker-compose up -d postgres
+    docker compose up -d postgres
     sleep 15
     systemctl start mcp-orchestrator
     
@@ -1349,14 +1349,14 @@ recover_system() {
     
     # 3. Stop all services
     systemctl stop mcp-orchestrator || true
-    docker-compose down || true
+    docker compose down || true
     
     # 4. Restore application files
     cd /
     tar -xzf "$latest_backup"
     
     # 5. Restore database
-    docker-compose up -d postgres
+    docker compose up -d postgres
     sleep 30
     gunzip -c "$latest_db_backup" | psql "$DATABASE_URL"
     
