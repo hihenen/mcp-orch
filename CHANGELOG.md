@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_063] Fix PostgreSQL container initialization error in docker-compose.hybrid.yml (2025-06-24)
+  - Remove problematic init.sql volume mount that was causing "Is a directory" error
+  - Fix PostgreSQL container startup issues during quickstart-hybrid.sh execution
+  - Resolve "could not read from input file: Is a directory" error in Docker logs
+  - Enable clean PostgreSQL initialization using environment variables only
 - [TASK_062] Fix EC2 alembic migration error by updating DATABASE_URL to use asyncpg driver (2025-06-24)
   - Update .env.hybrid.example DATABASE_URL from postgresql:// to postgresql+asyncpg://
   - Update all PostgreSQL connection examples (AWS RDS, Aurora, Supabase, Google Cloud SQL)
