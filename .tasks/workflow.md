@@ -177,11 +177,29 @@
   - [ ] 토스트 구현 옵션 및 최적 위치 결정
   - [ ] 구현 방안 다이어그램 작성
 
+### TASK_058: EC2 서버 DATABASE_URL 설정 및 alembic 오류 해결
+- [x] EC2 서버 환경 파일 확인
+  - [x] 현재 .env 파일의 DATABASE_URL 설정값 확인 (.env.hybrid.example 기준)
+  - [x] postgresql:// vs postgresql+asyncpg:// 형식 검증 (문제 발견!)
+  - [x] 다른 관련 환경변수 설정 상태 확인
+- [x] quickstart-hybrid.sh 스크립트 분석
+  - [x] 스크립트에서 DATABASE_URL 생성 로직 확인 (.env.hybrid.example 복사 방식)
+  - [x] psycopg2 vs asyncpg 드라이버 설정 문제 파악 (asyncpg 필요)
+  - [x] 스크립트의 .env 파일 생성 방식 분석 (cp .env.hybrid.example .env)
+- [x] alembic 오류 원인 진단
+  - [x] psycopg2 드라이버 관련 오류 메시지 분석 (postgresql:// 형식 문제)
+  - [x] async 환경에서 asyncpg 드라이버 필요성 확인 (FastAPI + SQLAlchemy 2.0)
+  - [x] DATABASE_URL 형식 불일치 문제 확인 (postgresql:// → postgresql+asyncpg://)
+- [ ] 해결 방안 구현
+  - [ ] .env.hybrid.example에서 DATABASE_URL 형식 수정
+  - [ ] 다른 PostgreSQL 예시들도 +asyncpg 접미사 추가
+  - [ ] 기존 설치된 환경에서 수정 방법 문서화
+
 ## Progress Status
-- Current Progress: TASK_057 - Next.js 로그인/가입 플로우 분석 완료
-- Next Task: 신규 사용자 가입 성공 토스트 구현 옵션 결정
+- Current Progress: TASK_058 - EC2 서버 DATABASE_URL 설정 문제 분석 완료, 해결 방안 구현 중
+- Next Task: .env.hybrid.example 파일의 DATABASE_URL 형식 수정
 - Last Update: 2025-06-24
-- Automatic Check Feedback: NextAuth.js 설정, 토스트 시스템, 회원가입/로그인 페이지, 인증 플로우 분석 완료
+- Automatic Check Feedback: alembic 오류 원인 파악 완료 - postgresql://에서 postgresql+asyncpg://로 변경 필요
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

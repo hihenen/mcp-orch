@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_062] Fix EC2 alembic migration error by updating DATABASE_URL to use asyncpg driver (2025-06-24)
+  - Update .env.hybrid.example DATABASE_URL from postgresql:// to postgresql+asyncpg://
+  - Update all PostgreSQL connection examples (AWS RDS, Aurora, Supabase, Google Cloud SQL)
+  - Resolve SQLAlchemy async engine requiring async driver compatibility
+  - Fix "The loaded 'psycopg2' is not async" error during alembic migrations
 - [TASK_061] Fix Alembic database connection issues with environment variable support (2025-06-24)
   - Update alembic.ini to use mcp_orch user instead of postgres
   - Add DATABASE_URL environment variable override in migrations/env.py
