@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_057] Fix project creation team selection to show only user's teams (2025-06-24)
+  - Replace hardcoded dummy teams with actual user team API integration
+  - Update TeamStore to use /api/teams endpoint with NextAuth.js session authentication
+  - Improve UI to show "Create as Personal Project" as default when user has no teams
+  - Remove API token dependency in favor of session-based authentication
 - [TASK_055] Fix project creation 500 error due to missing slug field (2025-06-24)
   - Add automatic slug generation function for new projects
   - Implement Unicode normalization and URL-friendly slug conversion

@@ -71,6 +71,13 @@ export default function ProjectsPage() {
     }
   }, [status, router, loadProjects, loadTeams]);
 
+  // Set default team_id to "personal" when teams are loaded and user has no teams
+  useEffect(() => {
+    if (teams.length === 0 && newProject.team_id === '') {
+      setNewProject(prev => ({ ...prev, team_id: 'personal' }));
+    }
+  }, [teams, newProject.team_id]);
+
   // Loading or unauthenticated cases
   if (status === 'loading' || status === 'unauthenticated') {
     return (
@@ -180,11 +187,11 @@ export default function ProjectsPage() {
                   onValueChange={(value) => setNewProject(prev => ({ ...prev, team_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a team or create as personal project" />
+                    <SelectValue placeholder={teams.length === 0 ? "Create as Personal Project" : "Select a team or create as personal project"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="personal">Create as Personal Project</SelectItem>
-                    {teams.map((team) => (
+                    {teams.length > 0 && teams.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
                       </SelectItem>
@@ -192,7 +199,10 @@ export default function ProjectsPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  If no team is selected, the project will be created as personal and you can invite members later.
+                  {teams.length === 0 
+                    ? "You are not a member of any teams. The project will be created as personal."
+                    : "If no team is selected, the project will be created as personal and you can invite members later."
+                  }
                 </p>
               </div>
             </div>

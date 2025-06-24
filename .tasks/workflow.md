@@ -128,7 +128,7 @@
   - [x] convertServerToJson에서 compatibility_mode 제거
 
 ### TASK_055: Project 모델 slug 필드 NOT NULL 제약 조건 위반 문제 해결
-- [ ] 문제 분석 완료 (Project 생성 시 slug 필드 누락으로 인한 NOT NULL 제약 조건 위반)
+- [x] 문제 분석 완료 (Project 생성 시 slug 필드 누락으로 인한 NOT NULL 제약 조건 위반)
 - [ ] 해결 방안 구현
   - [ ] 프로젝트 이름 기반 slug 자동 생성 함수 작성
   - [ ] create_project API에서 slug 생성 로직 추가
@@ -138,11 +138,26 @@
   - [ ] slug 중복 처리 테스트
 - [ ] CHANGELOG.md 업데이트
 
+### TASK_056: Next.js 프론트엔드에서 Create New Project 컴포넌트 분석
+- [x] 프로젝트 생성 UI 컴포넌트 분석 및 위치 파악
+  - [x] `/app/projects/page.tsx` - 메인 프로젝트 페이지의 "New Project" 다이얼로그
+  - [x] `/app/teams/[teamId]/projects/page.tsx` - 팀 내 프로젝트 생성 다이얼로그
+  - [x] `/app/admin/projects/components/CreateProjectModal.tsx` - 관리자용 프로젝트 생성 모달
+  - [x] `/components/layout/ProjectSelector.tsx` - 프로젝트 선택기의 "Create New Project" 옵션
+- [x] 팀 선택 기능 분석
+  - [x] Select 컴포넌트를 통한 팀 선택 UI (`/app/projects/page.tsx`)
+  - [x] "Create as Personal Project" 옵션 제공
+  - [x] 팀 데이터는 `useTeamStore`에서 로드
+- [x] 프로젝트 생성 플로우 분석
+  - [x] 프론트엔드: `useProjectStore.createProject()` 호출
+  - [x] API: `/api/projects` POST 엔드포인트 
+  - [x] 백엔드: FastAPI로 JWT 인증 후 프로젝트 생성
+
 ## Progress Status
-- Current Progress: TASK_055 - Project 모델 slug 필드 NOT NULL 제약 조건 위반 문제 분석 완료
-- Next Task: slug 자동 생성 로직 구현
+- Current Progress: TASK_056 - Next.js 프론트엔드 Create New Project 컴포넌트 분석 완료
+- Next Task: TASK_055 slug 자동 생성 로직 구현
 - Last Update: 2025-06-24
-- Automatic Check Feedback: 프로젝트 생성 시 slug 누락으로 인한 데이터베이스 제약 조건 위반 확인
+- Automatic Check Feedback: 프로젝트 생성 UI 컴포넌트 4개 위치 파악 및 팀 선택 기능 분석 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

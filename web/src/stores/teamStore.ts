@@ -66,16 +66,9 @@ export const useTeamStore = create<TeamContextStore>()(
         set({ loading: true, error: null });
         
         try {
-          // API 토큰 가져오기
-          const apiToken = localStorage.getItem('api_token');
-          if (!apiToken) {
-            throw new Error('API 토큰이 없습니다. 로그인이 필요합니다.');
-          }
-
-          // 사용자 조직 목록 조회 API 호출
-          const response = await fetch('/api/organizations', {
+          // NextAuth.js 세션 기반 API 호출
+          const response = await fetch('/api/teams', {
             headers: {
-              'Authorization': `Bearer ${apiToken}`,
               'Content-Type': 'application/json'
             }
           });
@@ -84,7 +77,7 @@ export const useTeamStore = create<TeamContextStore>()(
             if (response.status === 401) {
               throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
             }
-            throw new Error(`조직 목록을 불러오는데 실패했습니다: ${response.status}`);
+            throw new Error(`팀 목록을 불러오는데 실패했습니다: ${response.status}`);
           }
 
           const teams: Organization[] = await response.json();
