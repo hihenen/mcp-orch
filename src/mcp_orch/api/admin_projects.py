@@ -25,7 +25,6 @@ class AdminProjectResponse(BaseModel):
     id: str
     name: str
     description: Optional[str] = None
-    slug: str
     created_by: str
     created_at: datetime
     updated_at: datetime
@@ -123,8 +122,7 @@ async def list_projects_admin(
             search_term = f"%{search}%"
             query = query.filter(
                 (Project.name.ilike(search_term)) |
-                (Project.description.ilike(search_term)) |
-                (Project.slug.ilike(search_term))
+                (Project.description.ilike(search_term))
             )
         
         # Total count
@@ -173,7 +171,6 @@ async def list_projects_admin(
                 id=str(project.id),
                 name=project.name,
                 description=project.description,
-                slug=project.slug,
                 created_by=str(project.created_by),
                 created_at=project.created_at,
                 updated_at=project.updated_at,
@@ -255,7 +252,6 @@ async def get_project_admin(
             id=str(project.id),
             name=project.name,
             description=project.description,
-            slug=project.slug,
             created_by=str(project.created_by),
             created_at=project.created_at,
             updated_at=project.updated_at,
@@ -297,19 +293,10 @@ async def create_project_admin(
                 detail="Owner user not found"
             )
         
-        # Generate slug from name
-        slug = project_data.name.lower().replace(' ', '-').replace('_', '-')
-        
-        # Check if slug is unique
-        existing_project = db.query(Project).filter(Project.slug == slug).first()
-        if existing_project:
-            slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
-        
         # Create project
         new_project = Project(
             name=project_data.name,
             description=project_data.description,
-            slug=slug,
             created_by=owner_user.id,
             sse_auth_required=project_data.sse_auth_required,
             message_auth_required=project_data.message_auth_required,
@@ -337,7 +324,6 @@ async def create_project_admin(
             id=str(new_project.id),
             name=new_project.name,
             description=new_project.description,
-            slug=new_project.slug,
             created_by=str(new_project.created_by),
             created_at=new_project.created_at,
             updated_at=new_project.updated_at,
@@ -383,8 +369,6 @@ async def update_project_admin(
         # Update fields
         if project_data.name is not None:
             project.name = project_data.name
-            # Update slug when name changes
-            project.slug = project_data.name.lower().replace(' ', '-').replace('_', '-')
         if project_data.description is not None:
             project.description = project_data.description
         if project_data.sse_auth_required is not None:
@@ -432,7 +416,6 @@ async def update_project_admin(
             id=str(project.id),
             name=project.name,
             description=project.description,
-            slug=project.slug,
             created_by=str(project.created_by),
             created_at=project.created_at,
             updated_at=project.updated_at,

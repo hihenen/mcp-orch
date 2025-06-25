@@ -28,7 +28,6 @@ interface Project {
   id: string;
   name: string;
   description?: string;
-  slug: string;
   sse_auth_required: boolean;
   message_auth_required: boolean;
   allowed_ip_ranges?: string[];

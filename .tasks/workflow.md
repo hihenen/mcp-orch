@@ -7,6 +7,51 @@
 
 ## Task List
 
+### TASK_095: 프로젝트 식별자 사용 패턴 조사 및 slug 필요성 평가
+- [x] 실제 SSE 엔드포인트 URL 패턴 조사 (project_id vs slug)
+  - [x] Cline MCP 설정 파일에서 실제 SSE URL 확인: `/projects/{project_id}/servers/{server_name}/sse`
+  - [x] 백엔드 API 라우트에서 project_id 패턴 확인
+  - [x] 모든 SSE 라우트가 project_id 사용 확인
+- [x] SSE 관련 API 라우트 정의 확인
+  - [x] standard_mcp.py: `/projects/{project_id}/servers/{server_name}/sse`
+  - [x] mcp_sse_transport.py: `/projects/{project_id}/servers/{server_name}/sse`
+  - [x] mcp_sdk_sse_bridge.py: `/projects/{project_id}/servers/{server_name}/sse`
+  - [x] fastmcp_impl.py: `/fastmcp/projects/{project_id}/servers/{server_name}/sse`
+- [x] 프론트엔드에서 SSE URL 생성 방식 확인
+  - [x] Next.js API 라우트 확인: `/api/projects/[projectId]/cline-config/route.ts`
+  - [x] 프론트엔드 API 클라이언트 확인: project_id 기반 URL 패턴 사용
+- [x] 프로젝트 식별자 사용 패턴 전체 분석
+  - [x] **모든 API 라우트가 project_id 사용**: `/projects/{project_id}/servers`, `/projects/{project_id}/api-keys` 등
+  - [x] **slug 사용 사례 없음**: 백엔드 API에서 slug 기반 라우트 없음
+  - [x] **slug는 admin 패널에서만 표시용으로 사용**
+- [x] slug 필드 실제 필요성 재평가
+  - [x] **teams.py create_team_project 함수에서 slug 누락으로 NOT NULL 오류 발생**
+  - [x] **Project 모델에서 slug 필드가 nullable=False로 정의**
+  - [x] **실제 사용: slug는 admin 패널 검색과 표시에만 사용**
+
+**결론**: 
+- **모든 SSE 및 API 엔드포인트는 project_id 사용**
+- **slug는 관리용 표시 목적으로만 사용되며 실제 라우팅에 사용되지 않음**
+- **해결 방안**: teams.py의 create_team_project 함수에 slug 자동 생성 로직 추가 필요
+
+### TASK_096: ClientSession 모델 데이터베이스 스키마 불일치 수정
+- [x] MCP 클라이언트 연결 오류 분석
+  - [x] Cline MCP 클라이언트 연결 시 "column 'client_type' does not exist" 오류 발생 확인
+  - [x] 사용자 제공 데이터베이스 스키마에서 client_name 필드 사용 확인
+  - [x] ClientSession 모델과 실제 데이터베이스 테이블 구조 불일치 파악
+- [x] ClientSession 모델 업데이트
+  - [x] 실제 데이터베이스 스키마에 맞게 모델 필드 수정
+  - [x] client_type → client_name 필드명 변경
+  - [x] 누락된 필드들 추가 (session_token, expires_at, status 등)
+  - [x] 호환성을 위한 @property 메서드 추가
+- [x] MCP SSE Bridge 코드 수정
+  - [x] ClientSession 생성 시 올바른 필드명 사용
+  - [x] 세션 업데이트 로직 수정 (last_accessed_at, total_requests, failed_requests)
+  - [x] 세션 종료 처리 수정 (status='inactive')
+- [x] CHANGELOG.md 업데이트
+  - [x] 스키마 불일치 수정 사항 문서화
+  - [x] 호환성 속성 추가 내용 기록
+
 ### TASK_043: API Wrapper 모드 제거 및 Resource Connection 단일 모드 전환
 - [x] 현재 상황 분석 및 작업 계획 수립
 - [x] 프론트엔드 UI에서 Compatibility Mode 선택기 제거
@@ -572,10 +617,10 @@
 - [x] CHANGELOG.md 업데이트
 
 ## Progress Status  
-- Current Progress: TASK_093 - Activity Logger JSON 직렬화 오류 수정 완료
+- Current Progress: TASK_096 - ClientSession 모델 데이터베이스 스키마 불일치 수정 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: Activity Logger JSON 직렬화 안전성 확보 완료, API 키 생성 오류 해결됨
+- Automatic Check Feedback: MCP 클라이언트 연결 스키마 불일치 해결, Cline 연결 오류 수정 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

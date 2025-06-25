@@ -37,7 +37,6 @@ class AdminApiKeyResponse(BaseModel):
     # Project and creator information
     project_id: str
     project_name: str
-    project_slug: str
     creator_id: str
     creator_name: str
     creator_email: str
@@ -158,7 +157,6 @@ async def list_api_keys_admin(
                 rate_limit_per_day=api_key.rate_limit_per_day,
                 project_id=str(api_key.project_id),
                 project_name=api_key.project.name,
-                project_slug=api_key.project.slug,
                 creator_id=str(api_key.created_by_id),
                 creator_name=api_key.created_by.name,
                 creator_email=api_key.created_by.email,
@@ -227,7 +225,6 @@ async def get_api_key_admin(
             rate_limit_per_day=api_key.rate_limit_per_day,
             project_id=str(api_key.project_id),
             project_name=api_key.project.name,
-            project_slug=api_key.project.slug,
             creator_id=str(api_key.created_by_id),
             creator_name=api_key.created_by.name,
             creator_email=api_key.created_by.email,
@@ -304,7 +301,6 @@ async def update_api_key_admin(
             rate_limit_per_day=api_key.rate_limit_per_day,
             project_id=str(api_key.project_id),
             project_name=api_key.project.name,
-            project_slug=api_key.project.slug,
             creator_id=str(api_key.created_by_id),
             creator_name=api_key.created_by.name,
             creator_email=api_key.created_by.email,

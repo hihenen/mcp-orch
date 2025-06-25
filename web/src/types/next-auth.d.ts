@@ -10,7 +10,6 @@ declare module "next-auth" {
       teams?: Array<{
         id: string
         name: string
-        slug: string
         role: string
       }>
     } & DefaultSession["user"]
@@ -36,7 +35,6 @@ declare module "next-auth/jwt" {
     teams?: Array<{
       id: string
       name: string
-      slug: string
       role: string
     }>
   }

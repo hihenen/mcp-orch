@@ -42,7 +42,6 @@ import { formatDate } from '@/lib/date-utils';
 interface AdminTeamResponse {
   id: string;
   name: string;
-  slug: string;
   description?: string;
   is_personal: boolean;
   is_active: boolean;
@@ -305,7 +304,7 @@ export default function TeamsAdminPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search teams by name, slug, or description..."
+                  placeholder="Search teams by name or description..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
@@ -411,7 +410,7 @@ export default function TeamsAdminPage() {
                             )}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {team.slug}
+                            ID: {team.id}
                           </div>
                           {team.description && (
                             <div className="text-sm text-muted-foreground mt-1">

@@ -45,7 +45,6 @@ class Project(Base):
     id: UUID = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     name: str = Column(String(255), nullable=False)
     description: Optional[str] = Column(Text)
-    slug: str = Column(String(100), unique=True, nullable=False)  # URL-friendly identifier
     
     # 프로젝트 생성자 (소유자)
     created_by: UUID = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
@@ -116,17 +115,17 @@ class ProjectMember(Base):
 └── API 키: project_ecommerce_redesign_key_abc123
 
 SSE 엔드포인트:
-GET /api/projects/ecommerce-redesign/servers/github-server/sse
-Authorization: Bearer project_ecommerce_redesign_key_abc123
+GET /api/projects/{project_id}/servers/github-server/sse
+Authorization: Bearer project_api_key_abc123
 
 Cline 설정:
 {
   "mcpServers": {
     "github-server": {
       "transport": "sse",
-      "url": "http://localhost:8000/api/projects/ecommerce-redesign/servers/github-server/sse",
+      "url": "http://localhost:8000/api/projects/{project_id}/servers/github-server/sse",
       "headers": {
-        "Authorization": "Bearer project_ecommerce_redesign_key_abc123"
+        "Authorization": "Bearer project_api_key_abc123"
       }
     }
   }

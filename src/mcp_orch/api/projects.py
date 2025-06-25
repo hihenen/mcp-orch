@@ -27,57 +27,6 @@ router = APIRouter(prefix="/api", tags=["projects"])
 logger = logging.getLogger(__name__)
 
 
-def generate_unique_slug(name: str, db: Session) -> str:
-    """
-    프로젝트 이름을 기반으로 고유한 slug를 생성합니다.
-    
-    Args:
-        name: 프로젝트 이름
-        db: 데이터베이스 세션
-        
-    Returns:
-        고유한 slug 문자열
-    """
-    # 1. 기본 slug 생성
-    # Unicode 정규화 (한글 등 -> 라틴 문자)
-    normalized = unicodedata.normalize('NFKD', name)
-    
-    # 소문자 변환 및 특수문자 제거
-    slug_base = re.sub(r'[^\w\s-]', '', normalized.lower())
-    
-    # 공백을 하이픈으로 변환하고 연속 하이픈 제거
-    slug_base = re.sub(r'[-\s]+', '-', slug_base)
-    
-    # 앞뒤 하이픈 제거
-    slug_base = slug_base.strip('-')
-    
-    # 빈 문자열인 경우 기본값 설정
-    if not slug_base:
-        slug_base = 'project'
-    
-    # 길이 제한 (100자 제한에서 숫자 추가 공간 확보)
-    slug_base = slug_base[:90]
-    
-    # 2. 중복 확인 및 고유성 보장
-    from mcp_orch.models.project import Project
-    
-    original_slug = slug_base
-    counter = 1
-    
-    while True:
-        # 현재 slug가 존재하는지 확인
-        existing = db.query(Project).filter(Project.slug == slug_base).first()
-        if not existing:
-            return slug_base
-        
-        # 중복이면 숫자 추가
-        slug_base = f"{original_slug}-{counter}"
-        counter += 1
-        
-        # 무한 루프 방지 (1000번 시도 후 UUID 사용)
-        if counter > 1000:
-            import uuid
-            return f"{original_slug}-{str(uuid.uuid4())[:8]}"
 
 
 # Pydantic 모델들
@@ -219,14 +168,10 @@ async def create_project(
 ):
     """새 프로젝트 생성"""
     
-    # slug 생성
-    slug = generate_unique_slug(project_data.name, db)
-    
     # 프로젝트 생성
     project = Project(
         name=project_data.name,
         description=project_data.description,
-        slug=slug,
         created_by=current_user.id
     )
     

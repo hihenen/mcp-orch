@@ -37,7 +37,6 @@ interface ApiKey {
   rate_limit_per_day: number;
   project_id: string;
   project_name: string;
-  project_slug: string;
   creator_id: string;
   creator_name: string;
   creator_email: string;
@@ -462,7 +461,7 @@ export default function AdminApiKeysPage() {
                             <div>
                               <div className="font-medium">{apiKey.project_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {apiKey.project_slug}
+                                ID: {apiKey.project_id}
                               </div>
                             </div>
                           </TableCell>

@@ -59,7 +59,6 @@ export default function HomePage() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    slug: '',
     team_id: ''
   });
 
@@ -789,20 +788,10 @@ cd mcp-orch
     project.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Auto-generate slug
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9가-힣]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-  };
-
   const handleNameChange = (name: string) => {
     setNewProject(prev => ({
       ...prev,
-      name,
-      slug: generateSlug(name)
+      name
     }));
   };
 
@@ -815,7 +804,7 @@ cd mcp-orch
       };
       await createProject(projectData);
       setIsCreateDialogOpen(false);
-      setNewProject({ name: '', description: '', slug: '', team_id: '' });
+      setNewProject({ name: '', description: '', team_id: '' });
     } catch (error) {
       console.error('Failed to create project:', error);
     }
@@ -887,18 +876,6 @@ cd mcp-orch
                 />
               </div>
               <div>
-                <Label htmlFor="slug">Slug</Label>
-                <Input
-                  id="slug"
-                  value={newProject.slug}
-                  onChange={(e) => setNewProject(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="frontend-dashboard"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Unique identifier to be used in URLs.
-                </p>
-              </div>
-              <div>
                 <Label htmlFor="team">Team (Optional)</Label>
                 <Select
                   value={newProject.team_id}
@@ -927,7 +904,7 @@ cd mcp-orch
               </Button>
               <Button 
                 onClick={handleCreateProject}
-                disabled={!newProject.name || !newProject.slug}
+                disabled={!newProject.name}
               >
                 Create
               </Button>

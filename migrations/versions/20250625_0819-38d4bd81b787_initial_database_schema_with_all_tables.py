@@ -92,7 +92,6 @@ def upgrade() -> None:
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('name', sa.String(length=255), nullable=False),
             sa.Column('description', sa.Text(), nullable=True),
-            sa.Column('slug', sa.String(length=100), nullable=False),
             sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
@@ -100,8 +99,7 @@ def upgrade() -> None:
             sa.Column('message_auth_required', sa.Boolean(), nullable=False, default=True),
             sa.Column('allowed_ip_ranges', sa.JSON(), nullable=True, default=list),
             sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-            sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('slug')
+            sa.PrimaryKeyConstraint('id')
         )
     
     # Create project_members table if it doesn't exist

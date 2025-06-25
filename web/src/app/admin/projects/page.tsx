@@ -41,7 +41,6 @@ interface AdminProjectResponse {
   id: string;
   name: string;
   description?: string;
-  slug: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -301,7 +300,7 @@ export default function ProjectsAdminPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search projects by name, description, or slug..."
+                  placeholder="Search projects by name and description..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
@@ -389,7 +388,7 @@ export default function ProjectsAdminPage() {
                             <span className="font-medium">{project.name}</span>
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {project.slug}
+                            ID: {project.id}
                           </div>
                           {project.description && (
                             <div className="text-sm text-muted-foreground mt-1">

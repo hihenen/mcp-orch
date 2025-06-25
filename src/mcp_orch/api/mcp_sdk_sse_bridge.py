@@ -359,15 +359,21 @@ async def run_mcp_bridge_session(
     client_session = None
     
     try:
-        # ClientSession 생성
+        # ClientSession 생성 (실제 데이터베이스 스키마에 맞게 수정)
+        from datetime import datetime, timedelta
+        import uuid
+        
         client_session = ClientSession(
-            id=session_id,
-            client_type=client_type,
-            server_id=str(server_record.id),
+            id=uuid.UUID(session_id),
+            session_token=f"session_{session_id}",
+            user_id=None,  # 인증 사용자가 있으면 설정
             project_id=project_id,
+            server_id=str(server_record.id),
+            client_name=client_type,  # client_type -> client_name
             user_agent=user_agent,
             ip_address=client_ip,
-            is_active=True
+            status='active',
+            expires_at=datetime.utcnow() + timedelta(hours=24)  # 24시간 후 만료
         )
         
         db.add(client_session)
@@ -434,8 +440,8 @@ async def run_mcp_bridge_session(
                 try:
                     # 세션 활동 업데이트
                     if client_session:
-                        client_session.last_activity = datetime.utcnow()
-                        client_session.total_calls += 1
+                        client_session.last_accessed_at = datetime.utcnow()
+                        client_session.total_requests += 1
                         db.commit()
                     
                     # 실제 MCP 서버로 도구 호출 전달 (ToolCallLog 수집 포함)
@@ -451,10 +457,8 @@ async def run_mcp_bridge_session(
                         db=tool_log_db
                     )
                     
-                    # 성공 시 세션 통계 업데이트
-                    if client_session:
-                        client_session.successful_calls += 1
-                        db.commit()
+                    # 성공 시 세션 통계 업데이트 (successful_calls는 계산된 속성이므로 제거)
+                    # total_requests는 이미 위에서 증가시켰음
                     
                     logger.info(f"Tool call result from {server_name}: {result}")
                     
@@ -474,7 +478,7 @@ async def run_mcp_bridge_session(
                 except Exception as e:
                     # 실패 시 세션 통계 업데이트
                     if client_session:
-                        client_session.failed_calls += 1
+                        client_session.failed_requests += 1
                         db.commit()
                     raise
                     
@@ -544,7 +548,7 @@ async def run_mcp_bridge_session(
                 
                 # 실패 시 세션 통계 업데이트
                 if client_session:
-                    client_session.failed_calls += 1
+                    client_session.failed_requests += 1
                     db.commit()
                 
                 # 에러 시 에러 메시지 반환
@@ -571,8 +575,8 @@ async def run_mcp_bridge_session(
         # 세션 종료 처리
         if client_session and db:
             try:
-                client_session.is_active = False
-                client_session.disconnected_at = datetime.utcnow()
+                client_session.status = 'inactive'
+                client_session.updated_at = datetime.utcnow()
                 db.commit()
                 logger.info(f"🔌 ClientSession {session_id} disconnected")
             except Exception as e:

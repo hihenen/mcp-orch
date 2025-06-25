@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- [TASK_096] Complete removal of slug field from Project model and all references (2025-06-25)
+  - Remove slug field from Project model in database schema
+  - Remove slug references from all admin panel APIs and frontend interfaces  
+  - Remove slug-based routing patterns from frontend components
+  - Remove slug field from initial database migration scripts
+  - Remove generate_unique_slug function and slug creation logic from projects API
+  - Simplify project identification to use ID-only patterns throughout application
+  - Replace slug displays with project ID in admin interfaces and team management
+
 ### Changed
 - [TASK_094] Restore admin privilege assignment for existing users via INITIAL_ADMIN_EMAIL (2025-06-25)
   - Restore selective admin initialization that only grants privileges to existing users
@@ -15,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improve admin setup workflow by combining manual registration with automatic privilege assignment
 
 ### Fixed
+- [TASK_096] Fix ClientSession model database schema mismatch for MCP connections (2025-06-25)
+  - Updated ClientSession model to match actual database schema with client_name field
+  - Fixed MCP SSE Bridge to use correct field names (client_name, status, failed_requests, etc.)
+  - Added compatibility properties for backward compatibility
+  - Resolved "column 'client_type' does not exist" errors during MCP client connections
 - [TASK_093] Activity Logger JSON serialization error during API key creation (2025-06-25)
   - Fix SQLAlchemy Session object being passed to Activity Logger meta_data causing JSON serialization errors
   - Add JSON safety validation to prevent non-serializable objects from being stored in activity metadata
