@@ -85,40 +85,52 @@ class Activity(Base):
     team_id: Optional[UUID] = Column(PGUUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), nullable=True)
     user_id: Optional[UUID] = Column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
-    # 활동 정보
-    action: ActivityType = Column(String(50), nullable=False)
-    description: str = Column(Text, nullable=False)
+    # 실제 DB 스키마에 맞는 필드들
+    type: ActivityType = Column(String(50), nullable=False)  # 실제 DB에서는 'type' 필드 사용
     severity: ActivitySeverity = Column(String(20), default=ActivitySeverity.INFO, nullable=False)
+    title: str = Column(String(255), nullable=False)  # 실제 DB에는 title 필드 존재
+    description: Optional[str] = Column(Text, nullable=True)
     
     # 확장성을 위한 JSON 필드
-    meta_data: Dict[str, Any] = Column(JSON, nullable=False, default=dict)
-    context: Dict[str, Any] = Column(JSON, nullable=False, default=dict)
+    activity_metadata: Dict[str, Any] = Column('metadata', JSON, nullable=True, default=dict)  # 실제 DB에서는 'metadata' 사용
     
-    # 대상 리소스 (옵셔널)
-    target_type: Optional[str] = Column(String(50), nullable=True)  # 'server', 'member', 'api_key' 등
-    target_id: Optional[str] = Column(String(100), nullable=True)  # 대상 리소스의 ID
+    # 대상 리소스 (실제 DB 스키마)
+    resource_type: Optional[str] = Column(String(50), nullable=True)  # 실제 DB 필드명
+    resource_id: Optional[str] = Column(String(100), nullable=True)  # 실제 DB 필드명
+    
+    # 추가 메타데이터 (실제 DB 스키마)
+    ip_address: Optional[str] = Column(String(255), nullable=True)
+    user_agent: Optional[str] = Column(Text, nullable=True)
+    session_id: Optional[str] = Column(String(255), nullable=True)
+    tags: Optional[list] = Column(JSON, nullable=True)  # PostgreSQL ARRAY -> JSON으로 매핑
+    
+    # 서버 관련 (실제 DB 스키마)
+    server_id: Optional[UUID] = Column(PGUUID(as_uuid=True), nullable=True)
     
     # 타임스탬프
     created_at: datetime = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: datetime = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 관계
     project = relationship("Project")
     team = relationship("Team")
     user = relationship("User")
     
-    # 성능 최적화 인덱스
+    # 성능 최적화 인덱스 (실제 DB 필드명 사용)
     __table_args__ = (
         Index('idx_activities_project_created', 'project_id', 'created_at'),
         Index('idx_activities_team_created', 'team_id', 'created_at'),
-        Index('idx_activities_action_created', 'action', 'created_at'),
+        Index('idx_activities_type_created', 'type', 'created_at'),  # action -> type 변경
         Index('idx_activities_user_created', 'user_id', 'created_at'),
-        Index('idx_activities_target', 'target_type', 'target_id'),
+        Index('idx_activities_resource', 'resource_type', 'resource_id'),  # target -> resource 변경
         Index('idx_activities_severity', 'severity', 'created_at'),
     )
 
     def __repr__(self):
         resource_info = f"project_id={self.project_id}" if self.project_id else f"team_id={self.team_id}"
-        return f"<Activity(id={self.id}, {resource_info}, action={self.action.value}, description='{self.description[:50]}...')>"
+        type_value = self.type.value if self.type else 'unknown'
+        desc_preview = self.description[:50] + '...' if self.description and len(self.description) > 50 else (self.description or '')
+        return f"<Activity(id={self.id}, {resource_info}, type={type_value}, description='{desc_preview}')>"
 
     def to_dict(self) -> Dict[str, Any]:
         """딕셔너리 변환 (API 응답용)"""
@@ -127,16 +139,43 @@ class Activity(Base):
             'project_id': str(self.project_id) if self.project_id else None,
             'team_id': str(self.team_id) if self.team_id else None,
             'user_id': str(self.user_id) if self.user_id else None,
-            'action': self.action.value,
+            'server_id': str(self.server_id) if self.server_id else None,
+            'type': self.type.value if self.type else None,  # action -> type 변경
+            'title': self.title,
             'description': self.description,
-            'severity': self.severity.value,
-            'metadata': self.meta_data,
-            'context': self.context,
-            'target_type': self.target_type,
-            'target_id': self.target_id,
-            'created_at': self.created_at.isoformat(),
+            'severity': self.severity.value if self.severity else None,
+            'metadata': self.activity_metadata,
+            'resource_type': self.resource_type,
+            'resource_id': self.resource_id,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'session_id': self.session_id,
+            'tags': self.tags,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'user_name': self.user.name if self.user else 'System'
         }
+    
+    # 호환성을 위한 별칭들
+    @property
+    def action(self):
+        """호환성을 위한 별칭"""
+        return self.type
+    
+    @property
+    def meta_data(self):
+        """호환성을 위한 별칭"""
+        return self.activity_metadata
+    
+    @property
+    def target_type(self):
+        """호환성을 위한 별칭"""
+        return self.resource_type
+    
+    @property
+    def target_id(self):
+        """호환성을 위한 별칭"""
+        return self.resource_id
 
 
 # Backward compatibility alias

@@ -3,7 +3,7 @@
 MCP 서버의 연결, 오류, 실행 로그를 저장
 """
 
-from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey, Index
+from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey, Index, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -24,11 +24,12 @@ class LogLevel(enum.Enum):
 
 class LogCategory(enum.Enum):
     """로그 카테고리"""
-    CONNECTION = "connection"
-    TOOL_EXECUTION = "tool_execution"
+    STARTUP = "startup"
+    SHUTDOWN = "shutdown"
+    TOOL_CALL = "tool_call"
     ERROR = "error"
-    STATUS_CHECK = "status_check"
-    CONFIGURATION = "configuration"
+    CONNECTION = "connection"
+    SYSTEM = "system"
 
 
 class ServerLog(Base):
@@ -37,26 +38,28 @@ class ServerLog(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     server_id = Column(UUID(as_uuid=True), ForeignKey("mcp_servers.id", ondelete="CASCADE"), nullable=False)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    
+    # 실제 DB 스키마에 맞는 필드들
+    session_id = Column(String(100), nullable=True)
+    request_id = Column(String(100), nullable=True)
     
     # 로그 정보
     level = Column(Enum(LogLevel), nullable=False, default=LogLevel.INFO)
     category = Column(Enum(LogCategory), nullable=False, default=LogCategory.CONNECTION)
     message = Column(Text, nullable=False)
-    details = Column(Text, nullable=True)  # JSON 형태의 상세 정보
+    details = Column(JSON, nullable=True)  # 실제 DB에서는 JSON 타입
     
     # 메타데이터
     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
-    source = Column(String(100), nullable=True)  # 로그 발생 소스 (예: mcp_connection_service)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 관계
     server = relationship("McpServer", back_populates="logs")
-    project = relationship("Project")
     
     # 인덱스
     __table_args__ = (
         Index('idx_server_logs_server_timestamp', 'server_id', 'timestamp'),
-        Index('idx_server_logs_project_timestamp', 'project_id', 'timestamp'),
         Index('idx_server_logs_level_timestamp', 'level', 'timestamp'),
         Index('idx_server_logs_category_timestamp', 'category', 'timestamp'),
     )

@@ -367,7 +367,7 @@ def upgrade() -> None:
         op.create_table('activities',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('type', sa.Enum('SERVER_CREATED', 'SERVER_UPDATED', 'SERVER_DELETED', 'SERVER_STARTED', 'SERVER_STOPPED', 'TOOL_CALLED', 'PROJECT_CREATED', 'PROJECT_UPDATED', 'PROJECT_DELETED', 'TEAM_CREATED', 'TEAM_UPDATED', 'TEAM_DELETED', 'USER_JOINED', 'USER_LEFT', 'API_KEY_CREATED', 'API_KEY_DELETED', name='activitytype'), nullable=False),
-            sa.Column('severity', sa.Enum('LOW', 'MEDIUM', 'HIGH', 'CRITICAL', name='activityseverity'), nullable=False),
+            sa.Column('severity', sa.Enum('info', 'warning', 'error', 'success', name='activityseverity'), nullable=False),
             sa.Column('title', sa.String(length=255), nullable=False),
             sa.Column('description', sa.Text(), nullable=True),
             sa.Column('metadata', sa.JSON(), nullable=True),

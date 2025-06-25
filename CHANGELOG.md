@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved JSON configuration clarity for new users
 
 ### Fixed
+- [TASK_080] ServerLog model schema alignment with database structure (2025-06-25)
+  - Updated ServerLog model to match actual database schema with session_id and request_id fields
+  - Changed details field from Text to JSON type to match database
+  - Updated LogCategory enum values to match database: STARTUP, SHUTDOWN, TOOL_CALL, ERROR, CONNECTION, SYSTEM
+  - Removed project_id and source fields that were not present in actual database
+  - Added created_at and updated_at timestamp fields for consistency
 - [TASK_075] Comprehensive database schema synchronization with all SQLAlchemy models (2025-06-25)
   - Updated initial migration to include complete schemas for all 9 tables with field differences
   - Added missing fields to API_KEYS table: description (Text)

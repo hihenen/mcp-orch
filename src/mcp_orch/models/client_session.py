@@ -35,7 +35,8 @@ class ClientSession(Base):
     
     # 관계
     project = relationship("Project", back_populates="client_sessions")
-    tool_calls = relationship("ToolCallLog", back_populates="session", cascade="all, delete-orphan")
+    # ToolCallLog 관계는 ForeignKey가 없으므로 주석 처리
+    # tool_calls = relationship("ToolCallLog", back_populates="session", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<ClientSession(id={self.id}, client_type={self.client_type}, server_id={self.server_id})>"

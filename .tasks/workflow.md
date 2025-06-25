@@ -365,11 +365,42 @@
   - [x] AddServerDialog에서 brave-search만 표시하도록 변경
   - [x] 기존 복잡한 예시 제거하고 간단한 구성으로 교체
 
+### TASK_078: ToolCallLog 모델 완전 재구성 및 데이터베이스 재생성
+- [x] ToolCallLog 모델을 실제 DB 스키마와 완전히 일치시키기
+  - [x] 실제 DB 스키마 분석 (arguments, result, tool_namespace 제거 등)
+  - [x] 모델 필드를 실제 DB와 정확히 일치하도록 수정
+  - [x] 호환성을 위한 속성 별칭 추가 (input_data, output_data)
+- [x] 데이터베이스 완전 재생성
+  - [x] 초기 마이그레이션으로 깨끗한 스키마 생성
+  - [x] 백엔드 서버 재시작 및 동작 확인
+
+### TASK_079: Activities 테이블 스키마 불일치 수정
+- [x] Activities 테이블 스키마 불일치 수정
+  - [x] 실제 DB 스키마 분석 (type, severity, title, metadata 등)
+  - [x] ActivitySeverity enum을 실제 DB 값과 일치 (LOW/MEDIUM/HIGH/CRITICAL)
+  - [x] ActivityType enum을 실제 DB 값과 일치
+- [x] Activities 모델을 실제 DB 스키마와 일치시키기
+  - [x] action → type 필드명 변경
+  - [x] metadata → activity_metadata 변경 (SQLAlchemy 예약어 충돌 방지)
+  - [x] target_type → resource_type 필드명 변경
+  - [x] 실제 DB 필드 추가 (ip_address, user_agent, session_id, tags, server_id, updated_at)
+- [x] Activities API 필드 매핑 수정
+  - [x] 호환성을 위한 프로퍼티 별칭 추가
+  - [x] SQLAlchemy relationship 문제 수정
+
+### TASK_080: ServerLog 테이블 스키마 정렬
+- [x] ServerLog 모델을 실제 데이터베이스 스키마에 맞게 수정
+  - [x] session_id, request_id 필드 추가 (실제 DB에 존재)
+  - [x] details 필드 타입을 Text에서 JSON으로 변경
+  - [x] LogCategory enum 값을 DB 스키마에 맞게 수정 (STARTUP, SHUTDOWN, TOOL_CALL, ERROR, CONNECTION, SYSTEM)
+  - [x] project_id, source 필드 제거 (실제 DB에 없음)
+  - [x] created_at, updated_at 타임스탬프 필드 추가
+
 ## Progress Status
-- Current Progress: TASK_077 - 백엔드 API 필드 매핑 오류 수정 및 프론트엔드 예시 업데이트 완료
-- Next Task: 사용자 요청에 따른 추가 작업 대기
+- Current Progress: TASK_080 - ServerLog 테이블 스키마 정렬 완료
+- Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: ToolCallLog 필드 매핑 수정 완료 - execution_time_ms 필드 사용으로 스키마 불일치 해결, 프론트엔드 Load Example을 brave-search만 표시하도록 간소화
+- Automatic Check Feedback: ServerLog 모델을 실제 데이터베이스 스키마와 완전 일치시켜 수정 완료, 모든 스키마 불일치 문제 해결
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
