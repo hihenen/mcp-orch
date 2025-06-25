@@ -26,63 +26,39 @@ MCP Orchestrator is a comprehensive **project-based MCP server management platfo
 
 ## Quick Start (30 seconds!)
 
+Choose your deployment option:
+
+### 🎯 Option 1: Local Development (Recommended)
+**PostgreSQL (Docker) + Backend (Native) + Frontend (Auto-started)**
+
 ```bash
-# Clone the repository
+# Clone and start everything
 git clone https://github.com/fnf-ea/mcp-orch.git
 cd mcp-orch
-
-# One-click setup with interactive deployment selection
 ./scripts/quickstart.sh
 ```
 
-**That's it!** The script will guide you through choosing the best deployment option for your needs.
+✅ **Perfect for development**
+- All services ready instantly
+- Frontend automatically available at http://localhost:3000
+- Optimal MCP server compatibility
+- Easy debugging and troubleshooting
 
-## Deployment Options
-
-### 🎯 Option 1: Hybrid (Recommended)
-**PostgreSQL (Docker) + Backend (Native) + Frontend (Docker)**
-
-```bash
-# Quick start
-./scripts/quickstart-hybrid.sh
-
-# With frontend
-./scripts/quickstart-hybrid.sh --with-frontend
-```
-
-✅ **Best for most users**
-- Optimal MCP server compatibility 
-- Stable PostgreSQL database
-- Fast development and debugging
-- Easy troubleshooting
-
-### 🐳 Option 2: Full Docker  
+### 🐳 Option 2: Full Docker (Production)  
 **Complete containerized environment**
 
 ```bash
-# All services in Docker
+# Clone and deploy to production
+git clone https://github.com/fnf-ea/mcp-orch.git
+cd mcp-orch
 docker compose up -d
 ```
 
-✅ **Best for production**
-- Complete isolation
-- Consistent deployment
+✅ **Perfect for production**
+- Complete containerization
+- EC2/VPS ready deployment
+- Consistent across environments
 - Easy scaling
-- Enterprise-ready
-
-### 🛠️ Option 3: Development
-**SQLite + Native execution**
-
-```bash
-# Development environment
-./scripts/dev-setup.sh
-```
-
-✅ **Best for development**
-- Fastest setup
-- Minimal dependencies
-- Direct debugging
-- Local development
 
 ## What You Get
 
@@ -90,7 +66,6 @@ docker compose up -d
 - **🔧 Backend API**: `http://localhost:8000` - Secure MCP server orchestration
 - **📊 Project URLs**: `http://localhost:8000/projects/{project-id}/sse` - Direct AI tool integration
 - **👥 Team Collaboration**: Real-time member management and activity tracking
-- **📈 Monitoring** (Optional): Grafana dashboards and Prometheus metrics
 
 ## Usage
 
@@ -285,28 +260,11 @@ uv run python test_mcp_proxy_mode.py
    - Check tool list with `uv run mcp-orch list-tools`
    - Set log level to DEBUG for detailed logs
 
-## Advanced Configuration
-
-### Adding Monitoring Stack
-
-Add Prometheus and Grafana for system monitoring:
-
-```bash
-# Start monitoring services (optional)
-docker compose -f docker-compose.monitoring.yml up -d
-
-# Access dashboards
-open http://localhost:3001  # Grafana (admin/admin)
-open http://localhost:9090  # Prometheus
-```
+## Configuration
 
 ### Environment Variables
 
-Each deployment option uses different environment configurations:
-
-1. **Hybrid Deployment**: `.env` (based on `.env.hybrid.example`)
-2. **Full Docker**: `.env` (based on `.env.example`)  
-3. **Development**: Auto-generated `.env` with SQLite
+Both deployment options use `.env` files for configuration:
 
 ### Key Environment Variables
 ```bash
@@ -314,11 +272,8 @@ Each deployment option uses different environment configurations:
 AUTH_SECRET=your-strong-secret-key
 JWT_SECRET=your-jwt-secret-key
 
-# Database (Hybrid/Docker)
+# Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/mcp_orch
-
-# Development (SQLite)
-DATABASE_URL=sqlite:///./mcp_orch_dev.db
 
 # Admin Account
 INITIAL_ADMIN_EMAIL=admin@example.com
@@ -330,8 +285,6 @@ INITIAL_ADMIN_PASSWORD=your-secure-password
 ```bash
 # Stop all services
 docker compose down
-docker compose -f docker-compose.hybrid.yml down
-docker compose -f docker-compose.monitoring.yml down
 
 # View logs
 docker compose logs -f

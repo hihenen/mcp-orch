@@ -1,15 +1,19 @@
+# MCP Orchestrator - Full Docker Deployment
+# All services containerized for production use
+
 services:
+  # PostgreSQL Database
   postgresql:
-    image: docker.io/bitnami/postgresql:16.4.0
+    image: postgres:15
     container_name: mcp-orch-postgres
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - postgresql_data:/bitnami/postgresql
+      - postgresql_data:/var/lib/postgresql/data
     environment:
-      - POSTGRESQL_USERNAME=${DB_USER:-mcp_orch}
-      - POSTGRESQL_PASSWORD=${DB_PASSWORD:-1234}
-      - POSTGRESQL_DATABASE=${DB_NAME:-mcp_orch}
+      - POSTGRES_USER=${DB_USER:-mcp_orch}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-mcp_password}
+      - POSTGRES_DB=${DB_NAME:-mcp_orch}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mcp_orch} -d ${DB_NAME:-mcp_orch}"]
       interval: 10s
@@ -19,6 +23,7 @@ services:
     networks:
       - mcp-orch-network
 
+  # Backend API Server
   mcp-orch-backend:
     build: 
       context: .
@@ -30,8 +35,8 @@ services:
       - ENV=production
       - DB_HOST=postgresql
       - DB_PORT=5432
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-1234}
+      - DB_USER=${DB_USER:-mcp_orch}
+      - DB_PASSWORD=${DB_PASSWORD:-mcp_password}
       - DB_NAME=${DB_NAME:-mcp_orch}
       - SERVER__HOST=0.0.0.0
       - SERVER__PORT=8000
@@ -45,18 +50,20 @@ services:
     networks:
       - mcp-orch-network
 
+  # Frontend Web Interface
   mcp-orch-frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./web
+      dockerfile: ../Dockerfile.frontend
       args:
-        - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL_DOCKER:-http://mcp-orch-backend:8000}
+        - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
     container_name: mcp-orch-frontend
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-here-change-in-production}
-      - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL_DOCKER:-http://mcp-orch-backend:8000}
+      - NEXTAUTH_URL=http://localhost:${FRONTEND_PORT:-3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here}
+      - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
     depends_on:
       - mcp-orch-backend
     restart: unless-stopped
@@ -74,3 +81,6 @@ networks:
       config:
         - subnet: 10.123.0.0/16
           gateway: 10.123.0.1
+
+# Usage:
+# docker compose up -d

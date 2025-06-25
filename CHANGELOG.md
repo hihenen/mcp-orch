@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_061] Simplify deployment options to 2 clear choices (2025-06-25)
+  - Remove complex setup scripts (setup-production.sh, setup-standard.sh, dev-setup.sh)
+  - Consolidate quickstart-hybrid.sh into simplified quickstart.sh with automatic frontend
+  - Remove Redis and enterprise profiles for simpler architecture
+  - Remove monitoring stack (docker-compose.monitoring.yml) 
+  - Unify docker-compose.hybrid.yml into single docker-compose.yml
+  - Update README to focus on 2 options: Local Development vs Full Docker
+  - Eliminate configuration complexity and deployment decision paralysis
+
 ### Fixed
 - [TASK_060] Fix Alembic migration error with missing mcp_servers table (2025-06-25)
   - Replace invalid ALTER-only migration with comprehensive initial schema migration

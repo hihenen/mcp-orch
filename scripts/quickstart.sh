@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# MCP Orchestrator Quick Start
-# 사용자가 배포 옵션을 선택할 수 있는 메인 스크립트
+# MCP Orchestrator Quick Start  
+# 원클릭으로 완전한 개발 환경을 설정하고 실행합니다.
+# Database: Docker, Backend: Native, Frontend: Docker (무조건 포함)
 
 set -e
 
@@ -13,82 +14,160 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${CYAN}"
-cat << 'EOF'
-  __  __  ____  ____     ___            _               _             _             
- |  \/  |/ ___||  _ \   / _ \ _ __ ___  | |__   ___  ___| |_ _ __ __ _| |_ ___  _ __ 
- | |\/| | |    | |_) | | | | | '__/ __|| '_ \ / _ \/ __| __| '__/ _` | __/ _ \| '__|
- | |  | | |___ |  __/  | |_| | | | (__ | | | |  __/\__ \ |_| | | (_| | || (_) | |   
- |_|  |_|\____||_|      \___/|_|  \___||_| |_|\___||___/\__|_|  \__,_|\__\___/|_|   
-                                                                                    
-EOF
-echo -e "${NC}"
+# 함수 정의
+log_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
 
-echo "Model Context Protocol 서버를 위한 엔터프라이즈급 관리 플랫폼"
-echo ""
+log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
 
-# 배포 옵션 표시
-echo -e "${BLUE}🎯 배포 옵션을 선택하세요:${NC}"
-echo ""
-echo -e "${GREEN}1. Hybrid (권장)${NC} - PostgreSQL(Docker) + Backend(Native) + Frontend(Docker)"
-echo "   • 최적의 MCP 서버 호환성"
-echo "   • 안정적인 데이터베이스"
-echo "   • 빠른 개발 및 디버깅"
-echo ""
-echo -e "${YELLOW}2. Full Docker${NC} - 모든 서비스를 Docker로 실행"
-echo "   • 완전한 격리 환경"
-echo "   • 운영환경에 적합"
-echo "   • 일관된 배포 환경"
-echo ""
-echo -e "${CYAN}3. Development${NC} - SQLite + Native 실행"
-echo "   • 빠른 로컬 개발"
-echo "   • 의존성 최소화"
-echo "   • 간단한 디버깅"
-echo ""
+log_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
 
-# 사용자 입력 받기
-while true; do
-    echo -n "선택하세요 (1-3): "
-    read choice
-    case $choice in
-        1|hybrid|Hybrid)
-            echo -e "${GREEN}Hybrid 배포를 선택했습니다!${NC}"
-            ./scripts/quickstart-hybrid.sh "$@"
+log_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+# 시스템 요구사항 확인
+check_requirements() {
+    log_info "시스템 요구사항 확인 중..."
+    
+    # Docker 확인
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker가 설치되어 있지 않습니다. Docker를 먼저 설치해주세요."
+        exit 1
+    fi
+    
+    # Docker Compose 확인
+    if ! docker compose version &> /dev/null 2>&1; then
+        log_error "Docker Compose가 설치되어 있지 않습니다."
+        exit 1
+    fi
+    
+    # Python 확인
+    if ! command -v python3 &> /dev/null; then
+        log_error "Python 3.11+ 이 필요합니다."
+        exit 1
+    fi
+    
+    # uv 확인
+    if ! command -v uv &> /dev/null; then
+        log_warning "uv가 설치되어 있지 않습니다. 설치를 진행합니다..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$HOME/.cargo/bin:$PATH"
+    fi
+    
+    log_success "시스템 요구사항 확인 완료"
+}
+
+# 환경 변수 설정
+setup_environment() {
+    log_info "환경 변수 설정 중..."
+    
+    if [ ! -f ".env" ]; then
+        log_info ".env 파일 생성 중..."
+        cp .env.hybrid.example .env
+        log_success ".env 파일 생성 완료"
+        log_warning "필요시 .env 파일을 편집하여 설정을 변경하세요"
+    else
+        log_success ".env 파일이 이미 존재합니다"
+    fi
+}
+
+# PostgreSQL 시작
+start_database() {
+    log_info "PostgreSQL 데이터베이스 시작 중..."
+    
+    docker compose up -d postgresql
+    
+    # 데이터베이스 준비 대기
+    log_info "데이터베이스 준비 대기 중..."
+    for i in {1..30}; do
+        if docker exec mcp-orch-postgres pg_isready -U mcp_orch -d mcp_orch &> /dev/null; then
+            log_success "PostgreSQL 데이터베이스 준비 완료"
             break
-            ;;
-        2|docker|full|Full)
-            echo -e "${YELLOW}Full Docker 배포를 선택했습니다!${NC}"
-            echo "환경 변수 설정 중..."
-            if [ ! -f ".env" ]; then
-                cp .env.example .env 2>/dev/null || echo "# Docker 환경 변수" > .env
-            fi
-            echo "Docker Compose로 모든 서비스 시작 중..."
-            docker compose up -d
-            echo -e "${GREEN}✅ Full Docker 환경 시작 완료!${NC}"
-            echo "🌐 Frontend: http://localhost:3000"
-            echo "🔧 Backend API: http://localhost:8000"
-            break
-            ;;
-        3|dev|development|Development)
-            echo -e "${CYAN}Development 환경을 선택했습니다!${NC}"
-            ./scripts/dev-setup.sh "$@"
-            break
-            ;;
-        *)
-            echo -e "${RED}잘못된 선택입니다. 1, 2, 또는 3을 입력하세요.${NC}"
-            ;;
-    esac
-done
+        fi
+        if [ $i -eq 30 ]; then
+            log_error "데이터베이스 시작 시간이 초과되었습니다"
+            exit 1
+        fi
+        sleep 2
+    done
+}
 
-echo ""
-echo -e "${GREEN}🎉 MCP Orchestrator 설정이 완료되었습니다!${NC}"
-echo ""
-echo -e "${BLUE}📚 추가 리소스:${NC}"
-echo "  • 문서: README.md"
-echo "  • 설정 가이드: docs/"
-echo "  • 모니터링 추가: docker compose -f docker-compose.monitoring.yml up -d"
-echo ""
-echo -e "${YELLOW}💡 팁: 각 배포 옵션에 대한 자세한 정보는 README.md를 참고하세요!${NC}"
+# Frontend 시작 (무조건 포함)
+start_frontend() {
+    log_info "Frontend 컨테이너 시작 중..."
+    docker compose up -d mcp-orch-frontend
+    log_success "모든 컨테이너 시작 완료"
+    log_info "Frontend URL: http://localhost:3000"
+}
+
+# Python 의존성 설치
+install_dependencies() {
+    log_info "Python 의존성 설치 중..."
+    
+    # 가상환경이 없으면 생성
+    if [ ! -d ".venv" ]; then
+        uv venv
+    fi
+    
+    # 의존성 설치
+    uv sync
+    log_success "Python 의존성 설치 완료"
+}
+
+# 데이터베이스 마이그레이션
+run_migrations() {
+    log_info "데이터베이스 마이그레이션 실행 중..."
+    
+    # 현재 alembic_version 테이블 초기화 (만약 문제가 있다면)
+    if ! uv run alembic current &> /dev/null; then
+        log_warning "마이그레이션 상태를 확인할 수 없습니다. 초기화를 진행합니다..."
+        # Docker에서 alembic_version 테이블 초기화
+        docker exec mcp-orch-postgres psql -U mcp_orch -d mcp_orch -c "DELETE FROM alembic_version;" 2>/dev/null || true
+    fi
+    
+    uv run alembic upgrade head
+    log_success "데이터베이스 마이그레이션 완료"
+}
+
+# 백엔드 서버 시작 정보 출력
+show_startup_info() {
+    log_success "🎉 MCP Orchestrator 설정 완료!"
+    echo ""
+    echo "다음 명령으로 백엔드 서버를 시작하세요:"
+    echo -e "${YELLOW}uv run mcp-orch serve${NC}"
+    echo ""
+    echo "또는 개발 모드로 실행:"
+    echo -e "${YELLOW}uv run mcp-orch serve --reload --log-level DEBUG${NC}"
+    echo ""
+    echo "🌐 서비스 접속 정보:"
+    echo "  • Frontend: http://localhost:3000 ✨"
+    echo "  • Backend API: http://localhost:8000"
+    echo "  • PostgreSQL: localhost:5432"
+    echo ""
+    echo "🔧 유용한 명령어들:"
+    echo "  • 도구 목록: uv run mcp-orch list-tools"
+    echo "  • 서버 목록: uv run mcp-orch list-servers"
+    echo "  • 서비스 중지: docker compose down"
+}
+
+# 메인 실행
+main() {
+    check_requirements
+    setup_environment
+    start_database
+    install_dependencies
+    run_migrations
+    start_frontend
+    show_startup_info
+}
+
+# 스크립트 실행
+main "$@"
