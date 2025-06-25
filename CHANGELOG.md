@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_078] Fix api_usage table schema mismatch for API key deletion (2025-06-25)
+  - Update api_usage table schema to match ApiUsage model definition
+  - Add missing columns: team_id, tool_name, server_name, response_time_ms, tokens_used, bytes_transferred, cost_credits
+  - Remove obsolete columns: user_id, project_id, request_size, response_size, duration_ms, etc.
+  - Update foreign key constraints and indexes to match model requirements
+  - Resolve PostgreSQL UndefinedColumn errors during API key deletion operations
 - [TASK_078] Fix Activity model action property setter for activity logging (2025-06-25)
   - Add missing setter for action property in Activity model
   - Resolve AttributeError when creating activity logs during API key operations

@@ -153,35 +153,31 @@ def upgrade() -> None:
     if not table_exists('api_usage'):
         op.create_table('api_usage',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
-            sa.Column('api_key_id', postgresql.UUID(as_uuid=True), nullable=True),
+            sa.Column('api_key_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('team_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('timestamp', sa.DateTime(), nullable=False),
             sa.Column('endpoint', sa.String(length=255), nullable=False),
             sa.Column('method', sa.String(length=10), nullable=False),
+            sa.Column('tool_name', sa.String(length=255), nullable=True),
+            sa.Column('server_name', sa.String(length=255), nullable=True),
             sa.Column('status_code', sa.Integer(), nullable=False),
-            sa.Column('request_size', sa.Integer(), nullable=True),
-            sa.Column('response_size', sa.Integer(), nullable=True),
-            sa.Column('duration_ms', sa.Integer(), nullable=True),
+            sa.Column('response_time_ms', sa.Integer(), nullable=False),
+            sa.Column('tokens_used', sa.Integer(), nullable=False, default=0),
+            sa.Column('bytes_transferred', sa.Integer(), nullable=False, default=0),
+            sa.Column('cost_credits', sa.Float(), nullable=False, default=0.0),
             sa.Column('ip_address', sa.String(length=45), nullable=True),
-            sa.Column('user_agent', sa.Text(), nullable=True),
-            sa.Column('referer', sa.Text(), nullable=True),
-            sa.Column('request_headers', sa.JSON(), nullable=True),
-            sa.Column('response_headers', sa.JSON(), nullable=True),
-            sa.Column('request_body_hash', sa.String(length=64), nullable=True),
-            sa.Column('response_body_hash', sa.String(length=64), nullable=True),
-            sa.Column('error_message', sa.Text(), nullable=True),
-            sa.Column('rate_limit_hit', sa.Boolean(), nullable=False, server_default='false'),
-            sa.Column('cache_hit', sa.Boolean(), nullable=False, server_default='false'),
-            sa.Column('region', sa.String(length=50), nullable=True),
-            sa.Column('session_id', sa.String(length=100), nullable=True),
-            sa.Column('timestamp', sa.DateTime(), nullable=False),
+            sa.Column('user_agent', sa.String(length=500), nullable=True),
+            sa.Column('error_message', sa.String(length=500), nullable=True),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(['api_key_id'], ['api_keys.id'], ),
-            sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
-            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+            sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
             sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('idx_usage_api_key', 'api_usage', ['api_key_id'], unique=False)
+        op.create_index('idx_usage_timestamp', 'api_usage', ['timestamp'], unique=False)
+        op.create_index('idx_usage_team_date', 'api_usage', ['team_id', 'timestamp'], unique=False)
+        op.create_index('ix_api_usage_timestamp', 'api_usage', ['timestamp'], unique=False)
     
     # Create mcp_servers table if it doesn't exist
     if not table_exists('mcp_servers'):
