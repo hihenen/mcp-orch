@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_073] Update initial migration to include all required fields for new installations (2025-06-25)
+  - Update initial database migration to include NextAuth.js compatible user fields
+  - Update initial migration to include modern WorkerConfig schema with scheduler settings
+  - Ensure new installations get complete schema in single migration step
+  - Maintain backward compatibility for existing installations via secondary migration
+  - Eliminate 2-step migration requirement for fresh deployments
 - [TASK_072] Fix database schema mismatch with missing user authentication fields (2025-06-25)
   - Add missing NextAuth.js compatible fields to users table: email_verified, image, password, provider, provider_id
   - Add missing worker configuration fields: server_check_interval, coalesce, max_instances, notes

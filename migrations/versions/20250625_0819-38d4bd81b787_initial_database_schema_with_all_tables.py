@@ -33,16 +33,19 @@ def upgrade() -> None:
         op.create_table('users',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('email', sa.String(length=255), nullable=False),
+            sa.Column('email_verified', sa.DateTime(), nullable=True),
             sa.Column('name', sa.String(length=255), nullable=True),
-            sa.Column('avatar_url', sa.String(length=500), nullable=True),
+            sa.Column('image', sa.String(length=500), nullable=True),
+            sa.Column('password', sa.String(length=255), nullable=True),
+            sa.Column('provider', sa.String(length=50), nullable=True),
+            sa.Column('provider_id', sa.String(length=255), nullable=True),
             sa.Column('is_active', sa.Boolean(), nullable=False),
             sa.Column('is_admin', sa.Boolean(), nullable=False),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
-            sa.Column('last_login_at', sa.DateTime(), nullable=True),
-            sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('email')
+            sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('ix_users_email', 'users', ['email'], unique=True)
     
     # Create teams table if it doesn't exist
     if not table_exists('teams'):
@@ -278,14 +281,16 @@ def upgrade() -> None:
     if not table_exists('worker_configs'):
         op.create_table('worker_configs',
             sa.Column('id', sa.Integer(), nullable=False),
-            sa.Column('config_key', sa.String(length=255), nullable=False),
-            sa.Column('config_value', sa.Text(), nullable=False),
-            sa.Column('description', sa.String(length=500), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False),
-            sa.Column('updated_at', sa.DateTime(), nullable=False),
-            sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('config_key')
+            sa.Column('server_check_interval', sa.Integer(), nullable=True, default=300, comment="Server status check interval in seconds"),
+            sa.Column('coalesce', sa.Boolean(), nullable=True, default=True, comment="Merge duplicate jobs"),
+            sa.Column('max_instances', sa.Integer(), nullable=True, default=1, comment="Maximum number of job instances"),
+            sa.Column('description', sa.String(length=255), nullable=True, default="Worker Configuration", comment="Configuration description"),
+            sa.Column('notes', sa.Text(), nullable=True, comment="Additional configuration notes"),
+            sa.Column('created_at', sa.DateTime(), nullable=False, comment="Configuration creation time"),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, comment="Last update time"),
+            sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('ix_worker_configs_id', 'worker_configs', ['id'], unique=False)
     
     # Create activities table if it doesn't exist
     if not table_exists('activities'):

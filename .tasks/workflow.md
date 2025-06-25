@@ -259,11 +259,36 @@
   - [x] 마이그레이션 실행으로 스키마 불일치 해결
   - [x] 데이터베이스 스키마 검증 완료
 
+### TASK_073: 신규 설치용 초기 마이그레이션 완성
+- [x] 기존 초기 마이그레이션 분석 및 누락 필드 식별
+  - [x] User 테이블: email_verified, image, password, provider, provider_id 필드 누락
+  - [x] WorkerConfig 테이블: server_check_interval, coalesce, max_instances, notes 필드 누락
+  - [x] 기존 마이그레이션이 불완전한 스키마 생성하는 문제 확인
+- [x] 초기 마이그레이션에 User 테이블 NextAuth.js 호환 필드 추가
+  - [x] email_verified (DateTime) - 이메일 확인 상태
+  - [x] image (String(500)) - 프로필 이미지 URL
+  - [x] password (String(255)) - 이메일/패스워드 인증용
+  - [x] provider (String(50)) - OAuth 제공자 정보
+  - [x] provider_id (String(255)) - 제공자별 사용자 ID
+  - [x] ix_users_email 인덱스로 unique 제약조건 변경
+- [x] 초기 마이그레이션에 WorkerConfig 테이블 스케줄러 설정 필드 추가
+  - [x] server_check_interval (Integer) - 서버 상태 확인 간격
+  - [x] coalesce (Boolean) - 중복 작업 병합 여부
+  - [x] max_instances (Integer) - 최대 작업 인스턴스 수
+  - [x] notes (Text) - 추가 설정 메모
+  - [x] description 필드 타입 및 기본값 업데이트
+  - [x] 모든 필드에 적절한 comment 추가
+- [x] 깨끗한 데이터베이스에서 업데이트된 초기 마이그레이션 테스트
+  - [x] mcp_orch_test 데이터베이스 생성
+  - [x] 초기 마이그레이션 단독 실행 (38d4bd81b787)
+  - [x] 모든 필수 필드 생성 확인 (User: 12개, WorkerConfig: 8개)
+  - [x] 신규 설치시 완전한 스키마 한 번에 생성 검증
+
 ## Progress Status
-- Current Progress: TASK_072 - 데이터베이스 스키마 누락 필드 추가 완료
+- Current Progress: TASK_073 - 신규 설치용 초기 마이그레이션 완성 완료
 - Next Task: 요청 사항에 따른 추가 작업 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 데이터베이스 스키마 불일치 문제 해결 완료 - User 인증 필드 및 WorkerConfig 설정 필드 추가됨, NextAuth.js 호환성 확보
+- Automatic Check Feedback: 신규 설치 개선 완료 - 초기 마이그레이션이 완전한 스키마 생성, 기존 설치와 신규 설치 모두 호환성 확보
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
