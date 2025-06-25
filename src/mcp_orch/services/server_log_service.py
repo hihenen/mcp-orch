@@ -52,12 +52,10 @@ class ServerLogService:
         try:
             log_entry = ServerLog(
                 server_id=server_id,
-                project_id=project_id,
                 level=level,
                 category=category,
                 message=message,
-                details=json.dumps(details) if details else None,
-                source=source,
+                details=details,  # JSON 타입이므로 직접 저장
                 timestamp=datetime.utcnow()
             )
             
@@ -99,10 +97,18 @@ class ServerLogService:
             ServerLog 객체 리스트
         """
         try:
-            query = self.db.query(ServerLog).filter(ServerLog.server_id == server_id)
-            
+            # project_id 검증이 필요한 경우 McpServer를 통해 JOIN
             if project_id:
-                query = query.filter(ServerLog.project_id == project_id)
+                query = self.db.query(ServerLog).join(
+                    McpServer, ServerLog.server_id == McpServer.id
+                ).filter(
+                    and_(
+                        ServerLog.server_id == server_id,
+                        McpServer.project_id == project_id
+                    )
+                )
+            else:
+                query = self.db.query(ServerLog).filter(ServerLog.server_id == server_id)
             
             if level:
                 query = query.filter(ServerLog.level == level)
@@ -147,7 +153,10 @@ class ServerLogService:
             ServerLog 객체 리스트
         """
         try:
-            query = self.db.query(ServerLog).filter(ServerLog.project_id == project_id)
+            # 프로젝트의 모든 서버 로그 조회를 위해 McpServer와 JOIN
+            query = self.db.query(ServerLog).join(
+                McpServer, ServerLog.server_id == McpServer.id
+            ).filter(McpServer.project_id == project_id)
             
             if level:
                 query = query.filter(ServerLog.level == level)
@@ -188,18 +197,29 @@ class ServerLogService:
             에러 레벨 ServerLog 객체 리스트
         """
         try:
-            query = self.db.query(ServerLog).filter(
-                or_(
-                    ServerLog.level == LogLevel.ERROR,
-                    ServerLog.level == LogLevel.CRITICAL
+            # project_id 필터링이 필요한 경우 McpServer와 JOIN
+            if project_id:
+                query = self.db.query(ServerLog).join(
+                    McpServer, ServerLog.server_id == McpServer.id
+                ).filter(
+                    and_(
+                        or_(
+                            ServerLog.level == LogLevel.ERROR,
+                            ServerLog.level == LogLevel.CRITICAL
+                        ),
+                        McpServer.project_id == project_id
+                    )
                 )
-            )
+            else:
+                query = self.db.query(ServerLog).filter(
+                    or_(
+                        ServerLog.level == LogLevel.ERROR,
+                        ServerLog.level == LogLevel.CRITICAL
+                    )
+                )
             
             if server_id:
                 query = query.filter(ServerLog.server_id == server_id)
-            
-            if project_id:
-                query = query.filter(ServerLog.project_id == project_id)
             
             since = datetime.utcnow() - timedelta(hours=hours)
             query = query.filter(ServerLog.timestamp >= since)
@@ -260,13 +280,21 @@ class ServerLogService:
         try:
             since = datetime.utcnow() - timedelta(hours=hours)
             
-            base_query = self.db.query(ServerLog).filter(ServerLog.timestamp >= since)
+            # project_id 필터링이 필요한 경우 McpServer와 JOIN
+            if project_id:
+                base_query = self.db.query(ServerLog).join(
+                    McpServer, ServerLog.server_id == McpServer.id
+                ).filter(
+                    and_(
+                        ServerLog.timestamp >= since,
+                        McpServer.project_id == project_id
+                    )
+                )
+            else:
+                base_query = self.db.query(ServerLog).filter(ServerLog.timestamp >= since)
             
             if server_id:
                 base_query = base_query.filter(ServerLog.server_id == server_id)
-            
-            if project_id:
-                base_query = base_query.filter(ServerLog.project_id == project_id)
             
             # 레벨별 카운트
             level_counts = {}

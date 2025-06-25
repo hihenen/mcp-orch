@@ -490,11 +490,30 @@
   - [x] Core Component Status의 APScheduler Worker도 "Coming Soon"으로 변경
   - [x] 일관된 파란색 테마 및 메시지 적용
 
+### TASK_089: 프로젝트 서버 로그 API ServerLog project_id 참조 수정
+- [x] 문제 분석 및 영향 범위 파악
+  - [x] project_servers.py 898번째 줄 ServerLog.project_id 직접 참조 문제 확인
+  - [x] server_log_service.py의 여러 메서드에서 동일 문제 발견
+  - [x] TASK_080 ServerLog 스키마 변경과의 연관성 파악
+- [x] project_servers.py 수정
+  - [x] get_server_logs 함수에서 ServerLog.project_id 제거
+  - [x] server_id만으로 필터링하도록 로직 단순화 (project_id는 이미 서버 검증에서 확인됨)
+- [x] server_log_service.py 전면 수정
+  - [x] add_log 메서드에서 project_id 파라미터 제거 (ServerLog 생성시)
+  - [x] get_server_logs 메서드 JOIN 로직 추가
+  - [x] get_project_logs 메서드 McpServer JOIN 구현
+  - [x] get_error_logs 메서드 조건부 JOIN 로직 추가
+  - [x] get_log_summary 메서드 JOIN 기반 필터링 구현
+- [x] 코드 검증 및 정리
+  - [x] 모든 ServerLog.project_id 참조 완전 제거 확인
+  - [x] 관계형 매핑을 통한 project 연결 무결성 확보
+  - [x] 기존 API 호환성 유지
+
 ## Progress Status  
-- Current Progress: TASK_088 - Admin Worker Status "Coming Soon" 표시 변경 완료
+- Current Progress: TASK_089 - 프로젝트 서버 로그 API ServerLog project_id 참조 수정 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: Worker Status 표시를 Coming Soon으로 변경하여 사용자 혼란 방지
+- Automatic Check Feedback: ServerLog project_id 참조 문제 해결로 프로젝트 서버 로그 기능 정상화
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

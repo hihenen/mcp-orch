@@ -891,13 +891,8 @@ async def get_server_logs(
             detail="Server not found"
         )
     
-    # 로그 쿼리 구성
-    query = db.query(ServerLog).filter(
-        and_(
-            ServerLog.server_id == server_id,
-            ServerLog.project_id == project_id
-        )
-    )
+    # 로그 쿼리 구성 (server_id로만 필터링, project_id는 이미 위에서 검증됨)
+    query = db.query(ServerLog).filter(ServerLog.server_id == server_id)
     
     # 필터링 적용
     if level:

@@ -22,7 +22,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Apply consistent blue theme for Coming Soon indicators to avoid user confusion
   - Prioritize user experience over incomplete feature implementation
 
+### Changed
+- [TASK_090] Integrate Global Servers functionality into Admin Panel (2025-06-25)
+  - Move Global Servers management from standalone /servers route to admin panel structure
+  - Add Global Servers section to Admin Panel Quick Actions for better organization
+  - Create /admin/servers route with admin-integrated server management interface
+  - Remove standalone /servers page and redirect to admin panel structure
+  - Improve admin interface consistency and centralize admin-level features
+
 ### Fixed
+- [TASK_089] Project server logs API ServerLog model project_id reference fix (2025-06-25)
+  - Fix project_servers.py get_server_logs function to remove direct ServerLog.project_id reference
+  - Update server_log_service.py to use McpServer JOIN for project_id filtering instead of direct field access
+  - Resolve "type object 'ServerLog' has no attribute 'project_id'" error in project server logs interface
+  - Maintain backward compatibility for all service methods while adapting to TASK_080 schema changes
+  - Enable proper server log display in project management interface
 - [TASK_087] Admin system logs ServerLog model relationship mapping (2025-06-25)
   - Fix admin API to reference project_id through McpServer relationship instead of direct ServerLog.project_id
   - Update ServerLog query joins to properly connect McpServer and Project tables
