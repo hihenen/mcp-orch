@@ -209,9 +209,9 @@ export default function ProjectMembersPage() {
     }
   };
 
-  // Group members by invitation method
-  const directMembers = projectMembers.filter(member => 
-    member.invited_as === InviteSource.INDIVIDUAL &&
+  // Group members by invitation method - simplified to Individual vs Team
+  const individualMembers = projectMembers.filter(member => 
+    (member.invited_as === InviteSource.INDIVIDUAL || member.invited_as === InviteSource.EXTERNAL) &&
     (memberFilter === '' || 
      member.user_name?.toLowerCase().includes(memberFilter.toLowerCase()) ||
      member.user_email?.toLowerCase().includes(memberFilter.toLowerCase()))
@@ -223,13 +223,16 @@ export default function ProjectMembersPage() {
      member.user_name?.toLowerCase().includes(memberFilter.toLowerCase()) ||
      member.user_email?.toLowerCase().includes(memberFilter.toLowerCase()))
   );
-  
-  const externalMembers = projectMembers.filter(member => 
-    member.invited_as === InviteSource.EXTERNAL &&
-    (memberFilter === '' || 
-     member.user_name?.toLowerCase().includes(memberFilter.toLowerCase()) ||
-     member.user_email?.toLowerCase().includes(memberFilter.toLowerCase()))
-  );
+
+  // Group team members by team for better organization
+  const teamMembersByTeam = teamMembers.reduce((acc, member) => {
+    const teamName = member.team_name || 'Unknown Team';
+    if (!acc[teamName]) {
+      acc[teamName] = [];
+    }
+    acc[teamName].push(member);
+    return acc;
+  }, {} as Record<string, typeof teamMembers>);
 
   return (
     <ProjectLayout>
@@ -501,17 +504,20 @@ export default function ProjectMembersPage() {
 
         {/* Member section group display */}
         <div className="space-y-6">
-          {/* Directly invited members section */}
-          {directMembers.length > 0 && (
+          {/* Individual members section */}
+          {individualMembers.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
-                  Directly Invited Members
+                  Individual Members
                   <Badge variant="secondary" className="ml-2">
-                    {directMembers.length} members
+                    {individualMembers.length} members
                   </Badge>
                 </CardTitle>
+                <CardDescription>
+                  Members invited individually or as external partners
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -526,7 +532,7 @@ export default function ProjectMembersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {directMembers.map((member) => (
+                      {individualMembers.map((member) => (
                         <tr key={member.id} className="hover:bg-gray-50">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
@@ -635,255 +641,139 @@ export default function ProjectMembersPage() {
                   <Users className="h-4 w-4" />
                   Team Members
                   <Badge variant="secondary" className="ml-2">
-                    {teamMembers.length} members
+                    {teamMembers.length} members from {Object.keys(teamMembersByTeam).length} teams
                   </Badge>
                 </CardTitle>
                 <CardDescription>
-                  Members who joined the project through teams
+                  Members who joined the project through team invitations
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Account</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Team</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Role</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Join Date</th>
-                        <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {teamMembers.map((member) => (
-                        <tr key={member.id} className="hover:bg-gray-50">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarFallback className="text-sm">
-                                  {getInitials(member.user_name || member.user_email || 'U')}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{member.user_name || member.user_email || 'Unknown User'}</span>
-                                  {member.is_current_user && (
-                                    <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
-                                      It's you
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {member.user_email || '@username'}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">
-                                {member.team_name || 'No Team Info'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <Select
-                              value={member.role}
-                              onValueChange={(value) => handleRoleChange(member.id, value)}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue>
-                                  <div className="flex items-center gap-2">
-                                    {member.role === 'owner' && <Crown className="h-4 w-4 text-red-600" />}
-                                    {member.role === 'developer' && <Code className="h-4 w-4 text-blue-600" />}
-                                    {member.role === 'reporter' && <FileText className="h-4 w-4 text-gray-600" />}
-                                    <span className="capitalize">{member.role}</span>
+                <div className="space-y-4">
+                  {Object.entries(teamMembersByTeam).map(([teamName, members]) => (
+                    <div key={teamName} className="border rounded-lg overflow-hidden">
+                      {/* Team header */}
+                      <div className="bg-blue-50 border-b px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium text-blue-900">{teamName}</span>
+                          <Badge variant="outline" className="text-blue-700 border-blue-300">
+                            {members.length} members
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {/* Team members table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="text-left p-4 font-medium text-sm text-gray-700">Account</th>
+                              <th className="text-left p-4 font-medium text-sm text-gray-700">Role</th>
+                              <th className="text-left p-4 font-medium text-sm text-gray-700">Join Date</th>
+                              <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {members.map((member) => (
+                              <tr key={member.id} className="hover:bg-gray-50">
+                                <td className="p-4">
+                                  <div className="flex items-center gap-3">
+                                    <Avatar className="h-10 w-10">
+                                      <AvatarFallback className="text-sm">
+                                        {getInitials(member.user_name || member.user_email || 'U')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{member.user_name || member.user_email || 'Unknown User'}</span>
+                                        {member.is_current_user && (
+                                          <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
+                                            It's you
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {member.user_email || '@username'}
+                                      </p>
+                                    </div>
                                   </div>
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="owner">
-                                  <div className="flex items-center gap-2">
-                                    <Crown className="h-4 w-4 text-red-600" />
-                                    <span>Owner</span>
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="developer">
-                                  <div className="flex items-center gap-2">
-                                    <Code className="h-4 w-4 text-blue-600" />
-                                    <span>Developer</span>
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="reporter">
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-gray-600" />
-                                    <span>Reporter</span>
-                                  </div>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="p-4">
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(member.joined_at).toLocaleDateString('ko-KR')}
-                            </p>
-                          </td>
-                          <td className="p-4 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  Edit Permissions
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-red-600"
-                                  onClick={() => handleRemoveMember(member.id, member.user_name || member.user_email || 'Unknown User')}
-                                >
-                                  Remove Member
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                                </td>
+                                <td className="p-4">
+                                  <Select
+                                    value={member.role}
+                                    onValueChange={(value) => handleRoleChange(member.id, value)}
+                                  >
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue>
+                                        <div className="flex items-center gap-2">
+                                          {member.role === 'owner' && <Crown className="h-4 w-4 text-red-600" />}
+                                          {member.role === 'developer' && <Code className="h-4 w-4 text-blue-600" />}
+                                          {member.role === 'reporter' && <FileText className="h-4 w-4 text-gray-600" />}
+                                          <span className="capitalize">{member.role}</span>
+                                        </div>
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="owner">
+                                        <div className="flex items-center gap-2">
+                                          <Crown className="h-4 w-4 text-red-600" />
+                                          <span>Owner</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="developer">
+                                        <div className="flex items-center gap-2">
+                                          <Code className="h-4 w-4 text-blue-600" />
+                                          <span>Developer</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="reporter">
+                                        <div className="flex items-center gap-2">
+                                          <FileText className="h-4 w-4 text-gray-600" />
+                                          <span>Reporter</span>
+                                        </div>
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </td>
+                                <td className="p-4">
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(member.joined_at).toLocaleDateString('ko-KR')}
+                                  </p>
+                                </td>
+                                <td className="p-4 text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem>
+                                        <Shield className="h-4 w-4 mr-2" />
+                                        Edit Permissions
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        className="text-red-600"
+                                        onClick={() => handleRemoveMember(member.id, member.user_name || member.user_email || 'Unknown User')}
+                                      >
+                                        Remove Member
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* External members section */}
-          {externalMembers.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  External Members
-                  <Badge variant="secondary" className="ml-2">
-                    {externalMembers.length} members
-                  </Badge>
-                </CardTitle>
-                <CardDescription>
-                  Members invited as external partners
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Account</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Role</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-700">Join Date</th>
-                        <th className="text-right p-4 font-medium text-sm text-gray-700"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {externalMembers.map((member) => (
-                        <tr key={member.id} className="hover:bg-gray-50">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarFallback className="text-sm">
-                                  {getInitials(member.user_name || member.user_email || 'U')}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{member.user_name || member.user_email || 'Unknown User'}</span>
-                                  {member.is_current_user && (
-                                    <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
-                                      It's you
-                                    </Badge>
-                                  )}
-                                  <Badge variant="outline" className="text-xs">
-                                    External
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {member.user_email || '@username'}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <Select
-                              value={member.role}
-                              onValueChange={(value) => handleRoleChange(member.id, value)}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue>
-                                  <div className="flex items-center gap-2">
-                                    {member.role === 'owner' && <Crown className="h-4 w-4 text-red-600" />}
-                                    {member.role === 'developer' && <Code className="h-4 w-4 text-blue-600" />}
-                                    {member.role === 'reporter' && <FileText className="h-4 w-4 text-gray-600" />}
-                                    <span className="capitalize">{member.role}</span>
-                                  </div>
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="owner">
-                                  <div className="flex items-center gap-2">
-                                    <Crown className="h-4 w-4 text-red-600" />
-                                    <span>Owner</span>
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="developer">
-                                  <div className="flex items-center gap-2">
-                                    <Code className="h-4 w-4 text-blue-600" />
-                                    <span>Developer</span>
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="reporter">
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-gray-600" />
-                                    <span>Reporter</span>
-                                  </div>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="p-4">
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(member.joined_at).toLocaleDateString('ko-KR')}
-                            </p>
-                          </td>
-                          <td className="p-4 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  Edit Permissions
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-red-600"
-                                  onClick={() => handleRemoveMember(member.id, member.user_name || member.user_email || 'Unknown User')}
-                                >
-                                  Remove Member
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* No members case */}
           {projectMembers.length === 0 && (

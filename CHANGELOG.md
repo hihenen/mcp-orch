@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_083] Simplify project members UI with improved Individual/Team organization (2025-06-25)
+  - Redesign project members page from 3 sections to 2 clear sections: Individual Members and Team Members
+  - Group team members by team name with visual team headers and member counts
+  - Consolidate individual and external members into single "Individual Members" section
+  - Improve UX with cleaner visual hierarchy and better team member organization
+  - Remove redundant "Team" column in team members table since members are already grouped by team
 - [TASK_082] Simplify admin initialization to work with email-only configuration (2025-06-25)
   - Remove INITIAL_ADMIN_PASSWORD requirement for existing users
   - Allow admin privilege assignment to existing users with only INITIAL_ADMIN_EMAIL
@@ -18,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevent individual member's personal projects from appearing in team project lists
   - Resolve data integrity issue where team members' personal projects were incorrectly displayed as team projects
   - Improve team project isolation and data accuracy
+- [TASK_064] Fix team member invitation 405 error (2025-06-25)
+  - Add missing Next.js API route for team member invitation
+  - Implement POST /api/teams/[teamId]/members/invite endpoint
+  - Enable team member invitation functionality in frontend
+  - Fix 405 Method Not Allowed error for team member invitations
 
 ### Added
 - [TASK_076] Automatic MCP encryption key generation and management (2025-06-25)
