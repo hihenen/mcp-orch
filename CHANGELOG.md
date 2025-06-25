@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- [TASK_067] Standardize database configuration with DATABASE_URL as primary option (2025-06-25)
+  - Set DATABASE_URL as the recommended primary option in all environment files
+  - Add clear English comments with "Choose ONE option" guidance in .env.hybrid.example
+  - Unify database configuration structure across .env.example and .env.hybrid.example
+  - Comment out individual DB_* variables as alternative option
+  - Include cloud database examples (AWS RDS, Supabase) for easy reference
 - [TASK_066] Clean up environment configuration files and remove unused Enterprise features (2025-06-25)
   - Simplify database configuration with clear "Option 1 vs Option 2" choices in all env files
   - Remove unused Enterprise/Production features from .env.hybrid.example (SSO, SAML, LDAP, S3 backups, webhooks)
