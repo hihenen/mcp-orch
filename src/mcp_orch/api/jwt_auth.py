@@ -475,6 +475,11 @@ async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[Use
             logger.info("🔍 Detected project API key")
             return await _get_user_from_project_api_key(token, db)
         
+        # MCP API 키인지 확인 (mch_ 접두사로 시작)
+        if token.startswith("mch_"):
+            logger.info("🔍 Detected MCP API key")
+            return await _get_user_from_mcp_api_key(token, db)
+        
         # JWT 토큰 처리
         logger.info("🔍 Processing as JWT token")
         jwt_user = verify_jwt_token(token)
@@ -560,6 +565,66 @@ async def _get_user_from_project_api_key(api_key: str, db: Session) -> Optional[
         
     except Exception as e:
         logger.error(f"❌ Error processing project API key: {e}")
+        return None
+
+
+async def _get_user_from_mcp_api_key(api_key: str, db: Session) -> Optional[User]:
+    """
+    MCP API 키 (mch_ 접두사)를 검증하고 해당 사용자를 반환합니다.
+    
+    Args:
+        api_key: MCP API 키 (mch_ 접두사로 시작)
+        db: 데이터베이스 세션
+        
+    Returns:
+        User 객체 또는 None
+    """
+    try:
+        from ..models.api_key import ApiKey
+        from ..models.project import Project
+        import hashlib
+        
+        # API 키 해시 생성 (프로젝트 API 키와 동일한 방식)
+        key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+        
+        logger.info(f"🔍 Looking for MCP API key with hash: {key_hash[:20]}...")
+        
+        # 데이터베이스에서 API 키 조회
+        api_key_record = db.query(ApiKey).filter(
+            ApiKey.key_hash == key_hash,
+            ApiKey.is_active == True
+        ).first()
+        
+        if not api_key_record:
+            logger.warning("❌ MCP API key not found or inactive")
+            return None
+        
+        logger.info(f"✅ Found MCP API key: {api_key_record.name}")
+        
+        # API 키 사용 시간 업데이트
+        from datetime import datetime
+        api_key_record.last_used_at = datetime.utcnow()
+        db.commit()
+        
+        # 프로젝트 조회 (MCP API 키도 프로젝트에 연결됨)
+        project = db.query(Project).filter(Project.id == api_key_record.project_id).first()
+        if not project:
+            logger.warning("❌ Project not found for MCP API key")
+            return None
+        
+        logger.info(f"✅ Found project for MCP key: {project.name}")
+        
+        # 프로젝트 생성자 조회 (API 키로 인증된 사용자로 간주)
+        user = db.query(User).filter(User.id == api_key_record.created_by_id).first()
+        if not user:
+            logger.warning("❌ User not found for MCP API key")
+            return None
+        
+        logger.info(f"✅ Authenticated user via MCP API key: {user.email}")
+        return user
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing MCP API key: {e}")
         return None
 
 

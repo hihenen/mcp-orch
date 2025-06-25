@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_097] JWT middleware API key handling for mch_ prefixed tokens (2025-06-25)
+  - Fix JWT middleware to properly detect and handle mch_ prefixed API keys using standard Bearer token format
+  - Prevent UTF-8 decoding errors when mch_ API keys are incorrectly processed as JWT tokens
+  - Implement `_get_user_from_mcp_api_key` function for proper API key authentication
+  - Maintain backward compatibility with existing JWT token authentication and API communications
+  - Enable secure MCP SSE endpoint access with project-based API key security system
+
 ### Removed
 - [TASK_096] Complete removal of slug field from Project model and all references (2025-06-25)
   - Remove slug field from Project model in database schema
