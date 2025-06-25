@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_072] Fix database schema mismatch with missing user authentication fields (2025-06-25)
+  - Add missing NextAuth.js compatible fields to users table: email_verified, image, password, provider, provider_id
+  - Add missing worker configuration fields: server_check_interval, coalesce, max_instances, notes
+  - Resolve "column does not exist" errors in user signup and authentication
+  - Enable proper NextAuth.js OAuth integration with database persistence
+  - Fix worker configuration persistence for scheduler settings
 - [TASK_069] Fix NextAuth.js UntrustedHost error in production environment (2025-06-25)
   - Add trustHost: true setting to NextAuth.js configuration
   - Resolve "Host must be trusted" authentication errors in EC2 deployment

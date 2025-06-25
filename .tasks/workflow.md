@@ -2,7 +2,7 @@
 
 ## Metadata
 - Status: In Progress
-- Last Update: 2025-06-24
+- Last Update: 2025-06-25
 - Automatic Check Status: PASS
 
 ## Task List
@@ -224,11 +224,46 @@
   - [ ] 보안 설정 점검 가이드
   - [ ] 데이터베이스 연결 설정 최적화
 
+### TASK_065: SQLAlchemy 모델 정의 파일 조사 및 필드 확인
+- [x] SQLAlchemy 모델 파일 위치 파악
+  - [x] `/src/mcp_orch/models/` 디렉토리 구조 확인
+  - [x] 전체 모델 목록 파악 (16개 모델 클래스)
+- [x] User 모델 분석 (`/src/mcp_orch/models/user.py`)
+  - [x] `email_verified` 컬럼 존재 확인 (DateTime 타입, nullable=True)
+  - [x] NextAuth.js 호환 구조 확인
+  - [x] OAuth 및 패스워드 인증 지원 구조 확인
+- [x] WorkerConfig 모델 분석 (`/src/mcp_orch/models/worker_config.py`)
+  - [x] `server_check_interval` 컬럼 존재 확인 (Integer 타입, 기본값 300초)
+  - [x] 스케줄러 설정 영구화 목적 확인
+  - [x] 설정 관리 메서드들 확인 (load_or_create_config, update_from_dict)
+- [x] 주요 모델 구조 파악
+  - [x] Project 모델: slug 필드 존재 (String(100), unique=True, nullable=False)
+  - [x] McpServer 모델: compatibility_mode 필드 resource_connection 고정
+  - [x] 데이터베이스 설정: PostgreSQL + asyncpg 드라이버 사용
+
+### TASK_072: 데이터베이스 스키마 누락 필드 추가 (NextAuth.js 호환)
+- [x] 누락된 User 필드 분석
+  - [x] email_verified: DateTime 타입, NextAuth.js 이메일 확인 상태
+  - [x] image: String(500) 타입, 프로필 이미지 URL
+  - [x] password: String(255) 타입, 이메일/패스워드 인증용
+  - [x] provider: String(50) 타입, OAuth 제공자 ('google', 'github' 등)
+  - [x] provider_id: String(255) 타입, 제공자별 사용자 ID
+- [x] 누락된 WorkerConfig 필드 분석
+  - [x] server_check_interval: Integer 타입, 서버 상태 확인 간격(초)
+  - [x] coalesce: Boolean 타입, 중복 작업 병합 여부
+  - [x] max_instances: Integer 타입, 최대 작업 인스턴스 수
+  - [x] notes: Text 타입, 추가 설정 메모
+- [x] Alembic 마이그레이션 생성 및 실행
+  - [x] 20250625_1459-add_missing_user_fields.py 마이그레이션 생성
+  - [x] 필수 필드만 포함한 간단한 마이그레이션으로 안전성 확보
+  - [x] 마이그레이션 실행으로 스키마 불일치 해결
+  - [x] 데이터베이스 스키마 검증 완료
+
 ## Progress Status
-- Current Progress: TASK_063 - Docker 빌드 오류 해결 완료, EC2에서 quickstart.sh 재실행 필요
-- Next Task: EC2 환경에서 수정된 docker-compose.yml로 quickstart.sh 테스트
+- Current Progress: TASK_072 - 데이터베이스 스키마 누락 필드 추가 완료
+- Next Task: 요청 사항에 따른 추가 작업 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: docker-compose.yml context 문제 수정 완료 - "/web" not found 오류 해결됨
+- Automatic Check Feedback: 데이터베이스 스키마 불일치 문제 해결 완료 - User 인증 필드 및 WorkerConfig 설정 필드 추가됨, NextAuth.js 호환성 확보
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
