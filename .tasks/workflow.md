@@ -208,6 +208,22 @@
   - [x] 로컬 환경에서 수정 완료 (Docker 데몬 미실행으로 빌드 테스트 생략)
   - [x] EC2 환경에서 quickstart.sh 재실행을 통한 검증 필요
 
+### TASK_064: EC2 외부 데이터베이스 연결 오류 해결 (socket.gaierror: Name or service not known)
+- [ ] EC2 서버의 .env 파일 분석
+  - [ ] 현재 DATABASE_URL 설정값 확인
+  - [ ] 호스트명 DNS 해상도 검증
+  - [ ] 네트워크 연결 가능성 테스트
+- [ ] 가능한 원인 분석
+  - [ ] DNS 서버 설정 문제
+  - [ ] 보안 그룹/방화벽 설정 문제
+  - [ ] 외부 데이터베이스 서비스 접근 권한 문제
+  - [ ] VPC/네트워킹 설정 문제
+- [ ] 해결 방안 제안
+  - [ ] DNS 검증 및 대안 설정
+  - [ ] 네트워크 연결성 확인 방법
+  - [ ] 보안 설정 점검 가이드
+  - [ ] 데이터베이스 연결 설정 최적화
+
 ## Progress Status
 - Current Progress: TASK_063 - Docker 빌드 오류 해결 완료, EC2에서 quickstart.sh 재실행 필요
 - Next Task: EC2 환경에서 수정된 docker-compose.yml로 quickstart.sh 테스트

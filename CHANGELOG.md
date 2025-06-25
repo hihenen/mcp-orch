@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_069] Fix NextAuth.js UntrustedHost error in production environment (2025-06-25)
+  - Add trustHost: true setting to NextAuth.js configuration
+  - Resolve "Host must be trusted" authentication errors in EC2 deployment
+  - Enable proper session handling for production domains
+  - Fix Frontend Docker container authentication issues
+
 ### Added
 - [TASK_068] Add quickstart-external-db.sh script for external database deployments (2025-06-25)
   - Create dedicated script for external database usage (AWS Aurora, RDS, Supabase, etc.)

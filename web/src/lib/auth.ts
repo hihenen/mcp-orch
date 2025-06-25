@@ -43,6 +43,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
+  trustHost: true, // UntrustedHost 오류 해결
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
