@@ -107,6 +107,13 @@
 - [x] Admin 프로젝트 목록 페이지 보안 배지 단일화
 - [x] CHANGELOG.md 업데이트
 
+### TASK_101: SECURITY__ENABLE_AUTH 죽은 코드 정리 및 DISABLE_AUTH 표준화
+- [x] config.py에서 SecurityConfig.enable_auth 필드 제거
+- [x] Settings.from_env()에서 SECURITY__ENABLE_AUTH 매핑 제거
+- [x] .env.example에서 SECURITY__ENABLE_AUTH 설정 제거
+- [x] DISABLE_AUTH 환경변수를 공식 인증 제어 방법으로 문서화
+- [x] CHANGELOG.md 업데이트
+
 ### TASK_043: API Wrapper 모드 제거 및 Resource Connection 단일 모드 전환
 - [x] 현재 상황 분석 및 작업 계획 수립
 - [x] 프론트엔드 UI에서 Compatibility Mode 선택기 제거
@@ -702,11 +709,33 @@
   - [x] SecuritySettings 인터페이스에서 `jwt_auth_required` 사용 (이미 통합됨)
   - [x] 단일 JWT 인증 토글로 통합 구현됨
 
+### TASK_102: SECURITY__ENABLE_AUTH 환경변수 사용 현황 조사
+- [x] 코드베이스 전체에서 SECURITY__ENABLE_AUTH 환경변수 검색
+  - [x] `/src/mcp_orch/config.py`에서만 발견 - 정의되어 있지만 사용되지 않음
+  - [x] SecurityConfig 클래스에서 enable_auth 필드로 매핑됨
+  - [x] Settings.from_env() 메서드에서 환경변수 매핑 정의됨
+- [x] 실제 사용 코드 조사
+  - [x] `settings.security.enable_auth` 사용 코드 없음 확인
+  - [x] JWT 인증 미들웨어에서 사용되지 않음 확인
+  - [x] 대신 `DISABLE_AUTH` 환경변수가 실제로 사용 중임을 발견
+- [x] DISABLE_AUTH 환경변수 사용 현황 조사
+  - [x] `/src/mcp_orch/api/jwt_auth.py` - JWT 미들웨어에서 인증 우회 제어
+  - [x] `/src/mcp_orch/api/mcp_sdk_sse_bridge.py` - SSE Bridge 인증 우회 제어
+  - [x] `/src/mcp_orch/api/tool_call_logs.py` - 도구 호출 로그 인증 우회 제어
+- [x] 환경 파일에서 SECURITY__ENABLE_AUTH 설정 현황 확인
+  - [x] `.env.example`과 `.env`에 SECURITY__ENABLE_AUTH=true로 설정됨
+  - [x] 하지만 실제로는 사용되지 않는 죽은 코드
+
+**결론**: 
+- **SECURITY__ENABLE_AUTH는 완전히 사용되지 않는 죽은 코드**
+- **실제 인증 제어는 DISABLE_AUTH 환경변수로 구현됨**
+- **config.py와 환경파일의 SECURITY__ENABLE_AUTH 관련 코드는 제거 가능**
+
 ## Progress Status  
-- Current Progress: TASK_100 완료 - 프론트엔드 JWT 인증 UI 단일화 완료  
+- Current Progress: TASK_101 완료 - SECURITY__ENABLE_AUTH 죽은 코드 정리 및 DISABLE_AUTH 표준화 완료  
 - Next Task: 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: JWT 인증 통합 프론트엔드 UI 작업 완료 - 이중 토글에서 단일 JWT 제어로 성공적으로 단순화
+- Automatic Check Feedback: 사용되지 않는 인증 설정 정리 완료 - DISABLE_AUTH를 공식 인증 제어 방법으로 표준화하고 혼란 요소 제거
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

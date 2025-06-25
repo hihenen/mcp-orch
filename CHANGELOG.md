@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_101] Remove unused SECURITY__ENABLE_AUTH configuration and standardize DISABLE_AUTH for authentication control (2025-06-25)
+  - Remove dead code: SecurityConfig.enable_auth field and SECURITY__ENABLE_AUTH environment variable mapping
+  - Clean up unused authentication configuration from .env.example to prevent developer confusion
+  - Standardize DISABLE_AUTH as the official authentication control method with comprehensive documentation
+  - Add clear warnings and usage guidelines for DISABLE_AUTH in development/testing environments
+  - Eliminate configuration inconsistency between defined but unused vs actually implemented authentication controls
 - [TASK_100] Frontend JWT authentication UI unification - replace dual SSE/Message toggles with single JWT control (2025-06-25)
   - Replace separate SSE and Message authentication toggles with unified JWT Authentication control
   - Update SecuritySettingsSection.tsx to use single jwt_auth_required toggle for all MCP connections

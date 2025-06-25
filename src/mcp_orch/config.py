@@ -36,7 +36,6 @@ class DatabaseConfig(BaseModel):
 
 class SecurityConfig(BaseModel):
     """보안 설정"""
-    enable_auth: bool = True
     api_keys: List[Dict[str, Any]] = Field(default_factory=list)
     cors_origins: List[str] = Field(default_factory=lambda: ["*"])
     
@@ -247,7 +246,6 @@ class Settings(BaseSettings):
             "SQL_ECHO": ("database", "sql_echo"),
             
             # 보안 설정
-            "SECURITY__ENABLE_AUTH": ("security", "enable_auth"),
             "INITIAL_ADMIN_EMAIL": ("security", "initial_admin_email"),
             "INITIAL_ADMIN_PASSWORD": ("security", "initial_admin_password"),
         }
