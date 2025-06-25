@@ -38,8 +38,8 @@ async def initialize_admin_user(settings: Settings) -> Optional[str]:
         admin_email = settings.security.initial_admin_email
         admin_password = settings.security.initial_admin_password
         
-        if not admin_email or not admin_password:
-            logger.info("INITIAL_ADMIN_EMAIL 또는 INITIAL_ADMIN_PASSWORD가 설정되지 않음. 관리자 초기화 스킵.")
+        if not admin_email:
+            logger.info("INITIAL_ADMIN_EMAIL이 설정되지 않음. 관리자 초기화 스킵.")
             return "초기 관리자 설정이 없음 - 스킵"
         
         logger.info(f"초기 관리자 설정 발견: {admin_email}")
@@ -61,7 +61,11 @@ async def initialize_admin_user(settings: Settings) -> Optional[str]:
                     logger.info(f"사용자 {admin_email}은 이미 관리자 권한을 가지고 있음")
                     return f"사용자 {admin_email}은 이미 관리자"
             else:
-                # 새 관리자 계정 생성
+                # 새 관리자 계정 생성 (패스워드가 있는 경우에만)
+                if not admin_password:
+                    logger.info(f"사용자 {admin_email}이 존재하지 않고 INITIAL_ADMIN_PASSWORD가 설정되지 않음. 신규 계정 생성 스킵.")
+                    return f"사용자 {admin_email}이 존재하지 않음 - 먼저 회원가입 필요"
+                
                 hashed_password = hash_password(admin_password)
                 
                 new_admin = User(

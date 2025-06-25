@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, desc, asc
 from sqlalchemy.orm import Session, joinedload
 
 from ..database import get_db
@@ -780,8 +780,8 @@ async def get_team_projects(
     
     team, membership = get_team_and_verify_access(team_id, current_user, db)
     
-    # 팀 멤버들이 참여한 모든 프로젝트 조회
-    # 팀 멤버로 초대된 프로젝트 + 개별적으로 참여한 프로젝트를 모두 포함
+    # 팀으로 명시적으로 초대된 프로젝트만 조회
+    # InviteSource.TEAM_MEMBER로 초대된 프로젝트만 표시하여 개인 프로젝트는 제외
     
     # 팀의 모든 멤버 ID 조회
     team_member_ids = db.query(TeamMember.user_id).filter(
@@ -789,8 +789,7 @@ async def get_team_projects(
     ).all()
     team_member_ids = [member_id[0] for member_id in team_member_ids]
     
-    # 팀 멤버들이 참여한 프로젝트들 조회 (JSON 컬럼 제외하여 DISTINCT 오류 방지)
-    # PostgreSQL JSON 컬럼은 DISTINCT에서 equality operator가 없어서 오류 발생
+    # 팀으로 명시적으로 초대된 프로젝트만 조회 (개인 프로젝트 제외)
     projects_query = db.query(
         Project.id,
         Project.name, 
@@ -799,7 +798,10 @@ async def get_team_projects(
         Project.created_at,
         Project.updated_at
     ).join(ProjectMember).filter(
-        ProjectMember.user_id.in_(team_member_ids)
+        and_(
+            ProjectMember.user_id.in_(team_member_ids),
+            ProjectMember.invited_as == InviteSource.TEAM_MEMBER  # 팀으로 초대된 경우만
+        )
     ).distinct()
     
     project_rows = projects_query.all()

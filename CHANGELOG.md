@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_082] Simplify admin initialization to work with email-only configuration (2025-06-25)
+  - Remove INITIAL_ADMIN_PASSWORD requirement for existing users
+  - Allow admin privilege assignment to existing users with only INITIAL_ADMIN_EMAIL
+  - Improve security by avoiding password storage in environment files
+  - New users still require password for account creation
+- [TASK_063] Fix team project display to show only team-invited projects (2025-06-25)
+  - Update get_team_projects function to filter by InviteSource.TEAM_MEMBER only
+  - Prevent individual member's personal projects from appearing in team project lists
+  - Resolve data integrity issue where team members' personal projects were incorrectly displayed as team projects
+  - Improve team project isolation and data accuracy
+
 ### Added
 - [TASK_076] Automatic MCP encryption key generation and management (2025-06-25)
   - Add MCP_ENCRYPTION_KEY to .env.example and .env.hybrid.example with comprehensive documentation
