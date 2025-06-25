@@ -52,42 +52,38 @@ def upgrade() -> None:
         op.create_table('teams',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('name', sa.String(length=255), nullable=False),
-            sa.Column('description', sa.String(length=1000), nullable=True),
             sa.Column('slug', sa.String(length=255), nullable=False),
-            sa.Column('avatar_url', sa.String(length=500), nullable=True),
-            sa.Column('billing_email', sa.String(length=255), nullable=True),
-            sa.Column('subscription_plan', sa.String(length=50), nullable=False, server_default='free'),
-            sa.Column('max_projects', sa.Integer(), nullable=True),
-            sa.Column('max_members', sa.Integer(), nullable=True),
-            sa.Column('is_active', sa.Boolean(), nullable=False),
-            sa.Column('settings', sa.JSON(), nullable=False),
-            sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('description', sa.String(length=500), nullable=True),
+            sa.Column('is_personal', sa.Boolean(), nullable=False, server_default='false'),
+            sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
+            sa.Column('plan', sa.String(length=50), nullable=False, server_default='free'),
+            sa.Column('max_api_keys', sa.Integer(), nullable=False, server_default='5'),
+            sa.Column('max_members', sa.Integer(), nullable=False, server_default='10'),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
-            sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id'),
             sa.UniqueConstraint('slug')
         )
+        op.create_index('ix_teams_slug', 'teams', ['slug'], unique=False)
     
     # Create team_members table if it doesn't exist
     if not table_exists('team_members'):
         op.create_table('team_members',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('team_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('role', sa.Enum('OWNER', 'ADMIN', 'MEMBER', name='teamrole'), nullable=False),
-            sa.Column('permissions', sa.JSON(), nullable=True),
-            sa.Column('status', sa.String(length=20), nullable=False, server_default='active'),
-            sa.Column('joined_at', sa.DateTime(), nullable=False),
+            sa.Column('team_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('role', sa.Enum('OWNER', 'DEVELOPER', 'REPORTER', name='teamrole'), nullable=False),
             sa.Column('invited_by_id', postgresql.UUID(as_uuid=True), nullable=True),
             sa.Column('invited_at', sa.DateTime(), nullable=True),
+            sa.Column('joined_at', sa.DateTime(), nullable=True),
+            sa.Column('is_default', sa.Boolean(), nullable=False, server_default='false'),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(['invited_by_id'], ['users.id'], ),
             sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('team_id', 'user_id')
+            sa.UniqueConstraint('user_id', 'team_id', name='uq_user_team')
         )
     
     # Create projects table if it doesn't exist

@@ -199,20 +199,6 @@ function JsonBulkAddForm({
 
   // JSON 예시 설정 (간단한 형식)
   const exampleConfig = `{
-  "excel-mcp-server": {
-    "disabled": false,
-    "timeout": 300,
-    "type": "stdio",
-    "command": "npx",
-    "args": [
-      "-y",
-      "@smithery/cli@latest",
-      "run",
-      "@negokaz/excel-mcp-server",
-      "--key",
-      "78f3339f-b944-49c3-bbcb-57e6aa079e2b"
-    ]
-  },
   "brave-search": {
     "disabled": false,
     "timeout": 60,
@@ -225,31 +211,6 @@ function JsonBulkAddForm({
     "env": {
       "BRAVE_API_KEY": "your-brave-api-key-here"
     }
-  },
-  "github-server": {
-    "disabled": false,
-    "timeout": 30,
-    "type": "stdio",
-    "command": "npx",
-    "args": [
-      "-y",
-      "@modelcontextprotocol/server-github"
-    ],
-    "env": {
-      "GITHUB_TOKEN": "your-github-token-here"
-    }
-  },
-  "database-jdbc": {
-    "disabled": false,
-    "timeout": 60,
-    "type": "stdio",
-    "command": "jbang",
-    "args": [
-      "run",
-      "jdbc@quarkiverse/quarkus-mcp-servers",
-      "jdbc:postgresql://localhost:5432/mydb"
-    ],
-    "description": "Database JDBC server example"
   }
 }`;
 

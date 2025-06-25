@@ -1156,24 +1156,24 @@ async def get_server_tool_calls(
     
     # Get recent tool calls from the database
     try:
-        from ..models.tool_call_log import ToolCallLog
+        from ..models.tool_call_log import ToolCallLog, CallStatus
         
         tool_calls = db.query(ToolCallLog).filter(
             and_(
                 ToolCallLog.server_id == server_id,
                 ToolCallLog.project_id == project_id
             )
-        ).order_by(ToolCallLog.called_at.desc()).limit(limit).all()
+        ).order_by(ToolCallLog.timestamp.desc()).limit(limit).all()
         
         return [
             ToolCall(
                 id=str(call.id),
                 tool_name=call.tool_name,
-                client_name=call.client_name or "Unknown",
-                status="success" if call.success else "error",
-                response_time=call.response_time or 0.0,
-                called_at=call.called_at.isoformat() if call.called_at else datetime.utcnow().isoformat(),
-                error_message=call.error_message if not call.success else None
+                client_name="Unknown",  # ToolCallLog doesn't have client_name
+                status=call.status.value if call.status else "unknown",
+                response_time=call.execution_time or 0.0,
+                called_at=call.timestamp.isoformat() if call.timestamp else datetime.utcnow().isoformat(),
+                error_message=call.error_message if call.status != CallStatus.SUCCESS else None
             )
             for call in tool_calls
         ]
