@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_085] API Key creation success dialog with secure key display (2025-06-25)
+  - Add ApiKeySuccessDialog component with masked/visible key toggle
+  - Implement secure API key copy functionality with visual feedback
+  - Add comprehensive security warnings and usage guidelines
+  - Include API key metadata display (name, description, expiration)
+  - Enable one-time secure display of generated API keys with proper UX flow
+
 ### Fixed
 - [TASK_078] Fix api_usage table schema mismatch for API key deletion (2025-06-25)
   - Update api_usage table schema to match ApiUsage model definition

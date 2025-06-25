@@ -26,6 +26,7 @@ import { ProjectLayout } from '@/components/projects/ProjectLayout';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ApiKeySuccessDialog } from '@/components/api-keys/ApiKeySuccessDialog';
 import { toast } from 'sonner';
 
 export default function ProjectApiKeysPage() {
@@ -44,6 +45,8 @@ export default function ProjectApiKeysPage() {
 
   // State management
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [createdApiKey, setCreatedApiKey] = useState<any>(null);
   const [apiKeyData, setApiKeyData] = useState({
     name: '',
     description: '',
@@ -66,17 +69,19 @@ export default function ProjectApiKeysPage() {
     }
 
     try {
-      await createProjectApiKey(projectId, {
+      const newApiKey = await createProjectApiKey(projectId, {
         name: apiKeyData.name,
         description: apiKeyData.description || undefined,
         expires_at: apiKeyData.expires_at || undefined
       });
 
-      // Reset form
+      // Reset form and close creation dialog
       setApiKeyData({ name: '', description: '', expires_at: null });
       setIsApiKeyDialogOpen(false);
       
-      toast.success('API key has been created successfully.');
+      // Show success dialog with the new API key
+      setCreatedApiKey(newApiKey);
+      setIsSuccessDialogOpen(true);
     } catch (error) {
       console.error('API key creation error:', error);
       toast.error('Failed to create API key.');
@@ -492,6 +497,20 @@ export default function ProjectApiKeysPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* API Key Success Dialog */}
+        {createdApiKey && (
+          <ApiKeySuccessDialog
+            open={isSuccessDialogOpen}
+            onOpenChange={(open) => {
+              setIsSuccessDialogOpen(open);
+              if (!open) {
+                setCreatedApiKey(null);
+              }
+            }}
+            apiKey={createdApiKey}
+          />
+        )}
       </div>
     </ProjectLayout>
   );

@@ -432,11 +432,26 @@
   - [x] 팀별 멤버 수 및 기본 정보 표시
   - [x] 확장 시에만 개별 멤버 테이블 표시
 
+### TASK_085: API Key 생성 성공 다이얼로그 구현
+- [x] ApiKeySuccessDialog 컴포넌트 생성
+  - [x] 생성된 API Key 안전한 표시 (마스킹/표시 토글)
+  - [x] 복사 기능 및 시각적 피드백 구현
+  - [x] 보안 경고 및 사용 가이드라인 추가
+  - [x] API Key 메타데이터 표시 (이름, 설명, 만료일)
+- [x] API Key 생성 플로우 수정
+  - [x] 성공 후 바로 다이얼로그 닫기 → 성공 다이얼로그 표시로 변경
+  - [x] 생성된 API Key 값을 state에 저장하여 성공 다이얼로그에 전달
+  - [x] 사용자가 확인 후 다이얼로그 닫기 방식으로 UX 개선
+- [x] 보안 기능 강화
+  - [x] "한 번만 표시" 보안 안내 메시지
+  - [x] 안전한 저장 및 관리 가이드라인
+  - [x] 버전 관리 시스템 커밋 금지 경고
+
 ## Progress Status  
-- Current Progress: TASK_078 - Activity 모델 setter 구현 완료
+- Current Progress: TASK_085 - API Key 생성 성공 다이얼로그 구현 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: Activity 모델에 target_type, target_id, meta_data setter 추가 완료
+- Automatic Check Feedback: ApiKeySuccessDialog 컴포넌트 구현 및 보안 UX 개선 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
