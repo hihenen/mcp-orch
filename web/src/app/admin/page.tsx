@@ -299,25 +299,16 @@ export default function AdminPage() {
 
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center space-x-3">
-                  {stats?.worker_status === 'running' ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                  )}
+                  <AlertTriangle className="h-5 w-5 text-blue-500" />
                   <div>
                     <div className="font-medium">APScheduler Worker</div>
                     <div className="text-sm text-muted-foreground">
-                      {stats?.worker_status === 'running' ? 'Auto server status check running' : 'Worker is stopped'}
+                      Background worker status monitoring feature
                     </div>
                   </div>
                 </div>
-                <Badge 
-                  className={stats?.worker_status === 'running' 
-                    ? "bg-green-100 text-green-800 border-green-200" 
-                    : "bg-yellow-100 text-yellow-800 border-yellow-200"
-                  }
-                >
-                  {stats?.worker_status === 'running' ? 'Running' : 'Stopped'}
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                  Coming Soon
                 </Badge>
               </div>
             </div>

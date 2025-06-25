@@ -447,11 +447,45 @@
   - [x] 안전한 저장 및 관리 가이드라인
   - [x] 버전 관리 시스템 커밋 금지 경고
 
+### TASK_086: Admin 화면 APScheduler Worker 상태 표시 문제 분석
+- [x] Admin 화면 System Status 컴포넌트 위치 분석
+  - [x] Admin 화면 구조 파악 (`/web/src/app/admin/page.tsx`)
+  - [x] System Status 컴포넌트 구현 위치 확인 (266-326줄, APScheduler Worker 표시)
+  - [x] Worker 상태 표시 로직 분석 (`/api/admin/stats` 엔드포인트 사용)
+- [x] APScheduler Worker 상태 확인 로직 조사
+  - [x] 백엔드 Worker 상태 체크 API 엔드포인트 확인 (`/api/workers/status`, `/api/admin/stats`)
+  - [x] Worker 상태 조회 로직 분석 (`scheduler_service.get_status()` 메서드)
+  - [x] Background scheduler 실행 상태 확인 방법 조사 (APScheduler 기반 서비스)
+- [x] 실제 Worker 실행 상태 vs 표시 상태 불일치 원인 분석
+  - [x] APScheduler 상태 추출 로직 문제점 파악 (하드코딩된 "running" 상태)
+  - [x] Worker 프로세스 상태 감지 방법 검증 (`scheduler_service.is_running` 플래그)
+  - [x] 상태 업데이트 주기 및 캐싱 문제 확인 (Admin Stats 하드코딩 문제)
+- [ ] 문제 해결 방안 구현
+  - [ ] Admin Stats API에서 실제 scheduler_service 상태 사용하도록 수정
+  - [ ] Worker 상태 조회 로직 통합 (scheduler_service 의존성 추가)
+  - [ ] 프론트엔드 SystemStats 인터페이스 업데이트
+  - [ ] 실시간 상태 업데이트 테스트 및 검증
+
+### TASK_087: Admin system logs ServerLog 모델 관계 매핑 수정
+- [x] ServerLog 모델의 project_id 필드 부재 문제 분석
+  - [x] TASK_080에서 ServerLog에서 project_id 필드 제거됨을 확인
+  - [x] admin.py에서 직접 ServerLog.project_id 참조하려는 시도가 오류 원인 파악
+  - [x] McpServer 테이블을 통한 간접 참조 필요성 확인
+- [x] admin.py의 ServerLog 쿼리 수정
+  - [x] query에서 McpServer.project_id.label('project_id')로 변경
+  - [x] JOIN 구문에서 McpServer와 Project 테이블 연결 수정
+  - [x] 프로젝트 필터링에서 McpServer.project_id 사용으로 변경
+  - [x] source 필드 기본값 "server_log" 제공
+- [x] 관계형 데이터베이스 매핑 검증
+  - [x] ServerLog → McpServer → Project 관계 확인
+  - [x] 모든 JOIN 조건 및 필터링 로직 점검 완료
+  - [x] admin logs API의 project_id 참조 무결성 확보
+
 ## Progress Status  
-- Current Progress: TASK_085 - API Key 생성 성공 다이얼로그 구현 완료
+- Current Progress: TASK_087 - Admin system logs ServerLog 모델 관계 매핑 수정 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: ApiKeySuccessDialog 컴포넌트 구현 및 보안 UX 개선 완료
+- Automatic Check Feedback: ServerLog admin API의 project_id 참조 문제 해결 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable one-time secure display of generated API keys with proper UX flow
 
 ### Fixed
+- [TASK_087] Admin system logs ServerLog model relationship mapping (2025-06-25)
+  - Fix admin API to reference project_id through McpServer relationship instead of direct ServerLog.project_id
+  - Update ServerLog query joins to properly connect McpServer and Project tables
+  - Resolve "type object 'ServerLog' has no attribute 'project_id'" error in admin logs interface
+  - Add default source field value for ServerLog entries to maintain API compatibility
+  - Enable proper admin system log filtering and project association
 - [TASK_078] Fix api_usage table schema mismatch for API key deletion (2025-06-25)
   - Update api_usage table schema to match ApiUsage model definition
   - Add missing columns: team_id, tool_name, server_name, response_time_ms, tokens_used, bytes_transferred, cost_credits

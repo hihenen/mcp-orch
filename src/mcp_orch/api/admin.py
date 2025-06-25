@@ -373,19 +373,18 @@ async def get_system_logs(
         query = db.query(
             ServerLog.id,
             ServerLog.server_id,
-            ServerLog.project_id,
+            McpServer.project_id.label('project_id'),
             ServerLog.level,
             ServerLog.category,
             ServerLog.message,
             ServerLog.details,
             ServerLog.timestamp,
-            ServerLog.source,
             McpServer.name.label('server_name'),
             Project.name.label('project_name')
         ).join(
             McpServer, ServerLog.server_id == McpServer.id
         ).join(
-            Project, ServerLog.project_id == Project.id
+            Project, McpServer.project_id == Project.id
         )
         
         # 기본 날짜 범위 제한 (성능을 위해 기본 최근 24시간)
@@ -433,7 +432,7 @@ async def get_system_logs(
             try:
                 from uuid import UUID
                 project_uuid = UUID(project_id)
-                query = query.filter(ServerLog.project_id == project_uuid)
+                query = query.filter(McpServer.project_id == project_uuid)
             except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -483,7 +482,7 @@ async def get_system_logs(
                 message=log_data.message,
                 details=log_data.details,
                 timestamp=log_data.timestamp,
-                source=log_data.source,
+                source="server_log",  # ServerLog 모델에 source 필드가 없으므로 기본값 사용
                 server_name=log_data.server_name,
                 project_name=log_data.project_name
             )
