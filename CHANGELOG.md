@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_068] Add quickstart-external-db.sh script for external database deployments (2025-06-25)
+  - Create dedicated script for external database usage (AWS Aurora, RDS, Supabase, etc.)
+  - Skip PostgreSQL Docker container when using external databases
+  - Add DATABASE_URL validation and warning messages for localhost configurations
+  - Provide clear guidance for external database setup and migration
+  - Maintain frontend Docker container support for hybrid deployments
+
 ### Changed
+- [TASK_068] Remove INITIAL_ADMIN_PASSWORD requirement and simplify admin setup (2025-06-25)
+  - Remove INITIAL_ADMIN_PASSWORD from all environment files for security
+  - Add clear English step-by-step admin setup process in comments
+  - Simplify admin workflow: signup → set email → restart → auto admin privileges
+  - Eliminate security risk of storing plaintext passwords in environment variables
 - [TASK_067] Standardize database configuration with DATABASE_URL as primary option (2025-06-25)
   - Set DATABASE_URL as the recommended primary option in all environment files
   - Add clear English comments with "Choose ONE option" guidance in .env.hybrid.example
