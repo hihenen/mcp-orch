@@ -533,11 +533,25 @@
   - [x] 수동 관리자 설정 방법 안내
 - [x] CHANGELOG.md 업데이트
 
+### TASK_091: 회원가입 성공 시 즉시 리다이렉트 구현
+- [x] 회원가입 플로우 지연 문제 분석
+  - [x] 토스트 표시 시간 5초 + 리다이렉트 지연 1.5초 = 총 6.5초 지연 확인
+  - [x] 사용자 경험 개선 필요성 파악
+- [x] 토스트 표시 시간 최적화
+  - [x] signup/page.tsx에서 duration을 5000ms에서 2000ms로 단축
+  - [x] 적절한 피드백 유지하면서 대기 시간 감소
+- [x] 리다이렉트 지연 제거
+  - [x] setTimeout 1500ms 지연 완전 제거
+  - [x] 즉시 로그인 페이지로 이동하도록 변경
+- [x] UX 개선 검증
+  - [x] 전체 지연 시간 6.5초 → 2초로 대폭 단축
+  - [x] 자연스러운 전환 플로우 유지
+
 ## Progress Status  
-- Current Progress: TASK_092 - INITIAL_ADMIN_EMAIL 자동 사용자 생성 비활성화 완료
+- Current Progress: TASK_091 - 회원가입 성공 시 즉시 리다이렉트 구현 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 자동 관리자 계정 생성 기능을 성공적으로 비활성화, 보안 강화 및 수동 관리자 설정 방식으로 변경
+- Automatic Check Feedback: 회원가입 성공 플로우 개선 완료, 사용자 대기 시간 6.5초에서 2초로 단축
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
