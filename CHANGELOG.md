@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fix Frontend Docker container authentication issues
 
 ### Changed
+- [TASK_071] Add Google DNS configuration to Frontend Docker container (2025-06-25)
+  - Add DNS servers (8.8.8.8, 8.8.4.4) to mcp-orch-frontend service
+  - Resolve Docker container DNS resolution issues for external domains
+  - Enable reliable domain name resolution in containerized environments
+  - Follow Docker Compose standard DNS configuration practices
 - [TASK_070] Update quickstart scripts to use production-appropriate settings (2025-06-25)
   - Remove --reload option from default serve command in quickstart scripts
   - Set production log level to INFO instead of DEBUG for better performance
