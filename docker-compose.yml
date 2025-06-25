@@ -53,8 +53,8 @@ services:
   # Frontend Web Interface
   mcp-orch-frontend:
     build:
-      context: ./web
-      dockerfile: ../Dockerfile.frontend
+      context: .
+      dockerfile: Dockerfile.frontend
       args:
         - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
     container_name: mcp-orch-frontend

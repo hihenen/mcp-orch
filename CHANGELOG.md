@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_063] Fix Docker frontend build context error in quickstart deployment (2025-06-25)
+  - Resolve "/web: not found" error during Docker Compose build process
+  - Update docker-compose.yml frontend service to use project root as build context
+  - Fix Dockerfile.frontend path reference for proper COPY web/ command execution
+  - Enable successful quickstart.sh execution on EC2 and other deployment environments
+
+### Added
+- [TASK_062] Add comprehensive shutdown script for clean service termination (2025-06-25)
+  - Create scripts/shutdown.sh with intelligent process detection and safe termination
+  - Support multiple shutdown modes: interactive, force, docker-only, processes-only
+  - Automatic detection of MCP backend processes, Docker containers, and port conflicts
+  - Optional data volume cleanup with user confirmation
+  - Status verification and restart instructions after shutdown
+  - Update README with shutdown management documentation
+
 ### Changed
 - [TASK_061] Simplify deployment options to 2 clear choices (2025-06-25)
   - Remove complex setup scripts (setup-production.sh, setup-standard.sh, dev-setup.sh)

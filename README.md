@@ -283,8 +283,17 @@ INITIAL_ADMIN_PASSWORD=your-secure-password
 ### Service Management
 
 ```bash
-# Stop all services
-docker compose down
+# Stop all services (recommended)
+./scripts/shutdown.sh
+
+# Stop services with options
+./scripts/shutdown.sh --force        # Force shutdown without prompts
+./scripts/shutdown.sh --docker-only  # Docker containers only
+./scripts/shutdown.sh --help         # Show all options
+
+# Manual shutdown (alternative)
+docker compose down                  # For production deployment
+kill $(pgrep -f "mcp-orch serve")   # For local development backend
 
 # View logs
 docker compose logs -f

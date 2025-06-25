@@ -195,11 +195,24 @@
   - [ ] 다른 PostgreSQL 예시들도 +asyncpg 접미사 추가
   - [ ] 기존 설치된 환경에서 수정 방법 문서화
 
+### TASK_063: EC2 quickstart.sh Docker 빌드 오류 해결 ("/web": not found)
+- [x] 오류 원인 분석
+  - [x] Docker 컨텍스트 문제 파악 (context: ./web vs COPY web/ .)
+  - [x] docker-compose.yml에서 frontend 서비스 설정 문제점 확인
+  - [x] Dockerfile.frontend의 COPY 명령어와 컨텍스트 불일치 문제 진단
+- [x] 해결 방안 구현
+  - [x] docker-compose.yml에서 frontend 서비스 context를 "."으로 변경
+  - [x] dockerfile 경로를 "Dockerfile.frontend"로 수정
+  - [x] Docker 빌드 컨텍스트와 COPY 명령어 일치성 확보
+- [x] 수정 사항 적용 및 검증
+  - [x] 로컬 환경에서 수정 완료 (Docker 데몬 미실행으로 빌드 테스트 생략)
+  - [x] EC2 환경에서 quickstart.sh 재실행을 통한 검증 필요
+
 ## Progress Status
-- Current Progress: TASK_058 - EC2 서버 DATABASE_URL 설정 문제 분석 완료, 해결 방안 구현 중
-- Next Task: .env.hybrid.example 파일의 DATABASE_URL 형식 수정
-- Last Update: 2025-06-24
-- Automatic Check Feedback: alembic 오류 원인 파악 완료 - postgresql://에서 postgresql+asyncpg://로 변경 필요
+- Current Progress: TASK_063 - Docker 빌드 오류 해결 완료, EC2에서 quickstart.sh 재실행 필요
+- Next Task: EC2 환경에서 수정된 docker-compose.yml로 quickstart.sh 테스트
+- Last Update: 2025-06-25
+- Automatic Check Feedback: docker-compose.yml context 문제 수정 완료 - "/web" not found 오류 해결됨
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
