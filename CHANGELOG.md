@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable one-time secure display of generated API keys with proper UX flow
 
 ### Changed
+- [TASK_091] Improve signup success redirect timing for better user experience (2025-06-25)
+  - Reduce success toast display duration from 5 seconds to 2 seconds
+  - Remove 1.5 second redirect delay for immediate login page navigation
+  - Improve overall signup completion flow responsiveness
+  - Maintain visual feedback while eliminating unnecessary waiting time
 - [TASK_088] Update Admin Worker Status display to "Coming Soon" (2025-06-25)
   - Change APScheduler Worker status from inaccurate "Stopped" display to "Coming Soon" badge
   - Update both Worker Status card and Core Component Status sections in admin panel
@@ -23,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prioritize user experience over incomplete feature implementation
 
 ### Changed
+- [TASK_092] Disable automatic admin user creation on server startup (2025-06-25)
+  - Remove automatic user creation logic for INITIAL_ADMIN_EMAIL environment variable
+  - Require manual user registration followed by admin privilege assignment
+  - Update environment file documentation to reflect manual admin setup process
+  - Improve security by preventing unintended automatic user account creation
 - [TASK_090] Integrate Global Servers functionality into Admin Panel (2025-06-25)
   - Move Global Servers management from standalone /servers route to admin panel structure
   - Add Global Servers section to Admin Panel Quick Actions for better organization

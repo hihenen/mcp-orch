@@ -71,7 +71,7 @@ export default function SignUpPage() {
       // Show success toast
       toast.success(`🎉 회원가입 완료! ${formData.name}님, 환영합니다!`, {
         description: "새 계정이 성공적으로 생성되었습니다.",
-        duration: 5000,
+        duration: 2000,
       })
 
       // Store success message for login page
@@ -80,10 +80,8 @@ export default function SignUpPage() {
         timestamp: Date.now()
       }))
 
-      // Navigate to login page after a brief delay
-      setTimeout(() => {
-        router.push('/auth/signin?from=signup')
-      }, 1500)
+      // Navigate to login page immediately
+      router.push('/auth/signin?from=signup')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred during signup.')
     } finally {

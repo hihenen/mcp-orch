@@ -521,11 +521,23 @@
   - [x] 관련 참조 및 링크 정리
 - [x] CHANGELOG.md 업데이트
 
+### TASK_092: INITIAL_ADMIN_EMAIL 자동 사용자 생성 비활성화
+- [x] 초기 관리자 생성 로직 조사
+  - [x] 백엔드에서 INITIAL_ADMIN_EMAIL 환경변수 사용 위치 찾기
+  - [x] 사용자 자동 생성 코드 위치 파악
+- [x] 자동 생성 로직 비활성화
+  - [x] 초기 관리자 자동 생성 코드 제거 또는 비활성화
+  - [x] 기존 사용자 권한 부여 로직은 유지
+- [x] 환경 파일 설명 업데이트
+  - [x] .env.example 등에서 관련 설명 수정
+  - [x] 수동 관리자 설정 방법 안내
+- [x] CHANGELOG.md 업데이트
+
 ## Progress Status  
-- Current Progress: TASK_090 - Global Servers 기능 Admin Panel 통합 완료
+- Current Progress: TASK_092 - INITIAL_ADMIN_EMAIL 자동 사용자 생성 비활성화 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: Global Servers 관리 기능을 Admin Panel로 성공적으로 통합, 일관된 관리자 인터페이스 제공
+- Automatic Check Feedback: 자동 관리자 계정 생성 기능을 성공적으로 비활성화, 보안 강화 및 수동 관리자 설정 방식으로 변경
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
