@@ -52,8 +52,7 @@ class Project(Base):
     updated_at: datetime = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 보안 설정
-    sse_auth_required: bool = Column(Boolean, default=False, nullable=False)  # SSE 연결 인증 필수 여부
-    message_auth_required: bool = Column(Boolean, default=True, nullable=False)  # 메시지 호출 인증 필수 여부
+    jwt_auth_required: bool = Column(Boolean, default=True, nullable=False)  # JWT 인증 필수 여부 (SSE + Message 통합)
     allowed_ip_ranges: Optional[str] = Column(JSON, default=list)  # 허용된 IP 범위 목록
     
     # 관계
@@ -64,6 +63,7 @@ class Project(Base):
     client_sessions = relationship("ClientSession", back_populates="project", cascade="all, delete-orphan")
     # ToolCallLog 관계는 ForeignKey가 없으므로 주석 처리
     # tool_call_logs = relationship("ToolCallLog", back_populates="project", cascade="all, delete-orphan")
+    
 
 
 class ProjectMember(Base):

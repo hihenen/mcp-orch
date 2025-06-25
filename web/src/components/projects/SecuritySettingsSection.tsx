@@ -9,8 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   Shield, 
-  Server, 
-  MessageSquare,
   Globe,
   CheckCircle,
   AlertTriangle
@@ -18,8 +16,7 @@ import {
 import { toast } from 'sonner';
 
 interface SecuritySettings {
-  sse_auth_required: boolean;
-  message_auth_required: boolean;
+  jwt_auth_required: boolean;
   allowed_ip_ranges: string[];
 }
 
@@ -29,8 +26,7 @@ interface SecuritySettingsSectionProps {
 
 export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionProps) {
   const [settings, setSettings] = useState<SecuritySettings>({
-    sse_auth_required: false,
-    message_auth_required: true,
+    jwt_auth_required: true,
     allowed_ip_ranges: []
   });
 
@@ -143,52 +139,31 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
           Authentication Settings
         </CardTitle>
         <CardDescription>
-          Manage authentication settings for SSE connections and message calls in your project
+          Manage JWT authentication settings for all MCP connections in your project
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* 인증 설정 */}
         <div className="space-y-4">
-          <h4 className="font-medium">MCP Authentication Settings</h4>
+          <h4 className="font-medium">JWT Authentication</h4>
           
-          <div className="grid grid-cols-1 gap-4">
-            {/* SSE 인증 설정 */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Server className="h-5 w-5 text-blue-600" />
-                <div>
-                  <Label className="font-medium">SSE Connection Authentication</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require authentication for /sse endpoint access (currently unsupported by Cline)
-                  </p>
-                </div>
+          {/* JWT 인증 설정 */}
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 text-blue-600" />
+              <div>
+                <Label className="font-medium">JWT Authentication Required</Label>
+                <p className="text-sm text-muted-foreground">
+                  Require JWT authentication for all MCP connections (SSE and Message endpoints)
+                </p>
               </div>
-              <Switch
-                checked={settings.sse_auth_required}
-                onCheckedChange={(checked: boolean) => 
-                  setSettings(prev => ({ ...prev, sse_auth_required: checked }))
-                }
-              />
             </div>
-
-            {/* Message 인증 설정 */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-5 w-5 text-green-600" />
-                <div>
-                  <Label className="font-medium">Message Call Authentication</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require authentication for /message endpoint tool calls (recommended)
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.message_auth_required}
-                onCheckedChange={(checked: boolean) => 
-                  setSettings(prev => ({ ...prev, message_auth_required: checked }))
-                }
-              />
-            </div>
+            <Switch
+              checked={settings.jwt_auth_required}
+              onCheckedChange={(checked: boolean) => 
+                setSettings(prev => ({ ...prev, jwt_auth_required: checked }))
+              }
+            />
           </div>
         </div>
 
@@ -251,15 +226,9 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
               <h4 className="font-medium text-blue-900">Current Authentication Status</h4>
               <div className="text-sm text-blue-700 mt-2 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span>SSE Connection:</span>
-                  <Badge variant={settings.sse_auth_required ? "default" : "secondary"}>
-                    {settings.sse_auth_required ? "Authentication Required" : "No Authentication"}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>Message Calls:</span>
-                  <Badge variant={settings.message_auth_required ? "default" : "secondary"}>
-                    {settings.message_auth_required ? "Authentication Required" : "No Authentication"}
+                  <span>JWT Authentication:</span>
+                  <Badge variant={settings.jwt_auth_required ? "default" : "secondary"}>
+                    {settings.jwt_auth_required ? "Required" : "Disabled"}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
@@ -280,8 +249,8 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
             <div>
               <h4 className="font-medium text-green-900">Recommended Settings</h4>
               <ul className="text-sm text-green-700 mt-2 space-y-1">
-                <li>• <strong>SSE Authentication:</strong> Recommended to disable as it's currently unsupported by Cline</li>
-                <li>• <strong>Message Authentication:</strong> Recommended to enable for security</li>
+                <li>• <strong>JWT Authentication:</strong> Recommended to enable for secure MCP connections</li>
+                <li>• <strong>API Keys:</strong> Use project API keys for external MCP client access</li>
                 <li>• <strong>IP Restriction:</strong> Currently under development - coming in future updates</li>
                 <li>• Settings changes are automatically saved</li>
               </ul>

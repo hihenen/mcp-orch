@@ -332,16 +332,11 @@ async def get_current_user_for_standard_mcp(
     # SSE 연결인지 확인
     is_sse_request = request.url.path.endswith('/sse')
     
-    # SSE 연결 시 인증 정책 확인
-    if is_sse_request:
-        if not project.sse_auth_required:
-            logger.info(f"Standard MCP SSE connection allowed without auth for project {project_id}")
-            return None  # 인증 없이 허용
-    else:
-        # 메시지 요청 시 인증 정책 확인
-        if not project.message_auth_required:
-            logger.info(f"Standard MCP message request allowed without auth for project {project_id}")
-            return None  # 인증 없이 허용
+    # 프로젝트 JWT 인증 정책 확인 (SSE와 Message 통합)
+    if not project.jwt_auth_required:
+        auth_type = "SSE" if is_sse_request else "Message"
+        logger.info(f"Standard MCP {auth_type} request allowed without auth for project {project_id}")
+        return None  # 인증 없이 허용
     
     # 인증이 필요한 경우 - JWT 토큰 또는 API 키 확인
     user = await get_user_from_jwt_token(request, db)

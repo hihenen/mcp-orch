@@ -21,14 +21,12 @@ router = APIRouter(prefix="/api", tags=["project-security"])
 
 # Pydantic 모델들
 class SecuritySettings(BaseModel):
-    sse_auth_required: bool = False
-    message_auth_required: bool = True
+    jwt_auth_required: bool = True
     allowed_ip_ranges: List[str] = []
 
 
 class SecurityResponse(BaseModel):
-    sse_auth_required: bool
-    message_auth_required: bool
+    jwt_auth_required: bool
     allowed_ip_ranges: List[str]
     
     class Config:
@@ -82,8 +80,7 @@ async def get_project_security_settings(
         )
     
     return SecurityResponse(
-        sse_auth_required=project.sse_auth_required,
-        message_auth_required=project.message_auth_required,
+        jwt_auth_required=project.jwt_auth_required,
         allowed_ip_ranges=project.allowed_ip_ranges or []
     )
 
@@ -120,9 +117,8 @@ async def update_project_security_settings(
             detail="Project not found"
         )
     
-    # 보안 설정 업데이트
-    project.sse_auth_required = security_data.sse_auth_required
-    project.message_auth_required = security_data.message_auth_required
+    # 보안 설정 업데이트 (통합된 JWT 인증 사용)
+    project.jwt_auth_required = security_data.jwt_auth_required
     project.allowed_ip_ranges = security_data.allowed_ip_ranges
     project.updated_at = datetime.utcnow()
     
@@ -130,7 +126,6 @@ async def update_project_security_settings(
     db.refresh(project)
     
     return SecurityResponse(
-        sse_auth_required=project.sse_auth_required,
-        message_auth_required=project.message_auth_required,
+        jwt_auth_required=project.jwt_auth_required,
         allowed_ip_ranges=project.allowed_ip_ranges or []
     )

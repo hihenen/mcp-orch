@@ -52,6 +52,61 @@
   - [x] 스키마 불일치 수정 사항 문서화
   - [x] 호환성 속성 추가 내용 기록
 
+### TASK_098: Auto-provisioning 제어 환경변수 추가
+- [x] 문제 상황 분석
+  - [x] 데이터베이스 초기화 후에도 브라우저 JWT 세션으로 사용자 자동 생성 문제 확인
+  - [x] Enterprise SSO 환경에서는 auto-provisioning이 필수적임을 이해
+  - [x] 현재 개발 환경에서는 통제된 사용자 생성이 필요함을 파악
+- [x] AUTO_PROVISION 환경변수 구현
+  - [x] get_user_from_jwt_token 함수에 auto-provisioning 제어 로직 추가
+  - [x] get_current_user 함수에 auto-provisioning 제어 로직 추가
+  - [x] 사용자 미존재 시 적절한 에러 메시지 반환
+- [x] 환경 설정 및 문서화
+  - [x] .env.example에 AUTO_PROVISION 설정 추가 (기본값: false)
+  - [x] 설정 의미 및 사용법에 대한 명확한 주석 작성
+  - [x] SecurityConfig에 auto_provision 필드 추가
+- [x] 시작 시 로깅 추가
+  - [x] app.py에서 auto-provisioning 정책 상태 로깅
+  - [x] 현재 설정에 대한 명확한 안내 메시지 출력
+- [x] 변수명 리팩토링
+  - [x] DISABLE_AUTO_PROVISION → AUTO_PROVISION으로 변경
+  - [x] 이중 부정 제거로 코드 가독성 향상
+  - [x] 업계 표준 명명 규칙 적용
+- [x] CHANGELOG.md 업데이트
+  - [x] 새로운 기능 추가 사항 문서화
+  - [x] Enterprise SSO 대비 기초 작업임을 명시
+
+### TASK_099: JWT 인증 통합 제어로 단순화
+- [x] 문제 분석
+  - [x] 현재 SSE와 Message 별도 인증 설정의 복잡성 확인
+  - [x] 사용자 혼란 및 설정 관리 어려움 파악
+  - [x] 단일 JWT 인증 제어의 필요성 인식
+- [x] 데이터베이스 모델 수정
+  - [x] Project 모델에서 sse_auth_required, message_auth_required → jwt_auth_required로 통합
+  - [x] 마이그레이션 스크립트 생성 (기존 데이터 보존)
+  - [x] 초기 마이그레이션도 새로운 필드 구조로 업데이트
+- [x] 백엔드 API 업데이트
+  - [x] mcp_sdk_sse_bridge.py의 인증 로직 통합
+  - [x] standard_mcp.py의 인증 로직 통합
+  - [x] project_security.py API 응답 모델 수정 (깔끔한 단일 필드)
+- [x] 호환성 코드 제거
+  - [x] Project 모델에서 @property 접근자 제거
+  - [x] API 응답에서 호환성 필드 제거
+  - [x] 새로운 프론트엔드를 위한 깔끔한 구현
+- [x] CHANGELOG.md 업데이트
+  - [x] JWT 인증 통합 기능 문서화
+  - [x] 깔끔한 구현 방향 명시
+
+### TASK_100: 프론트엔드 JWT 인증 UI 단일화
+- [x] 프로젝트 설정 UI에서 SSE/Message 분리 토글 제거
+- [x] 단일 JWT Authentication 토글로 UI 교체
+- [x] API 호출 로직을 새로운 jwt_auth_required 필드로 업데이트
+- [x] TypeScript 타입 정의 업데이트
+- [x] 사용자 경험 개선 - 설정 설명 텍스트 업데이트
+- [x] Admin 패널 프로젝트 생성/편집 모달 업데이트
+- [x] Admin 프로젝트 목록 페이지 보안 배지 단일화
+- [x] CHANGELOG.md 업데이트
+
 ### TASK_043: API Wrapper 모드 제거 및 Resource Connection 단일 모드 전환
 - [x] 현재 상황 분석 및 작업 계획 수립
 - [x] 프론트엔드 UI에서 Compatibility Mode 선택기 제거
@@ -616,11 +671,42 @@
   - [x] 기존 사용자 권한 부여 방식으로 설명 수정
 - [x] CHANGELOG.md 업데이트
 
+### TASK_100: 프론트엔드 보안 설정 파일 조사 완료
+- [x] 프로젝트 보안 설정 UI 컴포넌트 분석
+  - [x] SecuritySettingsSection 컴포넌트 위치 및 기능 파악 (`/components/projects/SecuritySettingsSection.tsx`)
+  - [x] SSE/Message 인증 토글 UI 구현 확인 (Switch 컴포넌트 사용)
+  - [x] 자동 저장 기능 및 IP 범위 제한 "Coming Soon" 기능 확인
+- [x] 프로젝트 설정 페이지 분석
+  - [x] 메인 설정 페이지 위치 확인 (`/app/projects/[projectId]/settings/page.tsx`)
+  - [x] SecuritySettingsSection 컴포넌트 통합 방식 분석
+  - [x] 권한 관리 (Owner만 수정 가능) 확인
+- [x] Admin 패널 보안 설정 모달 분석
+  - [x] EditProjectModal 컴포넌트 분석 (`/app/admin/projects/components/EditProjectModal.tsx`)
+  - [x] CreateProjectModal 컴포넌트 분석 (`/app/admin/projects/components/CreateProjectModal.tsx`)
+  - [x] Checkbox 기반 SSE/Message 인증 설정 UI 확인
+- [x] API 라우트 및 타입 정의 분석
+  - [x] 보안 설정 API 엔드포인트 확인 (`/api/projects/[projectId]/security/route.ts`)
+  - [x] JWT 인증 기반 GET/PUT 요청 처리 방식 확인
+  - [x] SecuritySettings 인터페이스 정의 확인 (sse_auth_required, message_auth_required, allowed_ip_ranges)
+
+### TASK_101: Admin API 라우트 JWT 인증 업데이트 조사
+- [x] Admin 프로젝트 API 라우트 파일 위치 및 구조 파악
+  - [x] `/api/admin/projects/route.ts` - GET, POST 라우트 (JWT 인증 이미 사용 중)
+  - [x] `/api/admin/projects/[project_id]/route.ts` - GET, PUT, DELETE 라우트 (JWT 인증 이미 사용 중)
+  - [x] `/api/projects/[projectId]/security/route.ts` - GET, PUT 라우트 (JWT 인증 이미 사용 중)
+- [x] Admin 프론트엔드 컴포넌트 sse_auth/message_auth 필드 사용 현황 파악
+  - [x] CreateProjectModal: `jwt_auth_required` 필드 사용 (이미 통합된 새 필드 사용)
+  - [x] EditProjectModal: `jwt_auth_required` 필드 사용 (이미 통합된 새 필드 사용)
+  - [x] Admin projects page: 여전히 `sse_auth_required`, `message_auth_required` 필드 사용 중
+- [x] SecuritySettingsSection 컴포넌트 JWT 통합 상태 확인
+  - [x] SecuritySettings 인터페이스에서 `jwt_auth_required` 사용 (이미 통합됨)
+  - [x] 단일 JWT 인증 토글로 통합 구현됨
+
 ## Progress Status  
-- Current Progress: TASK_096 - ClientSession 모델 데이터베이스 스키마 불일치 수정 완료
-- Next Task: 다음 사용자 요청 대기
+- Current Progress: TASK_100 완료 - 프론트엔드 JWT 인증 UI 단일화 완료  
+- Next Task: 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: MCP 클라이언트 연결 스키마 불일치 해결, Cline 연결 오류 수정 완료
+- Automatic Check Feedback: JWT 인증 통합 프론트엔드 UI 작업 완료 - 이중 토글에서 단일 JWT 제어로 성공적으로 단순화
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

@@ -175,6 +175,17 @@ def get_current_user(credentials: HTTPAuthorizationCredentials, db: Session = De
     # 데이터베이스에서 사용자 찾기 또는 생성
     user = db.query(User).filter(User.id == jwt_user.id).first()
     if not user:
+        # Auto-provisioning 설정 확인
+        auto_provision = os.getenv("AUTO_PROVISION", "false").lower() == "true"
+        
+        if not auto_provision:
+            logger.warning(f"🚫 Auto-provisioning disabled - user {jwt_user.email} not found and won't be created")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account not found. Please contact administrator for account creation.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
         # 사용자가 존재하지 않으면 생성 (NextAuth.js 통합)
         user = User(
             id=jwt_user.id,
@@ -184,7 +195,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials, db: Session = De
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Created new user from JWT: {user.email}")
+        logger.info(f"✅ Created new user from JWT: {user.email}")
     
     return user
 
@@ -490,6 +501,13 @@ async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[Use
         # 데이터베이스에서 사용자 찾기 또는 생성
         user = db.query(User).filter(User.id == jwt_user.id).first()
         if not user:
+            # Auto-provisioning 설정 확인
+            auto_provision = os.getenv("AUTO_PROVISION", "false").lower() == "true"
+            
+            if not auto_provision:
+                logger.warning(f"🚫 Auto-provisioning disabled - user {jwt_user.email} not found and won't be created")
+                return None
+            
             # 사용자가 존재하지 않으면 생성 (NextAuth.js 통합)
             user = User(
                 id=jwt_user.id,
@@ -499,7 +517,7 @@ async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[Use
             db.add(user)
             db.commit()
             db.refresh(user)
-            logger.info(f"Created new user from JWT: {user.email}")
+            logger.info(f"✅ Created new user from JWT: {user.email}")
         
         return user
         

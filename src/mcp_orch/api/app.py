@@ -5,6 +5,7 @@ FastAPI 앱 인스턴스를 생성하고 설정합니다.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict
 
@@ -56,6 +57,13 @@ async def lifespan(app: FastAPI):
     # 컨트롤러 초기화
     controller = app.state.controller
     await controller.initialize()
+    
+    # Auto-provisioning 설정 상태 로깅
+    auto_provision = os.getenv("AUTO_PROVISION", "false").lower() == "true"
+    if auto_provision:
+        logger.info("✅ Auto-provisioning ENABLED - OAuth users will be automatically created")
+    else:
+        logger.info("🚫 Auto-provisioning DISABLED - manual account creation required")
     
     # 기존 사용자 관리자 권한 부여 (신규 생성 없음)
     from ..services.admin_init_service import initialize_admin_user

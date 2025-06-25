@@ -43,6 +43,9 @@ class SecurityConfig(BaseModel):
     # 초기 관리자 계정 설정
     initial_admin_email: Optional[str] = None
     initial_admin_password: Optional[str] = None
+    
+    # 사용자 자동 프로비저닝 설정
+    auto_provision: bool = False
 
 
 class LLMProviderConfig(BaseModel):

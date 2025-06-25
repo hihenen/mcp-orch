@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_100] Frontend JWT authentication UI unification - replace dual SSE/Message toggles with single JWT control (2025-06-25)
+  - Replace separate SSE and Message authentication toggles with unified JWT Authentication control
+  - Update SecuritySettingsSection.tsx to use single jwt_auth_required toggle for all MCP connections
+  - Update admin project creation and editing modals to use unified JWT authentication field
+  - Update admin project list page to display single JWT Auth badge instead of separate SSE/Message badges
+  - Simplify authentication UX from complex dual settings to clear single JWT control
+  - Improve security setting descriptions and recommendations for unified authentication approach
+
+### Added
+- [TASK_099] Unify SSE and Message authentication to single JWT authentication control (2025-06-25)
+  - Replace separate sse_auth_required and message_auth_required with single jwt_auth_required field
+  - Simplify project authentication settings from two toggles to one unified control
+  - Add database migration to preserve existing authentication settings during transition
+  - Clean implementation without backward compatibility layers for new frontend
+  - Update all MCP endpoints to use unified JWT authentication policy
+- [TASK_098] Add AUTO_PROVISION environment variable for user auto-creation control (2025-06-25)
+  - Add environment variable to control automatic user provisioning from OAuth/JWT tokens
+  - Set AUTO_PROVISION=false to require manual account creation (default: false)
+  - Set AUTO_PROVISION=true to automatically create users from valid OAuth tokens
+  - Provide clear error messages when auto-provisioning is disabled and user not found
+  - Add startup logging to show current auto-provisioning policy status
+  - Prepare foundation for future enterprise SSO integration with granular provisioning control
+
 ### Fixed
 - [TASK_097] JWT middleware API key handling for mch_ prefixed tokens (2025-06-25)
   - Fix JWT middleware to properly detect and handle mch_ prefixed API keys using standard Bearer token format

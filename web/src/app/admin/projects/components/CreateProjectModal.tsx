@@ -20,8 +20,7 @@ interface CreateProjectForm {
   name: string;
   description: string;
   owner_email: string;
-  sse_auth_required: boolean;
-  message_auth_required: boolean;
+  jwt_auth_required: boolean;
   allowed_ip_ranges: string[];
 }
 
@@ -36,8 +35,7 @@ export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Create
     name: '',
     description: '',
     owner_email: '',
-    sse_auth_required: false,
-    message_auth_required: true,
+    jwt_auth_required: true,
     allowed_ip_ranges: [],
   });
   const [loading, setLoading] = useState(false);
@@ -68,8 +66,7 @@ export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Create
         name: '',
         description: '',
         owner_email: '',
-        sse_auth_required: false,
-        message_auth_required: true,
+        jwt_auth_required: true,
         allowed_ip_ranges: [],
       });
       setIpRangeInput('');
@@ -172,28 +169,15 @@ export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Create
           <div className="space-y-4">
             <h4 className="text-sm font-medium">Security Settings</h4>
             
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="sse_auth_required"
-                  checked={formData.sse_auth_required}
-                  onCheckedChange={(checked) => handleInputChange('sse_auth_required', checked as boolean)}
-                />
-                <Label htmlFor="sse_auth_required" className="text-sm">
-                  Require SSE Authentication
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="message_auth_required"
-                  checked={formData.message_auth_required}
-                  onCheckedChange={(checked) => handleInputChange('message_auth_required', checked as boolean)}
-                />
-                <Label htmlFor="message_auth_required" className="text-sm">
-                  Require Message Authentication (Recommended)
-                </Label>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="jwt_auth_required"
+                checked={formData.jwt_auth_required}
+                onCheckedChange={(checked) => handleInputChange('jwt_auth_required', checked as boolean)}
+              />
+              <Label htmlFor="jwt_auth_required" className="text-sm">
+                Require JWT Authentication (Recommended)
+              </Label>
             </div>
 
             {/* IP Ranges */}

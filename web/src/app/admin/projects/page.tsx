@@ -26,7 +26,6 @@ import {
   Trash2,
   Crown,
   Server,
-  Key,
   Users,
   Shield,
   Globe,
@@ -44,8 +43,7 @@ interface AdminProjectResponse {
   created_by: string;
   created_at: string;
   updated_at: string;
-  sse_auth_required: boolean;
-  message_auth_required: boolean;
+  jwt_auth_required: boolean;
   allowed_ip_ranges?: string[];
   member_count: number;
   server_count: number;
@@ -212,7 +210,7 @@ export default function ProjectsAdminPage() {
   const totalMembers = projects.reduce((sum, p) => sum + p.member_count, 0);
   const totalServers = projects.reduce((sum, p) => sum + p.server_count, 0);
   const totalApiKeys = projects.reduce((sum, p) => sum + p.api_key_count, 0);
-  const securedProjects = projects.filter(p => p.sse_auth_required && p.message_auth_required).length;
+  const securedProjects = projects.filter(p => p.jwt_auth_required).length;
 
   // Pagination calculations
   const totalPages = Math.ceil(totalProjects / perPage);
@@ -416,16 +414,16 @@ export default function ProjectsAdminPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
-                          {project.sse_auth_required && (
+                          {project.jwt_auth_required && (
                             <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
                               <Shield className="h-3 w-3 mr-1" />
-                              SSE Auth
+                              JWT Auth
                             </Badge>
                           )}
-                          {project.message_auth_required && (
-                            <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">
-                              <Key className="h-3 w-3 mr-1" />
-                              Message Auth
+                          {!project.jwt_auth_required && (
+                            <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-800">
+                              <Shield className="h-3 w-3 mr-1" />
+                              No Auth
                             </Badge>
                           )}
                           {project.allowed_ip_ranges && project.allowed_ip_ranges.length > 0 && (
