@@ -61,28 +61,9 @@ async def initialize_admin_user(settings: Settings) -> Optional[str]:
                     logger.info(f"사용자 {admin_email}은 이미 관리자 권한을 가지고 있음")
                     return f"사용자 {admin_email}은 이미 관리자"
             else:
-                # 새 관리자 계정 생성 (패스워드가 있는 경우에만)
-                if not admin_password:
-                    logger.info(f"사용자 {admin_email}이 존재하지 않고 INITIAL_ADMIN_PASSWORD가 설정되지 않음. 신규 계정 생성 스킵.")
-                    return f"사용자 {admin_email}이 존재하지 않음 - 먼저 회원가입 필요"
-                
-                hashed_password = hash_password(admin_password)
-                
-                new_admin = User(
-                    email=admin_email,
-                    name=admin_email.split('@')[0],  # 이메일에서 이름 생성
-                    password=hashed_password,
-                    is_admin=True,
-                    is_active=True,
-                    provider=None  # 직접 생성된 계정
-                )
-                
-                db.add(new_admin)
-                db.commit()
-                db.refresh(new_admin)
-                
-                logger.info(f"새 관리자 계정 생성 완료: {admin_email} (ID: {new_admin.id})")
-                return f"새 관리자 계정 생성: {admin_email}"
+                # 새 관리자 계정 생성 비활성화 - 기존 사용자만 권한 부여
+                logger.info(f"사용자 {admin_email}이 존재하지 않음. 자동 계정 생성이 비활성화되었습니다. 먼저 회원가입을 완료해주세요.")
+                return f"사용자 {admin_email}이 존재하지 않음 - 먼저 회원가입 필요"
                 
         finally:
             db.close()

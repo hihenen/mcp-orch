@@ -57,15 +57,14 @@ async def lifespan(app: FastAPI):
     controller = app.state.controller
     await controller.initialize()
     
-    # 초기 관리자 계정 생성/업데이트 (비활성화됨)
-    # from ..services.admin_init_service import initialize_admin_user
-    # settings = app.state.settings
-    # try:
-    #     admin_result = await initialize_admin_user(settings)
-    #     logger.info(f"관리자 초기화 결과: {admin_result}")
-    # except Exception as e:
-    #     logger.error(f"관리자 초기화 실패: {e}")
-    logger.info("자동 관리자 계정 생성이 비활성화되었습니다. 수동으로 회원가입 후 관리자 권한을 설정하세요.")
+    # 기존 사용자 관리자 권한 부여 (신규 생성 없음)
+    from ..services.admin_init_service import initialize_admin_user
+    settings = app.state.settings
+    try:
+        admin_result = await initialize_admin_user(settings)
+        logger.info(f"관리자 초기화 결과: {admin_result}")
+    except Exception as e:
+        logger.error(f"관리자 초기화 실패: {e}")
     
     # 스케줄러 서비스 초기화 및 시작
     from ..services.scheduler_service import scheduler_service

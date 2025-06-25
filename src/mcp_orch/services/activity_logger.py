@@ -8,6 +8,7 @@ Phase 3: Event Queue 시스템
 """
 
 import logging
+import json
 from datetime import datetime
 from typing import Dict, Any, Optional, Union
 from uuid import UUID
@@ -18,6 +19,35 @@ from ..models.activity import Activity, ActivityType, ActivitySeverity
 
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_json_serializable(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    딕셔너리에서 JSON 직렬화 불가능한 객체들을 안전하게 제거합니다.
+    
+    Args:
+        data: 검사할 딕셔너리
+        
+    Returns:
+        JSON 직렬화 가능한 딕셔너리
+    """
+    if not data:
+        return {}
+    
+    safe_data = {}
+    for key, value in data.items():
+        try:
+            # JSON 직렬화 테스트
+            json.dumps(value, default=str)
+            safe_data[key] = value
+        except (TypeError, ValueError) as e:
+            # 직렬화 불가능한 객체는 로그에 기록하고 제외
+            logger.warning(f"Skipping non-serializable value for key '{key}': {type(value).__name__} - {e}")
+            # SQLAlchemy Session 등 특별한 객체들은 타입명으로 대체
+            if hasattr(value, '__class__'):
+                safe_data[f"{key}_type"] = value.__class__.__name__
+    
+    return safe_data
 
 
 class ActivityLogger:
@@ -148,6 +178,10 @@ class ActivityLogger:
                 'phase': 'phase_1_database'
             })
             
+            # JSON 직렬화 안전성 검사
+            safe_meta_data = _ensure_json_serializable(meta_data or {})
+            safe_context = _ensure_json_serializable(context)
+            
             # 활동 기록 생성
             activity = Activity(
                 project_id=project_id,
@@ -159,8 +193,8 @@ class ActivityLogger:
                 severity=severity,
                 target_type=target_type,
                 target_id=target_id,
-                meta_data=meta_data or {},
-                context=context
+                meta_data=safe_meta_data,
+                context=safe_context
             )
             
             db.add(activity)
@@ -180,7 +214,7 @@ class ActivityLogger:
                 db.close()
     
     @staticmethod
-    def log_server_created(project_id: UUID, user_id: UUID, server_id: UUID, server_name: str, **kwargs) -> bool:
+    def log_server_created(project_id: UUID, user_id: UUID, server_id: UUID, server_name: str, db: Optional[Session] = None, **kwargs) -> bool:
         """서버 생성 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.SERVER_CREATED,
@@ -190,11 +224,12 @@ class ActivityLogger:
             severity=ActivitySeverity.SUCCESS,
             target_type='server',
             target_id=str(server_id),
-            meta_data={'server_name': server_name, **kwargs}
+            meta_data={'server_name': server_name, **kwargs},
+            db=db
         )
     
     @staticmethod
-    def log_server_deleted(project_id: UUID, user_id: UUID, server_id: UUID, server_name: str, **kwargs) -> bool:
+    def log_server_deleted(project_id: UUID, user_id: UUID, server_id: UUID, server_name: str, db: Optional[Session] = None, **kwargs) -> bool:
         """서버 삭제 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.SERVER_DELETED,
@@ -204,11 +239,12 @@ class ActivityLogger:
             severity=ActivitySeverity.WARNING,
             target_type='server',
             target_id=str(server_id),
-            meta_data={'server_name': server_name, **kwargs}
+            meta_data={'server_name': server_name, **kwargs},
+            db=db
         )
     
     @staticmethod
-    def log_tool_executed(project_id: UUID, user_id: UUID, server_id: UUID, tool_name: str, success: bool = True, **kwargs) -> bool:
+    def log_tool_executed(project_id: UUID, user_id: UUID, server_id: UUID, tool_name: str, success: bool = True, db: Optional[Session] = None, **kwargs) -> bool:
         """도구 실행 활동 로깅 (편의 메소드)"""
         action = ActivityType.TOOL_EXECUTED if success else ActivityType.TOOL_FAILED
         severity = ActivitySeverity.SUCCESS if success else ActivitySeverity.ERROR
@@ -222,11 +258,12 @@ class ActivityLogger:
             severity=severity,
             target_type='server',
             target_id=str(server_id),
-            meta_data={'tool_name': tool_name, 'success': success, **kwargs}
+            meta_data={'tool_name': tool_name, 'success': success, **kwargs},
+            db=db
         )
     
     @staticmethod
-    def log_member_invited(project_id: UUID, inviter_id: UUID, invitee_email: str, role: str, **kwargs) -> bool:
+    def log_member_invited(project_id: UUID, inviter_id: UUID, invitee_email: str, role: str, db: Optional[Session] = None, **kwargs) -> bool:
         """멤버 초대 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.MEMBER_INVITED,
@@ -236,11 +273,12 @@ class ActivityLogger:
             severity=ActivitySeverity.INFO,
             target_type='member',
             target_id=invitee_email,
-            meta_data={'invitee_email': invitee_email, 'role': role, **kwargs}
+            meta_data={'invitee_email': invitee_email, 'role': role, **kwargs},
+            db=db
         )
     
     @staticmethod
-    def log_api_key_created(project_id: UUID, user_id: UUID, key_name: str, **kwargs) -> bool:
+    def log_api_key_created(project_id: UUID, user_id: UUID, key_name: str, db: Optional[Session] = None, **kwargs) -> bool:
         """API 키 생성 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.API_KEY_CREATED,
@@ -250,13 +288,14 @@ class ActivityLogger:
             severity=ActivitySeverity.SUCCESS,
             target_type='api_key',
             target_id=key_name,
-            meta_data={'key_name': key_name, **kwargs}
+            meta_data={'key_name': key_name, **kwargs},
+            db=db
         )
     
     # === 팀 활동 로깅 편의 메소드들 ===
     
     @staticmethod
-    def log_team_created(team_id: UUID, user_id: UUID, team_name: str, **kwargs) -> bool:
+    def log_team_created(team_id: UUID, user_id: UUID, team_name: str, db: Optional[Session] = None, **kwargs) -> bool:
         """팀 생성 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.TEAM_CREATED,
@@ -266,11 +305,12 @@ class ActivityLogger:
             severity=ActivitySeverity.SUCCESS,
             target_type='team',
             target_id=str(team_id),
-            meta_data={'team_name': team_name, **kwargs}
+            meta_data={'team_name': team_name, **kwargs},
+            db=db
         )
     
     @staticmethod
-    def log_team_member_joined(team_id: UUID, user_id: UUID, team_name: str, user_name: str, role: str, **kwargs) -> bool:
+    def log_team_member_joined(team_id: UUID, user_id: UUID, team_name: str, user_name: str, role: str, db: Optional[Session] = None, **kwargs) -> bool:
         """팀 멤버 가입 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.MEMBER_JOINED,
@@ -280,11 +320,12 @@ class ActivityLogger:
             severity=ActivitySeverity.SUCCESS,
             target_type='member',
             target_id=str(user_id),
-            meta_data={'team_name': team_name, 'user_name': user_name, 'role': role, **kwargs}
+            meta_data={'team_name': team_name, 'user_name': user_name, 'role': role, **kwargs},
+            db=db
         )
     
     @staticmethod
-    def log_team_api_key_created(team_id: UUID, user_id: UUID, team_name: str, api_key_name: str, api_key_id: str, **kwargs) -> bool:
+    def log_team_api_key_created(team_id: UUID, user_id: UUID, team_name: str, api_key_name: str, api_key_id: str, db: Optional[Session] = None, **kwargs) -> bool:
         """팀 API 키 생성 활동 로깅 (편의 메소드)"""
         return ActivityLogger.log_activity(
             action=ActivityType.API_KEY_CREATED,
@@ -294,7 +335,8 @@ class ActivityLogger:
             severity=ActivitySeverity.SUCCESS,
             target_type='api_key',
             target_id=api_key_id,
-            meta_data={'team_name': team_name, 'api_key_name': api_key_name, **kwargs}
+            meta_data={'team_name': team_name, 'api_key_name': api_key_name, **kwargs},
+            db=db
         )
 
 

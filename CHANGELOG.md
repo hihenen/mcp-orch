@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_094] Restore admin privilege assignment for existing users via INITIAL_ADMIN_EMAIL (2025-06-25)
+  - Restore selective admin initialization that only grants privileges to existing users
+  - Remove automatic user creation while maintaining admin privilege assignment functionality
+  - Update INITIAL_ADMIN_EMAIL to work as privilege assignment tool for registered users
+  - Improve admin setup workflow by combining manual registration with automatic privilege assignment
+
+### Fixed
+- [TASK_093] Activity Logger JSON serialization error during API key creation (2025-06-25)
+  - Fix SQLAlchemy Session object being passed to Activity Logger meta_data causing JSON serialization errors
+  - Add JSON safety validation to prevent non-serializable objects from being stored in activity metadata
+  - Update all Activity Logger convenience methods to properly handle database session parameters
+  - Resolve "Object of type Session is not JSON serializable" error during API key creation workflow
+  - Enable proper activity logging for all system operations with comprehensive serialization safety
+
 ### Added
 - [TASK_085] API Key creation success dialog with secure key display (2025-06-25)
   - Add ApiKeySuccessDialog component with masked/visible key toggle

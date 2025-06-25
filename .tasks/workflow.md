@@ -547,11 +547,35 @@
   - [x] 전체 지연 시간 6.5초 → 2초로 대폭 단축
   - [x] 자연스러운 전환 플로우 유지
 
+
+### TASK_093: Activity Logger JSON 직렬화 오류 수정
+- [x] Activity Logger JSON 직렬화 오류 원인 분석
+  - [x] SQLAlchemy Session 객체가 meta_data에 포함되어 JSON 직렬화 실패 확인
+  - [x] teams.py에서 log_team_api_key_created 호출 시 db=db가 kwargs로 전달되는 문제 파악
+- [x] meta_data에서 JSON 비호환 객체 제거 로직 추가
+  - [x] _ensure_json_serializable 헬퍼 함수 구현
+  - [x] JSON 직렬화 테스트 및 안전한 데이터만 필터링
+  - [x] _log_to_database 메소드에 안전성 검사 적용
+- [x] API 키 생성 시 Activity Logger 호출 부분 수정
+  - [x] 모든 Activity Logger 편의 메소드에 db 매개변수 명시적 분리
+  - [x] **kwargs에서 db 매개변수가 meta_data로 포함되지 않도록 수정
+- [x] CHANGELOG.md 업데이트
+### TASK_094: INITIAL_ADMIN_EMAIL 기존 사용자 권한 부여 기능 구현
+- [x] admin_init_service.py 수정
+  - [x] 기존 사용자가 있을 때만 관리자 권한 부여
+  - [x] 신규 사용자 자동 생성 로직은 제거
+- [x] app.py에서 호출 재활성화
+  - [x] initialize_admin_user 함수 호출 다시 활성화
+  - [x] 수정된 로직으로 기존 사용자만 처리
+- [x] 환경 파일 설명 업데이트
+  - [x] 기존 사용자 권한 부여 방식으로 설명 수정
+- [x] CHANGELOG.md 업데이트
+
 ## Progress Status  
-- Current Progress: TASK_091 - 회원가입 성공 시 즉시 리다이렉트 구현 완료
+- Current Progress: TASK_093 - Activity Logger JSON 직렬화 오류 수정 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 회원가입 성공 플로우 개선 완료, 사용자 대기 시간 6.5초에서 2초로 단축
+- Automatic Check Feedback: Activity Logger JSON 직렬화 안전성 확보 완료, API 키 생성 오류 해결됨
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
