@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_066] Clean up environment configuration files and remove unused Enterprise features (2025-06-25)
+  - Simplify database configuration with clear "Option 1 vs Option 2" choices in all env files
+  - Remove unused Enterprise/Production features from .env.hybrid.example (SSO, SAML, LDAP, S3 backups, webhooks)
+  - Reduce .env.hybrid.example from 176 to 76 lines (57% reduction in complexity)
+  - Standardize database credentials to mcp_orch/mcp_password across all example files
+  - Remove unnecessary Docker-specific environment variables
+
 ### Fixed
 - [TASK_065] Enhance Docker build configuration to completely skip type checking (2025-06-25)
   - Update next.config.ts to ignore TypeScript and ESLint errors in production environment
