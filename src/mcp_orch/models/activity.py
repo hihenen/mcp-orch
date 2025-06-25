@@ -196,6 +196,18 @@ class Activity(Base):
     def target_id(self, value):
         """호환성을 위한 setter"""
         self.resource_id = value
+    
+    @property
+    def context(self):
+        """호환성을 위한 별칭"""
+        return self.activity_metadata.get('context', {})
+    
+    @context.setter
+    def context(self, value):
+        """호환성을 위한 setter"""
+        if self.activity_metadata is None:
+            self.activity_metadata = {}
+        self.activity_metadata['context'] = value
 
 
 # Backward compatibility alias

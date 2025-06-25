@@ -154,6 +154,7 @@ class ActivityLogger:
                 team_id=team_id,
                 user_id=user_id,
                 action=action,
+                title=description or action.value,  # title 필드 필수
                 description=description,
                 severity=severity,
                 target_type=target_type,
