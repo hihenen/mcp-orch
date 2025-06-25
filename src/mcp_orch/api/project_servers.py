@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from ..database import get_db
 from ..models import Project, ProjectMember, User, McpServer, ProjectRole, ServerLog, LogLevel, LogCategory
 from ..models.mcp_server import McpServerStatus
+from ..models.tool_call_log import CallStatus
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service, ToolExecutionError
 
@@ -1077,7 +1078,7 @@ async def get_server_stats(
             and_(
                 ToolCallLog.server_id == server_id,
                 ToolCallLog.project_id == project_id,
-                ToolCallLog.success == True
+                ToolCallLog.status == CallStatus.SUCCESS
             )
         ).count()
         
@@ -1087,16 +1088,16 @@ async def get_server_stats(
         # Average response time
         avg_response_time = 0.0
         if total_calls > 0:
-            response_times = db.query(ToolCallLog.response_time).filter(
+            response_times = db.query(ToolCallLog.execution_time_ms).filter(
                 and_(
                     ToolCallLog.server_id == server_id,
                     ToolCallLog.project_id == project_id,
-                    ToolCallLog.response_time.isnot(None)
+                    ToolCallLog.execution_time_ms.isnot(None)
                 )
             ).all()
             
             if response_times:
-                avg_response_time = sum(rt[0] for rt in response_times if rt[0]) / len(response_times)
+                avg_response_time = sum(rt[0] / 1000.0 for rt in response_times if rt[0]) / len(response_times)
         
         return UsageStats(
             total_calls=total_calls,

@@ -351,11 +351,25 @@
   - [x] 프로덕션 배포 환경에서의 키 관리 가이드
   - [x] 백업, 로테이션, 비밀 관리 시스템 사용법 설명
 
+### TASK_077: 백엔드 API 필드 매핑 오류 수정 및 프론트엔드 예시 업데이트
+- [x] ToolCallLog 모델 필드 매핑 수정
+  - [x] project_servers.py에서 called_at → timestamp 매핑 수정
+  - [x] success → status.value 매핑 수정
+  - [x] response_time → execution_time 매핑 수정
+  - [x] CallStatus enum import 추가
+- [x] 데이터베이스 재설치 및 테스트
+  - [x] 초기 마이그레이션으로 새 스키마 생성
+  - [x] 백엔드 서버 재시작 및 동작 확인
+  - [x] ToolCallLog 모델을 실제 DB 스키마에 맞게 수정 (execution_time_ms 사용)
+- [x] 프론트엔드 Load Example 업데이트
+  - [x] AddServerDialog에서 brave-search만 표시하도록 변경
+  - [x] 기존 복잡한 예시 제거하고 간단한 구성으로 교체
+
 ## Progress Status
-- Current Progress: TASK_076 - MCP 암호화 키 자동 관리 시스템 구축 완료
-- Next Task: 요청 사항에 따른 추가 작업 대기
+- Current Progress: TASK_077 - 백엔드 API 필드 매핑 오류 수정 및 프론트엔드 예시 업데이트 완료
+- Next Task: 사용자 요청에 따른 추가 작업 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: MCP 암호화 키 관리 개선 완료 - 자동 키 생성, 설치 스크립트 통합, 보안 문서화로 사용자 경험 개선 및 보안 강화
+- Automatic Check Feedback: ToolCallLog 필드 매핑 수정 완료 - execution_time_ms 필드 사용으로 스키마 불일치 해결, 프론트엔드 Load Example을 brave-search만 표시하도록 간소화
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

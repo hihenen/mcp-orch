@@ -35,7 +35,7 @@ class ToolCallLog(Base):
     output_data = Column(JSON)  # 출력 결과
     
     # 실행 정보
-    execution_time = Column(Float)  # 실행 시간 (초)
+    execution_time_ms = Column("execution_time_ms", Float)  # 실행 시간 (밀리초)
     status = Column(SQLEnum(CallStatus), nullable=False, index=True)
     error_message = Column(Text)
     error_code = Column(String)
@@ -79,6 +79,11 @@ class ToolCallLog(Base):
         return self.status == CallStatus.SUCCESS
     
     @property
+    def execution_time(self):
+        """실행 시간을 초 단위로 반환 (호환성을 위해)"""
+        return (self.execution_time_ms / 1000.0) if self.execution_time_ms else None
+    
+    @property
     def duration_ms(self):
         """실행 시간을 밀리초로 반환"""
-        return int(self.execution_time * 1000) if self.execution_time else None
+        return int(self.execution_time_ms) if self.execution_time_ms else None

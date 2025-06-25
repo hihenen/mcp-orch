@@ -197,7 +197,7 @@ function JsonBulkAddForm({
   isEditMode?: boolean;
 }) {
 
-  // JSON 예시 설정 (간단한 형식)
+  // JSON 예시 설정 (brave-search만 표시)
   const exampleConfig = `{
   "brave-search": {
     "disabled": false,

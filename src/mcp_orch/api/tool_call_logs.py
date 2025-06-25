@@ -191,10 +191,10 @@ async def list_tool_call_logs(
             query = query.filter(ToolCallLog.session_id == session_id)
         
         if min_execution_time is not None:
-            query = query.filter(ToolCallLog.execution_time >= min_execution_time)
+            query = query.filter(ToolCallLog.execution_time_ms >= min_execution_time * 1000)
         
         if max_execution_time is not None:
-            query = query.filter(ToolCallLog.execution_time <= max_execution_time)
+            query = query.filter(ToolCallLog.execution_time_ms <= max_execution_time * 1000)
         
         # 텍스트 검색 (JSONB 필드에서 검색)
         if search_text:
@@ -323,9 +323,9 @@ async def get_tool_call_metrics(
             func.sum(case((ToolCallLog.status == CallStatus.SUCCESS, 1), else_=0)).label('successful_calls'),
             func.sum(case((ToolCallLog.status == CallStatus.ERROR, 1), else_=0)).label('error_calls'),
             func.sum(case((ToolCallLog.status == CallStatus.TIMEOUT, 1), else_=0)).label('timeout_calls'),
-            func.avg(ToolCallLog.execution_time).label('avg_execution_time'),
-            func.percentile_cont(0.5).within_group(ToolCallLog.execution_time).label('median_execution_time'),
-            func.percentile_cont(0.95).within_group(ToolCallLog.execution_time).label('p95_execution_time'),
+            func.avg(ToolCallLog.execution_time_ms / 1000.0).label('avg_execution_time'),
+            func.percentile_cont(0.5).within_group(ToolCallLog.execution_time_ms / 1000.0).label('median_execution_time'),
+            func.percentile_cont(0.95).within_group(ToolCallLog.execution_time_ms / 1000.0).label('p95_execution_time'),
             func.count(func.distinct(ToolCallLog.tool_name)).label('unique_tools'),
             func.count(func.distinct(ToolCallLog.session_id)).label('unique_sessions')
         ).filter(base_filter).first()

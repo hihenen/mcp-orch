@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Include detailed security documentation in README.md with best practices
   - Prevent "No encryption key found" warnings during initial server startup
   - Ensure secure MCP server data encryption from first installation
+- [TASK_077] Frontend Load Example simplification for better user experience (2025-06-25)
+  - Simplified AddServerDialog Load Example to show only brave-search configuration
+  - Removed complex multi-server examples to reduce user confusion
+  - Improved JSON configuration clarity for new users
 
 ### Fixed
 - [TASK_075] Comprehensive database schema synchronization with all SQLAlchemy models (2025-06-25)
@@ -28,6 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added missing fields to TOOL_CALL_LOGS table: request_id, session_id, tool_id, project_id, api_key_id, input_tokens, output_tokens, total_cost, priority, retry_count, error_code, queue_time_ms, started_at, completed_at, created_at, updated_at
   - Added missing fields to USER_FAVORITES table: favorite_type, tool_id, project_id, display_order, notes, updated_at
   - Added missing fields to ACTIVITIES table: resource_type, resource_id, ip_address, user_agent, session_id, tags, updated_at
+- [TASK_077] Backend API field mapping corrections for ToolCallLog compatibility (2025-06-25)
+  - Fixed ToolCallLog model to use execution_time_ms field matching actual database schema
+  - Updated project_servers.py and tool_call_logs.py to use correct field mappings
+  - Resolved "execution_time does not exist" database errors in tool call APIs
+  - Added backward compatibility property for execution_time (seconds) while using execution_time_ms internally
+  - Fixed CallStatus enum usage in API success/error filtering
+  - Improved API response time calculations with proper millisecond to second conversions
   - Ensure new installations receive complete modern schemas eliminating schema discovery issues
 - [TASK_074] Fix Projects table schema mismatch between model and database (2025-06-25)
   - Update initial migration to include correct Projects table schema with modern fields
