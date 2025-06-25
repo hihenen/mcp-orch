@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_075] Comprehensive database schema synchronization with all SQLAlchemy models (2025-06-25)
+  - Updated initial migration to include complete schemas for all 9 tables with field differences
+  - Added missing fields to API_KEYS table: description (Text)
+  - Added missing fields to API_USAGE table: ip_address, user_agent, referer, request_headers, response_headers, request_body_hash, response_body_hash, error_message, rate_limit_hit, cache_hit, region, session_id, created_at, updated_at
+  - Added missing fields to TEAMS table: billing_email, subscription_plan, max_projects, max_members
+  - Added missing fields to TEAM_MEMBERS table: permissions, status, invited_at, created_at, updated_at
+  - Added missing fields to CLIENT_SESSIONS table: session_token, user_id, project_id, client_version, ip_address, user_agent, capabilities, protocol_version, status, last_activity_type, connection_count, total_requests, failed_requests, updated_at
+  - Added missing fields to SERVER_LOGS table: session_id, request_id, created_at, updated_at
+  - Added missing fields to TOOL_CALL_LOGS table: request_id, session_id, tool_id, project_id, api_key_id, input_tokens, output_tokens, total_cost, priority, retry_count, error_code, queue_time_ms, started_at, completed_at, created_at, updated_at
+  - Added missing fields to USER_FAVORITES table: favorite_type, tool_id, project_id, display_order, notes, updated_at
+  - Added missing fields to ACTIVITIES table: resource_type, resource_id, ip_address, user_agent, session_id, tags, updated_at
+  - Ensure new installations receive complete modern schemas eliminating schema discovery issues
 - [TASK_074] Fix Projects table schema mismatch between model and database (2025-06-25)
   - Update initial migration to include correct Projects table schema with modern fields
   - Fix created_by_id → created_by field naming inconsistency  

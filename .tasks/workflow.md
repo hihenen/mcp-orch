@@ -306,11 +306,40 @@
   - [x] 기존 설치: fix_projects_schema 마이그레이션으로 스키마 수정 확인
   - [x] 두 경우 모두 동일한 최종 스키마 달성 검증
 
+### TASK_075: 모든 테이블 스키마 일괄 동기화
+- [x] 모든 모델과 데이터베이스 스키마 전체 비교 도구 생성
+  - [x] schema_analyzer.py 포괄적 스키마 비교 도구 개발
+  - [x] 모든 SQLAlchemy 모델 자동 탐지 및 스키마 추출
+  - [x] 데이터베이스 정보 스키마 쿼리로 실제 테이블 구조 수집
+  - [x] 차이점 분석 및 누락/초과 필드 목록화
+- [x] 모든 모델 테이블의 예상 필드 수집
+  - [x] `/src/mcp_orch/models/` 디렉토리 전체 모델 스캔
+  - [x] SQLAlchemy 모델 메타데이터 자동 추출
+  - [x] 컬럼 타입, nullable, 기본값 정보 수집
+- [x] 데이터베이스의 모든 테이블 스키마 수집
+  - [x] PostgreSQL information_schema 쿼리
+  - [x] 모든 public 스키마 테이블 컬럼 정보 수집
+  - [x] 데이터 타입, NULL 제약조건, 기본값 확인
+- [x] 차이점 분석 및 누락 필드 목록 생성
+  - [x] 9개 테이블에서 스키마 불일치 발견
+  - [x] 총 61개 누락 필드와 20개 초과 필드 식별
+  - [x] API_KEYS, API_USAGE, TEAMS, TEAM_MEMBERS, CLIENT_SESSIONS, SERVER_LOGS, TOOL_CALL_LOGS, USER_FAVORITES, ACTIVITIES 테이블 영향
+- [x] 초기 마이그레이션 일괄 업데이트
+  - [x] API_KEYS 테이블에 description 필드 추가
+  - [x] API_USAGE 테이블에 12개 누락 필드 추가 (IP, 헤더, 요청/응답 해시, 에러, 플래그, 세션 정보 등)
+  - [x] TEAMS 테이블에 4개 누락 필드 추가 (billing_email, subscription_plan, max_projects, max_members)
+  - [x] TEAM_MEMBERS 테이블에 5개 누락 필드 추가 (permissions, status, invited_at, timestamps)
+  - [x] CLIENT_SESSIONS 테이블에 14개 누락 필드 추가 (토큰, 사용자, 프로젝트, 클라이언트 정보, 프로토콜, 상태, 통계)
+  - [x] SERVER_LOGS 테이블에 4개 누락 필드 추가 (session_id, request_id, timestamps)
+  - [x] TOOL_CALL_LOGS 테이블에 15개 누락 필드 추가 (요청 ID, 토큰 사용량, 비용, 우선순위, 재시도, 시간 추적)
+  - [x] USER_FAVORITES 테이블에 6개 누락 필드 추가 (타입, 도구/프로젝트 관계, 정렬, 메모)
+  - [x] ACTIVITIES 테이블에 7개 누락 필드 추가 (리소스 정보, IP, 세션, 태그, 타임스탬프)
+
 ## Progress Status
-- Current Progress: TASK_074 - Projects 테이블 스키마 불일치 해결 완료
+- Current Progress: TASK_075 - 모든 테이블 스키마 일괄 동기화 완료
 - Next Task: 요청 사항에 따른 추가 작업 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: Projects 스키마 불일치 문제 완전 해결 - 모델과 데이터베이스 완전 동기화, 신규/기존 설치 모두 정상 동작
+- Automatic Check Feedback: 모든 테이블 스키마 완전 동기화 완료 - 9개 테이블 61개 누락 필드 일괄 해결, 신규 설치시 완전한 현대적 스키마 보장
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
