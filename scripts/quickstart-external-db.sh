@@ -139,7 +139,7 @@ show_startup_info() {
     log_success "🎉 MCP Orchestrator 설정 완료! (외부 데이터베이스 모드)"
     echo ""
     echo "다음 명령으로 백엔드 서버를 시작하세요:"
-    echo -e "${YELLOW}uv run mcp-orch serve${NC}"
+    echo -e "${YELLOW}uv run mcp-orch serve --log-level INFO${NC}"
     echo ""
     echo "또는 개발 모드로 실행:"
     echo -e "${YELLOW}uv run mcp-orch serve --reload --log-level DEBUG${NC}"

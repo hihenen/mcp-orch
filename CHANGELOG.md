@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable proper session handling for production domains
   - Fix Frontend Docker container authentication issues
 
+### Changed
+- [TASK_070] Update quickstart scripts to use production-appropriate settings (2025-06-25)
+  - Remove --reload option from default serve command in quickstart scripts
+  - Set production log level to INFO instead of DEBUG for better performance
+  - Maintain development mode option with --reload and DEBUG logging
+  - Improve production deployment recommendations
+
 ### Added
 - [TASK_068] Add quickstart-external-db.sh script for external database deployments (2025-06-25)
   - Create dedicated script for external database usage (AWS Aurora, RDS, Supabase, etc.)
