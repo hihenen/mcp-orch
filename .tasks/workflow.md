@@ -509,11 +509,23 @@
   - [x] 관계형 매핑을 통한 project 연결 무결성 확보
   - [x] 기존 API 호환성 유지
 
+### TASK_090: Global Servers 기능을 Admin Panel로 통합
+- [x] Admin Panel에 Global Servers 섹션 추가
+  - [x] Quick Actions에 "Global Servers" 카드 추가
+  - [x] MCP 서버 관리 링크와 설명 제공
+- [x] 새로운 Admin Servers 페이지 생성
+  - [x] `/web/src/app/admin/servers/page.tsx` 생성
+  - [x] 기존 servers 페이지 컴포넌트를 admin 구조에 맞게 수정
+- [x] 기존 `/servers` 라우트 삭제
+  - [x] 기존 `/servers` 페이지 파일 삭제
+  - [x] 관련 참조 및 링크 정리
+- [x] CHANGELOG.md 업데이트
+
 ## Progress Status  
-- Current Progress: TASK_089 - 프로젝트 서버 로그 API ServerLog project_id 참조 수정 완료
+- Current Progress: TASK_090 - Global Servers 기능 Admin Panel 통합 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: ServerLog project_id 참조 문제 해결로 프로젝트 서버 로그 기능 정상화
+- Automatic Check Feedback: Global Servers 관리 기능을 Admin Panel로 성공적으로 통합, 일관된 관리자 인터페이스 제공
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

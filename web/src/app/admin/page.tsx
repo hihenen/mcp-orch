@@ -240,6 +240,25 @@ export default function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
+                <Server className="h-5 w-5" />
+                <span>Global Servers</span>
+              </CardTitle>
+              <CardDescription>
+                Manage global MCP servers, configurations, and monitoring
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/servers">
+                <Button className="w-full">
+                  Go to Global Servers
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
                 <Activity className="h-5 w-5" />
                 <span>System Monitoring</span>
               </CardTitle>

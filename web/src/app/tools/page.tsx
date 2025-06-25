@@ -300,7 +300,7 @@ export default function ToolsPage() {
                 Please add and activate servers first.
               </p>
               <Button 
-                onClick={() => window.location.href = '/servers'}
+                onClick={() => window.location.href = '/admin/servers'}
                 className="flex items-center gap-2"
               >
                 <Server className="w-4 h-4" />

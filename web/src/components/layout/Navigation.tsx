@@ -32,7 +32,7 @@ const baseNavItems = [
 const adminNavItems = [
   {
     title: 'Global Servers',
-    href: '/servers',
+    href: '/admin/servers',
     icon: Server,
     description: 'Global Server Management (Admin Only)',
     adminOnly: true
