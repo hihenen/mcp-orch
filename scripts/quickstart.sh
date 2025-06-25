@@ -73,9 +73,62 @@ setup_environment() {
         log_info ".env 파일 생성 중..."
         cp .env.hybrid.example .env
         log_success ".env 파일 생성 완료"
+        
+        # MCP 암호화 키 자동 생성
+        generate_encryption_key
+        
         log_warning "필요시 .env 파일을 편집하여 설정을 변경하세요"
     else
         log_success ".env 파일이 이미 존재합니다"
+        
+        # 기존 .env 파일에서 암호화 키 확인 및 생성
+        check_encryption_key
+    fi
+}
+
+# MCP 암호화 키 생성 함수
+generate_encryption_key() {
+    log_info "MCP 암호화 키 생성 중..."
+    
+    # Python을 사용하여 안전한 암호화 키 생성
+    if command -v python3 &> /dev/null; then
+        ENCRYPTION_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+        
+        # .env 파일에서 placeholder 교체
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' "s/your-secure-encryption-key-change-this-in-production/$ENCRYPTION_KEY/" .env
+        else
+            # Linux
+            sed -i "s/your-secure-encryption-key-change-this-in-production/$ENCRYPTION_KEY/" .env
+        fi
+        
+        log_success "MCP 암호화 키 생성 완료"
+        log_warning "🔐 중요: 이 암호화 키는 MCP 서버 데이터 보안에 필수입니다"
+        log_warning "🔐 키를 분실하면 암호화된 데이터를 복구할 수 없습니다"
+    else
+        log_warning "Python3를 찾을 수 없어 수동으로 암호화 키를 설정해야 합니다"
+        log_warning "다음 명령으로 키를 생성하고 .env 파일을 편집하세요:"
+        log_warning "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\""
+    fi
+}
+
+# 기존 .env 파일의 암호화 키 확인
+check_encryption_key() {
+    if grep -q "your-secure-encryption-key-change-this-in-production" .env 2>/dev/null; then
+        log_warning "기본 암호화 키가 감지되었습니다. 새 키를 생성합니다..."
+        generate_encryption_key
+    elif grep -q "MCP_ENCRYPTION_KEY=" .env 2>/dev/null; then
+        log_success "MCP 암호화 키가 이미 설정되어 있습니다"
+    else
+        log_warning "MCP_ENCRYPTION_KEY가 없습니다. 새 키를 생성합니다..."
+        if command -v python3 &> /dev/null; then
+            ENCRYPTION_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+            echo "" >> .env
+            echo "# MCP 데이터 암호화 키 (자동 생성됨)" >> .env
+            echo "MCP_ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
+            log_success "MCP 암호화 키가 .env 파일에 추가되었습니다"
+        fi
     fi
 }
 

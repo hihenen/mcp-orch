@@ -272,12 +272,51 @@ Both deployment options use `.env` files for configuration:
 AUTH_SECRET=your-strong-secret-key
 JWT_SECRET=your-jwt-secret-key
 
+# MCP Data Encryption (CRITICAL)
+MCP_ENCRYPTION_KEY=your-secure-encryption-key
+
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/mcp_orch
 
 # Admin Account
 INITIAL_ADMIN_EMAIL=admin@example.com
 INITIAL_ADMIN_PASSWORD=your-secure-password
+```
+
+### 🔐 MCP Encryption Key Management
+
+**Critical Security Component**: The `MCP_ENCRYPTION_KEY` is used to encrypt MCP server arguments and environment variables stored in the database.
+
+#### Automatic Setup
+- **New Installations**: The quickstart script automatically generates a secure encryption key
+- **Existing Installations**: Missing keys are detected and generated automatically
+
+#### Manual Setup
+```bash
+# Generate a new encryption key
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# Add to your .env file
+echo "MCP_ENCRYPTION_KEY=<your-generated-key>" >> .env
+```
+
+#### Important Security Notes
+⚠️ **Critical Warning**: If you lose this key, encrypted server data cannot be recovered!
+
+✅ **Best Practices**:
+- **Backup the key** securely before production deployment
+- **Use the same key** across all environments for the same database
+- **Never commit** the key to version control
+- **Rotate periodically** in production environments
+- **Store securely** using secrets management systems in production
+
+#### Production Deployment
+```bash
+# Use environment variables in production
+export MCP_ENCRYPTION_KEY="your-production-key-from-secrets-manager"
+
+# Or configure in your container orchestration
+# Kubernetes secret, Docker secrets, AWS Parameter Store, etc.
 ```
 
 ### Service Management

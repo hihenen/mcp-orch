@@ -335,11 +335,27 @@
   - [x] USER_FAVORITES 테이블에 6개 누락 필드 추가 (타입, 도구/프로젝트 관계, 정렬, 메모)
   - [x] ACTIVITIES 테이블에 7개 누락 필드 추가 (리소스 정보, IP, 세션, 태그, 타임스탬프)
 
+### TASK_076: MCP 암호화 키 자동 관리 시스템 구축
+- [x] 환경 파일에 암호화 키 설정 추가
+  - [x] .env.example에 MCP_ENCRYPTION_KEY 필드 및 상세 설명 추가
+  - [x] .env.hybrid.example에 MCP_ENCRYPTION_KEY 필드 및 보안 섹션 추가
+  - [x] 키 생성 방법 및 보안 주의사항 상세 문서화
+- [x] 설치 스크립트 자동 키 생성 기능 구현
+  - [x] quickstart.sh에 generate_encryption_key() 함수 추가
+  - [x] 신규 설치시 자동 암호화 키 생성 및 .env 파일 설정
+  - [x] 기존 설치에서 누락된 키 자동 감지 및 생성
+  - [x] macOS/Linux 환경 호환성 확보 (sed 명령어 차이점 처리)
+- [x] 포괄적 보안 문서화
+  - [x] README.md에 "MCP Encryption Key Management" 섹션 추가
+  - [x] 자동 설정, 수동 설정, 중요 보안 주의사항 문서화
+  - [x] 프로덕션 배포 환경에서의 키 관리 가이드
+  - [x] 백업, 로테이션, 비밀 관리 시스템 사용법 설명
+
 ## Progress Status
-- Current Progress: TASK_075 - 모든 테이블 스키마 일괄 동기화 완료
+- Current Progress: TASK_076 - MCP 암호화 키 자동 관리 시스템 구축 완료
 - Next Task: 요청 사항에 따른 추가 작업 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 모든 테이블 스키마 완전 동기화 완료 - 9개 테이블 61개 누락 필드 일괄 해결, 신규 설치시 완전한 현대적 스키마 보장
+- Automatic Check Feedback: MCP 암호화 키 관리 개선 완료 - 자동 키 생성, 설치 스크립트 통합, 보안 문서화로 사용자 경험 개선 및 보안 강화
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

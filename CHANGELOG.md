@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_076] Automatic MCP encryption key generation and management (2025-06-25)
+  - Add MCP_ENCRYPTION_KEY to .env.example and .env.hybrid.example with comprehensive documentation
+  - Implement automatic encryption key generation in quickstart.sh installation script
+  - Add detection and automatic generation for missing encryption keys in existing installations
+  - Include detailed security documentation in README.md with best practices
+  - Prevent "No encryption key found" warnings during initial server startup
+  - Ensure secure MCP server data encryption from first installation
+
 ### Fixed
 - [TASK_075] Comprehensive database schema synchronization with all SQLAlchemy models (2025-06-25)
   - Updated initial migration to include complete schemas for all 9 tables with field differences
