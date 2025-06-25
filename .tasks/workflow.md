@@ -396,11 +396,40 @@
   - [x] project_id, source 필드 제거 (실제 DB에 없음)
   - [x] created_at, updated_at 타임스탬프 필드 추가
 
+### TASK_081: 팀 초대 API 로직 분석 - 기존 멤버 중복 체크 문제 조사
+- [x] 백엔드 팀 초대 API 엔드포인트 분석
+  - [x] `/api/projects/{project_id}/teams` POST 엔드포인트 발견 (`projects.py` 1848줄)
+  - [x] `invite_team_to_project` 함수 구현 분석 완료
+  - [x] 팀 멤버 개별 중복 체크 로직 파악 (1921-1939줄)
+- [x] 프론트엔드 팀 초대 함수 분석
+  - [x] `inviteTeamToProject` 함수 위치 확인 (`projectStore.ts` 999-1033줄)
+  - [x] `/api/projects/${projectId}/teams` POST 호출 방식 확인
+  - [x] 응답 처리: `added_members.length > 0` 체크로 토스트 메시지 결정
+- [x] 팀-프로젝트 멤버십 체크 로직 조사
+  - [x] 각 팀 멤버별로 `ProjectMember` 테이블에서 중복 검사 수행
+  - [x] 기존 멤버 발견 시 `skipped_members` 배열에 추가하고 `continue`
+  - [x] 새 멤버만 `added_members` 배열에 추가
+- [x] 문제점 및 개선방안 도출
+  - [x] 현재 로직 분석 완료: 백엔드는 정상 작동, 프론트엔드 메시지 로직 문제
+  - [x] 핵심 문제: `added_members.length === 0`일 때 "모든 멤버가 이미 참여 중"으로 처리
+  - [x] 개선방안: 토스트 메시지를 부분 성공/전체 스킵 구분하여 표시
+
+### TASK_084: 팀 초대 로직 개선 및 UI 변경 (팀 collapsed 표시)
+- [x] 팀 초대 성공 조건 개선
+  - [x] 백엔드: 일부 멤버가 이미 있어도 팀 자체는 성공적으로 초대되도록 로직 수정
+  - [x] 프론트엔드: 토스트 메시지를 부분 성공/전체 스킵 구분하여 표시
+  - [x] 팀이 초대되면 응답에서 success=true 반환하도록 변경
+- [ ] 프로젝트 멤버 UI 개선 (팀 collapsed 표시)
+  - [ ] 팀 섹션을 개별 멤버 확장 대신 collapsed 팀 카드로 변경
+  - [ ] 팀 카드 클릭 시 멤버 목록 확장/축소 기능 추가
+  - [ ] 팀별 멤버 수 및 기본 정보 표시
+  - [ ] 확장 시에만 개별 멤버 테이블 표시
+
 ## Progress Status
-- Current Progress: TASK_080 - ServerLog 테이블 스키마 정렬 완료
-- Next Task: 다음 사용자 요청 대기
+- Current Progress: TASK_084 - 팀 초대 로직 개선 및 UI 변경 계획 수립
+- Next Task: 사용자 승인 대기 (ACT 명령어)
 - Last Update: 2025-06-25
-- Automatic Check Feedback: ServerLog 모델을 실제 데이터베이스 스키마와 완전 일치시켜 수정 완료, 모든 스키마 불일치 문제 해결
+- Automatic Check Feedback: 팀 초대 문제 분석 완료, 개선 계획 수립
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

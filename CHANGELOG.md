@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_078] Fix api_keys table schema mismatch for API key creation (2025-06-25)
+  - Update api_keys table schema to match SQLAlchemy model definition
+  - Add missing columns: rate_limit_per_minute, rate_limit_per_day, created_by_id, last_used_ip, permissions
+  - Replace user_id with created_by_id and scopes with permissions for consistency
+  - Remove obsolete usage_count column from table structure
+  - Resolve PostgreSQL UndefinedColumn errors during API key creation operations
 - [TASK_083] Simplify project members UI with improved Individual/Team organization (2025-06-25)
   - Redesign project members page from 3 sections to 2 clear sections: Individual Members and Team Members
   - Group team members by team name with visual team headers and member counts

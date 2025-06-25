@@ -126,24 +126,28 @@ def upgrade() -> None:
     if not table_exists('api_keys'):
         op.create_table('api_keys',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('name', sa.String(length=255), nullable=False),
-            sa.Column('description', sa.Text(), nullable=True),
+            sa.Column('description', sa.String(length=1000), nullable=True),
             sa.Column('key_hash', sa.String(length=255), nullable=False),
-            sa.Column('key_prefix', sa.String(length=8), nullable=False),
-            sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
-            sa.Column('scopes', postgresql.ARRAY(sa.String()), nullable=False),
-            sa.Column('is_active', sa.Boolean(), nullable=False),
+            sa.Column('key_prefix', sa.String(length=50), nullable=False),
+            sa.Column('is_active', sa.Boolean(), nullable=False, default=True),
             sa.Column('expires_at', sa.DateTime(), nullable=True),
+            sa.Column('rate_limit_per_minute', sa.Integer(), nullable=False, default=60),
+            sa.Column('rate_limit_per_day', sa.Integer(), nullable=False, default=10000),
+            sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('last_used_at', sa.DateTime(), nullable=True),
-            sa.Column('usage_count', sa.Integer(), nullable=False),
+            sa.Column('last_used_ip', sa.String(length=45), nullable=True),
+            sa.Column('permissions', sa.JSON(), nullable=False, default=dict),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
-            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+            sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id'),
             sa.UniqueConstraint('key_hash')
         )
+        op.create_index('idx_api_key_hash', 'api_keys', ['key_hash'], unique=False)
+        op.create_index('idx_api_key_project', 'api_keys', ['project_id'], unique=False)
     
     # Create api_usage table if it doesn't exist
     if not table_exists('api_usage'):

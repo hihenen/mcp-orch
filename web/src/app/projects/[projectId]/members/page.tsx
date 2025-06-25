@@ -68,6 +68,9 @@ export default function ProjectMembersPage() {
     message: ''
   });
 
+  // Team expand/collapse state
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+
   // Load data when page loads
   useEffect(() => {
     if (projectId) {
@@ -142,10 +145,15 @@ export default function ProjectMembersPage() {
 
       const response = await inviteTeamToProject(projectId, teamInvite);
       
-      if (response.added_members.length > 0) {
-        toast.success(`Team invitation completed: ${response.added_members.length} members added. (${response.skipped_members.length} skipped)`);
+      // 백엔드에서 제공하는 메시지 사용
+      if (response.success) {
+        if (response.added_members.length > 0) {
+          toast.success(response.message);
+        } else {
+          toast.info(response.message);
+        }
       } else {
-        toast.info('All team members are already participating in the project.');
+        toast.error(response.message || 'Failed to invite team');
       }
 
       // Reset form
@@ -207,6 +215,17 @@ export default function ProjectMembersPage() {
       console.error('Member removal failed:', error);
       toast.error('Failed to remove member.');
     }
+  };
+
+  // Team expand/collapse handler
+  const toggleTeamExpansion = (teamName: string) => {
+    const newExpanded = new Set(expandedTeams);
+    if (newExpanded.has(teamName)) {
+      newExpanded.delete(teamName);
+    } else {
+      newExpanded.add(teamName);
+    }
+    setExpandedTeams(newExpanded);
   };
 
   // Group members by invitation method - simplified to Individual vs Team

@@ -131,6 +131,8 @@ class TeamInviteResponse(BaseModel):
     added_members: List[ProjectMemberResponse]
     skipped_members: List[dict]  # 이미 존재하는 멤버들
     total_invited: int
+    success: bool = True  # 팀 초대 성공 여부 (일부라도 추가되면 성공)
+    message: str = ""  # 상세 메시지
     
     class Config:
         from_attributes = True
@@ -1965,6 +1967,21 @@ async def invite_team_to_project(
     
     db.commit()
     
+    # 성공 여부 및 메시지 결정
+    total_team_members = len(added_members) + len(skipped_members)
+    
+    if len(added_members) > 0:
+        # 일부 또는 전체 멤버가 추가된 경우 성공
+        success = True
+        if len(skipped_members) > 0:
+            message = f"팀 '{team.name}' 초대 완료: {len(added_members)}명 추가, {len(skipped_members)}명 이미 참여 중"
+        else:
+            message = f"팀 '{team.name}' 초대 완료: {len(added_members)}명 추가"
+    else:
+        # 모든 멤버가 이미 참여 중인 경우
+        success = True  # 팀 자체 초대는 성공으로 처리
+        message = f"팀 '{team.name}'의 모든 멤버({len(skipped_members)}명)가 이미 프로젝트에 참여 중입니다"
+    
     logger.info(f"Team '{team.name}' invited to project '{project.name}' by user {current_user.email}. "
                 f"Added {len(added_members)} members, skipped {len(skipped_members)} members.")
     
@@ -1973,7 +1990,9 @@ async def invite_team_to_project(
         team_name=team.name,
         added_members=added_members,
         skipped_members=skipped_members,
-        total_invited=len(added_members)
+        total_invited=len(added_members),
+        success=success,
+        message=message
     )
 
 

@@ -147,4 +147,6 @@ export interface TeamInviteResponse {
     current_role: string;
   }>;
   total_invited: number;
+  success: boolean;
+  message: string;
 }
