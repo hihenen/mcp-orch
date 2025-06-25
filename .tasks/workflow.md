@@ -365,14 +365,21 @@
   - [x] AddServerDialog에서 brave-search만 표시하도록 변경
   - [x] 기존 복잡한 예시 제거하고 간단한 구성으로 교체
 
-### TASK_078: ToolCallLog 모델 완전 재구성 및 데이터베이스 재생성
-- [x] ToolCallLog 모델을 실제 DB 스키마와 완전히 일치시키기
-  - [x] 실제 DB 스키마 분석 (arguments, result, tool_namespace 제거 등)
-  - [x] 모델 필드를 실제 DB와 정확히 일치하도록 수정
-  - [x] 호환성을 위한 속성 별칭 추가 (input_data, output_data)
-- [x] 데이터베이스 완전 재생성
-  - [x] 초기 마이그레이션으로 깨끗한 스키마 생성
-  - [x] 백엔드 서버 재시작 및 동작 확인
+### TASK_078: API key 스키마 불일치 및 Activity 모델 setter 문제 해결
+- [x] API key 테이블 스키마 불일치 수정
+  - [x] rate_limit_per_minute, rate_limit_per_day, created_by_id, permissions 컬럼 추가
+  - [x] 초기 마이그레이션 수정으로 스키마 일치성 확보
+- [x] API usage 테이블 스키마 불일치 수정  
+  - [x] team_id, tool_name, server_name, response_time_ms 등 모든 누락 컬럼 추가
+  - [x] 기존 구식 스키마에서 신식 모델 스키마로 완전 전환
+- [x] Activity 모델 호환성 setter 구현
+  - [x] action property setter 추가 (action → type 매핑)
+  - [x] target_type property setter 추가 (target_type → resource_type 매핑)
+  - [x] target_id property setter 추가 (target_id → resource_id 매핑)
+  - [x] meta_data property setter 추가 (meta_data → activity_metadata 매핑)
+- [x] 데이터베이스 완전 재생성으로 스키마 일치성 확보
+  - [x] alembic downgrade base && alembic upgrade head 실행
+  - [x] API key 생성 및 삭제 기능 정상 작동 확인
 
 ### TASK_079: Activities 테이블 스키마 불일치 수정
 - [x] Activities 테이블 스키마 불일치 수정
@@ -425,11 +432,11 @@
   - [x] 팀별 멤버 수 및 기본 정보 표시
   - [x] 확장 시에만 개별 멤버 테이블 표시
 
-## Progress Status
-- Current Progress: TASK_084 - 팀 초대 로직 개선 및 UI 변경 완료
+## Progress Status  
+- Current Progress: TASK_078 - Activity 모델 setter 구현 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 팀 초대 로직 개선 및 collapsed UI 구현 완료
+- Automatic Check Feedback: Activity 모델에 target_type, target_id, meta_data setter 추가 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

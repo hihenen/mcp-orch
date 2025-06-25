@@ -14,11 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove obsolete columns: user_id, project_id, request_size, response_size, duration_ms, etc.
   - Update foreign key constraints and indexes to match model requirements
   - Resolve PostgreSQL UndefinedColumn errors during API key deletion operations
-- [TASK_078] Fix Activity model action property setter for activity logging (2025-06-25)
-  - Add missing setter for action property in Activity model
+- [TASK_078] Fix Activity model property setters for comprehensive activity logging (2025-06-25)
+  - Add missing setters for action, target_type, target_id, and meta_data properties in Activity model
   - Resolve AttributeError when creating activity logs during API key operations
-  - Maintain backward compatibility with existing action property usage
-  - Enable proper activity logging for all system operations
+  - Maintain backward compatibility with existing property usage across the system
+  - Enable proper activity logging for all system operations with complete field mapping
 - [TASK_084] Improve team invitation logic and UI with collapsed team display (2025-06-25)
   - Allow team invitations to succeed even when all members are already in project
   - Update team invitation response to include success status and detailed messages

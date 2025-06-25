@@ -172,15 +172,30 @@ class Activity(Base):
         """호환성을 위한 별칭"""
         return self.activity_metadata
     
+    @meta_data.setter
+    def meta_data(self, value):
+        """호환성을 위한 setter"""
+        self.activity_metadata = value
+    
     @property
     def target_type(self):
         """호환성을 위한 별칭"""
         return self.resource_type
     
+    @target_type.setter
+    def target_type(self, value):
+        """호환성을 위한 setter"""
+        self.resource_type = value
+    
     @property
     def target_id(self):
         """호환성을 위한 별칭"""
         return self.resource_id
+    
+    @target_id.setter
+    def target_id(self, value):
+        """호환성을 위한 setter"""
+        self.resource_id = value
 
 
 # Backward compatibility alias
