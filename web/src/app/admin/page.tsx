@@ -177,17 +177,10 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
-                {stats?.worker_status === 'running' ? (
-                  <Badge className="bg-green-100 text-green-800 border-green-200">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Running
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Stopped
-                  </Badge>
-                )}
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Coming Soon
+                </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Background worker

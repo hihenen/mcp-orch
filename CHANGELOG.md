@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Include API key metadata display (name, description, expiration)
   - Enable one-time secure display of generated API keys with proper UX flow
 
+### Changed
+- [TASK_088] Update Admin Worker Status display to "Coming Soon" (2025-06-25)
+  - Change APScheduler Worker status from inaccurate "Stopped" display to "Coming Soon" badge
+  - Update both Worker Status card and Core Component Status sections in admin panel
+  - Apply consistent blue theme for Coming Soon indicators to avoid user confusion
+  - Prioritize user experience over incomplete feature implementation
+
 ### Fixed
 - [TASK_087] Admin system logs ServerLog model relationship mapping (2025-06-25)
   - Fix admin API to reference project_id through McpServer relationship instead of direct ServerLog.project_id

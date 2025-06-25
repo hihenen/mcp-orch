@@ -481,11 +481,20 @@
   - [x] 모든 JOIN 조건 및 필터링 로직 점검 완료
   - [x] admin logs API의 project_id 참조 무결성 확보
 
+### TASK_088: Admin Worker Status "Coming Soon" 표시로 변경
+- [x] Admin 화면 Worker Status 분석
+  - [x] APScheduler Worker 상태 표시 문제 확인 (하드코딩된 값으로 인한 부정확한 표시)
+  - [x] 사용자 요청에 따라 실제 구현 대신 "Coming Soon" 표시로 변경 결정
+- [x] Worker Status UI 업데이트
+  - [x] Worker Status 카드에서 "Coming Soon" 배지로 변경
+  - [x] Core Component Status의 APScheduler Worker도 "Coming Soon"으로 변경
+  - [x] 일관된 파란색 테마 및 메시지 적용
+
 ## Progress Status  
-- Current Progress: TASK_087 - Admin system logs ServerLog 모델 관계 매핑 수정 완료
+- Current Progress: TASK_088 - Admin Worker Status "Coming Soon" 표시 변경 완료
 - Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: ServerLog admin API의 project_id 참조 문제 해결 완료
+- Automatic Check Feedback: Worker Status 표시를 Coming Soon으로 변경하여 사용자 혼란 방지
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
