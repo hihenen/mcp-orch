@@ -284,11 +284,33 @@
   - [x] 모든 필수 필드 생성 확인 (User: 12개, WorkerConfig: 8개)
   - [x] 신규 설치시 완전한 스키마 한 번에 생성 검증
 
+### TASK_074: Projects 테이블 스키마 불일치 해결
+- [x] Projects 테이블 스키마 불일치 분석 및 문제 식별
+  - [x] 데이터베이스: created_by_id, team_id, is_active, settings (구식 스키마)
+  - [x] 모델: created_by, sse_auth_required, message_auth_required, allowed_ip_ranges (신식 스키마)
+  - [x] "column projects.created_by does not exist" 오류 원인 파악
+  - [x] ProjectMember 테이블도 enum 타입과 필드명 불일치 확인
+- [x] 초기 마이그레이션에서 Projects 테이블 스키마 수정
+  - [x] created_by_id → created_by 필드명 수정
+  - [x] description 타입 Text로 변경, slug 길이 100으로 조정
+  - [x] 신식 필드 추가: sse_auth_required, message_auth_required, allowed_ip_ranges
+  - [x] 구식 필드 제거: team_id, is_active, settings
+  - [x] ProjectMember 테이블 enum → string 변경, invited_by_id → invited_by 수정
+  - [x] ProjectMember에 created_at, updated_at 필드 추가
+- [x] 기존 설치용 Projects 스키마 마이그레이션 생성
+  - [x] fix_projects_schema.py 마이그레이션 생성
+  - [x] 기존 데이터베이스를 모델과 일치시키는 변환 로직 구현
+  - [x] 안전한 downgrade 로직 포함
+- [x] 신규 및 기존 설치 둘 다 검증
+  - [x] 신규 설치: 초기 마이그레이션만으로 완전한 Projects 스키마 생성 확인
+  - [x] 기존 설치: fix_projects_schema 마이그레이션으로 스키마 수정 확인
+  - [x] 두 경우 모두 동일한 최종 스키마 달성 검증
+
 ## Progress Status
-- Current Progress: TASK_073 - 신규 설치용 초기 마이그레이션 완성 완료
+- Current Progress: TASK_074 - Projects 테이블 스키마 불일치 해결 완료
 - Next Task: 요청 사항에 따른 추가 작업 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 신규 설치 개선 완료 - 초기 마이그레이션이 완전한 스키마 생성, 기존 설치와 신규 설치 모두 호환성 확보
+- Automatic Check Feedback: Projects 스키마 불일치 문제 완전 해결 - 모델과 데이터베이스 완전 동기화, 신규/기존 설치 모두 정상 동작
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

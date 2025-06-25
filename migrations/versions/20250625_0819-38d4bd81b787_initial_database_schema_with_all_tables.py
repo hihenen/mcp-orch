@@ -86,16 +86,15 @@ def upgrade() -> None:
         op.create_table('projects',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('name', sa.String(length=255), nullable=False),
-            sa.Column('description', sa.String(length=1000), nullable=True),
-            sa.Column('slug', sa.String(length=255), nullable=False),
-            sa.Column('team_id', postgresql.UUID(as_uuid=True), nullable=True),
-            sa.Column('is_active', sa.Boolean(), nullable=False),
-            sa.Column('settings', sa.JSON(), nullable=False),
-            sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('description', sa.Text(), nullable=True),
+            sa.Column('slug', sa.String(length=100), nullable=False),
+            sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
-            sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
-            sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
+            sa.Column('sse_auth_required', sa.Boolean(), nullable=False, default=False),
+            sa.Column('message_auth_required', sa.Boolean(), nullable=False, default=True),
+            sa.Column('allowed_ip_ranges', sa.JSON(), nullable=True, default=list),
+            sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id'),
             sa.UniqueConstraint('slug')
         )
@@ -106,15 +105,16 @@ def upgrade() -> None:
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('role', sa.Enum('OWNER', 'ADMIN', 'MEMBER', 'VIEWER', name='projectrole'), nullable=False),
+            sa.Column('role', sa.String(length=20), nullable=False, default='developer'),
+            sa.Column('invited_as', sa.String(length=20), nullable=False),
+            sa.Column('invited_by', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('joined_at', sa.DateTime(), nullable=False),
-            sa.Column('invited_by_id', postgresql.UUID(as_uuid=True), nullable=True),
-            sa.Column('invite_source', sa.Enum('DIRECT', 'TEAM', name='invitesource'), nullable=False),
-            sa.ForeignKeyConstraint(['invited_by_id'], ['users.id'], ),
+            sa.Column('created_at', sa.DateTime(), nullable=False),
+            sa.Column('updated_at', sa.DateTime(), nullable=False),
+            sa.ForeignKeyConstraint(['invited_by'], ['users.id'], ),
             sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-            sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('project_id', 'user_id')
+            sa.PrimaryKeyConstraint('id')
         )
     
     # Create api_keys table if it doesn't exist

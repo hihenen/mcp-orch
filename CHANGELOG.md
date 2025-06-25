@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_074] Fix Projects table schema mismatch between model and database (2025-06-25)
+  - Update initial migration to include correct Projects table schema with modern fields
+  - Fix created_by_id → created_by field naming inconsistency  
+  - Add missing fields: sse_auth_required, message_auth_required, allowed_ip_ranges
+  - Remove deprecated fields: team_id, is_active, settings from Projects table
+  - Update ProjectMember schema with correct field names and types
+  - Create migration for existing installations to fix schema inconsistencies
+  - Resolve "column projects.created_by does not exist" errors
 - [TASK_073] Update initial migration to include all required fields for new installations (2025-06-25)
   - Update initial database migration to include NextAuth.js compatible user fields
   - Update initial migration to include modern WorkerConfig schema with scheduler settings
