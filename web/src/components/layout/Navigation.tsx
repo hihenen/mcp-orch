@@ -30,13 +30,7 @@ const baseNavItems = [
 ];
 
 const adminNavItems = [
-  {
-    title: 'Global Servers',
-    href: '/admin/servers',
-    icon: Server,
-    description: 'Global Server Management (Admin Only)',
-    adminOnly: true
-  },
+  // Global Servers moved to Admin Panel - no longer needed in main navigation
 ];
 
 export function Navigation() {
