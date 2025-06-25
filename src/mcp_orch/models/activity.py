@@ -162,6 +162,11 @@ class Activity(Base):
         """호환성을 위한 별칭"""
         return self.type
     
+    @action.setter
+    def action(self, value):
+        """호환성을 위한 setter"""
+        self.type = value
+    
     @property
     def meta_data(self):
         """호환성을 위한 별칭"""

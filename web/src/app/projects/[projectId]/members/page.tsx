@@ -669,21 +669,34 @@ export default function ProjectMembersPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="space-y-4">
-                  {Object.entries(teamMembersByTeam).map(([teamName, members]) => (
-                    <div key={teamName} className="border rounded-lg overflow-hidden">
-                      {/* Team header */}
-                      <div className="bg-blue-50 border-b px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium text-blue-900">{teamName}</span>
-                          <Badge variant="outline" className="text-blue-700 border-blue-300">
-                            {members.length} members
-                          </Badge>
+                  {Object.entries(teamMembersByTeam).map(([teamName, members]) => {
+                    const isExpanded = expandedTeams.has(teamName);
+                    return (
+                      <div key={teamName} className="border rounded-lg overflow-hidden">
+                        {/* Team header - clickable to expand/collapse */}
+                        <div 
+                          className="bg-blue-50 border-b px-4 py-3 cursor-pointer hover:bg-blue-100 transition-colors"
+                          onClick={() => toggleTeamExpansion(teamName)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-blue-600" />
+                              <span className="font-medium text-blue-900">{teamName}</span>
+                              <Badge variant="outline" className="text-blue-700 border-blue-300">
+                                {members.length} members
+                              </Badge>
+                            </div>
+                            <ChevronDown 
+                              className={`h-4 w-4 text-blue-600 transition-transform ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </div>
                         </div>
-                      </div>
                       
-                      {/* Team members table */}
-                      <div className="overflow-x-auto">
+                      {/* Team members table - only show when expanded */}
+                      {isExpanded && (
+                        <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead className="bg-gray-50 border-b">
                             <tr>
@@ -785,9 +798,11 @@ export default function ProjectMembersPage() {
                             ))}
                           </tbody>
                         </table>
+                        </div>
+                      )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

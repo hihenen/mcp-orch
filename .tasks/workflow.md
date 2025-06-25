@@ -419,17 +419,17 @@
   - [x] 백엔드: 일부 멤버가 이미 있어도 팀 자체는 성공적으로 초대되도록 로직 수정
   - [x] 프론트엔드: 토스트 메시지를 부분 성공/전체 스킵 구분하여 표시
   - [x] 팀이 초대되면 응답에서 success=true 반환하도록 변경
-- [ ] 프로젝트 멤버 UI 개선 (팀 collapsed 표시)
-  - [ ] 팀 섹션을 개별 멤버 확장 대신 collapsed 팀 카드로 변경
-  - [ ] 팀 카드 클릭 시 멤버 목록 확장/축소 기능 추가
-  - [ ] 팀별 멤버 수 및 기본 정보 표시
-  - [ ] 확장 시에만 개별 멤버 테이블 표시
+- [x] 프로젝트 멤버 UI 개선 (팀 collapsed 표시)
+  - [x] 팀 섹션을 개별 멤버 확장 대신 collapsed 팀 카드로 변경
+  - [x] 팀 카드 클릭 시 멤버 목록 확장/축소 기능 추가
+  - [x] 팀별 멤버 수 및 기본 정보 표시
+  - [x] 확장 시에만 개별 멤버 테이블 표시
 
 ## Progress Status
-- Current Progress: TASK_084 - 팀 초대 로직 개선 및 UI 변경 계획 수립
-- Next Task: 사용자 승인 대기 (ACT 명령어)
+- Current Progress: TASK_084 - 팀 초대 로직 개선 및 UI 변경 완료
+- Next Task: 다음 사용자 요청 대기
 - Last Update: 2025-06-25
-- Automatic Check Feedback: 팀 초대 문제 분석 완료, 개선 계획 수립
+- Automatic Check Feedback: 팀 초대 로직 개선 및 collapsed UI 구현 완료
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

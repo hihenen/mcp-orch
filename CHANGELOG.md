@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_078] Fix Activity model action property setter for activity logging (2025-06-25)
+  - Add missing setter for action property in Activity model
+  - Resolve AttributeError when creating activity logs during API key operations
+  - Maintain backward compatibility with existing action property usage
+  - Enable proper activity logging for all system operations
+- [TASK_084] Improve team invitation logic and UI with collapsed team display (2025-06-25)
+  - Allow team invitations to succeed even when all members are already in project
+  - Update team invitation response to include success status and detailed messages
+  - Implement collapsed team cards in project members page with click-to-expand functionality
+  - Improve user experience with better toast messages for team invitation scenarios
+  - Enable better team member organization with collapsible team sections
 - [TASK_078] Fix api_keys table schema mismatch for API key creation (2025-06-25)
   - Update api_keys table schema to match SQLAlchemy model definition
   - Add missing columns: rate_limit_per_minute, rate_limit_per_day, created_by_id, last_used_ip, permissions
