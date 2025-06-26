@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable proper SSE endpoint generation for cloud and containerized deployments
 
 ### Fixed
+- [TASK_095] Fix AttributeError in admin projects API for sse_auth_required (2025-06-26)
+  - Replace deprecated sse_auth_required and message_auth_required with jwt_auth_required
+  - Update AdminProjectResponse Pydantic model to use unified JWT authentication field
+  - Fix 500 Internal Server Error in /api/admin/projects endpoint
+  - Complete JWT authentication unification in admin project management
+- [TASK_094] Fix missing Key icon import in admin projects page (2025-06-26)
+  - Add missing Key import from lucide-react in ProjectsAdminPage component
+  - Fix ReferenceError: Key is not defined runtime error in admin interface
+  - Ensure proper icon display for API Keys statistics card
 - [TASK_092] Fix quickstart.sh to prevent backend container auto-start (2025-06-26)
   - Add --no-deps option to docker compose command to prevent dependency containers from starting
   - Ensure frontend container starts independently without triggering backend container

@@ -30,8 +30,7 @@ class AdminProjectResponse(BaseModel):
     updated_at: datetime
     
     # Security settings
-    sse_auth_required: bool
-    message_auth_required: bool
+    jwt_auth_required: bool
     allowed_ip_ranges: Optional[List[str]] = None
     
     # Statistics
@@ -174,8 +173,7 @@ async def list_projects_admin(
                 created_by=str(project.created_by),
                 created_at=project.created_at,
                 updated_at=project.updated_at,
-                sse_auth_required=project.sse_auth_required,
-                message_auth_required=project.message_auth_required,
+                jwt_auth_required=project.jwt_auth_required,
                 allowed_ip_ranges=project.allowed_ip_ranges or [],
                 member_count=member_count,
                 server_count=server_count,

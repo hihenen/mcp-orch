@@ -788,11 +788,29 @@
   - [x] ServerLogResponse.details 필드 타입을 str → Dict[str, Any]로 수정 (JSON 데이터 대응)
 - [x] 웹 UI에서 Connection logs 표시 확인 및 테스트
 
+### TASK_105: sse_auth_required/message_auth_required 죽은 코드 정리
+- [ ] 백엔드 API에서 project.sse_auth_required, project.message_auth_required 사용 코드 정리
+  - [ ] admin_projects.py - AdminProjectResponse에서 sse_auth_required, message_auth_required 필드 제거
+  - [ ] admin_projects.py - 프로젝트 생성/조회 시 project.sse_auth_required 참조 제거
+  - [ ] mcp_standard_sse.py - SSE 인증 로직에서 project.sse_auth_required 사용 제거
+  - [ ] mcp_sse_transport.py - Transport 인증에서 project.sse_auth_required 사용 제거
+  - [ ] project_sse.py - SSE 설정에서 project.sse_auth_required, project.message_auth_required 사용 제거
+  - [ ] fastmcp_impl.py, fastmcp_proper.py - FastMCP 구현에서 구식 필드 참조 제거
+- [ ] 백업 마이그레이션 파일 정리
+  - [ ] migrations/backup_* 디렉토리의 오래된 마이그레이션 파일에서 sse_auth_required 참조 확인
+  - [ ] 필요시 마이그레이션 파일 정리 또는 주석 추가
+- [ ] 프론트엔드 Admin 패널 업데이트
+  - [ ] admin projects 페이지에서 sse_auth_required, message_auth_required 필드 사용 제거
+  - [ ] jwt_auth_required 단일 필드로 통합된 UI 사용
+- [ ] 모든 API 엔드포인트에서 project.jwt_auth_required 사용으로 통일
+  - [ ] 인증 로직을 단일 JWT 인증 필드 기반으로 통합
+  - [ ] 기존 분리된 SSE/Message 인증 로직 제거
+
 ## Progress Status  
-- Current Progress: TASK_104 - 완료 (MCP 연결 로그 누락 문제 수정 완료)
-- Next Task: 다음 새로운 작업 대기
+- Current Progress: TASK_105 - sse_auth_required/message_auth_required 죽은 코드 정리 (분석 완료)
+- Next Task: TASK_105 계속 진행 (백엔드 API 코드 수정)
 - Last Update: 2025-06-26
-- Automatic Check Feedback: MCP 연결 로그가 웹 UI에 표시되지 않던 문제가 해결되었습니다. ServerLogService.add_log() 함수 호출 시 누락된 project_id 매개변수를 수정하여 연결 이벤트가 정상적으로 데이터베이스에 저장됩니다.
+- Automatic Check Feedback: sse_auth_required와 message_auth_required 속성이 사용되는 모든 위치를 파악했습니다. Project 모델에서는 이미 jwt_auth_required로 통합되었으나, 여러 API 파일에서 여전히 구식 필드들을 참조하고 있어 AttributeError가 발생할 가능성이 있습니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
