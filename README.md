@@ -242,6 +242,86 @@ uv run python test_mcp_connection.py
 uv run python test_mcp_proxy_mode.py
 ```
 
+## Backend Restart Guide
+
+### Quick Restart (Recommended)
+
+For development and production environments where you need to restart only the backend service:
+
+```bash
+# 1. Stop backend processes
+./scripts/restart-backend.sh
+
+# Or manual process:
+# 1. Stop current backend
+./scripts/shutdown.sh processes-only
+
+# 2. Update code  
+git pull origin main
+
+# 3. Restart with logs
+nohup uv run mcp-orch serve > "logs/mcp-orch-$(date +%Y%m%d).log" 2>&1 &
+```
+
+### Manual Process
+
+#### 1. Stop Backend Processes
+```bash
+# Find MCP backend processes
+ps aux | grep "mcp-orch serve"
+
+# Stop by PID
+kill <PID>
+
+# Or force stop all Python processes (use with caution)
+killall -9 python
+```
+
+#### 2. Update Code
+```bash
+cd /path/to/mcp-orch
+git pull origin main
+```
+
+#### 3. Restart Backend
+```bash
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Start with date-based logging
+nohup uv run mcp-orch serve > "logs/mcp-orch-$(date +%Y%m%d).log" 2>&1 &
+
+# Verify startup
+tail -f logs/mcp-orch-$(date +%Y%m%d).log
+```
+
+#### 4. Verify Restart
+```bash
+# Check process is running
+ps aux | grep "mcp-orch serve"
+
+# Check API response
+curl http://localhost:8000/health
+
+# Monitor logs
+tail -f logs/mcp-orch-$(date +%Y%m%d).log
+```
+
+### When to Use Backend Restart
+
+- **Code Updates**: After `git pull` to apply new features or fixes
+- **Configuration Changes**: After modifying `.env` files
+- **Memory Issues**: If backend becomes unresponsive
+- **Admin Privileges**: After updating `INITIAL_ADMIN_EMAIL` settings
+- **Database Schema**: After running migrations
+
+### Notes
+
+- **Frontend Unchanged**: Only restart backend; Docker frontend container continues running
+- **Database Unaffected**: PostgreSQL container remains active
+- **Session Persistence**: Active MCP sessions will be terminated and need reconnection
+- **Zero Frontend Downtime**: Web UI remains accessible during backend restart
+
 ## Troubleshooting
 
 ### Common Issues
