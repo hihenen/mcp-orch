@@ -3,7 +3,7 @@
 MCP 서버 CRUD, 상태 관리, 토글 기능
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 from uuid import UUID
 from datetime import datetime, timedelta
 import logging
@@ -838,7 +838,7 @@ class ServerLogResponse(BaseModel):
     level: str
     category: str
     message: str
-    details: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None  # JSON 타입으로 변경하여 dict 데이터 허용
     timestamp: datetime
     source: Optional[str] = None
 
