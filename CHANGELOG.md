@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Optimize production deployment with unified initial migration containing all schema changes
 
 ### Fixed
+- [TASK_090] Fix tool_call_logs API Pydantic validation error causing 500 errors (2025-06-26)
+  - Fix ToolCallLogResponse model server_id field type from str to UUID to match database schema
+  - Resolve "Input should be a valid string" Pydantic validation error for server_id field
+  - Enable proper tool call log display and metrics in web UI by fixing API response serialization
+  - Database schema was already correct - issue was in API response model validation
 - [TASK_103] Fix MCP Tool Call logging failure due to database schema mismatch (2025-06-26)
   - Fix execution_time vs execution_time_ms field mapping error in ToolCallLog model
   - Remove non-existent user_agent and ip_address fields from ToolCallLog creation

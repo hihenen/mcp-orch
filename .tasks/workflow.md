@@ -758,11 +758,20 @@
   - [ ] Roo Code에서 tool call 실행 후 웹 UI 로그 확인 예정
   - [ ] 실제 데이터 저장 및 조회 정상 동작 검증 예정
 
+### TASK_090: tool_call_logs API Pydantic 검증 오류 수정
+- [x] tool_call_logs 테이블 스키마 불일치 문제 분석
+- [x] ToolCallLog 모델과 마이그레이션 비교 분석
+- [x] 마이그레이션에 tool_namespace 필드 추가
+- [x] 마이그레이션 실행 및 테스트
+- [x] 실제 문제 원인 파악: Pydantic 검증 오류 (server_id 타입 불일치)
+- [x] ToolCallLogResponse 모델에서 server_id 타입을 str → UUID로 수정
+- [x] CHANGELOG.md 업데이트
+
 ## Progress Status  
-- Current Progress: TASK_103 - 코드 수정 완료, 데이터베이스 마이그레이션 대기 중
-- Next Task: 사용자 데이터베이스 재생성 후 실제 테스트 및 검증
+- Current Progress: TASK_090 - 완료 (Pydantic 검증 오류 수정 완료)
+- Next Task: 다음 새로운 작업 대기
 - Last Update: 2025-06-26
-- Automatic Check Feedback: ToolCallLog 모델과 MCP Session Manager 코드 수정 완료. 현재 "'ToolCallLog' object has no attribute 'user_agent'" 오류는 데이터베이스 스키마 미반영으로 인한 것으로, 사용자의 데이터베이스 재생성 후 자동 해결 예정
+- Automatic Check Feedback: tool_call_logs API의 500 오류가 해결되었습니다. 문제는 데이터베이스 스키마가 아닌 API 응답 모델의 server_id 필드 타입 불일치였습니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

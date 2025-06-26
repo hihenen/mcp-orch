@@ -40,7 +40,7 @@ class ToolCallLogResponse(BaseModel):
     """로그 응답 모델"""
     id: int
     session_id: str
-    server_id: str
+    server_id: UUID
     project_id: UUID
     tool_name: str
     tool_namespace: Optional[str]
