@@ -30,8 +30,8 @@ app = typer.Typer(
 console = Console()
 
 
-def setup_logging(log_level: str = "INFO"):
-    """로깅 설정"""
+def setup_cli_logging(log_level: str = "INFO"):
+    """CLI용 로깅 설정 (Rich 핸들러 사용)"""
     logging.basicConfig(
         level=log_level,
         format="%(message)s",
@@ -69,11 +69,16 @@ def serve(
     ),
 ):
     """MCP Orch 서버 실행"""
-    setup_logging(log_level)
-    
     # 설정 로드
     settings = Settings.from_env()
     settings.mcp_config_file = mcp_config
+    
+    # CLI용 로깅 설정 (Rich 핸들러)
+    setup_cli_logging(log_level)
+    
+    # 애플리케이션 로깅 설정 (설정 기반)
+    if hasattr(settings, 'logging'):
+        settings.setup_logging()
     
     if mode == "proxy":
         # mcp-proxy 호환 모드 실행
@@ -132,7 +137,7 @@ def serve_proxy(
     ),
 ):
     """MCP Orch 서버 실행 (mcp-proxy 호환 모드)"""
-    setup_logging(log_level)
+    setup_cli_logging(log_level)
     
     # 설정 로드
     settings = Settings.from_env()
@@ -161,7 +166,7 @@ def list_tools(
     ),
 ):
     """사용 가능한 도구 목록 표시"""
-    setup_logging()
+    setup_cli_logging()
     
     async def _list_tools():
         # 설정 로드
@@ -214,7 +219,7 @@ def list_servers(
     ),
 ):
     """MCP 서버 목록 표시"""
-    setup_logging()
+    setup_cli_logging()
     
     async def _list_servers():
         # 설정 로드
@@ -278,7 +283,7 @@ def init(
     ),
 ):
     """MCP 설정 파일 초기화"""
-    setup_logging()
+    setup_cli_logging()
     
     if path.exists() and not force:
         console.print(f"[red]File already exists: {path}[/red]")

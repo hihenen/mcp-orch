@@ -34,6 +34,41 @@ class DatabaseConfig(BaseModel):
     sql_echo: bool = False
 
 
+class LoggingConfig(BaseModel):
+    """로깅 설정"""
+    level: str = "INFO"
+    format: str = "text"  # "text" or "json"
+    output: str = "console"  # "console", "file", "both"
+    file_path: Optional[str] = None
+    
+    @field_validator('level')
+    @classmethod
+    def validate_level(cls, v: str) -> str:
+        """로그 레벨 유효성 검사"""
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        if v.upper() not in valid_levels:
+            raise ValueError(f"Invalid log level: {v}. Must be one of {valid_levels}")
+        return v.upper()
+    
+    @field_validator('format')
+    @classmethod
+    def validate_format(cls, v: str) -> str:
+        """로그 포맷 유효성 검사"""
+        valid_formats = ["text", "json"]
+        if v.lower() not in valid_formats:
+            raise ValueError(f"Invalid log format: {v}. Must be one of {valid_formats}")
+        return v.lower()
+    
+    @field_validator('output')
+    @classmethod
+    def validate_output(cls, v: str) -> str:
+        """로그 출력 방식 유효성 검사"""
+        valid_outputs = ["console", "file", "both"]
+        if v.lower() not in valid_outputs:
+            raise ValueError(f"Invalid log output: {v}. Must be one of {valid_outputs}")
+        return v.lower()
+
+
 class SecurityConfig(BaseModel):
     """보안 설정"""
     api_keys: List[Dict[str, Any]] = Field(default_factory=list)
@@ -127,6 +162,9 @@ class Settings(BaseSettings):
     
     # 데이터베이스 설정
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    
+    # 로깅 설정
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
     
     # 보안 설정
     security: SecurityConfig = Field(default_factory=SecurityConfig)
@@ -245,6 +283,12 @@ class Settings(BaseSettings):
             "DATABASE_URL": ("database", "url"),
             "SQL_ECHO": ("database", "sql_echo"),
             
+            # 로깅 설정
+            "LOG_LEVEL": ("logging", "level"),
+            "LOG_FORMAT": ("logging", "format"),
+            "LOG_OUTPUT": ("logging", "output"),
+            "LOG_FILE_PATH": ("logging", "file_path"),
+            
             # 보안 설정
             "INITIAL_ADMIN_EMAIL": ("security", "initial_admin_email"),
             "INITIAL_ADMIN_PASSWORD": ("security", "initial_admin_password"),
@@ -275,6 +319,7 @@ class Settings(BaseSettings):
         return {
             "server": self.server.model_dump(),
             "database": self.database.model_dump(exclude={"password"}),
+            "logging": self.logging.model_dump(),
             "security": self.security.model_dump(exclude={"jwt_secret"}),
             "llm": self.llm.model_dump(exclude={"azure__api_key", "openai__api_key", "anthropic__api_key"}),
             "execution": self.execution.model_dump(),
@@ -283,6 +328,17 @@ class Settings(BaseSettings):
                 for name, config in self.mcp_servers.items()
             }
         }
+    
+    def setup_logging(self) -> None:
+        """로깅 시스템을 설정합니다."""
+        from .utils.logging import setup_logging
+        
+        setup_logging(
+            level=self.logging.level,
+            format_type=self.logging.format,
+            output=self.logging.output,
+            file_path=self.logging.file_path
+        )
 
 
 # 전역 설정 인스턴스

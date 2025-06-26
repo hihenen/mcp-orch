@@ -39,6 +39,9 @@ rich>=13.7.0
 watchfiles>=0.21.0
 apscheduler>=3.10.4
 
+# Logging
+python-json-logger>=2.0.4
+
 # Utilities
 python-multipart>=0.0.6
 asyncio-mqtt>=0.13.0

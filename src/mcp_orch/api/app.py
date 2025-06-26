@@ -47,6 +47,10 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """애플리케이션 생명주기 관리"""
+    # 로깅 시스템 초기화
+    from ..config import settings
+    settings.setup_logging()
+    
     # 시작 시
     import time
     logger.info("Starting MCP Orch API server")

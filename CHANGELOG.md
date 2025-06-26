@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_091] Enhanced logging system with JSON format support and environment-based configuration (2025-06-26)
+  - Implement JSON logging formatter with structured output for production monitoring
+  - Add comprehensive logging configuration in config.py with validation
+  - Support for environment-based logging format switching (text/json)
+  - Add logging utilities with context management and specialized loggers for user actions, MCP server events, and API requests
+  - Include python-json-logger dependency for structured logging
+  - Create detailed logging documentation and Datadog APM integration guide
+  - Update .env.example with logging configuration options for development and production environments
 - [TASK_088] Hybrid admin privileges system for improved UX without manual restarts (2025-06-26)
   - Implement priority-based admin privilege assignment: INITIAL_ADMIN_EMAIL takes priority, first user becomes admin if not set
   - Add admin_utils.py service with should_grant_admin_privileges() and create_user_with_auto_admin() functions
