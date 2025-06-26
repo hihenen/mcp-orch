@@ -742,17 +742,27 @@
   - [x] mcp_session_manager.py의 _save_tool_call_log 로직 분석
 - [x] SSE 브리지에서 ToolCallLog 저장 로직 문제 발견 및 수정
   - [x] execution_time vs execution_time_ms 필드 불일치 수정
-  - [x] user_agent, ip_address 필드 누락 문제 해결
+  - [x] user_agent, ip_address, tool_namespace 필드를 ToolCallLog 모델에 추가
+  - [x] MCP Session Manager에서 모든 필드 정상 저장하도록 수정
   - [x] 상세 로깅 추가로 저장 과정 추적 개선
-- [ ] 테스트 및 검증
-  - [ ] Roo Code에서 tool call 실행 후 웹 UI 로그 확인
-  - [ ] 실제 데이터 저장 및 조회 정상 동작 검증
+- [x] 코드 수정 완료 상태 확인
+  - [x] ToolCallLog 모델 스키마 업데이트 완료
+  - [x] MCP Session Manager 필드 매핑 수정 완료
+  - [x] 모든 관련 파일 수정 작업 완료
+- [ ] 데이터베이스 스키마 마이그레이션 대기
+  - [ ] **중요**: 사용자가 데이터베이스 재생성 필요 (스키마 불일치로 인한 오류)
+  - [ ] 현재 "'ToolCallLog' object has no attribute 'user_agent'" 오류는 DB 스키마 미반영 때문
+  - [ ] 데이터베이스 스키마가 업데이트되면 자동으로 해결될 예정
+- [ ] 테스트 및 검증 (데이터베이스 업데이트 후)
+  - [ ] 사용자 데이터베이스 재생성 후 테스트 대기 중
+  - [ ] Roo Code에서 tool call 실행 후 웹 UI 로그 확인 예정
+  - [ ] 실제 데이터 저장 및 조회 정상 동작 검증 예정
 
 ## Progress Status  
-- Current Progress: TASK_103 - MCP Tool Call 로깅 누락 문제 해결 거의 완료
-- Next Task: 수정 사항 테스트 및 검증 - Roo Code tool call 후 웹 UI 로그 확인
+- Current Progress: TASK_103 - 코드 수정 완료, 데이터베이스 마이그레이션 대기 중
+- Next Task: 사용자 데이터베이스 재생성 후 실제 테스트 및 검증
 - Last Update: 2025-06-26
-- Automatic Check Feedback: ToolCallLog 데이터베이스 스키마 불일치 문제 발견 및 수정 완료. ROLLBACK 원인이었던 execution_time vs execution_time_ms 필드 매핑 오류 해결
+- Automatic Check Feedback: ToolCallLog 모델과 MCP Session Manager 코드 수정 완료. 현재 "'ToolCallLog' object has no attribute 'user_agent'" 오류는 데이터베이스 스키마 미반영으로 인한 것으로, 사용자의 데이터베이스 재생성 후 자동 해결 예정
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

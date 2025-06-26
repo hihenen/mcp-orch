@@ -95,7 +95,7 @@ def upgrade() -> None:
             sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
-            sa.Column('jwt_auth_required', sa.Boolean(), nullable=False, server_default='true'),
+            sa.Column('jwt_auth_required', sa.Boolean(), nullable=False, default=True),
             sa.Column('allowed_ip_ranges', sa.JSON(), nullable=True, default=list),
             sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id')

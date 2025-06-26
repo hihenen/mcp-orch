@@ -522,13 +522,15 @@ class McpSessionManager:
                 server_id=log_data.get('server_id'),
                 project_id=log_data.get('project_id'),
                 tool_name=log_data.get('tool_name'),
+                tool_namespace=f"{log_data.get('server_id')}.{log_data.get('tool_name')}",
                 arguments=log_data.get('arguments'),
                 result=output_data.get('result') if output_data else None,
                 error_message=error_message or (output_data.get('error') if output_data else None),
                 error_code=error_code,
                 execution_time_ms=int(execution_time),  # 밀리초 단위로 저장 (DB 스키마에 맞춰)
                 status=status,
-                # user_agent와 ip_address는 ToolCallLog 모델에 해당 필드가 없음
+                user_agent=log_data.get('user_agent'),
+                ip_address=log_data.get('ip_address'),
                 created_at=log_data.get('timestamp')
             )
             

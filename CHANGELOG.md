@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_089] Consolidate Alembic migrations into single initial schema for production deployment (2025-06-26)
+  - Merge jwt_auth_unification migration changes into initial database schema migration
+  - Remove intermediate JWT authentication migration file to simplify deployment process
+  - Backup existing migration files for development history preservation
+  - Ensure clean single-step database initialization for new installations
+  - Optimize production deployment with unified initial migration containing all schema changes
+
 ### Fixed
 - [TASK_103] Fix MCP Tool Call logging failure due to database schema mismatch (2025-06-26)
   - Fix execution_time vs execution_time_ms field mapping error in ToolCallLog model

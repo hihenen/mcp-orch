@@ -29,6 +29,7 @@ class ToolCallLog(Base):
     api_key_id = Column(PGUUID(as_uuid=True), nullable=True)
     server_id = Column(PGUUID(as_uuid=True), nullable=False, index=True)
     tool_name = Column(String, nullable=False, index=True)
+    tool_namespace = Column(String, nullable=True)  # 도구 네임스페이스 (server_id.tool_name 형식)
     
     # 호출 데이터 (실제 DB 필드명 사용)
     arguments = Column(JSON)  # 입력 파라미터
@@ -50,6 +51,8 @@ class ToolCallLog(Base):
     
     # 사용자 정보
     called_by_user_id = Column(PGUUID(as_uuid=True), nullable=True)
+    user_agent = Column(String, nullable=True)  # 클라이언트 User-Agent
+    ip_address = Column(String, nullable=True)  # 클라이언트 IP 주소
     
     # 타임스탬프
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -75,6 +78,7 @@ class ToolCallLog(Base):
             "api_key_id": str(self.api_key_id) if self.api_key_id else None,
             "server_id": str(self.server_id) if self.server_id else None,
             "tool_name": self.tool_name,
+            "tool_namespace": self.tool_namespace,
             "arguments": self.arguments,
             "result": self.result,
             "input_tokens": self.input_tokens,
@@ -89,6 +93,8 @@ class ToolCallLog(Base):
             "execution_time_ms": self.execution_time_ms,
             "queue_time_ms": self.queue_time_ms,
             "called_by_user_id": str(self.called_by_user_id) if self.called_by_user_id else None,
+            "user_agent": self.user_agent,
+            "ip_address": self.ip_address,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
