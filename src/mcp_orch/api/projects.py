@@ -1123,6 +1123,7 @@ class ServerResponse(BaseModel):
     last_connected: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    jwt_auth_required: Optional[bool] = None
     
     class Config:
         from_attributes = True
@@ -1205,7 +1206,8 @@ async def list_project_servers(
             tools_count=tools_count,
             last_connected=server.last_used_at,
             created_at=server.created_at,
-            updated_at=server.updated_at
+            updated_at=server.updated_at,
+            jwt_auth_required=server.jwt_auth_required
         ))
     
     return result
@@ -1309,7 +1311,8 @@ async def get_project_server_detail(
         tools=tools,
         last_connected=server.last_used_at,
         created_at=server.created_at,
-        updated_at=server.updated_at
+        updated_at=server.updated_at,
+        jwt_auth_required=server.jwt_auth_required
     )
 
 
@@ -1386,7 +1389,8 @@ async def create_project_server(
         tools_count=0,
         last_connected=new_server.last_used_at,
         created_at=new_server.created_at,
-        updated_at=new_server.updated_at
+        updated_at=new_server.updated_at,
+        jwt_auth_required=new_server.jwt_auth_required
     )
 
 
@@ -1502,7 +1506,8 @@ async def update_project_server(
         tools_count=0,
         last_connected=server.last_used_at,
         created_at=server.created_at,
-        updated_at=server.updated_at
+        updated_at=server.updated_at,
+        jwt_auth_required=server.jwt_auth_required
     )
 
 

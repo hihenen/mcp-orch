@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- [TASK_088] Fix MCP server JWT authentication settings update in web UI (2025-06-26)
+- [TASK_088] Fix MCP server JWT authentication settings display and update in web UI (2025-06-26)
   - Add missing jwt_auth_required field to ServerUpdate model in projects.py API
+  - Add missing jwt_auth_required field to ServerResponse model for API queries
   - Implement JWT authentication update logic in update_project_server function
+  - Update all server API response functions to include jwt_auth_required field
   - Resolve issue where web UI authentication settings changes were not being saved to database
-  - Enable proper server-level JWT authentication configuration through web interface
+  - Fix issue where web UI authentication settings were showing "Inherit" instead of actual values
+  - Enable proper server-level JWT authentication configuration and display through web interface
 
 ### Added
 - [TASK_101] Remove unused SECURITY__ENABLE_AUTH configuration and standardize DISABLE_AUTH for authentication control (2025-06-25)
