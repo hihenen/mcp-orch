@@ -1103,6 +1103,7 @@ class ServerUpdate(BaseModel):
     args: Optional[List[str]] = None
     env: Optional[dict] = None
     cwd: Optional[str] = None
+    jwt_auth_required: Optional[bool] = None
 
 
 class ServerResponse(BaseModel):
@@ -1477,6 +1478,9 @@ async def update_project_server(
     if server_data.cwd is not None:
         logger.info(f"🚨 Updating cwd: {server.cwd} -> {server_data.cwd}")
         server.cwd = server_data.cwd
+    if server_data.jwt_auth_required is not None:
+        logger.info(f"🚨 Updating jwt_auth_required: {server.jwt_auth_required} -> {server_data.jwt_auth_required}")
+        server.jwt_auth_required = server_data.jwt_auth_required
     
     server.updated_at = datetime.utcnow()
     

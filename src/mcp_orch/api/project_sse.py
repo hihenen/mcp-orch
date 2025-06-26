@@ -620,7 +620,7 @@ async def get_project_cline_config(
     current_user: User = Depends(get_current_user_for_project_sse),
     db: Session = Depends(get_db)
 ):
-    """프로젝트별 Cline 설정 파일 자동 생성"""
+    """프로젝트별 MCP 설정 파일 자동 생성 (Claude, Cursor 등 호환)"""
     
     # 프로젝트 접근 권한 확인
     project = await _verify_project_access(project_id, current_user, db)
@@ -654,8 +654,11 @@ async def get_project_cline_config(
     for server in servers:
         server_key = f"project-{project_id}-{server.name}"
         
+        # 서버별 JWT 인증 설정 확인
+        jwt_auth_required = server.get_effective_jwt_auth_required()
+        
         # Single Resource Connection mode - stdio 방식 (단일 모드)
-        mcp_servers[server_key] = {
+        server_config = {
             "type": "stdio",
             "command": server.command,
             "args": server.args if server.args else [],
@@ -663,6 +666,14 @@ async def get_project_cline_config(
             "timeout": 60,
             "disabled": False
         }
+        
+        # JWT 인증이 필요한 경우만 환경변수에 API 키 설정 추가
+        if jwt_auth_required:
+            if not server_config["env"]:
+                server_config["env"] = {}
+            server_config["env"]["MCP_API_KEY"] = f"${{{api_key.key_prefix}...}}"
+        
+        mcp_servers[server_key] = server_config
     
     cline_config = {
         "mcpServers": mcp_servers
@@ -675,9 +686,10 @@ async def get_project_cline_config(
         "servers_count": len(servers),
         "api_key_prefix": api_key.key_prefix,
         "instructions": [
-            "1. Save this configuration as 'cline_mcp_settings.json' in your project root",
-            "2. Configure Cline to use this MCP settings file",
-            "3. The API key shown is truncated for security - use your full API key",
-            f"4. Base URL is set to {base_url} - adjust if needed"
+            "1. Save this configuration as 'mcp_settings.json' in your project root",
+            "2. Configure Claude Desktop, Cursor, or other MCP clients to use this settings file",
+            "3. Replace placeholder API keys with your actual full API key where needed",
+            "4. Servers without MCP_API_KEY do not require authentication (based on server settings)",
+            f"5. Base configuration is set for stdio connections - adjust if needed"
         ]
     }

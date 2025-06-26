@@ -27,6 +27,10 @@ class ServerResponse(BaseModel):
     last_used: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    
+    # Authentication settings
+    jwt_auth_required: Optional[bool] = None  # Server-specific setting (null = inherit from project)
+    computed_jwt_auth_required: bool = True  # Final effective authentication requirement
 
     class Config:
         from_attributes = True
@@ -59,7 +63,9 @@ async def get_servers(
             tool_count=len(server.tools) if server.tools else 0,
             last_used=server.last_used_at,
             created_at=server.created_at,
-            updated_at=server.updated_at
+            updated_at=server.updated_at,
+            jwt_auth_required=server.jwt_auth_required,
+            computed_jwt_auth_required=server.get_effective_jwt_auth_required()
         )
         for server in servers
     ]
@@ -107,7 +113,9 @@ async def create_server(
         tool_count=0,
         last_used=None,
         created_at=server.created_at,
-        updated_at=server.updated_at
+        updated_at=server.updated_at,
+        jwt_auth_required=server.jwt_auth_required,
+        resolved_jwt_auth_required=server.get_effective_jwt_auth_required()
     )
 
 
@@ -143,7 +151,9 @@ async def get_server(
         tool_count=len(server.tools) if server.tools else 0,
         last_used=server.last_used_at,
         created_at=server.created_at,
-        updated_at=server.updated_at
+        updated_at=server.updated_at,
+        jwt_auth_required=server.jwt_auth_required,
+        resolved_jwt_auth_required=server.get_effective_jwt_auth_required()
     )
 
 

@@ -102,8 +102,8 @@ export default function ProjectApiKeysPage() {
     }
   };
 
-  // Cline configuration download handler
-  const handleDownloadClineConfig = async () => {
+  // MCP configuration download handler  
+  const handleDownloadMcpConfig = async () => {
     try {
       const config = await getProjectClineConfig(projectId);
       const blob = new Blob([JSON.stringify(config, null, 2)], { 
@@ -112,16 +112,16 @@ export default function ProjectApiKeysPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${selectedProject?.name || 'project'}-cline-config.json`;
+      a.download = `${selectedProject?.name || 'project'}-mcp-settings.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success('Cline configuration file has been downloaded.');
+      toast.success('MCP configuration file has been downloaded.');
     } catch (error) {
-      console.error('Cline configuration download error:', error);
-      toast.error('Failed to download Cline configuration.');
+      console.error('MCP configuration download error:', error);
+      toast.error('Failed to download MCP configuration.');
     }
   };
 
@@ -168,9 +168,9 @@ export default function ProjectApiKeysPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleDownloadClineConfig}>
+            <Button variant="outline" onClick={handleDownloadMcpConfig}>
               <Download className="h-4 w-4 mr-2" />
-              Download Cline Config
+              Download MCP Settings
             </Button>
             <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
               <DialogTrigger asChild>

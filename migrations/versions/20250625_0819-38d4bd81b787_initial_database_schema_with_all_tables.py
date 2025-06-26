@@ -196,6 +196,7 @@ def upgrade() -> None:
             sa.Column('compatibility_mode', sa.String(length=50), nullable=False, comment='MCP compatibility mode: resource_connection (single mode)'),
             sa.Column('status', sa.Enum('ACTIVE', 'INACTIVE', 'ERROR', 'STARTING', 'STOPPING', name='mcpserverstatus'), nullable=False),
             sa.Column('is_enabled', sa.Boolean(), nullable=False),
+            sa.Column('jwt_auth_required', sa.Boolean(), nullable=True, comment='JWT authentication required for this server (null = use project default)'),
             sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),

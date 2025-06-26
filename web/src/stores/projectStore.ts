@@ -784,7 +784,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  // Cline 설정
+  // MCP 설정 (Claude, Cursor 등)
   getProjectClineConfig: async (projectId: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -793,7 +793,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to get project Cline config: ${response.statusText}`);
+        throw new Error(`Failed to get project MCP config: ${response.statusText}`);
       }
       
       const config = await response.json();
@@ -801,7 +801,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       return config;
     } catch (error) {
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to get project Cline config',
+        error: error instanceof Error ? error.message : 'Failed to get project MCP config',
         isLoading: false 
       });
       throw error;

@@ -317,25 +317,33 @@ class StandardMCPHandler:
 async def get_current_user_for_standard_mcp(
     request: Request,
     project_id: UUID,
+    server_name: str,
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """표준 MCP용 유연한 사용자 인증 함수"""
+    """표준 MCP용 유연한 사용자 인증 함수 (서버별 인증 설정)"""
     
-    # 프로젝트 보안 설정 조회
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
+    # 서버 및 프로젝트 정보 조회
+    server = db.query(McpServer).filter(
+        McpServer.project_id == project_id,
+        McpServer.name == server_name,
+        McpServer.is_enabled == True
+    ).first()
+    
+    if not server:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
+            detail=f"Server '{server_name}' not found or disabled in project {project_id}"
         )
     
     # SSE 연결인지 확인
     is_sse_request = request.url.path.endswith('/sse')
     
-    # 프로젝트 JWT 인증 정책 확인 (SSE와 Message 통합)
-    if not project.jwt_auth_required:
+    # 서버별 JWT 인증 정책 확인 (서버 설정 > 프로젝트 기본값)
+    auth_required = server.get_effective_jwt_auth_required()
+    
+    if not auth_required:
         auth_type = "SSE" if is_sse_request else "Message"
-        logger.info(f"Standard MCP {auth_type} request allowed without auth for project {project_id}")
+        logger.info(f"Standard MCP {auth_type} request allowed without auth for project {project_id}, server {server_name}")
         return None  # 인증 없이 허용
     
     # 인증이 필요한 경우 - JWT 토큰 또는 API 키 확인
@@ -583,8 +591,8 @@ async def standard_mcp_sse_endpoint(
             logger.info(f"Received POST request to SSE endpoint, handling as MCP message")
             return await handle_mcp_message_request_with_fastmcp(request, project_id, server_name, db)
         
-        # 유연한 인증 적용
-        current_user = await get_current_user_for_standard_mcp(request, project_id, db)
+        # 유연한 인증 적용 (서버별 인증 설정 포함)
+        current_user = await get_current_user_for_standard_mcp(request, project_id, server_name, db)
         
         if current_user:
             logger.info(f"Standard MCP SSE connection: method={request.method}, project_id={project_id}, server={server_name}, user={current_user.email}")

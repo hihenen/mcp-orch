@@ -4,7 +4,7 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
-// 프로젝트별 Cline 설정 파일 생성 및 다운로드
+// 프로젝트별 MCP 설정 파일 생성 및 다운로드 (Claude, Cursor 등)
 export const GET = auth(async function GET(req) {
   try {
     // 1. NextAuth.js v5 세션 확인
@@ -48,7 +48,7 @@ export const GET = auth(async function GET(req) {
     if (download) {
       // 파일 다운로드로 응답
       const configJson = JSON.stringify(configData.config, null, 2);
-      const fileName = `${configData.project_name || 'project'}-mcp-config.json`;
+      const fileName = `${configData.project_name || 'project'}-mcp-settings.json`;
       
       return new NextResponse(configJson, {
         status: 200,

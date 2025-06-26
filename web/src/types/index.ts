@@ -20,6 +20,10 @@ export interface MCPServer {
   cpu?: number;
   memory?: number;
   last_connected?: string; // Backend field (ISO date string)
+  
+  // Authentication settings
+  jwt_auth_required?: boolean | null; // Server-specific setting (null = inherit from project)
+  computed_jwt_auth_required?: boolean; // Final effective authentication requirement
 }
 
 // Tool related types

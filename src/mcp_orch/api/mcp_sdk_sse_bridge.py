@@ -98,9 +98,10 @@ transport_manager = ProjectMCPTransportManager()
 async def get_current_user_for_mcp_sse_bridge(
     request: Request,
     project_id: UUID,
+    server_name: str,
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """MCP SSE Bridge용 사용자 인증 (DISABLE_AUTH 지원)"""
+    """MCP SSE Bridge용 사용자 인증 (DISABLE_AUTH 지원, 서버별 인증 설정)"""
     
     import os
     
@@ -108,25 +109,32 @@ async def get_current_user_for_mcp_sse_bridge(
     disable_auth = os.getenv("DISABLE_AUTH", "").lower() == "true"
     
     if disable_auth:
-        logger.info(f"⚠️ Authentication disabled for SSE bridge request to project {project_id}")
+        logger.info(f"⚠️ Authentication disabled for SSE bridge request to project {project_id}, server {server_name}")
         # 인증이 비활성화된 경우 None 반환 (인증 없이 진행)
         return None
     
-    # 프로젝트 보안 설정 조회
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
+    # 서버 및 프로젝트 정보 조회
+    server = db.query(McpServer).filter(
+        McpServer.project_id == project_id,
+        McpServer.name == server_name,
+        McpServer.is_enabled == True
+    ).first()
+    
+    if not server:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
+            detail=f"Server '{server_name}' not found or disabled in project {project_id}"
         )
     
     # SSE 연결인지 확인
     is_sse_request = request.url.path.endswith('/sse')
     
-    # 프로젝트 JWT 인증 정책 확인 (SSE와 Message 통합)
-    if not project.jwt_auth_required:
+    # 서버별 JWT 인증 정책 확인 (서버 설정 > 프로젝트 기본값)
+    auth_required = server.get_effective_jwt_auth_required()
+    
+    if not auth_required:
         auth_type = "SSE" if is_sse_request else "Message"
-        logger.info(f"{auth_type} request allowed without auth for project {project_id}")
+        logger.info(f"{auth_type} request allowed without auth for project {project_id}, server {server_name}")
         return None  # 인증 없이 허용
     
     # JWT 인증 시도
@@ -165,8 +173,8 @@ async def mcp_sse_bridge_endpoint(
     """
     
     try:
-        # 사용자 인증
-        current_user = await get_current_user_for_mcp_sse_bridge(request, project_id, db)
+        # 사용자 인증 (서버별 인증 설정 포함)
+        current_user = await get_current_user_for_mcp_sse_bridge(request, project_id, server_name, db)
         
         if current_user:
             logger.info(f"MCP SSE Bridge connection: project_id={project_id}, server={server_name}, user={current_user.email}")
@@ -257,8 +265,8 @@ async def mcp_bridge_post_messages(
     """
     
     try:
-        # 사용자 인증
-        current_user = await get_current_user_for_mcp_sse_bridge(request, project_id, db)
+        # 사용자 인증 (서버별 인증 설정 포함)
+        current_user = await get_current_user_for_mcp_sse_bridge(request, project_id, server_name, db)
         
         if current_user:
             logger.info(f"MCP Bridge POST message: project_id={project_id}, server={server_name}, user={current_user.email}")

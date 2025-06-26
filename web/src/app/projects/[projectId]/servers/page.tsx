@@ -24,7 +24,10 @@ import {
   PowerOff,
   MoreHorizontal,
   RefreshCw,
-  Clock
+  Clock,
+  Shield,
+  ShieldOff,
+  ShieldCheck
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
@@ -98,6 +101,7 @@ export default function ProjectServersPage() {
       serverType: server.compatibility_mode || 'api_wrapper',  // 프론트엔드 필드도 추가
       command: server.command || '',
       args: server.args || [],
+      jwt_auth_required: server.jwt_auth_required ?? null,
       env: server.env || {},
       cwd: server.cwd || ''
     };
@@ -415,6 +419,19 @@ export default function ProjectServersPage() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div>Type: {(server as any).transport_type || 'stdio'}</div>
                     <div>Tools: {server.tools_count || (server as any).availableTools || 0}</div>
+                    <div className="flex items-center gap-1">
+                      {(server as any).jwt_auth_required === null ? (
+                        <Shield className="h-3 w-3 text-blue-500" title="JWT Authentication: Project Default" />
+                      ) : (server as any).jwt_auth_required ? (
+                        <ShieldCheck className="h-3 w-3 text-green-500" title="JWT Authentication: Required" />
+                      ) : (
+                        <ShieldOff className="h-3 w-3 text-orange-500" title="JWT Authentication: Disabled" />
+                      )}
+                      <span className="text-xs">
+                        {(server as any).jwt_auth_required === null ? 'Default' : 
+                         (server as any).jwt_auth_required ? 'Auth' : 'No Auth'}
+                      </span>
+                    </div>
                     {(server as any).last_connected && (
                       <div>Last connected: {formatDateTime((server as any).last_connected)}</div>
                     )}

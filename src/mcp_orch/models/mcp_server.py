@@ -57,6 +57,9 @@ class McpServer(Base):
     status = Column(SQLEnum(McpServerStatus), default=McpServerStatus.INACTIVE, nullable=False)
     is_enabled = Column(Boolean, default=True, nullable=False)
     
+    # Authentication settings (nullable - if null, inherit from project default)
+    jwt_auth_required = Column(Boolean, nullable=True, comment="JWT authentication required for this server (null = use project default)")
+    
     # Tracking
     created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -92,6 +95,22 @@ class McpServer(Base):
     def is_running(self) -> bool:
         """Check if server is currently running."""
         return self.status == McpServerStatus.ACTIVE
+    
+    def get_effective_jwt_auth_required(self) -> bool:
+        """
+        Get effective JWT authentication requirement for this server.
+        
+        Priority: Server setting > Project default
+        
+        Returns:
+            bool: True if JWT authentication is required for this server
+        """
+        # If server has explicit setting, use it
+        if self.jwt_auth_required is not None:
+            return self.jwt_auth_required
+        
+        # Otherwise, use project default
+        return self.project.jwt_auth_required if self.project else True
     
     def _get_secret_manager(self):
         """Get secret manager instance for encryption/decryption."""

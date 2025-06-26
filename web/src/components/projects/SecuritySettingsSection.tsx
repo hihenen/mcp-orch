@@ -139,7 +139,7 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
           Authentication Settings
         </CardTitle>
         <CardDescription>
-          Manage JWT authentication settings for all MCP connections in your project
+          Set default JWT authentication policy for project servers. Individual servers can override these settings.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -152,9 +152,9 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-blue-600" />
               <div>
-                <Label className="font-medium">JWT Authentication Required</Label>
+                <Label className="font-medium">Default JWT Authentication Required</Label>
                 <p className="text-sm text-muted-foreground">
-                  Require JWT authentication for all MCP connections (SSE and Message endpoints)
+                  Default authentication policy for all project servers. Individual servers can override this setting.
                 </p>
               </div>
             </div>
@@ -226,10 +226,11 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
               <h4 className="font-medium text-blue-900">Current Authentication Status</h4>
               <div className="text-sm text-blue-700 mt-2 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span>JWT Authentication:</span>
+                  <span>Default JWT Authentication:</span>
                   <Badge variant={settings.jwt_auth_required ? "default" : "secondary"}>
                     {settings.jwt_auth_required ? "Required" : "Disabled"}
                   </Badge>
+                  <span className="text-xs text-muted-foreground">(Server default)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>IP Restriction:</span>
@@ -249,7 +250,8 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
             <div>
               <h4 className="font-medium text-green-900">Recommended Settings</h4>
               <ul className="text-sm text-green-700 mt-2 space-y-1">
-                <li>• <strong>JWT Authentication:</strong> Recommended to enable for secure MCP connections</li>
+                <li>• <strong>Default Authentication:</strong> Sets the default JWT requirement for all project servers</li>
+                <li>• <strong>Server Override:</strong> Individual servers can override this default in their settings</li>
                 <li>• <strong>API Keys:</strong> Use project API keys for external MCP client access</li>
                 <li>• <strong>IP Restriction:</strong> Currently under development - coming in future updates</li>
                 <li>• Settings changes are automatically saved</li>

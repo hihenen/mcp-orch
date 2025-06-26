@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
+import { Settings, Shield, ShieldOff, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { ServerTabProps } from './types';
 import { formatDateTime } from '@/lib/date-utils';
@@ -37,6 +37,32 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
                   {server.status === 'online' ? 'Online' : 
                    server.status === 'offline' ? 'Offline' :
                    server.status === 'connecting' ? 'Connecting' : 'Error'}
+                </div>
+              </div>
+              <div>
+                <div className="font-medium text-muted-foreground">JWT Authentication</div>
+                <div className="flex items-center gap-2">
+                  {server.jwt_auth_required === null ? (
+                    <>
+                      <Shield className="h-4 w-4 text-blue-500" />
+                      <span>Project Default</span>
+                    </>
+                  ) : server.jwt_auth_required ? (
+                    <>
+                      <ShieldCheck className="h-4 w-4 text-green-500" />
+                      <span>Required</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldOff className="h-4 w-4 text-orange-500" />
+                      <span>Disabled</span>
+                    </>
+                  )}
+                  {server.computed_jwt_auth_required !== undefined && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (Effective: {server.computed_jwt_auth_required ? 'Required' : 'Disabled'})
+                    </span>
+                  )}
                 </div>
               </div>
               <div>

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Plus, FileText, Settings } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 // import { useToast } from '@/hooks/use-toast'; // TODO: Enable after implementing toast system
 
 // Individual server form component
@@ -82,6 +83,48 @@ function IndividualServerForm({
         </div>
 
         {/* Compatibility Mode는 Resource Connection으로 고정됨 */}
+      </div>
+
+      {/* JWT Authentication Settings */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium">Authentication Settings</h3>
+        
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="space-y-1">
+              <Label htmlFor="jwt-auth-toggle" className="text-sm font-medium">
+                JWT Authentication Required
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Override project default authentication setting for this server
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-muted-foreground">
+                {formData.jwt_auth_required === null ? 'Project Default' : 
+                 formData.jwt_auth_required ? 'Required' : 'Disabled'}
+              </span>
+              <Select 
+                value={formData.jwt_auth_required === null ? 'inherit' : 
+                       formData.jwt_auth_required ? 'required' : 'disabled'} 
+                onValueChange={(value) => {
+                  const newValue = value === 'inherit' ? null : 
+                                 value === 'required' ? true : false;
+                  updateField('jwt_auth_required', newValue);
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inherit">Inherit</SelectItem>
+                  <SelectItem value="required">Required</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Execution Settings */}
@@ -293,6 +336,7 @@ interface ServerConfig {
   args: string[];
   env: Record<string, string>;
   cwd?: string;
+  jwt_auth_required?: boolean | null;  // null = inherit from project
 }
 
 interface AddServerDialogProps {
@@ -310,6 +354,7 @@ interface AddServerDialogProps {
     args?: string[];
     env?: Record<string, string>;
     cwd?: string;
+    jwt_auth_required?: boolean | null;
   };
 }
 
@@ -334,7 +379,8 @@ export function AddServerDialog({
     command: '',
     args: [],
     env: {},
-    cwd: ''
+    cwd: '',
+    jwt_auth_required: null  // null = inherit from project
   });
   
   // JSON 일괄 추가 상태
@@ -408,7 +454,8 @@ export function AddServerDialog({
         command: editServer.command,
         args: editServer.args || [],
         env: editServer.env || {},
-        cwd: editServer.cwd || ''
+        cwd: editServer.cwd || '',
+        jwt_auth_required: editServer.jwt_auth_required ?? null
       };
       
       setFormData(serverConfig);
@@ -430,7 +477,8 @@ export function AddServerDialog({
       command: '',
       args: [],
       env: {},
-      cwd: ''
+      cwd: '',
+      jwt_auth_required: null
     });
     setNewArg('');
     setNewEnvKey('');
@@ -461,7 +509,8 @@ export function AddServerDialog({
             command: formData.command,
             args: formData.args,
             env: formData.env,
-            cwd: formData.cwd || null
+            cwd: formData.cwd || null,
+            jwt_auth_required: formData.jwt_auth_required
           }),
           credentials: 'include'
         });
@@ -488,7 +537,8 @@ export function AddServerDialog({
             command: formData.command,
             args: formData.args,
             env: formData.env,
-            cwd: formData.cwd || null
+            cwd: formData.cwd || null,
+            jwt_auth_required: formData.jwt_auth_required
           }),
           credentials: 'include'
         });
