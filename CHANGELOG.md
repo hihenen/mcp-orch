@@ -16,17 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Optimize production deployment with unified initial migration containing all schema changes
 
 ### Fixed
-- [TASK_104] Fix MCP connection logs not appearing in web UI by implementing ServerLog creation (2025-06-26)
-  - Add ServerLogService integration to MCP SDK SSE Bridge for connection event logging
-  - Record CONNECTION logs for session start/end, SYSTEM logs for tool discovery
-  - Use separate database sessions to prevent ROLLBACK issues from affecting log persistence
-  - Fix ServerLogService.add_log() function signature to include missing project_id parameter
-  - Fix API AttributeError by handling missing source field in ServerLog model with getattr() fallback
-  - Fix ServerLogResponse model details field type from str to Dict[str, Any] to match JSON database storage
+- [TASK_104] Fix MCP connection logs not appearing in web UI (2025-06-26)
+  - Implement ServerLogService integration for connection event logging (session start/end, tool discovery)
+  - Fix API schema mismatches and Pydantic validation errors for ServerLog responses
   - Improve client type detection for Roo Code and Node.js based MCP clients
-  - Add enhanced logging to capture actual User-Agent strings for better client identification
   - Enable proper connection log display in web UI with session details and statistics
-  - Resolve issue where MCP session events appeared in application logs but not database
 - [TASK_090] Fix tool_call_logs API Pydantic validation error causing 500 errors (2025-06-26)
   - Fix ToolCallLogResponse model server_id field type from str to UUID to match database schema
   - Resolve "Input should be a valid string" Pydantic validation error for server_id field
