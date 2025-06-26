@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_092] Docker frontend environment variable configuration to respect .env file NEXTAUTH_URL (2025-06-26)
+  - Update docker-compose.yml to use ${NEXTAUTH_URL:-default} pattern for frontend container
+  - Enable .env file NEXTAUTH_URL values to override hardcoded defaults in Docker deployments
+  - Improve environment variable flexibility for custom domain configurations in containerized environments
+
 ### Added
+- [TASK_090] Backend restart guide and automation script for development and production environments (2025-06-26)
+  - Add comprehensive Backend Restart Guide section to README.md with manual and automated procedures
+  - Create scripts/restart-backend.sh automation script with intelligent process detection and safe restart
+  - Support for code updates via git pull integration and automatic logs directory creation
+  - Include health check verification and detailed status monitoring after restart
+  - Provide clear guidance for when to use backend restart vs full system restart
+  - Enable zero-downtime frontend operation during backend maintenance
 - [TASK_091] Enhanced logging system with JSON format support and environment-based configuration (2025-06-26)
   - Implement JSON logging formatter with structured output for production monitoring
   - Add comprehensive logging configuration in config.py with validation
