@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Record CONNECTION logs for session start/end, SYSTEM logs for tool discovery
   - Use separate database sessions to prevent ROLLBACK issues from affecting log persistence
   - Fix ServerLogService.add_log() function signature to include missing project_id parameter
+  - Fix API AttributeError by handling missing source field in ServerLog model with getattr() fallback
   - Enable proper connection log display in web UI with session details and statistics
   - Resolve issue where MCP session events appeared in application logs but not database
 - [TASK_090] Fix tool_call_logs API Pydantic validation error causing 500 errors (2025-06-26)

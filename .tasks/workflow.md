@@ -784,6 +784,7 @@
   - [x] 연결 종료: CONNECTION 로그 (클라이언트 세션 종료)
   - [x] 별도 데이터베이스 세션 사용으로 ROLLBACK 이슈 방지
   - [x] ServerLogService.add_log() 함수 호출 시 누락된 project_id 매개변수 수정
+  - [x] API에서 ServerLog.source 필드 접근 오류 수정 (getattr() 폴백 사용)
 - [x] 웹 UI에서 Connection logs 표시 확인 및 테스트
 
 ## Progress Status  

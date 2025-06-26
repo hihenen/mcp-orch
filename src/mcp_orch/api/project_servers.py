@@ -926,7 +926,7 @@ async def get_server_logs(
             message=log.message,
             details=log.details,
             timestamp=log.timestamp,
-            source=log.source
+            source=getattr(log, 'source', None)  # ServerLog 모델에 source 필드가 없으므로 기본값 None 사용
         )
         for log in logs
     ]
