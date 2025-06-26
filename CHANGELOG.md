@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fix ServerLogService.add_log() function signature to include missing project_id parameter
   - Fix API AttributeError by handling missing source field in ServerLog model with getattr() fallback
   - Fix ServerLogResponse model details field type from str to Dict[str, Any] to match JSON database storage
+  - Improve client type detection for Roo Code and Node.js based MCP clients
+  - Add enhanced logging to capture actual User-Agent strings for better client identification
   - Enable proper connection log display in web UI with session details and statistics
   - Resolve issue where MCP session events appeared in application logs but not database
 - [TASK_090] Fix tool_call_logs API Pydantic validation error causing 500 errors (2025-06-26)

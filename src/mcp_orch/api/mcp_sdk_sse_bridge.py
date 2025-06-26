@@ -356,8 +356,12 @@ async def run_mcp_bridge_session(
             client_type = "cursor"
         elif "vscode" in user_agent.lower():
             client_type = "vscode"
+        elif "roo" in user_agent.lower():
+            client_type = "roo"
+        elif user_agent.lower() == "node":
+            client_type = "node_client"  # Node.js 기반 클라이언트
     
-    logger.info(f"🔗 Creating session {session_id} for {client_type} client (IP: {client_ip})")
+    logger.info(f"🔗 Creating session {session_id} for {client_type} client (IP: {client_ip}, User-Agent: '{user_agent}')")
     
     # 데이터베이스 세션 생성
     db = get_db_session()
