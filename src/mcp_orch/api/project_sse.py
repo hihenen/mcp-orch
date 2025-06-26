@@ -617,10 +617,15 @@ async def delete_project_api_key(
 @router.get("/projects/{project_id}/cline-config")
 async def get_project_cline_config(
     project_id: UUID,
+    unified: bool = False,
     current_user: User = Depends(get_current_user_for_project_sse),
     db: Session = Depends(get_db)
 ):
-    """프로젝트별 MCP 설정 파일 자동 생성 (Claude, Cursor 등 호환)"""
+    """프로젝트별 MCP 설정 파일 자동 생성 (Claude, Cursor 등 호환)
+    
+    Args:
+        unified: True일 경우 통합 MCP 서버 엔드포인트 사용, False일 경우 개별 서버 설정
+    """
     
     # 프로젝트 접근 권한 확인
     project = await _verify_project_access(project_id, current_user, db)
@@ -647,33 +652,82 @@ async def get_project_cline_config(
             detail="No active API key found for this project. Please create an API key first."
         )
     
+    # 동적 base URL 확인 (환경변수 또는 요청에서 추출)
+    from ..config import get_mcp_server_base_url
+    from starlette.requests import Request
+    base_url = get_mcp_server_base_url()
+    
     # Cline 설정 생성
     mcp_servers = {}
-    base_url = "http://localhost:8000"
     
-    for server in servers:
-        server_key = f"project-{project_id}-{server.name}"
+    if unified:
+        # 통합 MCP 서버 모드 - 하나의 SSE 엔드포인트로 모든 서버 접근
+        server_key = f"mcp-orch-unified-{project_id}"
         
-        # 서버별 JWT 인증 설정 확인
-        jwt_auth_required = server.get_effective_jwt_auth_required()
+        # 프로젝트의 JWT 인증 설정 확인 (모든 서버가 JWT 필요한지 확인)
+        requires_jwt = any(server.get_effective_jwt_auth_required() for server in servers)
         
-        # Single Resource Connection mode - stdio 방식 (단일 모드)
         server_config = {
-            "type": "stdio",
-            "command": server.command,
-            "args": server.args if server.args else [],
-            "env": server.env if server.env else {},
+            "type": "sse",
+            "url": f"{base_url}/projects/{project_id}/unified/sse",
             "timeout": 60,
             "disabled": False
         }
         
-        # JWT 인증이 필요한 경우만 환경변수에 API 키 설정 추가
-        if jwt_auth_required:
-            if not server_config["env"]:
-                server_config["env"] = {}
-            server_config["env"]["MCP_API_KEY"] = f"${{{api_key.key_prefix}...}}"
+        # JWT 인증이 필요한 경우 헤더에 API 키 설정
+        if requires_jwt:
+            server_config["headers"] = {
+                "Authorization": f"Bearer ${{{api_key.key_prefix}...}}"
+            }
         
         mcp_servers[server_key] = server_config
+        
+        instructions = [
+            "🚀 UNIFIED MCP SERVER CONFIGURATION",
+            "1. Save this configuration as 'mcp_settings.json' in your project root",
+            "2. Configure Claude Desktop, Cursor, or other MCP clients to use this settings file",
+            "3. Replace placeholder API keys with your actual full API key where needed",
+            "4. This unified endpoint provides access to ALL project servers through a single connection",
+            f"5. Tools are namespaced with format: 'server_name.tool_name' (separator: '.')",
+            f"6. Access {len(servers)} servers through one SSE endpoint: /projects/{project_id}/unified/sse",
+            "7. Error isolation: individual server failures won't affect other servers",
+            "8. Health monitoring and recovery tools available through 'orchestrator.*' meta tools"
+        ]
+        
+    else:
+        # 개별 서버 모드 (기존 방식)
+        for server in servers:
+            server_key = f"project-{project_id}-{server.name}"
+            
+            # 서버별 JWT 인증 설정 확인
+            jwt_auth_required = server.get_effective_jwt_auth_required()
+            
+            # Single Resource Connection mode - stdio 방식 (단일 모드)
+            server_config = {
+                "type": "stdio",
+                "command": server.command,
+                "args": server.args if server.args else [],
+                "env": server.env if server.env else {},
+                "timeout": 60,
+                "disabled": False
+            }
+            
+            # JWT 인증이 필요한 경우만 환경변수에 API 키 설정 추가
+            if jwt_auth_required:
+                if not server_config["env"]:
+                    server_config["env"] = {}
+                server_config["env"]["MCP_API_KEY"] = f"${{{api_key.key_prefix}...}}"
+            
+            mcp_servers[server_key] = server_config
+        
+        instructions = [
+            "📋 INDIVIDUAL SERVERS CONFIGURATION",
+            "1. Save this configuration as 'mcp_settings.json' in your project root",
+            "2. Configure Claude Desktop, Cursor, or other MCP clients to use this settings file", 
+            "3. Replace placeholder API keys with your actual full API key where needed",
+            "4. Servers without MCP_API_KEY do not require authentication (based on server settings)",
+            f"5. Each server runs as separate stdio connection"
+        ]
     
     cline_config = {
         "mcpServers": mcp_servers
@@ -685,11 +739,7 @@ async def get_project_cline_config(
         "config": cline_config,
         "servers_count": len(servers),
         "api_key_prefix": api_key.key_prefix,
-        "instructions": [
-            "1. Save this configuration as 'mcp_settings.json' in your project root",
-            "2. Configure Claude Desktop, Cursor, or other MCP clients to use this settings file",
-            "3. Replace placeholder API keys with your actual full API key where needed",
-            "4. Servers without MCP_API_KEY do not require authentication (based on server settings)",
-            f"5. Base configuration is set for stdio connections - adjust if needed"
-        ]
+        "mode": "unified" if unified else "individual",
+        "unified_endpoint": f"{base_url}/projects/{project_id}/unified/sse" if unified else None,
+        "instructions": instructions
     }

@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_093] Enhanced Cline/Cursor configuration generation with unified MCP server support (2025-06-27)
+  - Add unified endpoint option to project and team Cline configuration APIs
+  - Support both individual server mode (existing) and unified mode (new) simultaneously
+  - Enable mixed usage scenarios for flexible MCP client setups
+  - Provide clear instructions for namespace-aware tool routing in unified mode
+  - Maintain full backward compatibility with existing individual server configurations
+  - Add dynamic base URL detection for production deployment compatibility
+- [TASK_107] Production deployment guide and environment configuration improvements (2025-06-27)
+  - Comprehensive production deployment documentation with step-by-step checklist
+  - Enhanced .env.hybrid.example with clear production vs development settings
+  - Improved environment variable comments with deployment warnings and examples
+  - Production deployment section in README.md with quick start guide
+  - Automated production environment detection in quickstart.sh script
+  - Standard example domains (your-domain.com) replacing real company domains
+  - Production deployment checklist with security and infrastructure requirements
 - [TASK_093] Unified MCP Server namespace tool routing with global separator configuration (2025-06-27)
   - Simplify namespace separator system to single global constant (NAMESPACE_SEPARATOR)
   - Remove complex client compatibility layer and dynamic separator selection

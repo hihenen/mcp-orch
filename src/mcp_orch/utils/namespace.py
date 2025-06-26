@@ -175,6 +175,37 @@ class OrchestratorMetaTools:
                     "type": "orchestrator", 
                     "category": "information"
                 }
+            },
+            {
+                "name": f"{prefix}recover_failed_servers",
+                "description": "Attempt to recover failed servers by retesting their connections",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "server_name": {
+                            "type": "string",
+                            "description": "Specific server name to recover (optional - if not provided, all failed servers will be tested)"
+                        }
+                    },
+                    "required": []
+                },
+                "_meta": {
+                    "type": "orchestrator",
+                    "category": "recovery"
+                }
+            },
+            {
+                "name": f"{prefix}health_report",
+                "description": "Get comprehensive health report of all servers with suggested actions",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                },
+                "_meta": {
+                    "type": "orchestrator",
+                    "category": "monitoring"
+                }
             }
         ]
     

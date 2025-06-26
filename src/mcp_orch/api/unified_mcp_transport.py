@@ -9,9 +9,10 @@ import asyncio
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List, AsyncGenerator
 from uuid import UUID
+from enum import Enum
 
 from fastapi import APIRouter, Request, HTTPException, status, Depends, Query
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -32,6 +33,207 @@ from ..utils.namespace import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["unified-mcp"])
+
+
+# ============================================================================
+# 구조화된 로깅 시스템
+# ============================================================================
+
+class StructuredLogger:
+    """통합 MCP 서버용 구조화된 로깅 클래스"""
+    
+    def __init__(self, session_id: str, project_id: UUID):
+        self.session_id = session_id
+        self.project_id = str(project_id)
+        self.logger = logger
+    
+    def _log_structured(self, level: str, event: str, **kwargs):
+        """구조화된 로그 생성"""
+        log_data = {
+            "timestamp": datetime.now().isoformat(),
+            "level": level,
+            "event": event,
+            "session_id": self.session_id,
+            "project_id": self.project_id,
+            **kwargs
+        }
+        
+        # JSON 형태로 로깅 (운영환경에서 파싱 용이)
+        log_message = json.dumps(log_data, ensure_ascii=False)
+        
+        # 레벨에 따라 적절한 로거 메서드 호출
+        if level == "error":
+            self.logger.error(log_message)
+        elif level == "warning":
+            self.logger.warning(log_message)
+        elif level == "info":
+            self.logger.info(log_message)
+        else:
+            self.logger.debug(log_message)
+    
+    def server_success(self, server_name: str, tools_count: int = 0, **kwargs):
+        """서버 성공 로그"""
+        self._log_structured(
+            "info", "server_success",
+            server_name=server_name,
+            tools_count=tools_count,
+            **kwargs
+        )
+    
+    def server_failure(self, server_name: str, error_type: str, error_message: str, 
+                      consecutive_failures: int = 0, **kwargs):
+        """서버 실패 로그"""
+        self._log_structured(
+            "error", "server_failure",
+            server_name=server_name,
+            error_type=error_type,
+            error_message=error_message,
+            consecutive_failures=consecutive_failures,
+            **kwargs
+        )
+    
+    def tool_call_start(self, tool_name: str, server_name: str, namespace: str, **kwargs):
+        """툴 호출 시작 로그"""
+        self._log_structured(
+            "info", "tool_call_start",
+            tool_name=tool_name,
+            server_name=server_name,
+            namespace=namespace,
+            **kwargs
+        )
+    
+    def tool_call_success(self, tool_name: str, server_name: str, namespace: str, 
+                         execution_time_ms: float = None, **kwargs):
+        """툴 호출 성공 로그"""
+        self._log_structured(
+            "info", "tool_call_success",
+            tool_name=tool_name,
+            server_name=server_name,
+            namespace=namespace,
+            execution_time_ms=execution_time_ms,
+            **kwargs
+        )
+    
+    def tool_call_failure(self, tool_name: str, server_name: str, namespace: str,
+                         error_type: str, error_message: str, **kwargs):
+        """툴 호출 실패 로그"""
+        self._log_structured(
+            "error", "tool_call_failure",
+            tool_name=tool_name,
+            server_name=server_name,
+            namespace=namespace,
+            error_type=error_type,
+            error_message=error_message,
+            **kwargs
+        )
+    
+    def session_event(self, event_type: str, **kwargs):
+        """세션 이벤트 로그"""
+        self._log_structured(
+            "info", "session_event",
+            event_type=event_type,
+            **kwargs
+        )
+
+
+# ============================================================================
+# 서버 상태 추적 및 에러 격리 시스템
+# ============================================================================
+
+class ServerErrorType(Enum):
+    """서버 에러 타입 분류"""
+    CONNECTION_TIMEOUT = "connection_timeout"
+    CONNECTION_REFUSED = "connection_refused"
+    INVALID_RESPONSE = "invalid_response"
+    TOOL_EXECUTION_ERROR = "tool_execution_error"
+    SERVER_CRASH = "server_crash"
+    AUTHENTICATION_ERROR = "authentication_error"
+    UNKNOWN_ERROR = "unknown_error"
+
+
+class ServerStatus(Enum):
+    """서버 상태"""
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"  # 일부 기능만 작동
+    FAILED = "failed"      # 완전히 실패
+    RECOVERING = "recovering"  # 복구 시도 중
+
+
+class ServerHealthInfo:
+    """개별 서버 헬스 정보"""
+    
+    def __init__(self, server_name: str):
+        self.server_name = server_name
+        self.status = ServerStatus.HEALTHY
+        self.last_success_time = datetime.now()
+        self.last_failure_time: Optional[datetime] = None
+        self.failure_count = 0
+        self.consecutive_failures = 0
+        self.last_error_type: Optional[ServerErrorType] = None
+        self.last_error_message: Optional[str] = None
+        self.recovery_attempts = 0
+        self.tools_available = 0
+        self.tools_failed = 0
+    
+    def record_success(self):
+        """성공 기록"""
+        self.status = ServerStatus.HEALTHY
+        self.last_success_time = datetime.now()
+        self.consecutive_failures = 0
+        self.recovery_attempts = 0
+        self.last_error_type = None
+        self.last_error_message = None
+    
+    def record_failure(self, error_type: ServerErrorType, error_message: str):
+        """실패 기록"""
+        self.last_failure_time = datetime.now()
+        self.failure_count += 1
+        self.consecutive_failures += 1
+        self.last_error_type = error_type
+        self.last_error_message = error_message
+        
+        # 상태 결정
+        if self.consecutive_failures >= 5:
+            self.status = ServerStatus.FAILED
+        elif self.consecutive_failures >= 2:
+            self.status = ServerStatus.DEGRADED
+    
+    def start_recovery(self):
+        """복구 시작"""
+        self.status = ServerStatus.RECOVERING
+        self.recovery_attempts += 1
+    
+    def is_failed(self) -> bool:
+        """서버가 실패 상태인지 확인"""
+        return self.status == ServerStatus.FAILED
+    
+    def should_retry(self) -> bool:
+        """재시도 해야 하는지 확인"""
+        if self.status == ServerStatus.HEALTHY:
+            return True
+        
+        # 최근 실패가 5분 이전이면 재시도
+        if self.last_failure_time and \
+           datetime.now() - self.last_failure_time > timedelta(minutes=5):
+            return True
+        
+        return False
+    
+    def get_health_summary(self) -> Dict[str, Any]:
+        """헬스 요약 정보 반환"""
+        return {
+            "server_name": self.server_name,
+            "status": self.status.value,
+            "last_success": self.last_success_time.isoformat() if self.last_success_time else None,
+            "last_failure": self.last_failure_time.isoformat() if self.last_failure_time else None,
+            "failure_count": self.failure_count,
+            "consecutive_failures": self.consecutive_failures,
+            "last_error_type": self.last_error_type.value if self.last_error_type else None,
+            "last_error_message": self.last_error_message,
+            "recovery_attempts": self.recovery_attempts,
+            "tools_available": self.tools_available,
+            "tools_failed": self.tools_failed
+        }
 
 
 class UnifiedMCPTransport(MCPSSETransport):
@@ -67,10 +269,24 @@ class UnifiedMCPTransport(MCPSSETransport):
         self.project_servers = project_servers
         self.namespace_registry = NamespaceRegistry()
         self.server_connections = {}  # 개별 서버 연결 캐시
-        self.failed_servers = set()   # 실패한 서버 추적
+        self.server_health = {}  # 서버별 헬스 정보 추적
+        self.structured_logger = StructuredLogger(session_id, project_id)  # 구조화된 로깅
+        
+        # 서버 헬스 정보 초기화
+        for server in project_servers:
+            if server.is_enabled:
+                self.server_health[server.name] = ServerHealthInfo(server.name)
         
         # 서버 네임스페이스 등록
         self._register_servers()
+        
+        # 세션 시작 로그
+        self.structured_logger.session_event(
+            "session_created",
+            servers_count=len(project_servers),
+            enabled_servers_count=len([s for s in project_servers if s.is_enabled]),
+            namespace_separator=NAMESPACE_SEPARATOR
+        )
         
         logger.info(f"🚀 UnifiedMCPTransport created: session={session_id}, servers={len(project_servers)}, separator='{NAMESPACE_SEPARATOR}'")
     
@@ -80,6 +296,101 @@ class UnifiedMCPTransport(MCPSSETransport):
             if server.is_enabled:
                 namespace_name = self.namespace_registry.register_server(server.name)
                 logger.debug(f"Registered server: '{server.name}' → '{namespace_name}'")
+    
+    def _classify_error(self, error: Exception) -> ServerErrorType:
+        """에러를 분류하여 적절한 타입 반환"""
+        error_msg = str(error).lower()
+        
+        if "timeout" in error_msg or "timed out" in error_msg:
+            return ServerErrorType.CONNECTION_TIMEOUT
+        elif "connection refused" in error_msg or "connection reset" in error_msg:
+            return ServerErrorType.CONNECTION_REFUSED
+        elif "authentication" in error_msg or "unauthorized" in error_msg:
+            return ServerErrorType.AUTHENTICATION_ERROR
+        elif "invalid response" in error_msg or "json" in error_msg:
+            return ServerErrorType.INVALID_RESPONSE
+        elif "crashed" in error_msg or "terminated" in error_msg:
+            return ServerErrorType.SERVER_CRASH
+        else:
+            return ServerErrorType.UNKNOWN_ERROR
+    
+    def _record_server_success(self, server_name: str, tools_count: int = 0):
+        """서버 성공 기록"""
+        if server_name in self.server_health:
+            health_info = self.server_health[server_name]
+            health_info.record_success()
+            health_info.tools_available = tools_count
+            
+            # 구조화된 로깅
+            self.structured_logger.server_success(
+                server_name=server_name,
+                tools_count=tools_count,
+                status=health_info.status.value
+            )
+            
+            logger.debug(f"✅ Server success recorded: {server_name} ({tools_count} tools)")
+    
+    def _record_server_failure(self, server_name: str, error: Exception):
+        """서버 실패 기록"""
+        error_type = self._classify_error(error)
+        error_message = str(error)
+        
+        if server_name in self.server_health:
+            health_info = self.server_health[server_name]
+            health_info.record_failure(error_type, error_message)
+            
+            # 구조화된 로깅
+            self.structured_logger.server_failure(
+                server_name=server_name,
+                error_type=error_type.value,
+                error_message=error_message,
+                consecutive_failures=health_info.consecutive_failures,
+                status=health_info.status.value
+            )
+            
+            logger.warning(f"❌ Server failure recorded: {server_name}")
+            logger.warning(f"   Error type: {error_type.value}")
+            logger.warning(f"   Consecutive failures: {health_info.consecutive_failures}")
+            logger.warning(f"   Status: {health_info.status.value}")
+    
+    def _is_server_available(self, server_name: str) -> bool:
+        """서버가 사용 가능한지 확인"""
+        if server_name not in self.server_health:
+            return True  # 새 서버는 기본적으로 사용 가능
+        
+        health_info = self.server_health[server_name]
+        return not health_info.is_failed() and health_info.should_retry()
+    
+    def _get_failed_servers(self) -> List[str]:
+        """실패한 서버 목록 반환"""
+        failed = []
+        for server_name, health_info in self.server_health.items():
+            if health_info.is_failed():
+                failed.append(server_name)
+        return failed
+    
+    def _get_server_health_summary(self) -> Dict[str, Any]:
+        """전체 서버 헬스 요약 정보"""
+        summary = {
+            "total_servers": len(self.project_servers),
+            "healthy_servers": 0,
+            "degraded_servers": 0,
+            "failed_servers": 0,
+            "servers": {}
+        }
+        
+        for server_name, health_info in self.server_health.items():
+            status = health_info.status
+            if status == ServerStatus.HEALTHY:
+                summary["healthy_servers"] += 1
+            elif status == ServerStatus.DEGRADED:
+                summary["degraded_servers"] += 1
+            elif status == ServerStatus.FAILED:
+                summary["failed_servers"] += 1
+            
+            summary["servers"][server_name] = health_info.get_health_summary()
+        
+        return summary
     
     async def handle_initialize(self, message: Dict[str, Any]) -> JSONResponse:
         """
@@ -124,17 +435,21 @@ class UnifiedMCPTransport(MCPSSETransport):
         
         logger.info(f"📋 Listing unified tools from {len(active_servers)} servers")
         
-        # 각 서버에서 툴 수집 (에러 격리)
+        # 각 서버에서 툴 수집 (강화된 에러 격리)
         for server in active_servers:
             try:
-                if server.name in self.failed_servers:
-                    logger.debug(f"Skipping previously failed server: {server.name}")
+                # 서버 헬스 체크
+                if not self._is_server_available(server.name):
+                    logger.debug(f"Skipping unavailable server: {server.name}")
+                    failed_servers.append(server.name)
                     continue
                 
                 # 서버 설정 구성
                 server_config = self._build_server_config_for_server(server)
                 if not server_config:
-                    logger.warning(f"Failed to build config for server: {server.name}")
+                    error_msg = f"Failed to build config for server: {server.name}"
+                    logger.warning(error_msg)
+                    self._record_server_failure(server.name, Exception(error_msg))
                     failed_servers.append(server.name)
                     continue
                 
@@ -144,7 +459,9 @@ class UnifiedMCPTransport(MCPSSETransport):
                 )
                 
                 if tools is None:
-                    logger.warning(f"No tools returned from server: {server.name}")
+                    error_msg = f"No tools returned from server: {server.name}"
+                    logger.warning(error_msg)
+                    self._record_server_failure(server.name, Exception(error_msg))
                     failed_servers.append(server.name)
                     continue
                 
@@ -170,12 +487,14 @@ class UnifiedMCPTransport(MCPSSETransport):
                     except Exception as e:
                         logger.error(f"Error processing tool {tool.get('name', 'unknown')} from {server.name}: {e}")
                         
+                # 서버 성공 기록
+                self._record_server_success(server.name, len(tools))
                 logger.info(f"✅ Collected {len(tools)} tools from server: {server.name}")
                 
             except Exception as e:
                 logger.error(f"❌ Failed to get tools from server {server.name}: {e}")
+                self._record_server_failure(server.name, e)
                 failed_servers.append(server.name)
-                self.failed_servers.add(server.name)
                 # 개별 서버 실패가 전체를 망가뜨리지 않도록 continue
         
         # 오케스트레이터 메타 도구 추가
@@ -199,7 +518,8 @@ class UnifiedMCPTransport(MCPSSETransport):
                     "failed_servers": failed_servers,
                     "namespace_separator": NAMESPACE_SEPARATOR,
                     "total_tools": len(all_tools),
-                    "meta_tools": len([t for t in all_tools if t.get('_meta', {}).get('type') == 'orchestrator'])
+                    "meta_tools": len([t for t in all_tools if t.get('_meta', {}).get('type') == 'orchestrator']),
+                    "server_health": self._get_server_health_summary()
                 }
             }
         }
@@ -237,8 +557,13 @@ class UnifiedMCPTransport(MCPSSETransport):
             if not target_server.is_enabled:
                 raise ValueError(f"Server '{namespace_name}' is disabled")
             
-            if target_server.name in self.failed_servers:
-                raise ValueError(f"Server '{namespace_name}' is marked as failed")
+            # 서버 헬스 체크
+            if not self._is_server_available(target_server.name):
+                health_info = self.server_health.get(target_server.name)
+                if health_info:
+                    raise ValueError(f"Server '{namespace_name}' is unavailable (Status: {health_info.status.value}, Failures: {health_info.consecutive_failures})")
+                else:
+                    raise ValueError(f"Server '{namespace_name}' is unavailable")
             
             # 개별 서버 호출 (기존 로직 재사용)
             server_config = self._build_server_config_for_server(target_server)
@@ -247,15 +572,59 @@ class UnifiedMCPTransport(MCPSSETransport):
             
             logger.info(f"🎯 Routing to server: {namespace_name} → {target_server.name}.{tool_name}")
             
-            # 도구 호출 (에러 격리)
+            # 툴 호출 시작 로그
+            self.structured_logger.tool_call_start(
+                tool_name=tool_name,
+                server_name=target_server.name,
+                namespace=namespace_name,
+                arguments_keys=list(arguments.keys()) if arguments else []
+            )
+            
+            # 도구 호출 (강화된 에러 격리)
+            start_time = datetime.now()
             try:
                 result = await mcp_connection_service.call_tool(
                     str(target_server.id), server_config, tool_name, arguments
                 )
+                
+                # 실행 시간 계산
+                execution_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+                
+                # 성공 기록
+                self._record_server_success(target_server.name)
+                
+                # 툴 호출 성공 로그
+                self.structured_logger.tool_call_success(
+                    tool_name=tool_name,
+                    server_name=target_server.name,
+                    namespace=namespace_name,
+                    execution_time_ms=execution_time_ms
+                )
+                
             except Exception as e:
-                # 서버 실패 마킹 (향후 요청에서 제외)
-                self.failed_servers.add(target_server.name)
-                raise ValueError(f"Tool execution failed on server '{namespace_name}': {str(e)}")
+                # 에러 타입 분류
+                error_type = self._classify_error(e)
+                
+                # 서버 실패 기록
+                self._record_server_failure(target_server.name, e)
+                
+                # 툴 호출 실패 로그
+                self.structured_logger.tool_call_failure(
+                    tool_name=tool_name,
+                    server_name=target_server.name,
+                    namespace=namespace_name,
+                    error_type=error_type.value,
+                    error_message=str(e)
+                )
+                
+                # 사용자 친화적 에러 메시지 생성
+                health_info = self.server_health.get(target_server.name)
+                if health_info:
+                    error_context = f"Error type: {health_info.last_error_type.value if health_info.last_error_type else 'unknown'}, Consecutive failures: {health_info.consecutive_failures}"
+                else:
+                    error_context = "Server error details unavailable"
+                
+                raise ValueError(f"Tool execution failed on server '{namespace_name}': {str(e)} ({error_context})")
             
             # 성공 응답 (기존 MCPSSETransport와 동일한 형식)
             response = {
@@ -272,7 +641,8 @@ class UnifiedMCPTransport(MCPSSETransport):
                         "source_server": target_server.name,
                         "namespace": namespace_name,
                         "original_tool": tool_name,
-                        "execution_mode": "unified"
+                        "execution_mode": "unified",
+                        "server_health": self.server_health.get(target_server.name, {}).get_health_summary() if target_server.name in self.server_health else None
                     }
                 }
             }
@@ -309,14 +679,18 @@ class UnifiedMCPTransport(MCPSSETransport):
             
             logger.info(f"🔧 Meta tool call: {tool_name}")
             
-            if tool_name == f"orchestrator{self.tool_naming.separator}list_servers":
+            meta_prefix = get_meta_tool_prefix()
+            
+            if tool_name == f"{meta_prefix}list_servers":
                 return await self._meta_list_servers(message)
-            elif tool_name == f"orchestrator{self.tool_naming.separator}server_status":
+            elif tool_name == f"{meta_prefix}server_status":
                 return await self._meta_server_status(message, arguments)
-            elif tool_name == f"orchestrator{self.tool_naming.separator}switch_namespace":
-                return await self._meta_switch_namespace(message, arguments)
-            elif tool_name == f"orchestrator{self.tool_naming.separator}project_info":
+            elif tool_name == f"{meta_prefix}project_info":
                 return await self._meta_project_info(message)
+            elif tool_name == f"{meta_prefix}recover_failed_servers":
+                return await self._meta_recover_failed_servers(message, arguments)
+            elif tool_name == f"{meta_prefix}health_report":
+                return await self._meta_health_report(message)
             else:
                 raise ValueError(f"Unknown meta tool: {tool_name}")
                 
@@ -341,20 +715,50 @@ class UnifiedMCPTransport(MCPSSETransport):
                 server.name
             )
             
+            # 서버 헬스 정보 추가
+            health_info = self.server_health.get(server.name)
+            if health_info:
+                status = health_info.status.value
+                tools_count = health_info.tools_available
+                consecutive_failures = health_info.consecutive_failures
+            else:
+                status = "unknown"
+                tools_count = 0
+                consecutive_failures = 0
+            
             servers_info.append({
                 "name": server.name,
                 "namespace": namespace_name,
                 "enabled": server.is_enabled,
-                "status": "failed" if server.name in self.failed_servers else "active",
+                "status": status,
                 "command": server.command,
-                "description": getattr(server, 'description', None)
+                "description": getattr(server, 'description', None),
+                "tools_count": tools_count,
+                "consecutive_failures": consecutive_failures
             })
         
         result_text = f"📋 Project Servers ({len(self.project_servers)} total):\n\n"
         for info in servers_info:
-            status_icon = "❌" if info["status"] == "failed" else ("✅" if info["enabled"] else "⏸️")
+            # 상태별 아이콘 결정
+            if info["status"] == "failed":
+                status_icon = "❌"
+            elif info["status"] == "degraded":
+                status_icon = "⚠️"
+            elif info["status"] == "healthy" and info["enabled"]:
+                status_icon = "✅"
+            elif not info["enabled"]:
+                status_icon = "⏸️"
+            else:
+                status_icon = "❓"
+            
             result_text += f"{status_icon} {info['namespace']} ({info['name']})\n"
+            result_text += f"   Status: {info['status']}\n"
             result_text += f"   Command: {info['command']}\n"
+            result_text += f"   Tools Available: {info['tools_count']}\n"
+            
+            if info['consecutive_failures'] > 0:
+                result_text += f"   Consecutive Failures: {info['consecutive_failures']}\n"
+            
             if info['description']:
                 result_text += f"   Description: {info['description']}\n"
             result_text += "\n"
@@ -484,6 +888,174 @@ class UnifiedMCPTransport(MCPSSETransport):
             "result": {
                 "content": [{"type": "text", "text": result_text}],
                 "_meta": {"project_info": project_info}
+            }
+        })
+    
+    async def _meta_recover_failed_servers(self, message: Dict[str, Any], arguments: Dict[str, Any]) -> JSONResponse:
+        """실패한 서버 복구 시도 메타 도구"""
+        target_server_name = arguments.get("server_name")
+        
+        if target_server_name:
+            # 특정 서버 복구
+            servers_to_recover = [s for s in self.project_servers if s.name == target_server_name]
+            if not servers_to_recover:
+                raise ValueError(f"Server '{target_server_name}' not found")
+        else:
+            # 모든 실패한 서버 복구
+            failed_server_names = self._get_failed_servers()
+            servers_to_recover = [s for s in self.project_servers if s.name in failed_server_names]
+        
+        recovery_results = []
+        
+        for server in servers_to_recover:
+            health_info = self.server_health.get(server.name)
+            if not health_info:
+                continue
+            
+            logger.info(f"🔄 Attempting to recover server: {server.name}")
+            
+            # 복구 시도 기록
+            health_info.start_recovery()
+            
+            try:
+                # 서버 설정 구성 시도
+                server_config = self._build_server_config_for_server(server)
+                if not server_config:
+                    recovery_results.append({
+                        "server": server.name,
+                        "success": False,
+                        "error": "Failed to build server configuration"
+                    })
+                    continue
+                
+                # 서버 도구 목록 가져오기 시도 (연결 테스트)
+                tools = await mcp_connection_service.get_server_tools(
+                    str(server.id), server_config
+                )
+                
+                if tools is not None:
+                    # 복구 성공
+                    self._record_server_success(server.name, len(tools))
+                    recovery_results.append({
+                        "server": server.name,
+                        "success": True,
+                        "tools_count": len(tools)
+                    })
+                    
+                    # 구조화된 로깅
+                    self.structured_logger.session_event(
+                        "server_recovered",
+                        server_name=server.name,
+                        tools_count=len(tools),
+                        recovery_attempts=health_info.recovery_attempts
+                    )
+                else:
+                    recovery_results.append({
+                        "server": server.name,
+                        "success": False,
+                        "error": "Server returned no tools"
+                    })
+                    
+            except Exception as e:
+                # 복구 실패
+                self._record_server_failure(server.name, e)
+                recovery_results.append({
+                    "server": server.name,
+                    "success": False,
+                    "error": str(e)
+                })
+        
+        # 결과 정리
+        successful_recoveries = [r for r in recovery_results if r["success"]]
+        failed_recoveries = [r for r in recovery_results if not r["success"]]
+        
+        result_text = f"🔄 Server Recovery Results:\n\n"
+        
+        if successful_recoveries:
+            result_text += f"✅ Successfully Recovered ({len(successful_recoveries)}):\n"
+            for result in successful_recoveries:
+                result_text += f"   • {result['server']} ({result.get('tools_count', 0)} tools)\n"
+            result_text += "\n"
+        
+        if failed_recoveries:
+            result_text += f"❌ Failed to Recover ({len(failed_recoveries)}):\n"
+            for result in failed_recoveries:
+                result_text += f"   • {result['server']}: {result['error']}\n"
+            result_text += "\n"
+        
+        if not recovery_results:
+            result_text += "ℹ️ No servers found for recovery.\n"
+        
+        result_text += f"Use {get_meta_tool_prefix()}health_report for detailed status information."
+        
+        return JSONResponse(content={
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": {
+                "content": [{"type": "text", "text": result_text}],
+                "_meta": {
+                    "total_attempted": len(recovery_results),
+                    "successful": len(successful_recoveries),
+                    "failed": len(failed_recoveries),
+                    "results": recovery_results
+                }
+            }
+        })
+    
+    async def _meta_health_report(self, message: Dict[str, Any]) -> JSONResponse:
+        """종합 헬스 리포트 및 권장 사항 메타 도구"""
+        health_summary = self._get_server_health_summary()
+        
+        result_text = f"🏥 Server Health Report\n\n"
+        
+        # 전체 요약
+        result_text += f"📊 Summary:\n"
+        result_text += f"   Total Servers: {health_summary['total_servers']}\n"
+        result_text += f"   ✅ Healthy: {health_summary['healthy_servers']}\n"
+        result_text += f"   ⚠️ Degraded: {health_summary['degraded_servers']}\n"
+        result_text += f"   ❌ Failed: {health_summary['failed_servers']}\n\n"
+        
+        # 개별 서버 상세 정보
+        recommendations = []
+        
+        for server_name, server_health in health_summary['servers'].items():
+            status = server_health['status']
+            
+            if status == 'failed':
+                result_text += f"❌ {server_name}:\n"
+                result_text += f"   Status: Failed ({server_health['consecutive_failures']} consecutive failures)\n"
+                result_text += f"   Last Error: {server_health['last_error_type']} - {server_health['last_error_message']}\n"
+                result_text += f"   Last Success: {server_health['last_success']}\n"
+                
+                recommendations.append(f"• Try recovering {server_name} using {get_meta_tool_prefix()}recover_failed_servers")
+                
+            elif status == 'degraded':
+                result_text += f"⚠️ {server_name}:\n"
+                result_text += f"   Status: Degraded ({server_health['consecutive_failures']} recent failures)\n"
+                result_text += f"   Tools Available: {server_health['tools_available']}\n"
+                result_text += f"   Last Error: {server_health['last_error_type']}\n"
+                
+                recommendations.append(f"• Monitor {server_name} closely - may need attention")
+                
+            elif status == 'healthy':
+                result_text += f"✅ {server_name}: Healthy ({server_health['tools_available']} tools)\n"
+            
+            result_text += "\n"
+        
+        # 권장 사항
+        if recommendations:
+            result_text += "💡 Recommendations:\n"
+            for rec in recommendations:
+                result_text += f"   {rec}\n"
+        else:
+            result_text += "✨ All servers are operating normally!\n"
+        
+        return JSONResponse(content={
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": {
+                "content": [{"type": "text", "text": result_text}],
+                "_meta": health_summary
             }
         })
     

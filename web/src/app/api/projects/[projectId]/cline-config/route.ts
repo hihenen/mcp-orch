@@ -27,8 +27,17 @@ export const GET = auth(async function GET(req) {
     const pathSegments = url.pathname.split('/');
     const projectId = pathSegments[pathSegments.indexOf('projects') + 1];
 
-    // 4. 백엔드 API 호출
-    const response = await fetch(`${BACKEND_URL}/projects/${projectId}/cline-config`, {
+    // 4. URL 파라미터 확인 (unified, download)
+    const unified = url.searchParams.get('unified') === 'true';
+    const download = url.searchParams.get('download') === 'true';
+
+    // 5. 백엔드 API 호출 (unified 파라미터 전달)
+    const backendUrl = new URL(`${BACKEND_URL}/projects/${projectId}/cline-config`);
+    if (unified) {
+      backendUrl.searchParams.set('unified', 'true');
+    }
+
+    const response = await fetch(backendUrl.toString(), {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
@@ -41,9 +50,6 @@ export const GET = auth(async function GET(req) {
     }
 
     const configData = await response.json();
-    
-    // URL 파라미터로 다운로드 여부 확인
-    const download = url.searchParams.get('download') === 'true';
 
     if (download) {
       // 파일 다운로드로 응답

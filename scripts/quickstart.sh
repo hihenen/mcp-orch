@@ -340,35 +340,35 @@ main() {
     echo "================================="
     echo ""
     
-    echo "단계 1/7: 배포 환경 확인"
+    echo "단계 1/8: 배포 환경 확인"
     check_production_deployment
     echo ""
     
-    echo "단계 2/7: 시스템 요구사항 확인"
+    echo "단계 2/8: 시스템 요구사항 확인"
     check_requirements
     echo ""
     
-    echo "단계 3/7: 환경 설정"
+    echo "단계 3/8: 환경 설정"
     setup_environment
     echo ""
     
-    echo "단계 4/7: 데이터베이스 시작"
+    echo "단계 4/8: 데이터베이스 시작"
     start_database
     echo ""
     
-    echo "단계 4/7: Python 의존성 설치"
+    echo "단계 5/8: Python 의존성 설치"
     install_dependencies
     echo ""
     
-    echo "단계 5/7: 데이터베이스 마이그레이션"
+    echo "단계 6/8: 데이터베이스 마이그레이션"
     run_migrations
     echo ""
     
-    echo "단계 6/7: 프론트엔드 시작"
+    echo "단계 7/8: 프론트엔드 시작"
     start_frontend
     echo ""
     
-    echo "단계 7/7: 백엔드 자동 시작 및 브라우저 열기"
+    echo "단계 8/8: 백엔드 자동 시작 및 브라우저 열기"
     if start_backend_automatic; then
         open_browser
         show_completion_info
