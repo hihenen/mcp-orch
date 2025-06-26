@@ -290,21 +290,69 @@ show_completion_info() {
     echo "  • 백엔드만 재시작: ./scripts/restart-backend.sh"
 }
 
+# 운영환경 감지 및 체크리스트
+check_production_deployment() {
+    log_info "배포 환경 확인 중..."
+    
+    # .env 파일에서 운영환경 설정 감지
+    if [ -f ".env" ]; then
+        # localhost가 아닌 도메인이 설정되어 있는지 확인
+        if grep -q "localhost" .env 2>/dev/null && ! grep -q "your-domain.com\|example.com" .env 2>/dev/null; then
+            log_info "개발 환경으로 감지되었습니다 (localhost 사용)"
+            return 0
+        fi
+        
+        # 프로덕션 도메인이 감지된 경우
+        if grep -E "NEXTAUTH_URL=https://[^localhost]|NEXT_PUBLIC_MCP_API_URL=https://[^localhost]" .env &>/dev/null; then
+            log_warning "⚠️  프로덕션 배포 설정이 감지되었습니다!"
+            echo ""
+            echo "🚨 프로덕션 배포 체크리스트:"
+            echo "   [ ] 도메인 및 SSL 인증서 준비 완료"
+            echo "   [ ] 프로덕션 데이터베이스 설정 완료"
+            echo "   [ ] 보안 키들이 안전하게 생성됨"
+            echo "   [ ] 방화벽 및 보안 그룹 설정 완료"
+            echo "   [ ] 백업 및 모니터링 설정 완료"
+            echo ""
+            echo "📖 상세한 프로덕션 배포 가이드:"
+            echo "   https://github.com/hihenen/mcp-orch/blob/main/docs/PRODUCTION_DEPLOYMENT.md"
+            echo ""
+            
+            # 사용자 확인
+            read -p "프로덕션 배포를 계속 진행하시겠습니까? (y/N): " -n 1 -r
+            echo ""
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                log_info "배포가 취소되었습니다."
+                exit 0
+            fi
+            
+            log_warning "프로덕션 배포를 진행합니다..."
+            return 1  # 프로덕션 모드 표시
+        fi
+    fi
+    
+    log_info "개발 환경으로 감지되었습니다"
+    return 0
+}
+
 # 메인 실행
 main() {
     echo "🚀 MCP Orchestrator 완전 자동 설정 시작!"
     echo "================================="
     echo ""
     
-    echo "단계 1/7: 시스템 요구사항 확인"
+    echo "단계 1/7: 배포 환경 확인"
+    check_production_deployment
+    echo ""
+    
+    echo "단계 2/7: 시스템 요구사항 확인"
     check_requirements
     echo ""
     
-    echo "단계 2/7: 환경 설정"
+    echo "단계 3/7: 환경 설정"
     setup_environment
     echo ""
     
-    echo "단계 3/7: 데이터베이스 시작"
+    echo "단계 4/7: 데이터베이스 시작"
     start_database
     echo ""
     

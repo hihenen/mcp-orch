@@ -26,6 +26,7 @@ from .standard_mcp import router as standard_mcp_router
 from .mcp_standard_sse import router as mcp_standard_sse_router
 from .mcp_sse_transport import router as mcp_sse_transport_router
 from .mcp_sdk_sse_bridge import router as mcp_sdk_sse_bridge_router
+from .unified_mcp_transport import router as unified_mcp_transport_router
 from .fastmcp_impl import router as fastmcp_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router

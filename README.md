@@ -215,6 +215,142 @@ The `mcp-config.json` file follows this format:
 └─────────────────┘
 ```
 
+## 🚀 Production Deployment
+
+Ready to deploy MCP Orchestrator to production? Follow our comprehensive deployment guide.
+
+### 📋 Quick Deployment Checklist
+
+Before deploying to production, ensure you have:
+
+- [ ] **Domain & SSL**: Your domain with valid SSL certificates
+- [ ] **Database**: Production PostgreSQL server (AWS RDS, Google Cloud SQL, etc.)
+- [ ] **Server**: VPS, EC2, or container hosting platform
+- [ ] **Security**: Firewall rules and security groups configured
+
+### 🌐 Domain Configuration
+
+**Required**: Replace localhost URLs with your production domains:
+
+```bash
+# In your .env file:
+NEXTAUTH_URL=https://your-domain.com
+NEXT_PUBLIC_MCP_API_URL=https://api.your-domain.com
+MCP_SERVER_BASE_URL=https://api.your-domain.com
+```
+
+**Examples:**
+- Main app: `https://mcp.company.com`
+- API: `https://api.mcp.company.com`
+- Subdirectory: `https://company.com/mcp` and `https://company.com/api`
+
+### 🔐 Security Configuration
+
+**Critical**: Generate production secrets:
+
+```bash
+# Generate secure secrets
+openssl rand -hex 32  # For JWT_SECRET
+openssl rand -hex 32  # For NEXTAUTH_SECRET
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"  # For MCP_ENCRYPTION_KEY
+```
+
+Set in your `.env`:
+```bash
+JWT_SECRET=your-generated-jwt-secret
+NEXTAUTH_SECRET=your-generated-nextauth-secret
+MCP_ENCRYPTION_KEY=your-generated-encryption-key
+NODE_ENV=production
+ENV=production
+```
+
+### 🗄️ Database Setup
+
+**Required**: Configure production database:
+
+```bash
+# AWS RDS example:
+DATABASE_URL=postgresql+asyncpg://admin:password@your-db.cluster-xxx.us-east-1.rds.amazonaws.com:5432/mcp_orch
+
+# Google Cloud SQL example:
+DATABASE_URL=postgresql+asyncpg://user:password@xxx.xxx.xxx.xxx:5432/mcp_orch
+
+# Always use +asyncpg for async support
+```
+
+### 🚀 Deploy with Docker
+
+**Recommended**: Use Docker Compose for production:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/hihenen/mcp-orch.git
+cd mcp-orch
+
+# 2. Configure environment
+cp .env.hybrid.example .env
+# Edit .env with your production settings
+
+# 3. Deploy
+docker compose up -d
+
+# 4. Verify deployment
+curl https://api.your-domain.com/health
+```
+
+### 🌐 Nginx Configuration
+
+**Example** reverse proxy setup:
+
+```nginx
+# Frontend (your-domain.com)
+server {
+    listen 443 ssl;
+    server_name your-domain.com;
+    
+    ssl_certificate /path/to/certificate.pem;
+    ssl_certificate_key /path/to/private.key;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# API (api.your-domain.com)
+server {
+    listen 443 ssl;
+    server_name api.your-domain.com;
+    
+    ssl_certificate /path/to/certificate.pem;
+    ssl_certificate_key /path/to/private.key;
+    
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### 📖 Complete Deployment Guide
+
+For detailed step-by-step instructions, security considerations, and troubleshooting:
+
+**[📚 View Complete Production Deployment Guide →](./docs/PRODUCTION_DEPLOYMENT.md)**
+
+This comprehensive guide includes:
+- Detailed configuration checklists
+- Database migration steps
+- SSL/TLS setup instructions
+- Monitoring and maintenance
+- Common deployment issues and solutions
+
 ## Development
 
 ### 🚀 Development Quick Start

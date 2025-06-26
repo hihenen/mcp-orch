@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_093] Unified MCP Server namespace tool routing with global separator configuration (2025-06-27)
+  - Simplify namespace separator system to single global constant (NAMESPACE_SEPARATOR)
+  - Remove complex client compatibility layer and dynamic separator selection
+  - Enable quick separator changes by modifying one constant (. → _ or : etc)
+  - Maintain backward compatibility with existing UnifiedToolNaming class
+  - Implement namespace-based tool routing for unified MCP server endpoints
 - [UX_IMPROVEMENT] Landing page instant installation section with 5-minute MCP server connection promise (2025-06-27)
   - Add prominent "30초 설치, 5분 안에 첫 MCP 서버 연결" section to hero area
   - Replace curl command with Git clone command using correct repository URL
