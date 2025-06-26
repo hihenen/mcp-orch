@@ -342,6 +342,96 @@ docker logs mcp-orch-postgres
 ./scripts/health-check.sh
 ```
 
+## 🔄 Update & Upgrade
+
+### Quick Update (Recommended)
+
+```bash
+# 1. Stop services
+./scripts/shutdown.sh
+
+# 2. Update codebase
+git pull origin main
+
+# 3. Restart services
+./scripts/quickstart.sh
+
+# 4. Start backend (for quickstart mode)
+uv run mcp-orch serve --log-level INFO
+```
+
+### Detailed Update Process
+
+```bash
+# 1. Backup database (production environments)
+pg_dump mcp_orch > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 2. Stop all services
+./scripts/shutdown.sh
+
+# 3. Update repository
+git pull origin main
+
+# 4. Check for new dependencies
+uv sync
+
+# 5. Run database migrations (if needed)
+uv run alembic upgrade head
+
+# 6. Restart services
+./scripts/quickstart.sh
+
+# 7. Start backend (for quickstart mode)
+uv run mcp-orch serve --log-level INFO
+```
+
+### Container-Only Update (Production)
+
+```bash
+# 1. Update codebase
+git pull origin main
+
+# 2. Rebuild and restart containers
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+### Environment Configuration Updates
+
+After updating environment variables in `.env`:
+
+```bash
+# Restart backend only (quickstart mode)
+kill $(pgrep -f "mcp-orch serve") 2>/dev/null || true
+uv run mcp-orch serve --log-level INFO &
+
+# Or restart all services
+./scripts/shutdown.sh && ./scripts/quickstart.sh
+```
+
+### Version-Specific Updates
+
+- Check [CHANGELOG.md](./CHANGELOG.md) for breaking changes and specific upgrade instructions
+- Review migration notes for database schema changes
+- Update environment variables as needed
+
+### Rollback (If needed)
+
+```bash
+# 1. Stop services
+./scripts/shutdown.sh
+
+# 2. Rollback to previous version
+git checkout <previous-tag-or-commit>
+
+# 3. Restore database backup (if needed)
+psql mcp_orch < backup_YYYYMMDD_HHMMSS.sql
+
+# 4. Restart services
+./scripts/quickstart.sh
+```
+
 ## 📋 License and Contributing
 
 ### 🏛️ Project Governance

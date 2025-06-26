@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_093] Comprehensive update and upgrade guide in README.md (2025-06-26)
+  - Add detailed "Update & Upgrade" section with multiple deployment scenarios
+  - Include quick update procedure using existing scripts (shutdown.sh + quickstart.sh)
+  - Add production container-only update process with proper rebuild steps
+  - Include environment configuration update procedures and rollback instructions
 - [TASK_085] Dynamic SSE endpoint configuration for production deployment (2025-06-26)
   - Add MCP_SERVER_BASE_URL environment variable for backend SSE endpoint configuration
   - Support automatic base URL detection from HTTP requests as fallback
