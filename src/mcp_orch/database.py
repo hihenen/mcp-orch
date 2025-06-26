@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import NullPool
 
@@ -23,11 +23,16 @@ DATABASE_URL = os.getenv(
     f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-# Create async engine
+# Create async engine with search_path for mcp_orch schema
 engine = create_async_engine(
     DATABASE_URL,
     echo=bool(os.getenv("SQL_ECHO", False)),
     poolclass=NullPool,  # Disable pooling for async safety
+    connect_args={
+        "server_settings": {
+            "search_path": "mcp_orch"
+        }
+    }
 )
 
 # Create async session factory
@@ -43,6 +48,9 @@ sync_engine = create_engine(
     sync_database_url,
     echo=bool(os.getenv("SQL_ECHO", False)),
     poolclass=NullPool,
+    connect_args={
+        "options": "-c search_path=mcp_orch"
+    }
 )
 
 # Create sync session factory
@@ -56,6 +64,9 @@ SessionLocal = sessionmaker(
 async def init_db() -> None:
     """Initialize database tables."""
     async with engine.begin() as conn:
+        # Create mcp_orch schema if it doesn't exist
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS mcp_orch"))
+        
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)
 
@@ -91,6 +102,11 @@ def get_db():
 
 def init_sync_db() -> None:
     """Initialize database tables (sync version)."""
+    # Create mcp_orch schema if it doesn't exist
+    with sync_engine.connect() as conn:
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS mcp_orch"))
+        conn.commit()
+    
     Base.metadata.create_all(bind=sync_engine)
 
 

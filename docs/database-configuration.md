@@ -579,7 +579,7 @@ SELECT
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
 FROM pg_tables
-WHERE schemaname = 'public'
+WHERE schemaname = 'mcp_orch'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 -- Connection monitoring
@@ -737,7 +737,7 @@ SELECT
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
     pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
 FROM pg_tables
-WHERE schemaname = 'public'
+WHERE schemaname = 'mcp_orch'
 ORDER BY size_bytes DESC;
 ```
 

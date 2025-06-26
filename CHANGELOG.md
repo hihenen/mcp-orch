@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_087] PostgreSQL schema migration from public to mcp_orch schema (2025-06-26)
+  - Implement dedicated mcp_orch schema for all database tables and operations
+  - Add automatic schema creation and search_path configuration in alembic migrations
+  - Update environment file examples to use mcp_orch schema consistently
+  - Configure database.py to use mcp_orch schema via search_path settings
+  - Add Context7 documentation research for PostgreSQL schema best practices
 - [TASK_093] Comprehensive update and upgrade guide in README.md (2025-06-26)
   - Add detailed "Update & Upgrade" section with multiple deployment scenarios
   - Include quick update procedure using existing scripts (shutdown.sh + quickstart.sh)
