@@ -906,8 +906,8 @@ async def create_team_project(
 @router.get("/{team_id}/cline-config")
 async def get_team_cline_config(
     team_id: str,
-    unified: bool = False,
     request: Request,
+    unified: bool = False,
     db: Session = Depends(get_db)
 ):
     """Generate Cline configuration for the team.

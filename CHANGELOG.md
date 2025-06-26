@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Provide clear instructions for namespace-aware tool routing in unified mode
   - Maintain full backward compatibility with existing individual server configurations
   - Add dynamic base URL detection for production deployment compatibility
+  - Add web UI dropdown menu for selecting individual vs unified configuration downloads
+  - Update project store to support unified parameter in configuration requests
 - [TASK_107] Production deployment guide and environment configuration improvements (2025-06-27)
   - Comprehensive production deployment documentation with step-by-step checklist
   - Enhanced .env.hybrid.example with clear production vs development settings

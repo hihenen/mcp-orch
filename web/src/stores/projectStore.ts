@@ -102,7 +102,7 @@ interface ProjectStore {
   deleteProjectApiKey: (projectId: string, keyId: string) => Promise<void>;
 
   // Cline 설정
-  getProjectClineConfig: (projectId: string) => Promise<ProjectClineConfig>;
+  getProjectClineConfig: (projectId: string, unified?: boolean) => Promise<ProjectClineConfig>;
 
   // 프로젝트 컨텍스트 관리
   getCurrentUserRole: (projectId: string) => ProjectRole | null;
@@ -785,10 +785,15 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   // MCP 설정 (Claude, Cursor 등)
-  getProjectClineConfig: async (projectId: string) => {
+  getProjectClineConfig: async (projectId: string, unified: boolean = false) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/api/projects/${projectId}/cline-config`, {
+      const url = new URL(`/api/projects/${projectId}/cline-config`, window.location.origin);
+      if (unified) {
+        url.searchParams.set('unified', 'true');
+      }
+      
+      const response = await fetch(url.toString(), {
         credentials: 'include',
       });
       

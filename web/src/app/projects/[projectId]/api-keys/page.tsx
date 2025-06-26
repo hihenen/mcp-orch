@@ -103,22 +103,25 @@ export default function ProjectApiKeysPage() {
   };
 
   // MCP configuration download handler  
-  const handleDownloadMcpConfig = async () => {
+  const handleDownloadMcpConfig = async (unified: boolean = false) => {
     try {
-      const config = await getProjectClineConfig(projectId);
-      const blob = new Blob([JSON.stringify(config, null, 2)], { 
+      const config = await getProjectClineConfig(projectId, unified);
+      const configToDownload = config.config; // 실제 config 객체만 다운로드
+      const blob = new Blob([JSON.stringify(configToDownload, null, 2)], { 
         type: 'application/json' 
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${selectedProject?.name || 'project'}-mcp-settings.json`;
+      const mode = unified ? 'unified' : 'individual';
+      a.download = `${selectedProject?.name || 'project'}-mcp-settings-${mode}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success('MCP configuration file has been downloaded.');
+      const modeText = unified ? 'Unified MCP Server' : 'Individual Servers';
+      toast.success(`${modeText} configuration downloaded successfully`);
     } catch (error) {
       console.error('MCP configuration download error:', error);
       toast.error('Failed to download MCP configuration.');
@@ -168,10 +171,24 @@ export default function ProjectApiKeysPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleDownloadMcpConfig}>
-              <Download className="h-4 w-4 mr-2" />
-              Download MCP Settings
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download MCP Settings
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleDownloadMcpConfig(false)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Individual Servers (stdio)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadMcpConfig(true)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Unified MCP Server (SSE)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
