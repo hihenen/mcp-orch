@@ -48,6 +48,7 @@ dependencies = [
     "fastmcp>=2.8.0",
     "apscheduler>=3.10.4",
     "psutil>=5.9.0",
+    "python-json-logger>=2.0.4",
 ]
 
 [project.optional-dependencies]
