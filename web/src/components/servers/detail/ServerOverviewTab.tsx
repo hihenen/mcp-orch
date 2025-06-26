@@ -7,6 +7,11 @@ import { toast } from 'sonner';
 import { ServerTabProps } from './types';
 import { formatDateTime } from '@/lib/date-utils';
 
+// 동적 base URL 생성 헬퍼 함수 (백엔드 API URL 사용)
+const getServerBaseUrl = () => {
+  return process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
+};
+
 export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
   return (
     <div className="space-y-6">
@@ -169,7 +174,7 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    const endpoint = `http://localhost:8000/projects/${projectId}/servers/${server.name}/sse`;
+                    const endpoint = `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`;
                     navigator.clipboard.writeText(endpoint);
                     toast.success('Endpoint copied to clipboard.');
                   }}
@@ -178,7 +183,7 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
                 </Button>
               </div>
               <div className="font-mono bg-muted p-3 rounded text-sm break-all">
-                http://localhost:8000/projects/{projectId}/servers/{server.name}/sse
+                {getServerBaseUrl()}/projects/{projectId}/servers/{server.name}/sse
               </div>
             </div>
 
@@ -194,7 +199,7 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
                         [server.name]: {
                           disabled: false,
                           timeout: 30,
-                          url: `http://localhost:8000/projects/${projectId}/servers/${server.name}/sse`,
+                          url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`,
                           headers: {
                             Authorization: "Bearer YOUR_API_TOKEN"
                           },
@@ -215,7 +220,7 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
                     [server.name]: {
                       disabled: false,
                       timeout: 30,
-                      url: `http://localhost:8000/projects/${projectId}/servers/${server.name}/sse`,
+                      url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`,
                       headers: {
                         Authorization: "Bearer YOUR_API_TOKEN"
                       },

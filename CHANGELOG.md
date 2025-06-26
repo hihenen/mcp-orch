@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_085] Dynamic SSE endpoint configuration for production deployment (2025-06-26)
+  - Add MCP_SERVER_BASE_URL environment variable for backend SSE endpoint configuration
+  - Support automatic base URL detection from HTTP requests as fallback
+  - Enable proper SSE endpoint generation for cloud and containerized deployments
+
+### Fixed
+- [TASK_085] Fix hardcoded localhost:8000 URLs in SSE endpoint generation (2025-06-26)
+  - Replace hardcoded localhost URLs with dynamic environment-based configuration
+  - Fix frontend SSE endpoint display to use backend API URL instead of frontend host
+  - Ensure MCP Inspector compatibility with proper absolute URI generation
+  - Fix SSE endpoints in Cline/Cursor integration settings for production environments
+
 ### Changed
 - [TASK_089] Consolidate Alembic migrations into single initial schema for production deployment (2025-06-26)
   - Merge jwt_auth_unification migration changes into initial database schema migration

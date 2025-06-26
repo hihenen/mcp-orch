@@ -167,7 +167,13 @@ async def generate_mcp_sse_stream(
         
         # 2. endpoint 이벤트 전송 (표준 MCP 프로토콜)
         # Inspector 호환성을 위해 절대 URI 필요 (Inspector Transport 타임아웃 방지)
-        endpoint_uri = f"http://localhost:8000/projects/{project_id}/servers/{server_name}/messages"
+        # 동적 base URL 구성: 환경변수 우선, Request 기반 fallback
+        import os
+        base_url = os.getenv('MCP_SERVER_BASE_URL')
+        if not base_url:
+            base_url = f"{request.url.scheme}://{request.url.netloc}"
+        
+        endpoint_uri = f"{base_url}/projects/{project_id}/servers/{server_name}/messages"
         endpoint_event = {
             "jsonrpc": "2.0",
             "method": "endpoint",
