@@ -731,11 +731,28 @@
 - **실제 인증 제어는 DISABLE_AUTH 환경변수로 구현됨**
 - **config.py와 환경파일의 SECURITY__ENABLE_AUTH 관련 코드는 제거 가능**
 
+### TASK_103: MCP Tool Call 로깅 누락 문제 해결 (Roo Code SSE 연결)
+- [x] SSE 엔드포인트 구현 조사
+  - [x] mcp_sdk_sse_bridge.py 메인 SSE 엔드포인트 분석 완료
+  - [x] MCP Session Manager 연동 및 로깅 체인 확인
+  - [x] 프로젝트별 URL 구조 `/projects/{project_id}/servers/{server_name}/sse` 확인
+- [x] 도구 호출 로깅 메커니즘 분석
+  - [x] ToolCallLog 모델 구조 및 필드 매핑 조사 완료
+  - [x] 사용자 제공 로그에서 ROLLBACK 원인 분석
+  - [x] mcp_session_manager.py의 _save_tool_call_log 로직 분석
+- [x] SSE 브리지에서 ToolCallLog 저장 로직 문제 발견 및 수정
+  - [x] execution_time vs execution_time_ms 필드 불일치 수정
+  - [x] user_agent, ip_address 필드 누락 문제 해결
+  - [x] 상세 로깅 추가로 저장 과정 추적 개선
+- [ ] 테스트 및 검증
+  - [ ] Roo Code에서 tool call 실행 후 웹 UI 로그 확인
+  - [ ] 실제 데이터 저장 및 조회 정상 동작 검증
+
 ## Progress Status  
-- Current Progress: TASK_101 완료 - SECURITY__ENABLE_AUTH 죽은 코드 정리 및 DISABLE_AUTH 표준화 완료  
-- Next Task: 사용자 요청 대기
-- Last Update: 2025-06-25
-- Automatic Check Feedback: 사용되지 않는 인증 설정 정리 완료 - DISABLE_AUTH를 공식 인증 제어 방법으로 표준화하고 혼란 요소 제거
+- Current Progress: TASK_103 - MCP Tool Call 로깅 누락 문제 해결 거의 완료
+- Next Task: 수정 사항 테스트 및 검증 - Roo Code tool call 후 웹 UI 로그 확인
+- Last Update: 2025-06-26
+- Automatic Check Feedback: ToolCallLog 데이터베이스 스키마 불일치 문제 발견 및 수정 완료. ROLLBACK 원인이었던 execution_time vs execution_time_ms 필드 매핑 오류 해결
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

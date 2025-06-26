@@ -514,6 +514,9 @@ class McpSessionManager:
     ):
         """ToolCallLog 데이터베이스에 저장"""
         try:
+            # 저장할 데이터 로깅
+            logger.info(f"🔍 Saving ToolCallLog: server_id={log_data.get('server_id')} (type: {type(log_data.get('server_id'))}), project_id={log_data.get('project_id')}, tool={log_data.get('tool_name')}")
+            
             tool_call_log = ToolCallLog(
                 session_id=log_data.get('session_id'),
                 server_id=log_data.get('server_id'),
@@ -523,20 +526,21 @@ class McpSessionManager:
                 result=output_data.get('result') if output_data else None,
                 error_message=error_message or (output_data.get('error') if output_data else None),
                 error_code=error_code,
-                execution_time=execution_time / 1000.0,  # 초 단위로 변환
+                execution_time_ms=int(execution_time),  # 밀리초 단위로 저장 (DB 스키마에 맞춰)
                 status=status,
-                user_agent=log_data.get('user_agent'),
-                ip_address=log_data.get('ip_address'),
+                # user_agent와 ip_address는 ToolCallLog 모델에 해당 필드가 없음
                 created_at=log_data.get('timestamp')
             )
             
             db.add(tool_call_log)
             db.commit()
             
-            logger.info(f"📊 ToolCallLog saved: {tool_call_log.tool_name} ({status.value}) in {execution_time:.3f}ms")
+            logger.info(f"✅ ToolCallLog saved successfully: id={tool_call_log.id}, server_id={tool_call_log.server_id}, project_id={tool_call_log.project_id}, tool={tool_call_log.tool_name} ({status.value}) in {execution_time:.3f}ms")
             
         except Exception as e:
             logger.error(f"❌ Failed to save ToolCallLog: {e}")
+            logger.error(f"❌ Log data: {log_data}")
+            logger.error(f"❌ Output data: {output_data}")
             db.rollback()
 
 

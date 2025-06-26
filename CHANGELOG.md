@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_103] Fix MCP Tool Call logging failure due to database schema mismatch (2025-06-26)
+  - Fix execution_time vs execution_time_ms field mapping error in ToolCallLog model
+  - Remove non-existent user_agent and ip_address fields from ToolCallLog creation
+  - Add detailed logging to track ToolCallLog save process and identify ROLLBACK causes
+  - Resolve issue where Roo Code/Cline tool calls were not appearing in web UI logs
+  - Fix MCP Session Manager _save_tool_call_log function to match actual database schema
 - [TASK_088] Fix MCP server JWT authentication settings display and update in web UI (2025-06-26)
   - Add missing jwt_auth_required field to ServerUpdate model in projects.py API
   - Add missing jwt_auth_required field to ServerResponse model for API queries
