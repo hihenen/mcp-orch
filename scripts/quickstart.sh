@@ -153,11 +153,11 @@ start_database() {
     done
 }
 
-# Frontend 시작 (무조건 포함)
+# Frontend 시작 (무조건 포함, 백엔드 의존성 제외)
 start_frontend() {
     log_info "Frontend 컨테이너 시작 중..."
-    docker compose up -d mcp-orch-frontend
-    log_success "모든 컨테이너 시작 완료"
+    docker compose up -d --no-deps mcp-orch-frontend
+    log_success "Frontend 컨테이너 시작 완료"
     log_info "Frontend URL: http://localhost:3000"
 }
 

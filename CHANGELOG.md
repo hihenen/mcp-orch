@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable proper SSE endpoint generation for cloud and containerized deployments
 
 ### Fixed
+- [TASK_092] Fix quickstart.sh to prevent backend container auto-start (2025-06-26)
+  - Add --no-deps option to docker compose command to prevent dependency containers from starting
+  - Ensure frontend container starts independently without triggering backend container
+  - Maintain intended hybrid deployment mode where backend runs natively via uv
 - [TASK_085] Fix hardcoded localhost:8000 URLs in SSE endpoint generation (2025-06-26)
   - Replace hardcoded localhost URLs with dynamic environment-based configuration
   - Fix frontend SSE endpoint display to use backend API URL instead of frontend host
