@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [UX_IMPROVEMENT] Landing page instant installation section with 5-minute MCP server connection promise (2025-06-27)
+  - Add prominent "30초 설치, 5분 안에 첫 MCP 서버 연결" section to hero area
+  - Replace curl command with Git clone command using correct repository URL
+  - Include visual terminal-style code block with color-coded commands
+  - Add direct login/signup buttons for immediate user onboarding
+- [UX_IMPROVEMENT] Complete quickstart.sh automation with backend auto-start and browser opening (2025-06-27)
+  - Implement automatic backend server startup in quickstart.sh with health checks
+  - Add cross-platform browser opening functionality (macOS/Linux/Windows WSL)
+  - Enhance progress reporting with 7-step clear progress indicators
+  - Include comprehensive error handling and fallback instructions
+  - Enable true one-command setup experience for 5-minute rule compliance
+- [DEVELOPER_EXPERIENCE] Comprehensive development script suite for individual service management (2025-06-27)
+  - Create dev-frontend.sh for Next.js development with hot reload and pnpm/npm detection
+  - Create dev-backend.sh for Python backend development with --reload and debug logging
+  - Create dev-database.sh for PostgreSQL-only development with connection verification
+  - Create logs.sh for unified real-time log monitoring across all services
+  - Add color-coded log output and intelligent service detection
+- [DEVELOPER_EXPERIENCE] Enhanced README.md development section with quick troubleshooting guide (2025-06-27)
+  - Add Development Quick Start section with two clear paths (full setup vs individual services)
+  - Include comprehensive development commands table with descriptions
+  - Add quick troubleshooting guide for common development issues
+  - Update project structure to reflect current architecture
+  - Provide specific commands for health checks and debugging
+
 ### Fixed
 - [TASK_092] Docker frontend environment variable configuration to respect .env file NEXTAUTH_URL (2025-06-26)
   - Update docker-compose.yml to use ${NEXTAUTH_URL:-default} pattern for frontend container

@@ -217,29 +217,113 @@ The `mcp-config.json` file follows this format:
 
 ## Development
 
+### 🚀 Development Quick Start
+
+Perfect for developers who want to work on individual services with hot reload:
+
+#### **Option 1: Full Development Setup**
+```bash
+# Start all services for development
+git clone https://github.com/hihenen/mcp-orch.git
+cd mcp-orch
+./scripts/quickstart.sh  # Complete setup with auto-start
+```
+
+#### **Option 2: Individual Service Development**
+
+**Database Only**
+```bash
+./scripts/dev-database.sh    # Start PostgreSQL only
+```
+
+**Backend Only (with Hot Reload)**
+```bash
+./scripts/dev-backend.sh     # Python backend with --reload
+```
+
+**Frontend Only (with Hot Reload)**
+```bash
+./scripts/dev-frontend.sh    # Next.js with hot reload
+```
+
+**Monitor All Logs**
+```bash
+./scripts/logs.sh           # Unified log monitoring
+./scripts/logs.sh backend   # Backend logs only
+./scripts/logs.sh frontend  # Frontend logs only
+./scripts/logs.sh database  # PostgreSQL logs only
+```
+
+### 🔧 Development Commands
+
+| Command | Description |
+|---------|-------------|
+| `./scripts/dev-database.sh` | Start PostgreSQL container only |
+| `./scripts/dev-backend.sh` | Run backend with hot reload & debug logs |
+| `./scripts/dev-frontend.sh` | Run frontend with hot reload (pnpm dev) |
+| `./scripts/logs.sh` | Monitor all service logs in real-time |
+| `./scripts/restart-backend.sh` | Quick backend restart with git pull |
+
+### 🐛 Quick Troubleshooting
+
+**Database Connection Issues**
+```bash
+# Check PostgreSQL status
+./scripts/dev-database.sh
+
+# Verify connection
+docker exec mcp-orch-postgres pg_isready -U mcp_orch -d mcp_orch
+```
+
+**Backend Not Starting**
+```bash
+# Check environment
+cat .env | grep DATABASE_URL
+
+# Run with debug logs
+./scripts/dev-backend.sh
+```
+
+**Frontend Build Issues**
+```bash
+# Clean install
+cd web && pnpm install --force
+
+# Check backend connection
+curl http://localhost:8000/health
+```
+
 ### Project Structure
 
 ```
 mcp-orch/
 ├── src/mcp_orch/
-│   ├── api/                 # API server (mcp_proxy_mode.py)
-│   ├── core/               # Core components (registry, adapter, controller)
-│   ├── proxy/              # Proxy handlers
-│   ├── cli.py              # CLI interface
-│   └── config.py           # Configuration management
-├── docs/                   # Documentation
-├── tests/                  # Test files
-└── mcp-config.json         # MCP server configuration
+│   ├── api/                 # FastAPI routes and endpoints
+│   ├── models/              # SQLAlchemy database models
+│   ├── services/            # Business logic services
+│   ├── core/               # Core MCP orchestration
+│   └── cli.py              # CLI interface
+├── web/                    # Next.js frontend
+│   ├── src/app/            # App Router pages
+│   ├── src/components/     # React components
+│   └── src/stores/         # Zustand state management
+├── scripts/               # Development and deployment scripts
+├── migrations/            # Alembic database migrations
+└── docs/                  # Documentation
 ```
 
 ### Testing
 
 ```bash
-# Test server connection
-uv run python test_mcp_connection.py
+# Health check
+curl http://localhost:8000/health
 
-# Test tool calls
-uv run python test_mcp_proxy_mode.py
+# API documentation
+open http://localhost:8000/docs
+
+# Test MCP connection
+uv run mcp-orch list-servers
+uv run mcp-orch list-tools
 ```
 
 ## Backend Restart Guide

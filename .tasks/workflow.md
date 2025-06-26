@@ -821,11 +821,33 @@
 - [x] 사용자 생성 시 권한 설정 로직 분석
 - [x] JWT 인증에서 관리자 권한 확인 코드 분석
 
+### UX_IMPROVEMENT: 사용자 경험 개선 - "바로 이해하고 바로 사용할 수 있게"
+- [x] Landing 페이지 Hero 섹션에 "30초 설치, 5분 안에 첫 MCP 서버 연결" 섹션 추가
+  - [x] Git clone 명령어로 정확한 저장소 URL 사용 (https://github.com/hihenen/mcp-orch.git)
+  - [x] 터미널 스타일 코드 블록으로 시각적 개선
+  - [x] 로그인/가입 버튼 직접 연결로 사용자 온보딩 개선
+- [x] quickstart.sh 완전 자동화로 5분 규칙 달성
+  - [x] 백엔드 자동 시작 기능 구현 (헬스 체크 포함)
+  - [x] 크로스 플랫폼 브라우저 자동 열기 (macOS/Linux/Windows WSL)
+  - [x] 7단계 명확한 진행 상황 표시
+  - [x] 포괄적인 오류 처리 및 대체 지침
+- [x] 개발자 친화적 스크립트 세트 생성
+  - [x] dev-frontend.sh: Next.js 개발 모드 (Hot Reload, pnpm/npm 감지)
+  - [x] dev-backend.sh: Python 백엔드 개발 모드 (--reload, 디버그 로깅)
+  - [x] dev-database.sh: PostgreSQL 전용 개발 (연결 확인)
+  - [x] logs.sh: 통합 실시간 로그 모니터링 (색상 코딩)
+- [x] README.md 개발자 섹션 전면 개선
+  - [x] Development Quick Start 가이드 (2가지 명확한 경로)
+  - [x] 개발 명령어 테이블 및 설명
+  - [x] 빠른 문제 해결 가이드
+  - [x] 현재 아키텍처를 반영한 프로젝트 구조 업데이트
+- [x] CHANGELOG.md 업데이트 (2025-06-27 타임스탬프)
+
 ## Progress Status  
-- Current Progress: TASK_088 - 하이브리드 관리자 권한 시스템 구현 및 Git 푸시 완료 ✅
-- Next Task: 새로운 작업 대기 중
-- Last Update: 2025-06-26
-- Automatic Check Feedback: 하이브리드 관리자 권한 시스템이 성공적으로 구현되어 commit 75b2541로 GitHub에 푸시되었습니다. 이제 수동 재시작 없이 관리자 권한 부여가 가능합니다.
+- Current Progress: UX_IMPROVEMENT - 사용자 경험 개선 작업 완료 ✅
+- Next Task: 커밋 및 푸시 준비
+- Last Update: 2025-06-27
+- Automatic Check Feedback: Landing 페이지 즉시성 개선, quickstart.sh 완전 자동화, 개발자 스크립트 세트, README.md 개발 가이드 등 모든 UX 개선사항이 성공적으로 구현되었습니다. 이제 사용자들이 "바로 이해하고 바로 사용할 수 있는" 목표를 달성했습니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

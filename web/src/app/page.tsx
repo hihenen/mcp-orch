@@ -85,10 +85,37 @@ export default function HomePage() {
               Open Source MCP
               <span className="block text-blue-600 mt-4">Server Orchestration</span>
             </h1>
-            <p className="text-xl text-gray-600 text-center mb-16 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 text-center mb-8 max-w-3xl mx-auto">
               Deploy anywhere, manage everywhere. Self-hosted MCP server management with 
               project-based team collaboration. No vendor lock-in, full control.
             </p>
+
+            {/* Quick Install Section */}
+            <div className="max-w-4xl mx-auto mb-16 text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+                30초 설치, 5분 안에 첫 MCP 서버 연결
+              </h2>
+              <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left font-mono text-sm md:text-base max-w-2xl mx-auto">
+                <div className="text-gray-500 mb-2"># Clone and start everything</div>
+                <div className="text-green-400">git clone https://github.com/hihenen/mcp-orch.git</div>
+                <div className="text-blue-400">cd mcp-orch</div>
+                <div className="text-yellow-400">./scripts/quickstart.sh</div>
+              </div>
+              <div className="mt-4 flex items-center justify-center space-x-4">
+                <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                  <Link href="/auth/signin">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    로그인하기
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/auth/signup">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    가입하기
+                  </Link>
+                </Button>
+              </div>
+            </div>
 
             {/* Problem visualization */}
             <div className="max-w-6xl mx-auto mb-16">
