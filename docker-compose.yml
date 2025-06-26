@@ -57,7 +57,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        - NEXT_PUBLIC_MCP_API_URL=${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_MCP_API_URL: ${NEXT_PUBLIC_MCP_API_URL:-http://localhost:8000}
     container_name: mcp-orch-frontend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"

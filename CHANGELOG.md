@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fix frontend SSE endpoint display to use backend API URL instead of frontend host
   - Ensure MCP Inspector compatibility with proper absolute URI generation
   - Fix SSE endpoints in Cline/Cursor integration settings for production environments
+- [TASK_091] Fix Docker build args format for frontend container environment variables (2025-06-26)
+  - Fix NEXT_PUBLIC_MCP_API_URL build argument format in docker-compose.yml
+  - Ensure proper environment variable injection at build time for Next.js frontend
+  - Fix frontend SSE endpoint URL generation in containerized environments
 
 ### Changed
 - [TASK_089] Consolidate Alembic migrations into single initial schema for production deployment (2025-06-26)
