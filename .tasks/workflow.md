@@ -806,11 +806,26 @@
   - [ ] 인증 로직을 단일 JWT 인증 필드 기반으로 통합
   - [ ] 기존 분리된 SSE/Message 인증 로직 제거
 
+### TASK_088: 하이브리드 관리자 권한 시스템 구현 (재시작 없는 UX 개선)
+- [x] User 모델에서 관리자 권한 부여 로직 분석 및 개선점 파악
+- [x] 하이브리드 관리자 권한 부여 함수 구현 (환경변수 우선, 첫 사용자 백업)
+- [x] 사용자 생성 시 자동 관리자 권한 부여 로직 통합
+- [x] JWT 인증 시스템에 관리자 권한 확인 로직 업데이트
+- [x] 환경변수 문서 및 예제 파일 업데이트
+- [x] CHANGELOG.md 업데이트
+- [x] 최종 커밋 및 푸시 진행
+
+### TASK_106: User 모델과 관리자 권한 부여 관련 코드 분석
+- [x] User 모델 정의 및 관리자 필드 분석
+- [x] INITIAL_ADMIN_EMAIL 사용 코드 찾기
+- [x] 사용자 생성 시 권한 설정 로직 분석
+- [x] JWT 인증에서 관리자 권한 확인 코드 분석
+
 ## Progress Status  
-- Current Progress: TASK_105 - sse_auth_required/message_auth_required 죽은 코드 정리 (분석 완료)
-- Next Task: TASK_105 계속 진행 (백엔드 API 코드 수정)
+- Current Progress: TASK_088 - 하이브리드 관리자 권한 시스템 구현 완료 및 커밋 진행 중
+- Next Task: Git 커밋 및 푸시 완료
 - Last Update: 2025-06-26
-- Automatic Check Feedback: sse_auth_required와 message_auth_required 속성이 사용되는 모든 위치를 파악했습니다. Project 모델에서는 이미 jwt_auth_required로 통합되었으나, 여러 API 파일에서 여전히 구식 필드들을 참조하고 있어 AttributeError가 발생할 가능성이 있습니다.
+- Automatic Check Feedback: 하이브리드 관리자 권한 시스템 구현이 완료되었습니다. INITIAL_ADMIN_EMAIL 우선순위와 첫 사용자 자동 관리자 시스템이 성공적으로 통합되었습니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

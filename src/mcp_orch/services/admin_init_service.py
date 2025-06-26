@@ -51,15 +51,17 @@ async def initialize_admin_user(settings: Settings) -> Optional[str]:
             existing_user = db.query(User).filter(User.email == admin_email).first()
             
             if existing_user:
-                # 기존 사용자 권한 업데이트
-                if not existing_user.is_admin:
-                    existing_user.is_admin = True
-                    db.commit()
-                    logger.info(f"기존 사용자 {admin_email}에게 관리자 권한 부여 완료")
-                    return f"기존 사용자 {admin_email}에게 관리자 권한 부여"
+                # 하이브리드 로직을 사용한 기존 사용자 권한 업데이트
+                from .admin_utils import update_existing_user_admin_privileges
+                
+                privilege_changed, change_reason = update_existing_user_admin_privileges(existing_user, db)
+                
+                if privilege_changed:
+                    logger.info(f"사용자 {admin_email} 권한 업데이트 완료: {change_reason}")
+                    return f"사용자 {admin_email} 권한 업데이트: {change_reason}"
                 else:
-                    logger.info(f"사용자 {admin_email}은 이미 관리자 권한을 가지고 있음")
-                    return f"사용자 {admin_email}은 이미 관리자"
+                    logger.info(f"사용자 {admin_email} 권한 변경 없음: {change_reason}")
+                    return f"사용자 {admin_email}: {change_reason}"
             else:
                 # 새 관리자 계정 생성 비활성화 - 기존 사용자만 권한 부여
                 logger.info(f"사용자 {admin_email}이 존재하지 않음. 자동 계정 생성이 비활성화되었습니다. 먼저 회원가입을 완료해주세요.")

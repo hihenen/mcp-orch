@@ -109,17 +109,15 @@ def signup(request: SignupRequest, db: Session = Depends(get_db)):
             bcrypt.gensalt()
         ).decode('utf-8')
 
-        # 사용자 생성
-        user = User(
-            name=request.name,
+        # 하이브리드 관리자 권한 부여 로직을 사용한 사용자 생성
+        from ..services.admin_utils import create_user_with_auto_admin
+        
+        user, is_admin_granted, admin_reason = create_user_with_auto_admin(
             email=request.email,
-            password=hashed_password
+            name=request.name,
+            password=hashed_password,
+            db=db
         )
-        db.add(user)
-        db.flush()  # ID를 얻기 위해 flush
-
-        # 커밋하여 사용자 생성 완료
-        db.commit()
 
         return {
             "message": "회원가입이 완료되었습니다. 팀을 생성하여 MCP 서버를 관리해보세요.",
@@ -452,6 +450,32 @@ async def get_user_admin(
         raise HTTPException(
             status_code=500,
             detail=f"사용자 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.get("/admin/status", response_model=dict)
+async def get_admin_status(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """관리자 권한 상태 정보 조회"""
+    try:
+        from ..services.admin_utils import get_admin_status_info
+        
+        status_info = get_admin_status_info(db)
+        return {
+            "current_user": {
+                "email": current_user.email,
+                "is_admin": current_user.is_admin,
+                "created_at": current_user.created_at.isoformat()
+            },
+            "system_status": status_info
+        }
+        
+    except Exception as e:
+        logger.error(f"관리자 상태 조회 중 오류: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"관리자 상태 조회 중 오류가 발생했습니다: {str(e)}"
         )
 
 @router.put("/admin/{user_id}", response_model=AdminUserResponse)

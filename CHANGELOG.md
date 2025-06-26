@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_088] Hybrid admin privileges system for improved UX without manual restarts (2025-06-26)
+  - Implement priority-based admin privilege assignment: INITIAL_ADMIN_EMAIL takes priority, first user becomes admin if not set
+  - Add admin_utils.py service with should_grant_admin_privileges() and create_user_with_auto_admin() functions
+  - Integrate hybrid logic into both regular signup and JWT auto-provisioning user creation paths
+  - Add /admin/status API endpoint for monitoring admin privilege assignment status and system information
+  - Update environment file documentation to explain hybrid admin system with clear priority explanations
+  - Eliminate need for manual server restart to grant admin privileges to users
 - [TASK_087] PostgreSQL schema migration from public to mcp_orch schema (2025-06-26)
   - Implement dedicated mcp_orch schema for all database tables and operations
   - Add automatic schema creation and search_path configuration in alembic migrations

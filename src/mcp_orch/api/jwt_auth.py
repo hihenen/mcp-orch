@@ -186,16 +186,16 @@ def get_current_user(credentials: HTTPAuthorizationCredentials, db: Session = De
                 headers={"WWW-Authenticate": "Bearer"},
             )
         
-        # 사용자가 존재하지 않으면 생성 (NextAuth.js 통합)
-        user = User(
-            id=jwt_user.id,
+        # 하이브리드 관리자 권한 부여 로직을 사용한 사용자 생성 (NextAuth.js 통합)
+        from ..services.admin_utils import create_user_with_auto_admin
+        
+        user, is_admin_granted, admin_reason = create_user_with_auto_admin(
             email=jwt_user.email,
-            name=jwt_user.name or jwt_user.email
+            name=jwt_user.name or jwt_user.email,
+            db=db,
+            id=jwt_user.id  # JWT에서 온 ID 사용
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        logger.info(f"✅ Created new user from JWT: {user.email}")
+        logger.info(f"✅ Created new user from JWT: {user.email} (Admin: {is_admin_granted}, Reason: {admin_reason})")
     
     return user
 
