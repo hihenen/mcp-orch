@@ -25,9 +25,10 @@ from mcp.shared.message import SessionMessage
 import mcp.types as types
 
 from ..database import get_db
-from ..models import Project, McpServer, User, ClientSession
+from ..models import Project, McpServer, User, ClientSession, LogLevel, LogCategory
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
+from ..services.server_log_service import get_log_service
 
 logger = logging.getLogger(__name__)
 
@@ -385,6 +386,28 @@ async def run_mcp_bridge_session(
         
         logger.info(f"✅ ClientSession created: {session_id}")
         
+        # ServerLog에 연결 이벤트 기록 (별도 DB 세션 사용)
+        try:
+            from ..services.server_log_service import ServerLogService
+            with next(get_db()) as log_db:
+                log_service = ServerLogService(log_db)
+                log_service.add_log(
+                    server_id=server_record.id,
+                    project_id=project_id,
+                    level=LogLevel.INFO,
+                    category=LogCategory.CONNECTION,
+                    message=f"Client session started: {client_type} client connected",
+                    details={
+                        "session_id": session_id,
+                        "client_type": client_type,
+                        "client_ip": client_ip,
+                        "user_agent": user_agent
+                    }
+                )
+            logger.info(f"📝 Connection log recorded for session {session_id}")
+        except Exception as log_error:
+            logger.error(f"Failed to record connection log: {log_error}")
+        
         # 서버 설정 구성
         server_config = _build_server_config_from_db(server_record)
         if not server_config:
@@ -425,6 +448,28 @@ async def run_mcp_bridge_session(
                     logger.info(f"  - Loaded tool: {tool.get('name')}")
                 
                 logger.info(f"Successfully loaded {len(tool_list)} tools from {server_name}")
+                
+                # ServerLog에 도구 로딩 완료 이벤트 기록 (별도 DB 세션 사용)
+                try:
+                    from ..services.server_log_service import ServerLogService
+                    with next(get_db()) as log_db:
+                        log_service = ServerLogService(log_db)
+                        log_service.add_log(
+                            server_id=server_record.id,
+                            project_id=project_id,
+                            level=LogLevel.INFO,
+                            category=LogCategory.SYSTEM,
+                            message=f"Tools loaded successfully: {len(tool_list)} tools available",
+                            details={
+                                "session_id": session_id,
+                                "tool_count": len(tool_list),
+                                "tool_names": [tool.name for tool in tool_list]
+                            }
+                        )
+                    logger.info(f"📝 Tool loading log recorded for session {session_id}")
+                except Exception as log_error:
+                    logger.error(f"Failed to record tool loading log: {log_error}")
+                
                 return tool_list
                 
             except Exception as e:
@@ -583,6 +628,29 @@ async def run_mcp_bridge_session(
                 client_session.updated_at = datetime.utcnow()
                 db.commit()
                 logger.info(f"🔌 ClientSession {session_id} disconnected")
+                
+                # ServerLog에 연결 종료 이벤트 기록 (별도 DB 세션 사용)
+                try:
+                    from ..services.server_log_service import ServerLogService
+                    with next(get_db()) as log_db:
+                        log_service = ServerLogService(log_db)
+                        log_service.add_log(
+                            server_id=server_record.id,
+                            project_id=project_id,
+                            level=LogLevel.INFO,
+                            category=LogCategory.CONNECTION,
+                            message=f"Client session ended: {client_type} client disconnected",
+                            details={
+                                "session_id": session_id,
+                                "client_type": client_type,
+                                "total_requests": client_session.total_requests,
+                                "failed_requests": client_session.failed_requests
+                            }
+                        )
+                    logger.info(f"📝 Disconnection log recorded for session {session_id}")
+                except Exception as log_error:
+                    logger.error(f"Failed to record disconnection log: {log_error}")
+                    
             except Exception as e:
                 logger.error(f"Error updating session on disconnect: {e}")
             finally:

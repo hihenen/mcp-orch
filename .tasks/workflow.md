@@ -767,11 +767,30 @@
 - [x] ToolCallLogResponse 모델에서 server_id 타입을 str → UUID로 수정
 - [x] CHANGELOG.md 업데이트
 
+### TASK_104: MCP 연결 로그가 웹 UI에 표시되지 않는 문제 해결
+- [x] MCP 세션 연결 로그가 server_logs 테이블에 저장되지 않는 문제 조사
+  - [x] 사용자 데이터베이스 쿼리 결과: server_logs 테이블이 비어있음 확인
+  - [x] 애플리케이션 로그에는 MCP 세션 생성 기록 있으나 데이터베이스에 저장 안됨
+- [x] ServerLog 저장 로직 분석 - MCP 세션 매니저에서 연결 이벤트 로깅 확인
+  - [x] MCP SDK SSE Bridge가 ServerLogService를 사용하지 않음을 발견
+  - [x] 연결/해제/도구 발견 이벤트가 ServerLog 테이블에 기록되지 않음
+- [x] server_logs 테이블과 ServerLog 모델 일치성 검증
+  - [x] ServerLog 모델이 실제 데이터베이스 스키마와 일치함 확인
+  - [x] LogLevel, LogCategory enum 값들이 정상적으로 매핑됨
+- [x] MCP 세션 생성/연결 시점에서 ServerLog 생성 로직 구현
+  - [x] mcp_sdk_sse_bridge.py에 ServerLogService 통합
+  - [x] 연결 시작: CONNECTION 로그 (클라이언트 세션 생성)
+  - [x] 도구 로딩: SYSTEM 로그 (도구 발견 완료)
+  - [x] 연결 종료: CONNECTION 로그 (클라이언트 세션 종료)
+  - [x] 별도 데이터베이스 세션 사용으로 ROLLBACK 이슈 방지
+  - [x] ServerLogService.add_log() 함수 호출 시 누락된 project_id 매개변수 수정
+- [x] 웹 UI에서 Connection logs 표시 확인 및 테스트
+
 ## Progress Status  
-- Current Progress: TASK_090 - 완료 (Pydantic 검증 오류 수정 완료)
+- Current Progress: TASK_104 - 완료 (MCP 연결 로그 누락 문제 수정 완료)
 - Next Task: 다음 새로운 작업 대기
 - Last Update: 2025-06-26
-- Automatic Check Feedback: tool_call_logs API의 500 오류가 해결되었습니다. 문제는 데이터베이스 스키마가 아닌 API 응답 모델의 server_id 필드 타입 불일치였습니다.
+- Automatic Check Feedback: MCP 연결 로그가 웹 UI에 표시되지 않던 문제가 해결되었습니다. ServerLogService.add_log() 함수 호출 시 누락된 project_id 매개변수를 수정하여 연결 이벤트가 정상적으로 데이터베이스에 저장됩니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨
