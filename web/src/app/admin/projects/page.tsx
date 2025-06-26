@@ -29,7 +29,8 @@ import {
   Users,
   Shield,
   Globe,
-  X
+  X,
+  Key
 } from 'lucide-react';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import { EditProjectModal } from './components/EditProjectModal';
