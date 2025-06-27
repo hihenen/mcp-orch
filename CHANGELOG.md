@@ -8,11 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- [TASK_121] Fix server status "Error" display issue in frontend interface (2025-06-27)
-  - Add proper handling for "error" status in frontend status mapping logic
-  - Change default unknown status from 'Error' to 'Unknown' for better UX
+- [TASK_121] Fix server status display inconsistency between backend and frontend (2025-06-27)
+  - Unify frontend status mapping to match backend status values (online/offline/error/disabled)
+  - Resolve servers showing as "Unknown" when backend sends "online" status
+  - Add proper handling for "disabled" status in frontend interface
   - Enhance backend live check logging with detailed debug information
-  - Resolve servers incorrectly showing as "Error" when they should be "Offline" or other states
+  - Change default unknown status from 'Error' to 'Unknown' for better UX
 
 ### Added
 - [TASK_120] Add comprehensive database management guidelines to prevent schema corruption (2025-06-27)

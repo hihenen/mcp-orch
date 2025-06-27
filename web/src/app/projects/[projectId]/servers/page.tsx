@@ -338,10 +338,11 @@ export default function ProjectServersPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">{server.name}</CardTitle>
-                      <Badge variant={server.status === 'active' ? 'default' : 'secondary'}>
-                        {server.status === 'active' ? 'Online' : 
-                         server.status === 'inactive' ? 'Offline' :
+                      <Badge variant={server.status === 'online' ? 'default' : 'secondary'}>
+                        {server.status === 'online' ? 'Online' : 
+                         server.status === 'offline' ? 'Offline' :
                          server.status === 'error' ? 'Error' :
+                         server.status === 'disabled' ? 'Disabled' :
                          server.status === 'starting' ? 'Starting' :
                          server.status === 'stopping' ? 'Stopping' : 'Unknown'}
                       </Badge>

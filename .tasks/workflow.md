@@ -111,7 +111,9 @@
 - [x] 문제 분석: 백엔드에서 "error" 상태 전송하나 프론트엔드에서 미처리
 - [x] 프론트엔드 상태 매핑에 "error" 케이스 추가
 - [x] 백엔드 실시간 상태 확인 로깅 강화
-- [ ] 실제 서버 상태 확인 및 검증
+- [x] 변경사항 커밋
+- [x] 근본 원인 발견: 백엔드 "online" vs 프론트엔드 "active" 불일치
+- [x] 프론트엔드를 백엔드 상태 체계로 통일 (online/offline/error/disabled)
 - [ ] 변경사항 테스트
 
 ### TASK_120: MCP Tool Filtering System 구현 완료 ✅
