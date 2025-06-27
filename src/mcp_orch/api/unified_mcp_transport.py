@@ -273,6 +273,9 @@ class UnifiedMCPTransport(MCPSSETransport):
         self.structured_logger = StructuredLogger(session_id, project_id)  # 구조화된 로깅
         self.tool_naming = UnifiedToolNaming()  # 🔧 ADD: tool_naming 속성 초기화
         
+        # 레거시 모드 초기화 (기본값: False)
+        self._legacy_mode = False
+        
         # 서버 헬스 정보 초기화
         for server in project_servers:
             if server.is_enabled:
@@ -539,7 +542,11 @@ class UnifiedMCPTransport(MCPSSETransport):
         failed_servers = []
         active_servers = [s for s in self.project_servers if s.is_enabled]
         
-        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers")
+        # 클라이언트 호환성을 위한 레거시 모드 감지
+        request_id = message.get("id")
+        legacy_mode = getattr(self, '_legacy_mode', False)  # 기본값 False
+        
+        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers (legacy_mode: {legacy_mode})")
         
         # 각 서버에서 툴 수집 (강화된 에러 격리)
         for server in active_servers:
@@ -578,17 +585,24 @@ class UnifiedMCPTransport(MCPSSETransport):
                 
                 for tool in tools:
                     try:
-                        namespaced_tool = tool.copy()
-                        namespaced_tool['name'] = create_namespaced_name(
-                            namespace_name, tool['name']
-                        )
+                        processed_tool = tool.copy()
                         
-                        # 메타데이터 추가
-                        namespaced_tool['_source_server'] = server.name
-                        namespaced_tool['_original_name'] = tool['name']
-                        namespaced_tool['_namespace'] = namespace_name
+                        if legacy_mode:
+                            # 레거시 모드: 네임스페이스 없이 원본 도구명 사용
+                            # 메타데이터 최소화
+                            pass  # 원본 도구명 그대로 사용
+                        else:
+                            # 표준 모드: 네임스페이스 적용
+                            processed_tool['name'] = create_namespaced_name(
+                                namespace_name, tool['name']
+                            )
+                            
+                            # 메타데이터 추가
+                            processed_tool['_source_server'] = server.name
+                            processed_tool['_original_name'] = tool['name']
+                            processed_tool['_namespace'] = namespace_name
                         
-                        all_tools.append(namespaced_tool)
+                        all_tools.append(processed_tool)
                         
                     except Exception as e:
                         logger.error(f"Error processing tool {tool.get('name', 'unknown')} from {server.name}: {e}")
@@ -603,32 +617,36 @@ class UnifiedMCPTransport(MCPSSETransport):
                 failed_servers.append(server.name)
                 # 개별 서버 실패가 전체를 망가뜨리지 않도록 continue
         
-        # 오케스트레이터 메타 도구 추가
-        try:
-            meta_tools = OrchestratorMetaTools.get_meta_tools()
-            all_tools.extend(meta_tools)
-            logger.info(f"✅ Added {len(meta_tools)} orchestrator meta tools")
-        except Exception as e:
-            logger.error(f"❌ Failed to add meta tools: {e}")
+        # 오케스트레이터 메타 도구 추가 (레거시 모드에서는 제외)
+        if not legacy_mode:
+            try:
+                meta_tools = OrchestratorMetaTools.get_meta_tools()
+                all_tools.extend(meta_tools)
+                logger.info(f"✅ Added {len(meta_tools)} orchestrator meta tools")
+            except Exception as e:
+                logger.error(f"❌ Failed to add meta tools: {e}")
         
         # 응답 구성
         response = {
             "jsonrpc": "2.0",
-            "id": message.get("id"),
+            "id": request_id,
             "result": {
-                "tools": all_tools,
-                "_meta": {
-                    "total_servers": len(self.project_servers),
-                    "active_servers": len(active_servers),
-                    "successful_servers": len(active_servers) - len(failed_servers),
-                    "failed_servers": failed_servers,
-                    "namespace_separator": NAMESPACE_SEPARATOR,
-                    "total_tools": len(all_tools),
-                    "meta_tools": len([t for t in all_tools if t.get('_meta', {}).get('type') == 'orchestrator']),
-                    "server_health": self._get_server_health_summary()
-                }
+                "tools": all_tools
             }
         }
+        
+        # 표준 모드에서만 _meta 정보 추가
+        if not legacy_mode:
+            response["result"]["_meta"] = {
+                "total_servers": len(self.project_servers),
+                "active_servers": len(active_servers),
+                "successful_servers": len(active_servers) - len(failed_servers),
+                "failed_servers": failed_servers,
+                "namespace_separator": NAMESPACE_SEPARATOR,
+                "total_tools": len(all_tools),
+                "meta_tools": len([t for t in all_tools if t.get('_meta', {}).get('type') == 'orchestrator']),
+                "server_health": self._get_server_health_summary()
+            }
         
         logger.info(f"📋 Unified tools list complete: {len(all_tools)} tools ({len(failed_servers)} failed servers)")
         return JSONResponse(content=response)

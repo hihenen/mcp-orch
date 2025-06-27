@@ -75,14 +75,50 @@ export async function getJwtToken(): Promise<string | null> {
  */
 export async function getServerJwtToken(request: NextRequest): Promise<string | null> {
   try {
+    console.log('🔍 [JWT Debug] Starting JWT token generation process...');
+    
+    // 환경변수 검증
+    const authSecret = process.env.AUTH_SECRET;
+    console.log('🔍 [JWT Debug] AUTH_SECRET exists:', !!authSecret);
+    console.log('🔍 [JWT Debug] AUTH_SECRET length:', authSecret?.length || 0);
+    console.log('🔍 [JWT Debug] AUTH_SECRET prefix:', authSecret?.substring(0, 10) + '...' || 'undefined');
+    
+    // NextAuth.js 환경변수들도 확인
+    console.log('🔍 [JWT Debug] NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET);
+    console.log('🔍 [JWT Debug] NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+    console.log('🔍 [JWT Debug] NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔍 [JWT Debug] AUTH_TRUST_HOST:', process.env.AUTH_TRUST_HOST);
+    
+    // 요청 헤더 확인
+    console.log('🔍 [JWT Debug] Request URL:', request.url);
+    console.log('🔍 [JWT Debug] Request headers:', Object.fromEntries(request.headers.entries()));
+    
+    // NextAuth.js getToken 호출
+    console.log('🔍 [JWT Debug] Calling NextAuth getToken...');
     const token = await getToken({ 
       req: request,
-      secret: process.env.AUTH_SECRET 
+      secret: authSecret 
     });
 
+    console.log('🔍 [JWT Debug] NextAuth token result:', !!token);
+    
     if (!token) {
+      console.error('❌ [JWT Debug] NextAuth getToken returned null');
+      console.log('🔍 [JWT Debug] Possible causes:');
+      console.log('  - No valid session cookie found');
+      console.log('  - AUTH_SECRET mismatch');
+      console.log('  - Cookie domain/secure settings issue');
+      console.log('  - Session expired');
       return null;
     }
+
+    console.log('✅ [JWT Debug] NextAuth token found');
+    console.log('🔍 [JWT Debug] Token keys:', Object.keys(token));
+    console.log('🔍 [JWT Debug] Token sub:', token.sub);
+    console.log('🔍 [JWT Debug] Token email:', token.email);
+    console.log('🔍 [JWT Debug] Token name:', token.name);
+    console.log('🔍 [JWT Debug] Token teamId:', token.teamId);
+    console.log('🔍 [JWT Debug] Token teamName:', token.teamName);
 
     // NextAuth.js 토큰을 백엔드 호환 JWT 형태로 변환
     const tokenPayload = {
@@ -95,14 +131,24 @@ export async function getServerJwtToken(request: NextRequest): Promise<string | 
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
     };
 
+    console.log('🔍 [JWT Debug] Creating JWT payload:', tokenPayload);
+
     // UTF-8 문자열을 안전하게 Base64로 인코딩
     const header = Buffer.from(JSON.stringify({ typ: "JWT", alg: "none" })).toString('base64');
     const payload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64');
     const signature = "";
 
-    return `${header}.${payload}.${signature}`;
+    const finalJwt = `${header}.${payload}.${signature}`;
+    console.log('✅ [JWT Debug] JWT token generated successfully');
+    console.log('🔍 [JWT Debug] JWT length:', finalJwt.length);
+    console.log('🔍 [JWT Debug] JWT preview:', finalJwt.substring(0, 50) + '...');
+
+    return finalJwt;
   } catch (error) {
-    console.error('❌ Error getting server JWT token:', error);
+    console.error('❌ [JWT Debug] Error in getServerJwtToken:', error);
+    console.error('❌ [JWT Debug] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('❌ [JWT Debug] Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('❌ [JWT Debug] Error message:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
