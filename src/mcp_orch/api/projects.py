@@ -96,6 +96,7 @@ class ProjectResponse(BaseModel):
     updated_at: datetime
     member_count: int
     server_count: int
+    unified_mcp_enabled: bool
     
     class Config:
         from_attributes = True
@@ -154,7 +155,8 @@ async def list_user_projects(
             created_at=project.created_at,
             updated_at=project.updated_at,
             member_count=member_count,
-            server_count=server_count
+            server_count=server_count,
+            unified_mcp_enabled=project.unified_mcp_enabled
         ))
     
     return result
@@ -199,7 +201,8 @@ async def create_project(
         created_at=project.created_at,
         updated_at=project.updated_at,
         member_count=1,
-        server_count=0
+        server_count=0,
+        unified_mcp_enabled=project.unified_mcp_enabled
     )
 
 
@@ -265,6 +268,7 @@ async def get_project_detail(
         updated_at=project.updated_at,
         member_count=len(members),
         server_count=server_count,
+        unified_mcp_enabled=project.unified_mcp_enabled,
         members=members,
         recent_activity=[]  # 향후 구현
     )
@@ -329,7 +333,8 @@ async def update_project(
         created_at=project.created_at,
         updated_at=project.updated_at,
         member_count=member_count,
-        server_count=server_count
+        server_count=server_count,
+        unified_mcp_enabled=project.unified_mcp_enabled
     )
 
 

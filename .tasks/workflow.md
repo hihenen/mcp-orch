@@ -951,11 +951,32 @@
   - [ ] 도움말 텍스트 및 권장사항 추가
 - [ ] CHANGELOG.md 업데이트
 
+### TASK_097: UnifiedMcpConnectionInfo 컴포넌트 표시 문제 조사
+- [ ] 백엔드 API에서 프로젝트 정보 조회 시 unified_mcp_enabled 필드 포함 확인
+  - [ ] /api/projects/[projectId]/route.ts 파일 분석
+  - [ ] 백엔드 projects.py 엔드포인트 응답 구조 확인
+  - [ ] 실제 데이터베이스 스키마에서 unified_mcp_enabled 필드 존재 확인
+- [ ] 프론트엔드 프로젝트 데이터 전달 과정 확인
+  - [ ] useProjectStore의 loadProject 함수 분석
+  - [ ] API 응답 데이터 파싱 및 상태 저장 과정 확인
+  - [ ] selectedProject 객체에 unified_mcp_enabled 필드 포함 여부 확인
+- [ ] 특정 프로젝트 실제 데이터 확인
+  - [ ] 프로젝트 ID 4d9e09f5-4305-47db-9a8d-590f8c79a047의 unified_mcp_enabled 값 조회
+  - [ ] 데이터베이스 직접 조회를 통한 값 확인
+- [ ] UnifiedMcpConnectionInfo 컴포넌트 로직 검증
+  - [ ] 조건부 렌더링 조건 분석
+  - [ ] 컴포넌트가 받는 props 확인
+  - [ ] 렌더링 조건문의 정확성 검토
+- [ ] 문제점 식별 및 해결 방안 제시
+  - [ ] 데이터 흐름에서 누락되는 지점 파악
+  - [ ] 컴포넌트 표시되지 않는 근본 원인 식별
+  - [ ] 수정 필요 사항 정리
+
 ## Progress Status  
-- Current Progress: TASK_112 - UnifiedMCPTransport tool_naming 속성 누락 오류 수정 진행 중
-- Next Task: FastAPI 서버 재시작 후 Cline 연결 테스트
+- Current Progress: TASK_097 - UnifiedMcpConnectionInfo 컴포넌트 표시 문제 조사 시작
+- Next Task: 백엔드 API 프로젝트 조회 응답에서 unified_mcp_enabled 필드 포함 여부 확인
 - Last Update: 2025-06-27
-- Automatic Check Feedback: UnifiedMCPTransport 클래스에서 tool_naming 속성이 초기화되지 않아 발생한 AttributeError를 수정했습니다. UnifiedToolNaming 클래스를 import하고 __init__에서 초기화하도록 코드를 수정했습니다. 이제 FastAPI 서버 재시작 후 Cline에서 unified MCP 엔드포인트 연결 테스트가 필요합니다.
+- Automatic Check Feedback: 새로운 조사 작업 시작, unified_mcp_enabled 필드 관련 문제 분석 계획 수립
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

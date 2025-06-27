@@ -291,6 +291,83 @@ class UnifiedMCPTransport(MCPSSETransport):
         
         logger.info(f"🚀 UnifiedMCPTransport created: session={session_id}, servers={len(project_servers)}, separator='{NAMESPACE_SEPARATOR}'")
     
+    async def handle_post_message(self, request: Request) -> JSONResponse:
+        """
+        🎯 Unified MCP POST 메시지 처리 (오버라이드)
+        
+        UnifiedMCPTransport용 메시지 라우팅:
+        - initialize: 통합 서버 초기화
+        - tools/list: 모든 서버의 네임스페이스 툴 목록
+        - tools/call: 네임스페이스 기반 툴 라우팅
+        - notifications/*: 알림 처리
+        """
+        try:
+            message = await request.json()
+            method = message.get("method")
+            request_id = message.get("id")
+            
+            logger.info(f"📥 Unified session {self.session_id} received: {method} (id={request_id})")
+            logger.debug(f"🔍 Unified message content: {json.dumps(message, indent=2)}")
+            
+            # JSON-RPC 2.0 검증
+            if message.get("jsonrpc") != "2.0":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid JSON-RPC version"
+                )
+            
+            if not method:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Missing method field"
+                )
+            
+            # Unified 메서드별 처리 (기본 MCPSSETransport와 다른 라우팅)
+            if method == "initialize":
+                logger.info(f"🎯 Unified initialize for session {self.session_id}")
+                return await self.handle_initialize(message)
+            elif method == "tools/list":
+                logger.info(f"📋 Unified tools/list for session {self.session_id}")
+                return await self.handle_tools_list(message)
+            elif method == "tools/call":
+                logger.info(f"🔧 Unified tools/call for session {self.session_id}")
+                return await self.handle_tool_call(message)
+            elif method.startswith("notifications/"):
+                logger.info(f"📢 Unified notification for session {self.session_id}: {method}")
+                return await self.handle_notification(message)
+            else:
+                # 알 수 없는 메서드
+                logger.warning(f"❓ Unknown unified method received: {method}")
+                error_response = {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "error": {
+                        "code": -32601,
+                        "message": f"Method not found: {method}"
+                    }
+                }
+                return JSONResponse(content=error_response, status_code=200)
+                
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error processing unified message in session {self.session_id}: {e}")
+            
+            # JSON-RPC 오류 응답
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": message.get("id") if 'message' in locals() else None,
+                "error": {
+                    "code": -32000,
+                    "message": f"Unified message processing error: {str(e)}",
+                    "data": {
+                        "mode": "unified",
+                        "error_type": type(e).__name__
+                    }
+                }
+            }
+            return JSONResponse(content=error_response, status_code=200)
+    
     def _register_servers(self):
         """프로젝트 서버들을 네임스페이스 레지스트리에 등록"""
         for server in self.project_servers:

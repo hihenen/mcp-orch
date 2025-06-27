@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Display API key status and provide navigation to management pages
   - Add comprehensive setup instructions and namespace information for unified mode
 
+### Fixed
+- [TASK_111] Backend API project response missing unified_mcp_enabled field (2025-06-27)
+  - Add unified_mcp_enabled field to ProjectResponse and ProjectDetailResponse models
+  - Include unified_mcp_enabled in all project API endpoints (list, get, create, update)
+  - Fix UnifiedMcpConnectionInfo component not displaying due to missing backend data
+  - Ensure proper data flow from database to frontend for unified MCP mode detection
+
 ### Changed
 - [TASK_110] Separated Unified MCP Server Mode from Security Settings into dedicated section (2025-06-27)
   - Created new McpServerModeSection component for MCP operation mode management
