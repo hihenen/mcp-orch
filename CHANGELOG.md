@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_124] Fix Pydantic V2 datetime serialization using field_serializer decorator (2025-06-27)
+  - Replace deprecated json_encoders with @field_serializer for ServerResponse model
+  - Ensure datetime fields are properly serialized with UTC 'Z' suffix for JavaScript compatibility
+  - Resolve backend API responses missing timezone information using modern Pydantic V2 patterns
+  - Maintain backward compatibility while migrating from V1 json_encoders to V2 field serializers
 - [TASK_123] Add comprehensive timestamp debugging logs for API responses and date formatting (2025-06-27)
   - Add detailed API response logging in loadProjectServers to debug timezone issues
   - Include JavaScript Date parsing tests with Korean timezone conversion

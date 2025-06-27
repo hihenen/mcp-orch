@@ -140,6 +140,14 @@
 - [ ] Phase 3: Real-time UI Integration (2일)
 - [ ] Phase 4: Testing and Optimization (1일)
 
+### TASK_124: Pydantic V2 datetime 직렬화 수정으로 'Z' 접미사 누락 문제 해결 ✅
+- [x] Context7을 통한 Pydantic V2에서 json_encoders deprecated 확인
+- [x] ServerResponse 모델에 @field_serializer 데코레이터로 datetime 필드 직렬화 수정
+  - [x] last_connected, created_at, updated_at 필드에 적용
+  - [x] UTC timezone 정보 포함한 'Z' 접미사 추가 로직 구현
+  - [x] None 값 처리 및 timezone 정보 유무에 따른 적절한 변환
+- [x] CHANGELOG.md 업데이트 및 변경사항 문서화
+
 ### TASK_123: 시간 표시 오류 디버깅을 위한 포괄적 로깅 추가 ✅
 - [x] loadProjectServers 함수에 날짜/시간 API 응답 디버깅 로그 추가
   - [x] 실제 API 응답 타임스탬프 값 확인 로그
@@ -166,10 +174,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_123 - 포괄적 타임스탬프 디버깅 로그 구현 완료
-- Next Task: 브라우저에서 디버그 로그 확인 후 문제 원인 분석
+- Current Progress: TASK_124 - Pydantic V2 datetime 직렬화 수정 완료
+- Next Task: 서버 재시작 후 브라우저에서 'Z' 접미사 포함 확인
 - Last Update: 2025-06-27
-- Automatic Check Feedback: 시간 표시 문제 해결을 위한 디버깅 로그 추가 완료. 이제 브라우저 개발자 도구에서 실제 API 응답과 날짜 포맷팅 결과를 확인할 수 있음
+- Automatic Check Feedback: Pydantic V2 호환 @field_serializer로 datetime 직렬화 수정 완료. json_encoders 대신 현대적인 방식으로 UTC timezone 정보 포함
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

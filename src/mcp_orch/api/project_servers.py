@@ -11,7 +11,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from ..database import get_db
 from ..models import Project, ProjectMember, User, McpServer, ProjectRole, ServerLog, LogLevel, LogCategory
@@ -64,10 +64,17 @@ class ServerResponse(BaseModel):
     
     class Config:
         from_attributes = True
-        # Ensure datetime fields are serialized with timezone information
-        json_encoders = {
-            datetime: lambda v: v.isoformat() + 'Z' if v.tzinfo is None else v.astimezone(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
-        }
+    
+    @field_serializer('last_connected', 'created_at', 'updated_at')
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        """Serialize datetime fields with UTC timezone information."""
+        if value is None:
+            return None
+        # Add 'Z' suffix for UTC timestamps to ensure JavaScript Date() interprets correctly
+        if value.tzinfo is None:
+            return value.isoformat() + 'Z'
+        else:
+            return value.astimezone(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
 
 
 # 사용자 인증 dependency 함수
