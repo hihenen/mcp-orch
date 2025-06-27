@@ -129,13 +129,18 @@ async def list_project_servers(
                 if server_config:
                     # 프로젝트별 고유 서버 식별자 생성
                     unique_server_id = mcp_connection_service._generate_unique_server_id(server)
+                    logger.debug(f"Live check for {server.name}: config={server_config}")
                     server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
+                    logger.debug(f"Live check for {server.name}: status={server_status}")
                     if server_status == "online":
                         tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
                         tools_count = len(tools)
                         logger.info(f"✅ Live check: Retrieved {tools_count} tools for server {server.name}")
+                else:
+                    logger.warning(f"No server config built for {server.name}")
+                    server_status = "error"
             except Exception as e:
-                logger.error(f"Error in live check for server {server.name}: {e}")
+                logger.error(f"Error in live check for server {server.name}: {e}", exc_info=True)
                 server_status = "error"
         else:
             # DB에 저장된 상태 정보 사용 (기본값)
@@ -166,6 +171,9 @@ async def list_project_servers(
             tools_count = len(server.tools) if server.tools else 0
             
             logger.info(f"Server {server.name} using cached status: {server_status}, tools: {tools_count}")
+        
+        # 디버그: 실제 전송되는 상태 확인
+        logger.debug(f"Server {server.name} - DB status: {getattr(server, 'status', 'N/A')}, Sending status: {server_status}")
         
         result.append(ServerResponse(
             id=str(server.id),

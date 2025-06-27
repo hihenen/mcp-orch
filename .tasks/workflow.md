@@ -107,6 +107,13 @@
 - [ ] 변경사항 테스트
 - [ ] 변경사항 커밋
 
+### TASK_121: 서버 상태 "Error" 표시 문제 해결
+- [x] 문제 분석: 백엔드에서 "error" 상태 전송하나 프론트엔드에서 미처리
+- [x] 프론트엔드 상태 매핑에 "error" 케이스 추가
+- [x] 백엔드 실시간 상태 확인 로깅 강화
+- [ ] 실제 서버 상태 확인 및 검증
+- [ ] 변경사항 테스트
+
 ### TASK_120: MCP Tool Filtering System 구현 완료 ✅
 - [x] Phase 1: Database Layer and Core Services (2일)
   - [x] ToolPreference 데이터베이스 모델 구현
@@ -125,10 +132,10 @@
 - [ ] Phase 4: Testing and Optimization (1일)
 
 ## Progress Status  
-- Current Progress: TASK_120 Phase 2 완료 - Tool Filtering System 백엔드 핵심 기능 구현 완료
-- Next Task: TASK_120 Phase 3 - 실시간 UI 통합 및 웹 인터페이스 구현
+- Current Progress: TASK_121 - 서버 상태 "Error" 표시 문제 해결 중
+- Next Task: TASK_121 - 프론트엔드 상태 매핑에 "error" 케이스 추가
 - Last Update: 2025-06-27
-- Automatic Check Feedback: MCP Tool Filtering System 백엔드 구현 성공. 데이터베이스 모델, 필터링 서비스, REST API 완료. Phase 3 UI 통합 단계로 진행 준비
+- Automatic Check Feedback: 서버 상태 매핑 문제 분석 완료. 백엔드는 "error" 상태를 보내지만 프론트엔드가 이를 처리하지 못함
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

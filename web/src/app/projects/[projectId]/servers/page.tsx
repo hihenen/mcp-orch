@@ -341,8 +341,9 @@ export default function ProjectServersPage() {
                       <Badge variant={server.status === 'active' ? 'default' : 'secondary'}>
                         {server.status === 'active' ? 'Online' : 
                          server.status === 'inactive' ? 'Offline' :
+                         server.status === 'error' ? 'Error' :
                          server.status === 'starting' ? 'Starting' :
-                         server.status === 'stopping' ? 'Stopping' : 'Error'}
+                         server.status === 'stopping' ? 'Stopping' : 'Unknown'}
                       </Badge>
                       {server.disabled && (
                         <Badge variant="outline">Disabled</Badge>
