@@ -145,12 +145,35 @@ export async function getServerJwtToken(request: NextRequest): Promise<string | 
 
     console.log('🔍 [JWT Debug] Creating JWT payload:', tokenPayload);
 
-    // UTF-8 문자열을 안전하게 Base64로 인코딩
-    const header = Buffer.from(JSON.stringify({ typ: "JWT", alg: "none" })).toString('base64');
-    const payload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64');
-    const signature = "";
-
-    const finalJwt = `${header}.${payload}.${signature}`;
+    // 프로덕션 환경에서는 서명된 JWT 생성, 개발환경에서는 none 알고리즘 사용
+    const isProduction = process.env.NODE_ENV === 'production';
+    console.log('🔍 [JWT Debug] Production mode:', isProduction);
+    
+    let finalJwt: string;
+    
+    if (isProduction && authSecret) {
+      // HS256으로 서명된 JWT 생성
+      const header = Buffer.from(JSON.stringify({ typ: "JWT", alg: "HS256" })).toString('base64url');
+      const payload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64url');
+      
+      // HMAC-SHA256 서명 생성
+      const crypto = require('crypto');
+      const signature = crypto
+        .createHmac('sha256', authSecret)
+        .update(`${header}.${payload}`)
+        .digest('base64url');
+      
+      finalJwt = `${header}.${payload}.${signature}`;
+      console.log('✅ [JWT Debug] Created HS256 signed JWT for production');
+    } else {
+      // 개발환경: alg: "none" 사용
+      const header = Buffer.from(JSON.stringify({ typ: "JWT", alg: "none" })).toString('base64');
+      const payload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64');
+      const signature = "";
+      
+      finalJwt = `${header}.${payload}.${signature}`;
+      console.log('✅ [JWT Debug] Created unsigned JWT for development');
+    }
     console.log('✅ [JWT Debug] JWT token generated successfully');
     console.log('🔍 [JWT Debug] JWT length:', finalJwt.length);
     console.log('🔍 [JWT Debug] JWT preview:', finalJwt.substring(0, 50) + '...');

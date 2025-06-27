@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_109] Fix Roo client compatibility by adding resources/list and resources/templates/list support to UnifiedMCPTransport (2025-06-27)
+  - Add handle_resources_list method to return empty resources array for Roo client compatibility
+  - Add handle_resources_templates_list method to return empty resourceTemplates array
+  - Prevent connection drops when Roo client requests resources discovery
+  - Enable proper tool list display in Roo code while maintaining tools-focused implementation
+  - Individual MCP servers (MCPSSETransport) left unchanged to maintain full backward compatibility
 - [TASK_108] Fix Unified MCP tools/list schema field naming for Inspector UI compatibility (2025-06-27)
   - Standardize tool schema field naming from 'schema' to 'inputSchema' in UnifiedMCPTransport
   - Add fallback inputSchema for tools missing schema definitions to prevent validation errors

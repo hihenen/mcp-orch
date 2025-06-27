@@ -413,6 +413,12 @@ class UnifiedMCPTransport(MCPSSETransport):
             elif method == "tools/call":
                 logger.info(f"🔧 🚀 UNIFIED tools/call for session {self.session_id}")
                 return await self.handle_tool_call(message)
+            elif method == "resources/list":
+                logger.info(f"📚 🚀 UNIFIED resources/list for session {self.session_id}")
+                return await self.handle_resources_list(message)
+            elif method == "resources/templates/list":
+                logger.info(f"📋 🚀 UNIFIED resources/templates/list for session {self.session_id}")
+                return await self.handle_resources_templates_list(message)
             elif method.startswith("notifications/"):
                 logger.info(f"📢 🚀 UNIFIED notification for session {self.session_id}: {method}")
                 return await self.handle_notification(message)
@@ -960,6 +966,104 @@ class UnifiedMCPTransport(MCPSSETransport):
             
             # 🔧 CRITICAL: 에러 응답도 메시지 큐를 통해 전송
             logger.info(f"📤 Queueing tool call error response for Unified SSE session {self.session_id}")
+            await self.message_queue.put(error_response_data)
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+    
+    async def handle_resources_list(self, message: Dict[str, Any]) -> JSONResponse:
+        """
+        📚 Unified MCP resources/list 처리
+        
+        Roo 클라이언트 호환성을 위한 빈 리소스 목록 반환.
+        현재 mcp-orch는 툴 중심으로 구현되어 있어 리소스는 지원하지 않음.
+        """
+        try:
+            request_id = message.get("id")
+            
+            logger.info(f"📚 Processing unified resources/list for session {self.session_id}, id={request_id}")
+            
+            # MCP 표준 리소스 응답 (빈 목록)
+            response_data = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "resources": []
+                }
+            }
+            
+            # 🔧 CRITICAL: Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+            logger.info(f"📤 Queueing resources/list response for Unified SSE session {self.session_id}")
+            await self.message_queue.put(response_data)
+            
+            logger.info(f"✅ Unified resources/list complete: 0 resources (tools-focused implementation)")
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+            
+        except Exception as e:
+            logger.error(f"❌ Unified resources/list error: {e}")
+            
+            # 에러 응답
+            error_response_data = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32000,
+                    "message": f"Resources list failed: {str(e)}"
+                }
+            }
+            
+            # 🔧 CRITICAL: 에러 응답도 메시지 큐를 통해 전송
+            await self.message_queue.put(error_response_data)
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+    
+    async def handle_resources_templates_list(self, message: Dict[str, Any]) -> JSONResponse:
+        """
+        📋 Unified MCP resources/templates/list 처리
+        
+        Roo 클라이언트 호환성을 위한 빈 리소스 템플릿 목록 반환.
+        현재 mcp-orch는 툴 중심으로 구현되어 있어 리소스 템플릿은 지원하지 않음.
+        """
+        try:
+            request_id = message.get("id")
+            
+            logger.info(f"📋 Processing unified resources/templates/list for session {self.session_id}, id={request_id}")
+            
+            # MCP 표준 리소스 템플릿 응답 (빈 목록)
+            response_data = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "resourceTemplates": []
+                }
+            }
+            
+            # 🔧 CRITICAL: Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+            logger.info(f"📤 Queueing resources/templates/list response for Unified SSE session {self.session_id}")
+            await self.message_queue.put(response_data)
+            
+            logger.info(f"✅ Unified resources/templates/list complete: 0 templates (tools-focused implementation)")
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+            
+        except Exception as e:
+            logger.error(f"❌ Unified resources/templates/list error: {e}")
+            
+            # 에러 응답
+            error_response_data = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32000,
+                    "message": f"Resource templates list failed: {str(e)}"
+                }
+            }
+            
+            # 🔧 CRITICAL: 에러 응답도 메시지 큐를 통해 전송
             await self.message_queue.put(error_response_data)
             
             # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
