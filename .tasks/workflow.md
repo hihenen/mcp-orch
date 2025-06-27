@@ -2,7 +2,7 @@
 
 ## Metadata
 - Status: In Progress
-- Last Update: 2025-06-25
+- Last Update: 2025-06-27
 - Automatic Check Status: PASS
 
 ## Task List
@@ -857,6 +857,20 @@
 - [x] CHANGELOG.md 업데이트
 - [x] 최종 커밋 및 푸시 진행
 
+### TASK_112: UnifiedMCPTransport tool_naming 속성 누락 오류 수정
+- [x] 문제 분석
+  - [x] 사용자 Cline 연결 시 "'UnifiedMCPTransport' object has no attribute 'tool_naming'" 오류 발생
+  - [x] UnifiedMCPTransport 클래스에서 tool_naming 속성이 초기화되지 않음 확인
+  - [x] handle_initialize 메서드에서 self.tool_naming.separator 참조 시 AttributeError 발생
+- [x] 해결책 구현
+  - [x] utils/namespace.py에서 UnifiedToolNaming 클래스 import 추가
+  - [x] UnifiedMCPTransport __init__에 self.tool_naming = UnifiedToolNaming() 초기화 추가
+  - [x] 전역 NAMESPACE_SEPARATOR 상수를 활용하도록 구성
+- [ ] 배포 및 테스트
+  - [ ] FastAPI 서버 재시작 필요
+  - [ ] Cline에서 unified MCP 엔드포인트 재연결 테스트
+  - [ ] tools/list 및 초기화 정상 작동 확인
+
 ### TASK_106: User 모델과 관리자 권한 부여 관련 코드 분석
 - [x] User 모델 정의 및 관리자 필드 분석
 - [x] INITIAL_ADMIN_EMAIL 사용 코드 찾기
@@ -938,10 +952,10 @@
 - [ ] CHANGELOG.md 업데이트
 
 ## Progress Status  
-- Current Progress: TASK_111 완료 - Unified MCP Server 연결 정보 표시 기능 구현
-- Next Task: 사용자의 다음 요청 대기
+- Current Progress: TASK_112 - UnifiedMCPTransport tool_naming 속성 누락 오류 수정 진행 중
+- Next Task: FastAPI 서버 재시작 후 Cline 연결 테스트
 - Last Update: 2025-06-27
-- Automatic Check Feedback: TASK_111 완료 - Unified MCP Server 연결 정보를 웹 UI에 표시하는 기능을 성공적으로 구현했습니다. UnifiedMcpConnectionInfo 컴포넌트 생성, 백엔드 API 엔드포인트 구현, Project Overview 및 Server 목록 페이지에 통합, Copy to Clipboard 기능, API 키 상태 표시, 설정 안내 및 네임스페이스 정보 제공이 모두 완료되었습니다.
+- Automatic Check Feedback: UnifiedMCPTransport 클래스에서 tool_naming 속성이 초기화되지 않아 발생한 AttributeError를 수정했습니다. UnifiedToolNaming 클래스를 import하고 __init__에서 초기화하도록 코드를 수정했습니다. 이제 FastAPI 서버 재시작 후 Cline에서 unified MCP 엔드포인트 연결 테스트가 필요합니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

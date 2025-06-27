@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_112] Fix UnifiedMCPTransport tool_naming attribute initialization error (2025-06-27)
+  - Resolve AttributeError when Cline connects to unified MCP endpoint
+  - Add missing UnifiedToolNaming class import and initialization in UnifiedMCPTransport
+  - Fix handle_initialize method access to self.tool_naming.separator
+  - Enable successful Cline integration with unified MCP server mode
+
 ### Added
 - [TASK_111] Unified MCP Server connection information display in web UI (2025-06-27)
   - Add UnifiedMcpConnectionInfo component for displaying Cline/Cursor connection details

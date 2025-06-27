@@ -25,7 +25,7 @@ from .jwt_auth import get_user_from_jwt_token
 from .mcp_sse_transport import MCPSSETransport, sse_transports
 from ..services.mcp_connection_service import mcp_connection_service
 from ..utils.namespace import (
-    NamespaceRegistry, OrchestratorMetaTools,
+    NamespaceRegistry, OrchestratorMetaTools, UnifiedToolNaming,
     create_namespaced_name, parse_namespaced_name, is_namespaced, 
     get_meta_tool_prefix, NAMESPACE_SEPARATOR
 )
@@ -271,6 +271,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         self.server_connections = {}  # 개별 서버 연결 캐시
         self.server_health = {}  # 서버별 헬스 정보 추적
         self.structured_logger = StructuredLogger(session_id, project_id)  # 구조화된 로깅
+        self.tool_naming = UnifiedToolNaming()  # 🔧 ADD: tool_naming 속성 초기화
         
         # 서버 헬스 정보 초기화
         for server in project_servers:
