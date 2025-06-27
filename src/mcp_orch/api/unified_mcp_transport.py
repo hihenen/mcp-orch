@@ -685,7 +685,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         return JSONResponse(content={"status": "processing"}, status_code=202)
     
     async def handle_tools_list(self, message: Dict[str, Any]) -> JSONResponse:
-        """모든 활성 서버의 툴을 네임스페이스와 함께 반환"""
+        """모든 활성 서버의 툴을 네임스페이스와 함께 반환 (필터링 적용)"""
         all_tools = []
         failed_servers = []
         active_servers = [s for s in self.project_servers if s.is_enabled]
@@ -694,7 +694,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         request_id = message.get("id")
         legacy_mode = getattr(self, '_legacy_mode', True)  # 기본값 True (Inspector 호환성)
         
-        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers (legacy_mode: {legacy_mode})")
+        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers (legacy_mode: {legacy_mode}, filtering: enabled)")
         
         # 각 서버에서 툴 수집 (강화된 에러 격리)
         for server in active_servers:

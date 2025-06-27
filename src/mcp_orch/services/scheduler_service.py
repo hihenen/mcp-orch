@@ -268,6 +268,19 @@ class SchedulerService:
                                 if tools_updated > 0:
                                     tools_synced_count += tools_updated
                                     logger.info(f"Synced {tools_updated} tools for server {server.name}")
+                                    
+                                    # 🆕 도구 목록이 변경된 경우 Tool Preference 캐시 무효화
+                                    try:
+                                        from .cache_invalidation_service import CacheInvalidationService
+                                        await CacheInvalidationService.on_tool_list_changed(
+                                            project_id=server.project_id,
+                                            server_id=server.id
+                                        )
+                                        logger.info(f"🔄 [SCHEDULER] Invalidated tool filtering cache for {server.name}")
+                                    except Exception as cache_error:
+                                        logger.error(f"❌ [SCHEDULER] Failed to invalidate tool cache: {cache_error}")
+                                        # 캐시 무효화 실패는 도구 동기화에 영향을 주지 않음
+                                        
                             except Exception as tool_sync_error:
                                 logger.error(f"Failed to sync tools for server {server.name}: {tool_sync_error}")
                                 # 도구 동기화 실패는 서버 상태에 영향을 주지 않음

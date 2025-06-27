@@ -366,7 +366,7 @@ class McpSessionManager:
             raise
     
     async def get_server_tools(self, server_id: str, server_config: Dict) -> List[Dict]:
-        """서버 도구 목록 조회 - 캐시된 결과 사용"""
+        """서버 도구 목록 조회 - 캐시된 결과 사용 + 툴 필터링 적용"""
         try:
             # 세션 가져오기 또는 생성
             session = await self.get_or_create_session(server_id, server_config)
@@ -374,9 +374,46 @@ class McpSessionManager:
             # 세션 초기화 (필요시)
             await self.initialize_session(session)
             
-            # 캐시된 도구 목록이 있으면 반환
+            # 🆕 프로젝트 ID 추출 (server_id가 "project_id.server_name" 형태인 경우)
+            project_id = None
+            actual_server_id = None
+            if '.' in server_id:
+                try:
+                    project_id_str, server_name = server_id.split('.', 1)
+                    project_id = UUID(project_id_str)
+                    
+                    # 실제 서버 ID 조회 (DB에서)
+                    from ..database import get_db
+                    from ..models import McpServer
+                    db = next(get_db())
+                    try:
+                        server = db.query(McpServer).filter(
+                            McpServer.project_id == project_id,
+                            McpServer.name == server_name
+                        ).first()
+                        if server:
+                            actual_server_id = server.id
+                    finally:
+                        db.close()
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"⚠️ Failed to parse server_id {server_id}: {e}")
+            
+            # 캐시된 도구 목록이 있으면 필터링 후 반환
             if session.tools_cache is not None:
                 logger.info(f"📋 Using cached tools for server {server_id}")
+                
+                # 🆕 캐시된 도구에 실시간 필터링 적용
+                if project_id and actual_server_id:
+                    from .tool_filtering_service import ToolFilteringService
+                    filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+                        project_id=project_id,
+                        server_id=actual_server_id,
+                        tools=session.tools_cache,
+                        db=None  # 세션 매니저에서는 별도 DB 세션 관리
+                    )
+                    logger.info(f"🎯 Applied filtering to cached tools: {len(filtered_tools)}/{len(session.tools_cache)} tools enabled")
+                    return filtered_tools
+                
                 return session.tools_cache
             
             # 도구 목록 요청
@@ -412,12 +449,24 @@ class McpSessionManager:
                 }
                 tools.append(normalized_tool)
             
-            # 캐시에 저장
-            session.tools_cache = tools
+            # 🆕 새로 조회한 도구에 필터링 적용
+            filtered_tools = tools
+            if project_id and actual_server_id:
+                from .tool_filtering_service import ToolFilteringService
+                filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+                    project_id=project_id,
+                    server_id=actual_server_id,
+                    tools=tools,
+                    db=None  # 세션 매니저에서는 별도 DB 세션 관리
+                )
+                logger.info(f"🎯 Applied filtering to new tools: {len(filtered_tools)}/{len(tools)} tools enabled")
+            
+            # 🆕 필터링된 도구를 캐시에 저장 (원본 대신 필터링된 결과)
+            session.tools_cache = filtered_tools
             session.last_used_at = datetime.utcnow()
             
-            logger.info(f"📋 Retrieved {len(tools)} tools for server {server_id}")
-            return tools
+            logger.info(f"📋 Retrieved and cached {len(filtered_tools)} filtered tools for server {server_id}")
+            return filtered_tools
             
         except Exception as e:
             logger.error(f"❌ Error getting tools for server {server_id}: {e}")

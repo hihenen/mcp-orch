@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_120] Complete Phase 2 - Tool filtering system transport layer integration (2025-06-27)
+  - Integrate real-time filtering into MCP Session Manager for both cached and new tool retrieval
+  - Connect Scheduler Service with cache invalidation system for automatic refresh on tool changes
+  - Add comprehensive Tool Preferences REST API with JWT authentication (GET, PUT, DELETE endpoints)
+  - Support bulk tool preference updates for efficient UI operations
+  - Implement project-based access control with role-based permissions (DEVELOPER+ for modifications)
+  - Register Tool Preferences API router in main FastAPI application for production ready deployment
+  - Enable transparent filtering across both Unified and Individual MCP Transport systems
 - [TASK_048] Implement Phase 1 - Core tool filtering system foundation (2025-06-27)
   - Add ToolPreference database model with project-server-tool unique constraints
   - Implement ToolFilteringService with ServerStatusService pattern integration for consistent DB session management

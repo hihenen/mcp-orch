@@ -240,12 +240,13 @@ class MCPSSETransport:
         return JSONResponse(content=response)
     
     async def handle_tools_list(self, message: Dict[str, Any]) -> JSONResponse:
-        """도구 목록 조회 처리"""
+        """도구 목록 조회 처리 (필터링 적용)"""
         try:
             server_config = self._build_server_config()
             if not server_config:
                 raise ValueError("Failed to build server configuration")
             
+            # 🆕 필터링이 적용된 도구 목록 조회 (세션 매니저에서 자동 처리)
             tools = await mcp_connection_service.get_server_tools(str(self.server.id), server_config)
             
             response = {
@@ -267,7 +268,7 @@ class MCPSSETransport:
                 }
             }
             
-            logger.info(f"📋 Sent {len(tools) if tools else 0} tools for session {self.session_id}")
+            logger.info(f"📋 Sent {len(tools) if tools else 0} filtered tools for session {self.session_id}")
             return JSONResponse(content=response)
             
         except Exception as e:
