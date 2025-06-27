@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_048] Complete MCP tool filtering system design documentation (2025-06-27)
+  - Add comprehensive design document for web UI-based tool enable/disable control system
+  - Support for both Unified MCP Transport and Individual MCP Transport filtering
+  - Include database schema design with tool_preferences table for project-specific settings
+  - Add common ToolFilteringService for consistent filtering across all transport types
+  - Design real-time filtering system with SSE client integration for immediate tool control
+  - Include implementation phases, risk analysis, and comprehensive technical specifications
 - [TASK_106] Implement automatic MCP server status update system (2025-06-27)
   - Add ServerStatusService for centralized server status management across all connection types
   - Enable automatic status updates on SSE connections (connect/disconnect) to reflect real-time states

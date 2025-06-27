@@ -72,11 +72,15 @@ for server in active_servers:
 [웹 UI] 툴 사용함/사용안함 설정
     ↓ API 호출
 [Backend] 툴 설정 저장 (새 테이블: tool_preferences)
-    ↓ 설정 참조
-[Unified MCP Transport] handle_tools_list() 필터링 로직
+    ↓ 설정 참조 (공통 ToolFilteringService)
+[Unified MCP Transport] ───┐
+                          ├─── handle_tools_list() 필터링 로직
+[Individual MCP Transport] ─┘
     ↓ 필터링된 툴 목록
 [SSE Client] 허용된 툴만 수신
 ```
+
+**✨ 핵심 특징**: Unified MCP Transport와 개별 MCP Transport 모두에 동일한 필터링 시스템 적용
 
 ### 3.2 데이터베이스 설계
 
@@ -118,9 +122,117 @@ class ToolPreference(BaseModel):
     )
 ```
 
-### 3.3 백엔드 API 설계
+### 3.3 공통 툴 필터링 서비스 설계
 
-#### 3.3.1 툴 설정 관리 API
+#### 3.3.1 ToolFilteringService 구현
+```python
+# 새 파일: src/mcp_orch/services/tool_filtering_service.py
+
+import logging
+from typing import List, Dict, Any
+from uuid import UUID
+from sqlalchemy.orm import Session
+from sqlalchemy import and_
+
+from ..models.tool_preference import ToolPreference
+
+logger = logging.getLogger(__name__)
+
+class ToolFilteringService:
+    """공통 툴 필터링 서비스 - Unified/Individual MCP Transport 모두 사용"""
+    
+    @staticmethod
+    async def filter_tools_by_preferences(
+        project_id: UUID,
+        server_id: UUID,
+        tools: List[Dict],
+        db: Session
+    ) -> List[Dict]:
+        """
+        프로젝트 툴 설정에 따라 툴 목록 필터링
+        
+        Args:
+            project_id: 프로젝트 ID
+            server_id: MCP 서버 ID
+            tools: 원본 툴 목록
+            db: 데이터베이스 세션
+            
+        Returns:
+            필터링된 툴 목록
+        """
+        try:
+            # 툴 설정 조회 (배치 쿼리)
+            tool_preferences = db.query(ToolPreference).filter(
+                and_(
+                    ToolPreference.project_id == project_id,
+                    ToolPreference.server_id == server_id
+                )
+            ).all()
+            
+            # 빠른 조회를 위한 설정 맵 생성
+            preference_map = {
+                pref.tool_name: pref.is_enabled
+                for pref in tool_preferences
+            }
+            
+            # 필터링 적용
+            filtered_tools = []
+            filtered_count = 0
+            
+            for tool in tools:
+                tool_name = tool.get('name', '')
+                is_enabled = preference_map.get(tool_name, True)  # 기본값: 사용함
+                
+                if is_enabled:
+                    filtered_tools.append(tool)
+                else:
+                    filtered_count += 1
+                    logger.debug(f"🚫 Tool filtered: {tool_name} from server {server_id}")
+            
+            # 필터링 통계 로깅
+            if filtered_count > 0:
+                logger.info(f"🎯 Filtered {filtered_count}/{len(tools)} tools for server {server_id}")
+            
+            return filtered_tools
+            
+        except Exception as e:
+            logger.error(f"❌ Error filtering tools for server {server_id}: {e}")
+            # 에러 시 원본 툴 목록 반환 (안전장치)
+            return tools
+    
+    @staticmethod
+    async def get_project_tool_preferences(
+        project_id: UUID,
+        db: Session
+    ) -> Dict[str, Dict[str, bool]]:
+        """
+        프로젝트의 전체 툴 설정 조회 (캐싱용)
+        
+        Returns:
+            {server_id: {tool_name: is_enabled}}
+        """
+        try:
+            preferences = db.query(ToolPreference).filter(
+                ToolPreference.project_id == project_id
+            ).all()
+            
+            result = {}
+            for pref in preferences:
+                server_key = str(pref.server_id)
+                if server_key not in result:
+                    result[server_key] = {}
+                result[server_key][pref.tool_name] = pref.is_enabled
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Error loading project tool preferences: {e}")
+            return {}
+```
+
+### 3.4 백엔드 API 설계
+
+#### 3.4.1 툴 설정 관리 API
 ```python
 # 새 파일: src/mcp_orch/api/tool_preferences.py
 
@@ -142,43 +254,277 @@ class ToolPreferenceUpdate(BaseModel):
     is_enabled: bool
 ```
 
-#### 3.3.2 Unified MCP Transport 수정
+#### 3.4.2 Unified MCP Transport 적용
 ```python
 # src/mcp_orch/api/unified_mcp_transport.py
 # handle_tools_list() 메서드 내 필터링 로직 추가
 
 async def handle_tools_list(self, message: Dict[str, Any]) -> JSONResponse:
-    # ... 기존 로직 ...
+    """모든 활성 서버의 툴을 네임스페이스와 함께 반환 (필터링 적용)"""
+    all_tools = []
+    failed_servers = []
+    active_servers = [s for s in self.project_servers if s.is_enabled]
     
-    # 툴 설정 조회
-    tool_preferences = db.query(ToolPreference).filter(
-        ToolPreference.project_id == self.project_id
-    ).all()
+    # DB 세션 가져오기
+    from ..database import SessionLocal
+    db = SessionLocal()
     
-    # 설정을 딕셔너리로 변환 (빠른 조회를 위해)
-    preference_map = {
-        f"{pref.server_id}:{pref.tool_name}": pref.is_enabled
-        for pref in tool_preferences
-    }
-    
-    for server in active_servers:
-        tools = await mcp_connection_service.get_server_tools(...)
+    try:
+        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers with filtering")
         
-        for tool in tools:
-            # 툴 필터링 체크
-            tool_key = f"{server.id}:{tool['name']}"
-            is_enabled = preference_map.get(tool_key, True)  # 기본값: 사용함
-            
-            if not is_enabled:
-                logger.debug(f"🚫 Tool filtered out: {tool['name']} from {server.name}")
-                continue  # 사용안함으로 설정된 툴은 제외
-            
-            # 기존 처리 로직...
-            processed_tool = tool.copy()
-            all_tools.append(processed_tool)
+        # 각 서버에서 툴 수집 및 필터링
+        for server in active_servers:
+            try:
+                # 서버에서 툴 목록 가져오기
+                server_config = self._build_server_config_for_server(server)
+                if not server_config:
+                    failed_servers.append(server.name)
+                    continue
+                
+                tools = await mcp_connection_service.get_server_tools(
+                    str(server.id), server_config
+                )
+                
+                if tools is None:
+                    failed_servers.append(server.name)
+                    continue
+                
+                # 🆕 툴 필터링 적용
+                from ..services.tool_filtering_service import ToolFilteringService
+                filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+                    project_id=self.project_id,
+                    server_id=server.id,
+                    tools=tools,
+                    db=db
+                )
+                
+                # 네임스페이스 적용 (필터링된 툴만)
+                namespace_name = self.namespace_registry.get_original_name(server.name)
+                if not namespace_name:
+                    namespace_name = self.namespace_registry.register_server(server.name)
+                
+                for tool in filtered_tools:
+                    try:
+                        processed_tool = tool.copy()
+                        
+                        # MCP 표준 스키마 필드명 통일
+                        if 'schema' in processed_tool and 'inputSchema' not in processed_tool:
+                            processed_tool['inputSchema'] = processed_tool.pop('schema')
+                        
+                        if not legacy_mode:
+                            # 네임스페이스 적용
+                            processed_tool['name'] = create_namespaced_name(
+                                namespace_name, tool['name']
+                            )
+                            processed_tool['_source_server'] = server.name
+                            processed_tool['_original_name'] = tool['name']
+                            processed_tool['_namespace'] = namespace_name
+                        
+                        all_tools.append(processed_tool)
+                        
+                    except Exception as e:
+                        logger.error(f"Error processing tool {tool.get('name', 'unknown')}: {e}")
+                
+                # 서버 성공 기록
+                self._record_server_success(server.name, len(filtered_tools))
+                logger.info(f"✅ Collected {len(filtered_tools)}/{len(tools)} tools from {server.name} (after filtering)")
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to get tools from server {server.name}: {e}")
+                self._record_server_failure(server.name, e)
+                failed_servers.append(server.name)
+        
+        # 응답 구성
+        response_data = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": {
+                "tools": all_tools
+            }
+        }
+        
+        # 메타 정보 추가 (필터링 통계 포함)
+        if not legacy_mode:
+            response_data["result"]["_meta"] = {
+                "total_servers": len(self.project_servers),
+                "active_servers": len(active_servers),
+                "successful_servers": len(active_servers) - len(failed_servers),
+                "failed_servers": failed_servers,
+                "total_tools": len(all_tools),
+                "filtering_applied": True
+            }
+        
+        # SSE를 통해 응답 전송
+        await self.message_queue.put(response_data)
+        
+        logger.info(f"📋 Unified tools list complete: {len(all_tools)} tools (filtered)")
+        return JSONResponse(content={"status": "processing"}, status_code=202)
+        
+    finally:
+        db.close()
 ```
 
-### 3.4 웹 UI 설계
+#### 3.6.1 개별 MCP Transport 적용
+```python
+# src/mcp_orch/api/mcp_sse_transport.py
+# handle_tools_list() 메서드 내 필터링 로직 추가
+
+async def handle_tools_list(self, message: Dict[str, Any]) -> JSONResponse:
+    """개별 서버의 툴 목록 반환 (필터링 적용)"""
+    try:
+        request_id = message.get("id")
+        
+        # 서버 설정 구성
+        server_config = self._build_server_config()
+        if not server_config:
+            raise ValueError("Server configuration not available")
+        
+        # 서버에서 툴 목록 가져오기
+        tools = await mcp_connection_service.get_server_tools(
+            str(self.server.id), server_config
+        )
+        
+        if tools is None:
+            tools = []
+        
+        # DB 세션 가져오기
+        from ..database import SessionLocal
+        db = SessionLocal()
+        
+        try:
+            # 🆕 툴 필터링 적용
+            from ..services.tool_filtering_service import ToolFilteringService
+            filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+                project_id=self.project_id,
+                server_id=self.server.id,
+                tools=tools,
+                db=db
+            )
+            
+            logger.info(f"📋 Individual server tools: {len(filtered_tools)}/{len(tools)} tools (after filtering)")
+            
+        finally:
+            db.close()
+        
+        # 응답 구성
+        response_data = {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "tools": filtered_tools
+            }
+        }
+        
+        return JSONResponse(content=response_data)
+        
+    except Exception as e:
+        logger.error(f"❌ Individual tools list error: {e}")
+        
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "error": {
+                "code": -32000,
+                "message": f"Tools list failed: {str(e)}"
+            }
+        }
+        return JSONResponse(content=error_response)
+```
+
+### 3.4 데이터 플로우 및 동작 방식
+
+#### 3.4.1 Unified MCP Transport vs Individual MCP Transport 비교
+
+**공통 ToolFilteringService 사용**:
+```python
+# 두 Transport 모두 동일한 서비스 사용
+from ..services.tool_filtering_service import ToolFilteringService
+
+# Unified MCP Transport에서
+filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+    project_id=self.project_id,
+    server_id=server.id,
+    tools=tools,
+    db=db
+)
+
+# Individual MCP Transport에서
+filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+    project_id=self.project_id,
+    server_id=self.server.id,
+    tools=tools,
+    db=db
+)
+```
+
+**동작 방식 차이점**:
+
+| 구분 | Unified MCP Transport | Individual MCP Transport |
+|------|----------------------|-------------------------|
+| 엔드포인트 | `/projects/{id}/unified/sse` | `/projects/{id}/servers/{server_id}/sse` |
+| 처리 범위 | 프로젝트 내 모든 활성 서버 | 특정 서버 하나만 |
+| 필터링 적용 | 서버별 개별 필터링 후 통합 | 해당 서버 툴만 필터링 |
+| 네임스페이스 | 서버명 기반 네임스페이스 적용 | 원본 툴명 그대로 사용 |
+| DB 세션 관리 | 단일 세션으로 모든 서버 처리 | 서버별 독립 세션 |
+
+#### 3.4.2 DB 세션 관리 패턴
+
+**Unified Transport 패턴**:
+```python
+# 단일 DB 세션으로 모든 서버 처리
+from ..database import SessionLocal
+db = SessionLocal()
+
+try:
+    for server in active_servers:
+        # 같은 DB 세션 재사용
+        filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+            project_id=self.project_id,
+            server_id=server.id,
+            tools=tools,
+            db=db  # 동일한 세션 사용
+        )
+finally:
+    db.close()
+```
+
+**Individual Transport 패턴**:
+```python
+# 서버별 독립 DB 세션
+from ..database import SessionLocal
+db = SessionLocal()
+
+try:
+    # 단일 서버만 처리
+    filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+        project_id=self.project_id,
+        server_id=self.server.id,
+        tools=tools,
+        db=db
+    )
+finally:
+    db.close()
+```
+
+#### 3.4.3 일관성 보장 메커니즘
+
+**설정 동기화**:
+- 두 Transport 모두 동일한 `tool_preferences` 테이블 참조
+- 실시간 설정 변경 시 양쪽 모두 즉시 반영
+- 캐싱 전략도 공통 적용
+
+**에러 처리 일관성**:
+```python
+# 공통 에러 처리 패턴
+try:
+    filtered_tools = await ToolFilteringService.filter_tools_by_preferences(...)
+except Exception as e:
+    logger.error(f"❌ Error filtering tools: {e}")
+    # 안전장치: 원본 툴 목록 반환
+    return original_tools
+```
+
+### 3.5 웹 UI 설계
 
 #### 3.4.1 툴 설정 페이지 개선
 **파일**: `web/src/app/projects/[projectId]/tools/page.tsx`
@@ -236,7 +582,7 @@ interface ProjectStore {
 }
 ```
 
-### 3.5 API 라우트 추가
+### 3.7 API 라우트 추가
 **새 파일**: `web/src/app/api/projects/[projectId]/tool-preferences/route.ts`
 
 ```typescript
