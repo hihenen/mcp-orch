@@ -81,15 +81,15 @@ export function formatDateTime(
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      // TEMPORARY FIX: Force UTC timezone until backend @field_serializer is fixed
+      // TEMPORARY FIX: Force Korea timezone until backend @field_serializer is fixed
       // TODO: Remove this after backend properly serializes datetime with 'Z' suffix
-      timeZone: options.timeZone || 'UTC',
+      timeZone: options.timeZone || 'Asia/Seoul',
       ...options
     };
     
-    // Show UTC indicator for temporary fix
+    // Show GMT+9 indicator for temporary fix
     if (!options.timeZoneName && !options.timeZone) {
-      formatOptions.timeZoneName = 'short'; // Will show "UTC"
+      formatOptions.timeZoneName = 'short'; // Will show "GMT+9"
     } else if (options.timeZoneName) {
       formatOptions.timeZoneName = options.timeZoneName;
     }
@@ -126,14 +126,14 @@ export function formatTime(
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      // TEMPORARY FIX: Force UTC timezone until backend @field_serializer is fixed
-      timeZone: options.timeZone || 'UTC',
+      // TEMPORARY FIX: Force Korea timezone until backend @field_serializer is fixed
+      timeZone: options.timeZone || 'Asia/Seoul',
       ...options
     };
     
-    // Show UTC indicator for temporary fix
+    // Show GMT+9 indicator for temporary fix
     if (!options.timeZoneName && !options.timeZone) {
-      formatOptions.timeZoneName = 'short'; // Will show "UTC"
+      formatOptions.timeZoneName = 'short'; // Will show "GMT+9"
     } else if (options.timeZoneName) {
       formatOptions.timeZoneName = options.timeZoneName;
     }

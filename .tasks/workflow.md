@@ -168,6 +168,18 @@
   - [x] 개발자 콘솔에서 실시간 모니터링 가능하도록 구현
 - [x] CHANGELOG.md 업데이트 및 변경사항 문서화
 
+### TASK_129: 임시 시간 표시를 UTC에서 한국시간(GMT+9)으로 변경 ✅
+- [x] formatDateTime과 formatTime 함수에서 timeZone을 UTC 대신 'Asia/Seoul'로 변경
+  - [x] 사용자 피드백에 따라 UTC 대신 정확한 한국시간 표시
+  - [x] timeZone: 'Asia/Seoul' 설정으로 GMT+9 시간대 적용
+- [x] timeZoneName을 'short'로 유지하여 "GMT+9" 표시 확인
+  - [x] 사용자가 현재 시간 기준을 명확히 알 수 있도록 표시
+- [x] 사용자가 원하는 정확한 한국시간 형식으로 수정
+  - [x] "2025년 6월 27일 오후 02:25 GMT+9" 형태로 표시
+- [x] 변경사항 문서화
+  - [x] CHANGELOG.md에 TASK_129 추가
+  - [x] 사용자 피드백 반영 내용 기록
+
 ### TASK_128: NextJS 15 비동기 params 호환성 문제 해결 ✅
 - [x] 다른 동적 라우트 파일들의 params 처리 방식 확인
   - [x] `/api/projects/[projectId]/servers/route.ts` - 올바른 패턴 확인 (await ctx.params)
@@ -178,7 +190,7 @@
   - [x] 정상 파일들: `ctx` 패턴 후 `await ctx.params` 비동기 접근
 - [x] NextJS 15 호환성 패턴 확인 및 수정
   - [x] unified-connection/route.ts 함수 시그니처를 ctx 패턴으로 변경
-  - [x] `const { projectId } = await ctx.params;`로 수정하여 오류 해결
+  - [x] `const { projectId} = await ctx.params;`로 수정하여 오류 해결
   - [x] 모든 동적 라우트 파일들과 일관된 패턴으로 통일
 
 ### TASK_127: 임시 UTC 시간 표시로 9시간 차이 문제 해결 ✅
@@ -206,10 +218,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_128 - NextJS 15 비동기 params 호환성 문제 해결 완료
-- Next Task: 브라우저에서 NextJS 오류 없이 정상 작동 확인
+- Current Progress: TASK_129 - 임시 시간 표시를 UTC에서 한국시간(GMT+9)으로 변경 완료
+- Next Task: 브라우저에서 한국시간 "GMT+9" 형식으로 정상 표시 확인
 - Last Update: 2025-06-28
-- Automatic Check Feedback: NextJS 15 호환성 문제 해결 완료. unified-connection API 라우트에서 "params should be awaited" 오류 수정. 모든 동적 라우트가 일관된 ctx 패턴 사용으로 통일됨. 시간 표시도 UTC로 정상 작동
+- Automatic Check Feedback: 사용자 피드백 반영하여 UTC에서 Asia/Seoul 타임존으로 변경 완료. 이제 "2025년 6월 27일 오후 02:25 GMT+9" 형태로 정확한 한국시간 표시. NextJS 15 호환성 문제도 해결된 상태
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

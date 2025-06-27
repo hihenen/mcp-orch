@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Add await to ctx.params access to comply with NextJS 15 async dynamic APIs
   - Resolve "params should be awaited before using its properties" error
   - Unify API route patterns across all dynamic route handlers for maintainability
+- [TASK_129] Change temporary time display from UTC to Korea timezone (GMT+9) (2025-06-28)
+  - Force Asia/Seoul timezone in formatDateTime and formatTime functions for correct local time
+  - Display "GMT+9" timezone indicator to show proper Korean time reference
+  - Resolve user feedback requesting Korean time instead of UTC time display
+  - Ensure accurate time display matches user's local timezone expectations
+  - Maintain temporary fix until backend @field_serializer properly serializes with 'Z' suffix
 - [TASK_127] Implement temporary UTC time display to resolve 9-hour offset issue (2025-06-27)
   - Force UTC timezone in formatDateTime and formatTime functions as temporary fix
   - Display "UTC" timezone indicator to inform users of current time reference
