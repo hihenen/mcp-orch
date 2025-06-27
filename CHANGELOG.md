@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_120] Implement improved server-level tool management UX (2025-06-27)
+  - Replace separate project tools page with integrated server-level tool toggle interface
+  - Add individual tool on/off switches in server detail Tools tab with immediate visual feedback
+  - Implement bulk operations (All ON/All OFF) for efficient server-level tool management
+  - Show enabled/disabled tool counts in real-time with visual state indicators
+  - Hide disabled tools from MCP clients while keeping them manageable in UI
+  - Remove redundant project-level tools navigation for streamlined user workflow
+  - Integrate existing toolPreferenceStore for seamless state management and optimistic updates
 - [TASK_120] Fix ToolPreference model import errors and server startup issues (2025-06-27)
   - Fix BaseModel import error by changing to Base class inheritance for SQLAlchemy compatibility
   - Add missing UUID primary key to ToolPreference model for proper database table creation

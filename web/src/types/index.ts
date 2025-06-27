@@ -53,6 +53,26 @@ export interface ToolParameter {
   default?: any;
 }
 
+// Tool Preference related types
+export interface ToolPreference {
+  server_id: string;
+  server_name: string;
+  tool_name: string;
+  is_enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ToolPreferenceUpdate {
+  server_id: string;
+  tool_name: string;
+  is_enabled: boolean;
+}
+
+export interface BulkToolPreferenceUpdate {
+  preferences: ToolPreferenceUpdate[];
+}
+
 // Execution related types
 export interface Execution {
   id: string;
