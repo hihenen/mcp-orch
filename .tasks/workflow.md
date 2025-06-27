@@ -84,19 +84,27 @@
 - [ ] Claude Cline/Inspector에서 parameter 정보 확인 테스트
 - [ ] 변경사항 커밋
 
-### TASK_090: MCP Client에게 제공하는 Tool 목록에서 inputSchema 누락 문제 해결 ✅
+### TASK_090: MCP Client에게 제공하는 Tool 목록에서 inputSchema 누락 문제 해결 ❌
 - [x] MCP 서버 응답에서 inputSchema 누락 문제 분석
 - [x] mcp-orch MCP 서버 구현부에서 tools/list 응답 확인
 - [x] MCP SSE Transport와 Unified Transport에서 inputSchema 처리 확인
 - [x] tools/list 응답에 inputSchema 정보 포함하도록 수정
-- [x] Claude Cline/Inspector에서 parameter 정보 확인 테스트
+- [x] Claude Cline/Inspector에서 parameter 정보 확인 테스트 (실제로는 문제 있음 발견)
+- [x] 변경사항 커밋
+
+### TASK_091: mcp-orch SSE Transport에서 MCP 클라이언트 inputSchema 미표시 문제 해결 ✅
+- [x] mcp-orch SSE Transport와 MCP 클라이언트 간 inputSchema 문제 분석
+- [x] MCP Inspector와 Cline에서 사용하는 실제 SSE 요청 형식 확인
+- [x] mcp-orch가 실제 MCP 서버에서 도구 정보를 가져올 때 inputSchema properties 손실 문제 확인
+- [x] mcp_session_manager에서 inputSchema->schema 변환과 SSE transport에서 inputSchema 참조 불일치 수정
+- [ ] MCP Inspector와 Cline에서 parameter 정보 표시 확인 테스트
 - [ ] 변경사항 커밋
 
 ## Progress Status  
-- Current Progress: TASK_090 완료 - MCP Client inputSchema 제공 문제 분석 완료
-- Next Task: 변경사항 커밋 및 서버 재시작 테스트
+- Current Progress: TASK_091 완료 - mcp_session_manager와 SSE transport 파일들의 inputSchema 필드 참조 불일치 수정 완료
+- Next Task: TASK_091 테스트 및 커밋 - MCP Inspector와 Cline에서 parameter 정보 표시 확인 
 - Last Update: 2025-06-27
-- Automatic Check Feedback: mcp-orch는 올바르게 inputSchema 제공하고 있음. 일부 서버 초기화 실패는 별개 문제
+- Automatic Check Feedback: inputSchema->schema 변환 불일치 문제 해결. 모든 SSE transport 파일에서 'schema' 필드 우선 참조하도록 수정
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

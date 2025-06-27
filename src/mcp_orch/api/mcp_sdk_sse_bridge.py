@@ -442,11 +442,11 @@ async def run_mcp_bridge_session(
                     tool_obj = types.Tool(
                         name=tool.get("name", ""),
                         description=tool.get("description", ""),
-                        inputSchema=tool.get("inputSchema", {
+                        inputSchema=tool.get("schema", tool.get("inputSchema", {
                             "type": "object",
                             "properties": {},
                             "required": []
-                        })
+                        }))
                     )
                     tool_list.append(tool_obj)
                     logger.info(f"  - Loaded tool: {tool.get('name')}")

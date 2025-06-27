@@ -256,11 +256,11 @@ class MCPSSETransport:
                         {
                             "name": tool.get("name"),
                             "description": tool.get("description", ""),
-                            "inputSchema": tool.get("inputSchema", {
+                            "inputSchema": tool.get("schema", tool.get("inputSchema", {
                                 "type": "object",
                                 "properties": {},
                                 "required": []
-                            })
+                            }))
                         }
                         for tool in tools
                     ] if tools else []
