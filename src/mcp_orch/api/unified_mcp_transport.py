@@ -294,6 +294,81 @@ class UnifiedMCPTransport(MCPSSETransport):
         
         logger.info(f"🚀 UnifiedMCPTransport created: session={session_id}, servers={len(project_servers)}, separator='{NAMESPACE_SEPARATOR}'")
     
+    async def start_sse_stream(self) -> AsyncGenerator[str, None]:
+        """
+        🎯 Unified MCP SSE 스트림 시작 (오버라이드)
+        
+        MCPSSETransport와 동일한 Inspector 호환성을 보장하면서
+        Unified MCP 기능 추가:
+        1. Inspector 표준 endpoint 이벤트 전송
+        2. 메시지 큐 처리 루프 시작  
+        3. Keep-alive 관리
+        4. Unified 서버 상태 로깅
+        """
+        try:
+            # 1. Inspector 표준 endpoint 이벤트 전송
+            # Inspector proxy SSEClientTransport는 절대 URL을 기대함
+            from urllib.parse import urlparse
+            
+            # Inspector proxy가 mcp-orch로 POST 요청을 보낼 실제 엔드포인트
+            parsed = urlparse(self.message_endpoint)
+            actual_message_endpoint = f"{parsed.path}?sessionId={self.session_id}"
+            
+            # Inspector 표준 형식: event: endpoint\ndata: URL\n\n
+            yield f"event: endpoint\ndata: {actual_message_endpoint}\n\n"
+            self.is_connected = True
+            logger.info(f"✅ Sent Inspector-compatible endpoint event: {actual_message_endpoint}")
+            logger.info(f"🎯 Inspector proxy will send POST to: {actual_message_endpoint}")
+            
+            # 2. Unified 서버 초기화 로깅
+            logger.info(f"🎯 Unified MCP initialize: session={self.session_id}, servers={len(self.project_servers)}")
+            
+            # 3. 연결 안정화 대기
+            await asyncio.sleep(0.1)
+            
+            # 4. 메시지 큐 처리 루프
+            logger.info(f"🔄 Starting message queue loop for session {self.session_id}")
+            keepalive_count = 0
+            
+            while self.is_connected:
+                try:
+                    # 메시지 대기 (30초 타임아웃)
+                    message = await asyncio.wait_for(self.message_queue.get(), timeout=30.0)
+                    
+                    if message is None:  # 종료 신호
+                        logger.info(f"📤 Received close signal for session {self.session_id}")
+                        break
+                        
+                    # 메시지 전송
+                    yield f"data: {json.dumps(message)}\n\n"
+                    logger.debug(f"📤 Sent unified message to session {self.session_id}: {message.get('method', 'unknown')}")
+                    
+                except asyncio.TimeoutError:
+                    # Keep-alive 전송
+                    keepalive_count += 1
+                    yield f": unified-keepalive-{keepalive_count}\n\n"
+                    
+                    if keepalive_count % 10 == 0:
+                        logger.debug(f"💓 Unified keepalive #{keepalive_count} for session {self.session_id}")
+                        
+        except asyncio.CancelledError:
+            logger.info(f"🔌 Unified SSE stream cancelled for session {self.session_id}")
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error in unified SSE stream {self.session_id}: {e}")
+            # 오류 이벤트 전송
+            error_event = {
+                "jsonrpc": "2.0",
+                "method": "notifications/error",
+                "params": {
+                    "code": -32000,
+                    "message": f"Unified SSE stream error: {str(e)}"
+                }
+            }
+            yield f"data: {json.dumps(error_event)}\n\n"
+        finally:
+            await self.close()
+    
     async def handle_post_message(self, request: Request) -> JSONResponse:
         """
         🎯 Unified MCP POST 메시지 처리 (오버라이드)
@@ -373,6 +448,60 @@ class UnifiedMCPTransport(MCPSSETransport):
                 }
             }
             return JSONResponse(content=error_response, status_code=200)
+    
+    async def handle_initialize(self, message: Dict[str, Any]) -> JSONResponse:
+        """
+        🎯 Unified MCP 초기화 요청 처리 (오버라이드)
+        
+        통합 서버 초기화:
+        - 모든 프로젝트 서버 통합
+        - 네임스페이스 기반 도구 관리 정보 포함
+        - Inspector 완전 호환성 보장
+        """
+        request_id = message.get("id")
+        params = message.get("params", {})
+        
+        logger.info(f"🎯 Processing unified initialize request for session {self.session_id}, id={request_id}")
+        logger.info(f"🔍 Unified initialize params: {json.dumps(params, indent=2)}")
+        
+        # 프로젝트 서버 상태 확인
+        total_servers = len(self.project_servers)
+        active_servers = len([s for s in self.project_servers if s.is_enabled])
+        
+        # MCP 표준 초기화 응답 (Inspector 완전 호환)
+        response = {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {
+                    "tools": {} if active_servers > 0 else None,
+                    "logging": {},
+                    "prompts": None,
+                    "resources": None
+                },
+                "serverInfo": {
+                    "name": f"mcp-orch-unified",
+                    "version": "1.0.0"
+                },
+                "instructions": f"MCP Orchestrator Unified Server for project {self.project_id}. Integrates {total_servers} servers ({active_servers} active) with namespace-based tool routing. Use tools/list to see all available tools."
+            }
+        }
+        
+        logger.info(f"✅ Unified initialize complete for session {self.session_id}")
+        logger.info(f"🔍 Unified initialize response: {json.dumps(response, indent=2)}")
+        logger.info(f"📋 Next step: Inspector Client should send 'notifications/initialized'")
+        logger.info(f"✅ Unified Inspector Transport should now be connected!")
+        
+        # 구조화된 로깅
+        self.structured_logger.session_event(
+            "unified_initialize_complete",
+            servers_count=total_servers,
+            active_servers_count=active_servers,
+            namespace_separator=NAMESPACE_SEPARATOR
+        )
+        
+        return JSONResponse(content=response)
     
     async def handle_notification(self, message: Dict[str, Any]) -> JSONResponse:
         """

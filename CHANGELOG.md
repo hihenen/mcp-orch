@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_105] Fix Unified MCP SSE connection issue by implementing proper Inspector compatibility (2025-06-27)
+  - Override start_sse_stream() method in UnifiedMCPTransport to ensure proper SSE endpoint events
+  - Add handle_initialize() method override for unified server initialization
+  - Implement Inspector-compatible endpoint event transmission for unified connections
+  - Fix connection drops by ensuring proper message queue handling for unified sessions
+  - Improve logging for unified SSE stream debugging and troubleshooting
 - [TASK_089] Fix Python syntax error in mcp_session_manager.py preventing server startup (2025-06-27)
   - Replace misplaced 'continue' statements with proper recursive calls in JSON parsing error handling
   - Fix SyntaxError at line 442 and 475 where 'continue' was used outside of loop context
