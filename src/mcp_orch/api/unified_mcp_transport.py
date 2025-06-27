@@ -1213,7 +1213,7 @@ async def unified_mcp_endpoint(
                 "X-Mode": "unified",
                 "X-Servers-Total": str(len(servers)),
                 "X-Servers-Active": str(len(active_servers)),
-                "X-Namespace-Separator": namespace_separator,
+                "X-Namespace-Separator": NAMESPACE_SEPARATOR,
                 
                 # SSE 최적화
                 "X-Accel-Buffering": "no",
