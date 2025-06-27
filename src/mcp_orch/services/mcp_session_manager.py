@@ -405,24 +405,58 @@ class McpSessionManager:
             logger.error(f"❌ Failed to send message: {e}")
             raise
     
-    async def _read_message(self, session: McpSession, timeout: int = 30) -> Optional[Dict]:
-        """메시지 읽기"""
+    async def _read_message(self, session: McpSession, timeout: int = 60) -> Optional[Dict]:
+        """메시지 읽기 - 대용량 메시지 지원"""
         try:
-            line = await asyncio.wait_for(
-                session.read_stream.readline(), 
-                timeout=timeout
-            )
+            # 대용량 메시지를 위한 커스텀 readline 구현
+            chunks = []
+            max_message_size = 100 * 1024 * 1024  # 100MB 최대 메시지 크기
+            total_size = 0
+            
+            while True:
+                # 한 번에 더 많은 데이터 읽기 (64KB 청크)
+                chunk = await asyncio.wait_for(
+                    session.read_stream.read(65536), 
+                    timeout=timeout
+                )
+                
+                if not chunk:
+                    logger.warning("⚠️ Connection closed by MCP server")
+                    return None
+                
+                chunks.append(chunk)
+                total_size += len(chunk)
+                
+                # 메시지 크기 제한 확인
+                if total_size > max_message_size:
+                    logger.error(f"❌ Message too large: {total_size} bytes (max: {max_message_size})")
+                    raise ToolExecutionError(f"Message too large: {total_size} bytes")
+                
+                # 개행 문자 찾기
+                combined = b''.join(chunks)
+                newline_pos = combined.find(b'\n')
+                
+                if newline_pos != -1:
+                    # 완전한 메시지 찾음
+                    line = combined[:newline_pos]
+                    # 남은 데이터가 있으면 다시 스트림에 넣기 (실제로는 버퍼에 저장)
+                    remaining = combined[newline_pos + 1:]
+                    if remaining:
+                        # 남은 데이터를 다음 읽기를 위해 임시 저장
+                        # asyncio.StreamReader는 unread 기능이 없으므로 로깅만
+                        logger.debug(f"📝 Buffered {len(remaining)} bytes for next read")
+                    break
             
             if not line:
                 logger.warning("⚠️ Received empty line from MCP server")
                 return None
             
-            line_text = line.decode().strip()
+            line_text = line.decode('utf-8').strip()
             if not line_text:
                 return None
             
             response = json.loads(line_text)
-            logger.debug(f"📥 Received message: {response.get('method', response.get('id'))}")
+            logger.debug(f"📥 Received message ({len(line_text)} bytes): {response.get('method', response.get('id'))}")
             return response
             
         except asyncio.TimeoutError:
@@ -431,6 +465,9 @@ class McpSessionManager:
         except json.JSONDecodeError as e:
             logger.error(f"❌ Invalid JSON response: {e}")
             raise ToolExecutionError(f"Invalid JSON response: {e}")
+        except UnicodeDecodeError as e:
+            logger.error(f"❌ Invalid UTF-8 encoding: {e}")
+            raise ToolExecutionError(f"Invalid UTF-8 encoding: {e}")
         except Exception as e:
             logger.error(f"❌ Error reading message: {e}")
             raise

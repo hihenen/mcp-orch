@@ -11,6 +11,7 @@ class CallStatus(Enum):
     """도구 호출 상태"""
     SUCCESS = "success"
     ERROR = "error"
+    FAILED = "failed"  # 실패 상태 추가
     TIMEOUT = "timeout"
     CANCELLED = "cancelled"
 
@@ -123,7 +124,17 @@ class ToolCallLog(Base):
         """호환성을 위한 별칭"""
         return self.arguments
     
+    @input_data.setter
+    def input_data(self, value):
+        """input_data setter - arguments 필드에 저장"""
+        self.arguments = value
+    
     @property
     def output_data(self):
         """호환성을 위한 별칭"""
         return self.result
+    
+    @output_data.setter
+    def output_data(self, value):
+        """output_data setter - result 필드에 저장"""
+        self.result = value

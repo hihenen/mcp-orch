@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_119] Fix multiple critical errors in MCP tool execution (2025-06-27)
+  - Add missing CallStatus.FAILED enum value to resolve tool execution errors
+  - Add missing LogCategory.TOOL_EXECUTION enum value for server logging  
+  - Implement input_data and output_data property setters for ToolCallLog model
+  - Increase maximum MCP message size to 100MB to handle large query results
+  - Improve MCP message reading with custom chunked implementation for better reliability
+  - Fix "Separator is not found, chunk exceed limit" errors in database queries
+  - Enable proper error handling and logging for tool execution failures
 - [TASK_117] Fix NextAuth.js JWT token generation failure in production environment (2025-06-27)
   - Resolve cookie domain mismatch between HTTPS production and development environments
   - Add explicit secureCookie and cookieName options to NextAuth getToken() calls

@@ -27,6 +27,7 @@ class LogCategory(enum.Enum):
     STARTUP = "startup"
     SHUTDOWN = "shutdown"
     TOOL_CALL = "tool_call"
+    TOOL_EXECUTION = "tool_execution"  # 도구 실행 로그 카테고리 추가
     ERROR = "error"
     CONNECTION = "connection"
     SYSTEM = "system"

@@ -513,7 +513,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         # 활성 서버 수 확인
         active_servers = [s for s in self.project_servers if s.is_enabled]
         
-        # MCP 표준 초기화 응답 (통합 서버용)
+        # MCP 표준 초기화 응답 (개별 서버 호환성)
         response = {
             "jsonrpc": "2.0",
             "id": request_id,
@@ -526,10 +526,10 @@ class UnifiedMCPTransport(MCPSSETransport):
                     "resources": None
                 },
                 "serverInfo": {
-                    "name": f"mcp-orch-unified-{self.project_id}",
+                    "name": f"mcp-orch-unified",
                     "version": "1.0.0"
                 },
-                "instructions": f"🎯 Unified MCP Server for project {self.project_id}. Managing {len(active_servers)} active servers with '{self.tool_naming.separator}' namespace separator. Use tools/list to see all available tools."
+                "instructions": f"MCP Orchestrator unified proxy for project {self.project_id}. Use tools/list to see available tools."
             }
         }
         
@@ -542,9 +542,9 @@ class UnifiedMCPTransport(MCPSSETransport):
         failed_servers = []
         active_servers = [s for s in self.project_servers if s.is_enabled]
         
-        # 클라이언트 호환성을 위한 레거시 모드 감지
+        # 클라이언트 호환성을 위한 레거시 모드 감지 (Inspector 호환성을 위해 기본 활성화)
         request_id = message.get("id")
-        legacy_mode = getattr(self, '_legacy_mode', False)  # 기본값 False
+        legacy_mode = getattr(self, '_legacy_mode', True)  # 기본값 True (Inspector 호환성)
         
         logger.info(f"📋 Listing unified tools from {len(active_servers)} servers (legacy_mode: {legacy_mode})")
         
