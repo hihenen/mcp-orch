@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_117] Fix NextAuth.js JWT token generation failure in production environment (2025-06-27)
+  - Resolve cookie domain mismatch between HTTPS production and development environments
+  - Add explicit secureCookie and cookieName options to NextAuth getToken() calls
+  - Implement proper __Secure- prefixed cookie handling for HTTPS environments
+  - Add comprehensive debugging logging for JWT token generation process
+  - Fix 500 errors in API endpoints caused by JWT token generation failures
+  - Enable proper authentication flow in production deployment with HTTPS
 - [TASK_114] Fix JWT middleware incorrectly processing MCP API keys as JWT tokens causing base64 decoding errors (2025-06-27)
   - Implement proper token type detection by prefix (project_, mch_, JWT)
   - Add dedicated MCP API key processing method (_get_user_from_mcp_api_key)

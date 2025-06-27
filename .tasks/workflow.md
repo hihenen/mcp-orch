@@ -16,20 +16,20 @@
   - [x] AUTH_SECRET 환경변수 일치성 확인 (모든 시크릿 동일 확인)
   - [x] NextAuth.js 설정 파일 검토 (올바른 설정 확인)
   - [x] JWT 생성 로직 검증 (코드 로직 정상 확인)
-- [ ] 개발환경 테스트
-  - [ ] 개발환경에서 JWT 토큰 생성 상태 확인
-  - [ ] 에러 재현 및 로그 분석
-  - [ ] API 엔드포인트 테스트
-- [ ] 문제 해결 및 수정
-  - [ ] 근본 원인 파악 후 수정
-  - [ ] 환경별 설정 최적화
-  - [ ] 에러 처리 개선
+- [x] 개발환경 테스트
+  - [x] 개발환경에서 JWT 토큰 생성 상태 확인 (문제 발견)
+  - [x] 에러 재현 및 로그 분석 (NextAuth getToken() null 반환)
+  - [x] API 엔드포인트 테스트 (500 에러 확인)
+- [x] 문제 해결 및 수정
+  - [x] 근본 원인 파악: NextAuth.js HTTPS 경우 쿠키 도메인 불일치
+  - [x] 환경별 설정 최적화: secureCookie 및 cookieName 옵션 추가
+  - [x] 에러 처리 개선: __Secure- 접두사 쿠키 올바른 처리
 
 ## Progress Status  
-- Current Progress: TASK_117 - JWT 토큰 생성 실패 디버깅 및 수정 (로깅 강화 완료)
-- Next Task: 개발환경에서 JWT 토큰 생성 상태 확인 및 테스트
+- Current Progress: TASK_117 완료 - JWT 토큰 생성 실패 문제 해결
+- Next Task: 운영환경에서 수정된 코드 테스트 및 검증
 - Last Update: 2025-06-27
-- Automatic Check Feedback: 운영환경 JWT 토큰 생성 실패 문제 해결 중
+- Automatic Check Feedback: NextAuth.js HTTPS 쿠키 처리 문제 해결 완료, 운영환경 JWT 인증 정상화 예상
 
 ## Lessons Learned and Insights
 - JWT 토큰 생성은 NextAuth.js getToken() 함수에 의존적

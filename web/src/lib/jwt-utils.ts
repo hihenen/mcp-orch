@@ -95,10 +95,22 @@ export async function getServerJwtToken(request: NextRequest): Promise<string | 
     
     // NextAuth.js getToken 호출
     console.log('🔍 [JWT Debug] Calling NextAuth getToken...');
-    const token = await getToken({ 
+    
+    // 운영환경에서 쿠키 도메인 문제 해결을 위한 옵션 추가
+    const tokenOptions = { 
       req: request,
-      secret: authSecret 
-    });
+      secret: authSecret,
+      // 운영환경에서 secureCookie 설정 명시적 처리
+      secureCookie: process.env.NODE_ENV === 'production' && request.url?.startsWith('https://'),
+      // 쿠키 이름 명시적 설정 (HTTPS 환경에서 __Secure- 접두사 처리)
+      cookieName: process.env.NODE_ENV === 'production' && request.url?.startsWith('https://') 
+        ? '__Secure-authjs.session-token' 
+        : 'authjs.session-token'
+    };
+    
+    console.log('🔍 [JWT Debug] Token options:', tokenOptions);
+    
+    const token = await getToken(tokenOptions);
 
     console.log('🔍 [JWT Debug] NextAuth token result:', !!token);
     
