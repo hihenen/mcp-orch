@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_120] Fix tool preference toggle functionality and optimize UI responsiveness (2025-06-27)
+  - Add missing Next.js API route endpoints for tool preference management
+  - Implement GET/PUT/DELETE endpoints with JWT authentication for secure access
+  - Fix store optimistic updates to provide immediate UI feedback without loading delays
+  - Add proper error handling with state rollback on API failures
+  - Ensure tool toggles work instantly with reliable backend synchronization
 - [TASK_120] Implement improved server-level tool management UX (2025-06-27)
   - Replace separate project tools page with integrated server-level tool toggle interface
   - Add individual tool on/off switches in server detail Tools tab with immediate visual feedback

@@ -93,7 +93,43 @@ export const useToolPreferenceStore = create<ToolPreferenceStore>((set, get) => 
     toolName: string, 
     isEnabled: boolean
   ) => {
-    set({ isLoading: true, error: null });
+    const currentState = get();
+    
+    // 낙관적 업데이트 먼저 실행 (즉시 UI 반영)
+    const projectPreferences = currentState.toolPreferences[projectId] || [];
+    const existingIndex = projectPreferences.findIndex(
+      p => p.server_id === serverId && p.tool_name === toolName
+    );
+
+    let updatedPreferences;
+    if (existingIndex >= 0) {
+      // 기존 설정 업데이트
+      updatedPreferences = projectPreferences.map((pref, index) =>
+        index === existingIndex ? { ...pref, is_enabled: isEnabled, updated_at: new Date().toISOString() } : pref
+      );
+    } else {
+      // 새 설정 추가
+      const newPreference: ToolPreference = {
+        server_id: serverId,
+        server_name: '', // 서버 이름은 나중에 채움
+        tool_name: toolName,
+        is_enabled: isEnabled,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      updatedPreferences = [...projectPreferences, newPreference];
+    }
+
+    // 즉시 상태 업데이트 (낙관적 업데이트)
+    set(state => ({
+      toolPreferences: {
+        ...state.toolPreferences,
+        [projectId]: updatedPreferences
+      },
+      error: null
+    }));
+
+    // 백엔드 API 호출
     try {
       const response = await fetch(
         `/api/projects/${projectId}/tool-preferences/${serverId}/${encodeURIComponent(toolName)}`,
@@ -108,48 +144,27 @@ export const useToolPreferenceStore = create<ToolPreferenceStore>((set, get) => 
       );
 
       if (!response.ok) {
+        // API 실패 시 상태 되돌리기
+        set(state => ({
+          toolPreferences: {
+            ...state.toolPreferences,
+            [projectId]: projectPreferences // 원래 상태로 복원
+          },
+          error: `Failed to update tool preference: ${response.statusText}`
+        }));
         throw new Error(`Failed to update tool preference: ${response.statusText}`);
       }
 
-      // 로컬 상태 업데이트 (낙관적 업데이트)
-      set(state => {
-        const projectPreferences = state.toolPreferences[projectId] || [];
-        const existingIndex = projectPreferences.findIndex(
-          p => p.server_id === serverId && p.tool_name === toolName
-        );
-
-        let updatedPreferences;
-        if (existingIndex >= 0) {
-          // 기존 설정 업데이트
-          updatedPreferences = projectPreferences.map((pref, index) =>
-            index === existingIndex ? { ...pref, is_enabled: isEnabled } : pref
-          );
-        } else {
-          // 새 설정 추가
-          const newPreference: ToolPreference = {
-            server_id: serverId,
-            server_name: '', // 서버 이름은 나중에 채움
-            tool_name: toolName,
-            is_enabled: isEnabled,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          updatedPreferences = [...projectPreferences, newPreference];
-        }
-
-        return {
-          toolPreferences: {
-            ...state.toolPreferences,
-            [projectId]: updatedPreferences
-          },
-          isLoading: false
-        };
-      });
+      console.log(`✅ Tool preference updated: ${toolName} = ${isEnabled}`);
     } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to update tool preference',
-        isLoading: false
-      });
+      // 네트워크 오류 시 상태 되돌리기
+      set(state => ({
+        toolPreferences: {
+          ...state.toolPreferences,
+          [projectId]: projectPreferences // 원래 상태로 복원
+        },
+        error: error instanceof Error ? error.message : 'Failed to update tool preference'
+      }));
       throw error;
     }
   },
