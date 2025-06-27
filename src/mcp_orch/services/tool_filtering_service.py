@@ -6,6 +6,7 @@ ServerStatusService 패턴을 적용한 일관된 DB 세션 관리 및 로깅 �
 
 import logging
 import time
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -181,7 +182,7 @@ class ToolFilteringService:
                 # 기존 설정 업데이트
                 old_value = preference.is_enabled
                 preference.is_enabled = is_enabled
-                preference.updated_at = time.time()
+                preference.updated_at = datetime.now(timezone.utc)
                 
                 logger.info(f"📝 [TOOL_FILTERING] Updated tool preference: {tool_name} ({old_value} → {is_enabled}) for server {server_id}")
             else:

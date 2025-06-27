@@ -6,7 +6,7 @@ from uuid import uuid4
 from sqlalchemy import Column, String, Boolean, ForeignKey, UniqueConstraint, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .base import Base
 
@@ -20,6 +20,8 @@ class ToolPreference(Base):
     server_id = Column(UUID(as_uuid=True), ForeignKey("mcp_servers.id", ondelete="CASCADE"), nullable=False)
     tool_name = Column(String(255), nullable=False)
     is_enabled = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # 관계 설정
     project = relationship("Project", back_populates="tool_preferences")

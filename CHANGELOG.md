@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_120] Fix tool preference database schema and service layer issues (2025-06-27)
+  - Add missing updated_at column to tool_preferences table via proper Alembic migration
+  - Fix ToolFilteringService to use datetime objects instead of Unix timestamps
+  - Ensure database compatibility with SQLAlchemy DateTime fields
+  - Add column existence checks in migration for safer upgrades
+  - Update ToolPreference model with proper created_at and updated_at timestamp fields
 - [TASK_120] Fix tool preference toggle functionality and optimize UI responsiveness (2025-06-27)
   - Add missing Next.js API route endpoints for tool preference management
   - Implement GET/PUT/DELETE endpoints with JWT authentication for secure access
