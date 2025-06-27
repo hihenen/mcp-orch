@@ -1104,7 +1104,7 @@ async def get_current_user_for_unified_mcp(
     is_sse_request = request.url.path.endswith('/sse')
     
     # SSE 연결 시 인증 정책 확인
-    if is_sse_request and not project.sse_auth_required:
+    if is_sse_request and not project.jwt_auth_required:
         logger.info(f"Unified SSE connection allowed without auth for project {project_id}")
         return None
     

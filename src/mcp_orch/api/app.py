@@ -357,6 +357,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(project_sse_router)   # 프로젝트 관리 API
     
     # 3. SSE 전용 라우터들 (/projects/*/sse 경로) - MCP 클라이언트용 (Cline, Cursor 등)
+    app.include_router(unified_mcp_transport_router)  # 🚀 NEW: 통합 MCP 서버 엔드포인트 (Unified Mode)
     app.include_router(mcp_sdk_sse_bridge_router)  # 🚀 NEW: python-sdk 표준 + mcp-orch URL 하이브리드 (최우선)
     app.include_router(mcp_sse_transport_router)  # 새로운 MCP 표준 준수 SSE Transport (호환성)
     app.include_router(mcp_standard_sse_router)  # 기존 표준 MCP SSE 엔드포인트 (호환성)
