@@ -444,6 +444,33 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       
       const servers = await response.json();
       console.log(`📞 API 데이터: loadProjectServers 결과 (${mode})`, servers.length, '개');
+      
+      // 🕐 DEBUG: 타임스탬프 디버깅 로그 추가
+      console.log('🕐 [TIMESTAMP DEBUG] Raw API response for servers:', servers);
+      if (servers.length > 0) {
+        const firstServer = servers[0];
+        console.log('🕐 [TIMESTAMP DEBUG] First server data:', {
+          id: firstServer.id,
+          name: firstServer.name,
+          last_connected: firstServer.last_connected,
+          created_at: firstServer.created_at,
+          updated_at: firstServer.updated_at
+        });
+        
+        // JavaScript Date 객체로 변환 테스트
+        if (firstServer.last_connected) {
+          const dateObj = new Date(firstServer.last_connected);
+          console.log('🕐 [TIMESTAMP DEBUG] last_connected parsing test:', {
+            raw: firstServer.last_connected,
+            parsed: dateObj,
+            toISOString: dateObj.toISOString(),
+            toLocaleString: dateObj.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+            getTime: dateObj.getTime(),
+            hasTimezone: firstServer.last_connected.includes('Z') || firstServer.last_connected.includes('+')
+          });
+        }
+      }
+      
       set({ projectServers: servers, isLoading: false });
     } catch (error) {
       console.error('📞 API 오류: loadProjectServers', error);

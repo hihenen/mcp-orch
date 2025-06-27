@@ -442,9 +442,21 @@ export default function ProjectServersPage() {
                          (server as any).jwt_auth_required ? 'Auth' : 'No Auth'}
                       </span>
                     </div>
-                    {(server as any).last_connected && (
-                      <div>Last connected: {formatDateTime((server as any).last_connected)}</div>
-                    )}
+                    {(server as any).last_connected && (() => {
+                      // 🕐 DEBUG: 날짜 포맷팅 디버깅 로그
+                      const rawTimestamp = (server as any).last_connected;
+                      const formatted = formatDateTime(rawTimestamp);
+                      console.log('🕐 [DATE FORMAT DEBUG] Server:', server.name, {
+                        raw: rawTimestamp,
+                        formatted: formatted,
+                        currentTime: new Date().toISOString(),
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                      });
+                      
+                      return (
+                        <div>Last connected: {formatted}</div>
+                      );
+                    })()}
                   </div>
                   
                   {(server as any).lastError && (

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_123] Add comprehensive timestamp debugging logs for API responses and date formatting (2025-06-27)
+  - Add detailed API response logging in loadProjectServers to debug timezone issues
+  - Include JavaScript Date parsing tests with Korean timezone conversion
+  - Add frontend date formatting debug logs to track formatDateTime behavior
+  - Log browser timezone detection and current time comparison for debugging
+  - Enable developer console monitoring of actual API timestamp values and formatting results
 - [TASK_121] Fix server status display inconsistency between backend and frontend (2025-06-27)
   - Unify frontend status mapping to match backend status values (online/offline/error/disabled)
   - Resolve servers showing as "Unknown" when backend sends "online" status

@@ -140,6 +140,17 @@
 - [ ] Phase 3: Real-time UI Integration (2일)
 - [ ] Phase 4: Testing and Optimization (1일)
 
+### TASK_123: 시간 표시 오류 디버깅을 위한 포괄적 로깅 추가 ✅
+- [x] loadProjectServers 함수에 날짜/시간 API 응답 디버깅 로그 추가
+  - [x] 실제 API 응답 타임스탬프 값 확인 로그
+  - [x] JavaScript Date 파싱 테스트 및 한국 시간 변환 로그  
+  - [x] timezone 정보 포함 여부 확인 로그
+- [x] 프론트엔드 날짜 포맷팅 디버깅 로그 추가
+  - [x] formatDateTime 함수 호출 시 원본/포맷 결과 로그
+  - [x] 브라우저 timezone 감지 및 현재 시간 비교 로그
+  - [x] 개발자 콘솔에서 실시간 모니터링 가능하도록 구현
+- [x] CHANGELOG.md 업데이트 및 변경사항 문서화
+
 ### TASK_122: 코드베이스 datetime 필드 및 날짜 파싱 분석
 - [ ] FastAPI 응답 모델의 datetime 필드 검색
   - [ ] *.py 파일에서 datetime 필드가 포함된 Pydantic 모델 찾기
@@ -155,10 +166,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_122 - 코드베이스 datetime 필드 및 날짜 파싱 분석 시작
-- Next Task: TASK_122 - FastAPI 응답 모델의 datetime 필드 검색
+- Current Progress: TASK_123 - 포괄적 타임스탬프 디버깅 로그 구현 완료
+- Next Task: 브라우저에서 디버그 로그 확인 후 문제 원인 분석
 - Last Update: 2025-06-27
-- Automatic Check Feedback: 새로운 작업 시작. 코드베이스 전체에서 datetime 관련 코드를 체계적으로 분석할 예정
+- Automatic Check Feedback: 시간 표시 문제 해결을 위한 디버깅 로그 추가 완료. 이제 브라우저 개발자 도구에서 실제 API 응답과 날짜 포맷팅 결과를 확인할 수 있음
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
