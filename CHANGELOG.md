@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_128] Fix NextJS 15 async params compatibility issue in unified-connection API route (2025-06-28)
+  - Change function signature from destructured params to ctx pattern for consistency
+  - Add await to ctx.params access to comply with NextJS 15 async dynamic APIs
+  - Resolve "params should be awaited before using its properties" error
+  - Unify API route patterns across all dynamic route handlers for maintainability
 - [TASK_127] Implement temporary UTC time display to resolve 9-hour offset issue (2025-06-27)
   - Force UTC timezone in formatDateTime and formatTime functions as temporary fix
   - Display "UTC" timezone indicator to inform users of current time reference

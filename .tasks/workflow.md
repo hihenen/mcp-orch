@@ -168,6 +168,19 @@
   - [x] 개발자 콘솔에서 실시간 모니터링 가능하도록 구현
 - [x] CHANGELOG.md 업데이트 및 변경사항 문서화
 
+### TASK_128: NextJS 15 비동기 params 호환성 문제 해결 ✅
+- [x] 다른 동적 라우트 파일들의 params 처리 방식 확인
+  - [x] `/api/projects/[projectId]/servers/route.ts` - 올바른 패턴 확인 (await ctx.params)
+  - [x] `/api/projects/[projectId]/route.ts` - 올바른 패턴 확인
+  - [x] 기존 정상 작동 파일들의 일관된 패턴 분석
+- [x] 현재 오류 발생 파일과 정상 작동 파일의 차이점 파악
+  - [x] 문제 파일: `{ params }` 직접 구조분해 후 `params` 동기 접근
+  - [x] 정상 파일들: `ctx` 패턴 후 `await ctx.params` 비동기 접근
+- [x] NextJS 15 호환성 패턴 확인 및 수정
+  - [x] unified-connection/route.ts 함수 시그니처를 ctx 패턴으로 변경
+  - [x] `const { projectId } = await ctx.params;`로 수정하여 오류 해결
+  - [x] 모든 동적 라우트 파일들과 일관된 패턴으로 통일
+
 ### TASK_127: 임시 UTC 시간 표시로 9시간 차이 문제 해결 ✅
 - [x] 프론트엔드에서 UTC 시간으로 표시하도록 formatDateTime 함수 수정
   - [x] timeZone: 'UTC' 강제 설정으로 올바른 시간 표시
@@ -193,10 +206,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_127 - 임시 UTC 시간 표시로 9시간 차이 문제 해결 완료
-- Next Task: 브라우저에서 UTC 시간 표시 확인 (14:25 UTC ≈ 23:25 KST)
-- Last Update: 2025-06-27
-- Automatic Check Feedback: 임시 해결책으로 UTC 시간 표시 구현. 9시간 차이 문제 즉시 해결. "UTC" 표시로 사용자 혼란 방지. 향후 백엔드 @field_serializer 수정 후 로컬 시간으로 변경 예정
+- Current Progress: TASK_128 - NextJS 15 비동기 params 호환성 문제 해결 완료
+- Next Task: 브라우저에서 NextJS 오류 없이 정상 작동 확인
+- Last Update: 2025-06-28
+- Automatic Check Feedback: NextJS 15 호환성 문제 해결 완료. unified-connection API 라우트에서 "params should be awaited" 오류 수정. 모든 동적 라우트가 일관된 ctx 패턴 사용으로 통일됨. 시간 표시도 UTC로 정상 작동
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

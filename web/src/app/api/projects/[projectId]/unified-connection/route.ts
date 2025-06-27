@@ -4,7 +4,7 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
-export const GET = auth(async function GET(req: NextRequest, { params }: { params: { projectId: string } }) {
+export const GET = auth(async function GET(req, ctx) {
   try {
     // 1. NextAuth.js v5 세션 확인
     if (!req.auth) {
@@ -21,7 +21,7 @@ export const GET = auth(async function GET(req: NextRequest, { params }: { param
 
     console.log('✅ Using JWT token for unified connection info request');
 
-    const { projectId } = params;
+    const { projectId } = await ctx.params;
 
     // 3. 백엔드에서 프로젝트 정보 조회
     const projectResponse = await fetch(`${BACKEND_URL}/api/projects/${projectId}`, {
