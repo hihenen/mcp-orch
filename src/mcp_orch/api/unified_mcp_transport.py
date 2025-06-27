@@ -729,6 +729,17 @@ class UnifiedMCPTransport(MCPSSETransport):
                     try:
                         processed_tool = tool.copy()
                         
+                        # 🔧 CRITICAL FIX: MCP 표준 스키마 필드명 통일 (schema → inputSchema)
+                        if 'schema' in processed_tool and 'inputSchema' not in processed_tool:
+                            processed_tool['inputSchema'] = processed_tool.pop('schema')
+                        elif 'inputSchema' not in processed_tool:
+                            # inputSchema가 없는 경우 기본값 설정
+                            processed_tool['inputSchema'] = {
+                                "type": "object",
+                                "properties": {},
+                                "required": []
+                            }
+                        
                         if legacy_mode:
                             # 레거시 모드: 네임스페이스 없이 원본 도구명 사용
                             # 메타데이터 최소화

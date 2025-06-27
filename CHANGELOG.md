@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_108] Fix Unified MCP tools/list schema field naming for Inspector UI compatibility (2025-06-27)
+  - Standardize tool schema field naming from 'schema' to 'inputSchema' in UnifiedMCPTransport
+  - Add fallback inputSchema for tools missing schema definitions to prevent validation errors
+  - Resolve Inspector Tools tab schema validation errors when clicking "List Tools" button
+  - Individual MCP servers (MCPSSETransport) left unchanged to maintain full backward compatibility
 - [TASK_107] Fix Unified MCP initialize response schema validation errors in Inspector (2025-06-27)
   - Change capabilities.prompts and capabilities.resources from null to empty objects {} 
   - Resolve Inspector schema validation errors that expected object types instead of null values
