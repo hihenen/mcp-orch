@@ -632,7 +632,10 @@ class UnifiedMCPTransport(MCPSSETransport):
     
     async def handle_initialize(self, message: Dict[str, Any]) -> JSONResponse:
         """
-        통합 서버 초기화 - 기존 로직 확장
+        통합 서버 초기화 - SSE 메시지 큐를 통한 응답 처리
+        
+        🔧 CRITICAL FIX: Unified SSE에서는 모든 응답이 메시지 큐를 통해 전송되어야 함
+        개별 서버(MCPSSETransport)는 기존대로 JSONResponse 직접 반환
         """
         request_id = message.get("id")
         params = message.get("params", {})
@@ -643,7 +646,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         active_servers = [s for s in self.project_servers if s.is_enabled]
         
         # MCP 표준 초기화 응답 (개별 서버 완전 호환성)
-        response = {
+        response_data = {
             "jsonrpc": "2.0",
             "id": request_id,
             "result": {
@@ -665,8 +668,15 @@ class UnifiedMCPTransport(MCPSSETransport):
             }
         }
         
-        logger.info(f"✅ Unified initialize complete: session={self.session_id}")
-        return JSONResponse(content=response)
+        # 🔧 CRITICAL: Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+        logger.info(f"📤 Queueing initialize response for Unified SSE session {self.session_id}")
+        await self.message_queue.put(response_data)
+        
+        logger.info(f"✅ Unified initialize response queued: session={self.session_id}")
+        logger.info(f"🎯 Inspector should receive initialize response via SSE and send notifications/initialized")
+        
+        # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+        return JSONResponse(content={"status": "processing"}, status_code=202)
     
     async def handle_tools_list(self, message: Dict[str, Any]) -> JSONResponse:
         """모든 활성 서버의 툴을 네임스페이스와 함께 반환"""
@@ -759,7 +769,7 @@ class UnifiedMCPTransport(MCPSSETransport):
                 logger.error(f"❌ Failed to add meta tools: {e}")
         
         # 응답 구성
-        response = {
+        response_data = {
             "jsonrpc": "2.0",
             "id": request_id,
             "result": {
@@ -769,7 +779,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         
         # 표준 모드에서만 _meta 정보 추가
         if not legacy_mode:
-            response["result"]["_meta"] = {
+            response_data["result"]["_meta"] = {
                 "total_servers": len(self.project_servers),
                 "active_servers": len(active_servers),
                 "successful_servers": len(active_servers) - len(failed_servers),
@@ -780,8 +790,14 @@ class UnifiedMCPTransport(MCPSSETransport):
                 "server_health": self._get_server_health_summary()
             }
         
+        # 🔧 CRITICAL: Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+        logger.info(f"📤 Queueing tools/list response for Unified SSE session {self.session_id}")
+        await self.message_queue.put(response_data)
+        
         logger.info(f"📋 Unified tools list complete: {len(all_tools)} tools ({len(failed_servers)} failed servers)")
-        return JSONResponse(content=response)
+        
+        # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+        return JSONResponse(content={"status": "processing"}, status_code=202)
     
     async def handle_tool_call(self, message: Dict[str, Any]) -> JSONResponse:
         """네임스페이스 툴 호출을 적절한 서버로 라우팅"""
@@ -883,7 +899,7 @@ class UnifiedMCPTransport(MCPSSETransport):
                 raise ValueError(f"Tool execution failed on server '{namespace_name}': {str(e)} ({error_context})")
             
             # 성공 응답 (기존 MCPSSETransport와 동일한 형식)
-            response = {
+            response_data = {
                 "jsonrpc": "2.0",
                 "id": message.get("id"),
                 "result": {
@@ -903,14 +919,20 @@ class UnifiedMCPTransport(MCPSSETransport):
                 }
             }
             
+            # 🔧 CRITICAL: Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+            logger.info(f"📤 Queueing tool call response for Unified SSE session {self.session_id}")
+            await self.message_queue.put(response_data)
+            
             logger.info(f"✅ Unified tool call successful: {namespaced_tool_name}")
-            return JSONResponse(content=response)
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
             
         except Exception as e:
             logger.error(f"❌ Unified tool call error: {e}")
             
             # 상세한 에러 정보 제공
-            error_response = {
+            error_response_data = {
                 "jsonrpc": "2.0",
                 "id": message.get("id"),
                 "error": {
@@ -919,12 +941,18 @@ class UnifiedMCPTransport(MCPSSETransport):
                     "data": {
                         "tool_name": namespaced_tool_name if 'namespaced_tool_name' in locals() else "unknown",
                         "error_type": type(e).__name__,
-                        "failed_servers": list(self.failed_servers),
+                        "failed_servers": self._get_failed_servers(),
                         "execution_mode": "unified"
                     }
                 }
             }
-            return JSONResponse(content=error_response)
+            
+            # 🔧 CRITICAL: 에러 응답도 메시지 큐를 통해 전송
+            logger.info(f"📤 Queueing tool call error response for Unified SSE session {self.session_id}")
+            await self.message_queue.put(error_response_data)
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
     
     async def _handle_meta_tool_call(self, message: Dict[str, Any]) -> JSONResponse:
         """오케스트레이터 메타 도구 처리"""

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_106] Fix Unified MCP SSE message queue handling for initialize/tools responses (2025-06-27)
+  - Modify UnifiedMCPTransport to use message queue instead of direct JSONResponse returns
+  - Fix handle_initialize() method to queue responses for SSE transmission compatibility
+  - Fix handle_tools_list() and handle_tool_call() methods to use message queue system  
+  - Enable proper Inspector handshake completion by ensuring initialize responses reach client
+  - Resolve connection drops in unified MCP mode due to missing initialize response transmission
+  - Maintain complete backward compatibility with individual MCP server operations
 - [TASK_105] Fix Unified MCP SSE connection issue by implementing proper Inspector compatibility (2025-06-27)
   - Override start_sse_stream() method in UnifiedMCPTransport to ensure proper SSE endpoint events
   - Add handle_initialize() method override for unified server initialization
