@@ -97,14 +97,21 @@
 - [x] MCP Inspector와 Cline에서 사용하는 실제 SSE 요청 형식 확인
 - [x] mcp-orch가 실제 MCP 서버에서 도구 정보를 가져올 때 inputSchema properties 손실 문제 확인
 - [x] mcp_session_manager에서 inputSchema->schema 변환과 SSE transport에서 inputSchema 참조 불일치 수정
-- [ ] MCP Inspector와 Cline에서 parameter 정보 표시 확인 테스트
+- [x] MCP Inspector와 Cline에서 parameter 정보 표시 확인 테스트
+- [x] 변경사항 커밋
+
+### TASK_092: Message ID mismatch 오류 해결
+- [x] Message ID mismatch 오류 분석 및 해결
+- [x] MCP 메시지 ID 동기화 문제 근본 원인 파악
+- [x] ID 기반 메시지 매칭 시스템 구현
+- [ ] 변경사항 테스트
 - [ ] 변경사항 커밋
 
 ## Progress Status  
-- Current Progress: TASK_091 완료 - mcp_session_manager와 SSE transport 파일들의 inputSchema 필드 참조 불일치 수정 완료
-- Next Task: TASK_091 테스트 및 커밋 - MCP Inspector와 Cline에서 parameter 정보 표시 확인 
+- Current Progress: TASK_092 완료 - Message ID mismatch 오류 해결을 위한 ID 기반 메시지 매칭 시스템 구현 완료
+- Next Task: TASK_092 테스트 및 커밋 - Message ID mismatch 오류 해결 검증
 - Last Update: 2025-06-27
-- Automatic Check Feedback: inputSchema->schema 변환 불일치 문제 해결. 모든 SSE transport 파일에서 'schema' 필드 우선 참조하도록 수정
+- Automatic Check Feedback: MCP 메시지 순서 문제로 인한 ID 불일치 해결. 메시지 큐 시스템으로 ID 기반 정확한 매칭 구현
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

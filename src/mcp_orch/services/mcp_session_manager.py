@@ -10,7 +10,7 @@ import time
 from typing import Dict, List, Optional, Any, Union, Tuple
 from datetime import datetime, timedelta
 from uuid import UUID
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from sqlalchemy.orm import Session
 
 from ..models import McpServer, ToolCallLog, CallStatus, ClientSession, ServerLog, LogLevel, LogCategory
@@ -33,6 +33,7 @@ class McpSession:
     is_initialized: bool = False
     initialization_lock: Optional[asyncio.Lock] = None
     _read_buffer: str = ""  # MCP 메시지 읽기용 버퍼
+    _message_queue: List[Dict] = field(default_factory=list)  # 순서가 맞지 않는 메시지 임시 저장용
 
 
 class ToolExecutionError(Exception):
@@ -209,8 +210,8 @@ class McpSessionManager:
             # 초기화 메시지 전송
             await self._send_message(session, init_message)
             
-            # 초기화 응답 대기
-            init_response = await self._read_message(session, timeout=10)
+            # 초기화 응답 대기 (메시지 ID 매칭)
+            init_response = await self._read_message(session, timeout=10, expected_id=init_message['id'])
             if not init_response or init_response.get('id') != init_message['id']:
                 raise Exception("Failed to receive initialization response")
             
@@ -295,9 +296,9 @@ class McpSessionManager:
             await self._send_message(session, tool_message)
             logger.info(f"📤 Sent tool call message for {tool_name} (ID: {tool_message['id']})")
             
-            # 응답 대기
+            # 응답 대기 (메시지 ID 매칭)
             timeout = server_config.get('timeout', 60)
-            response = await self._read_message(session, timeout=timeout)
+            response = await self._read_message(session, timeout=timeout, expected_id=tool_message['id'])
             
             # 응답 디버깅
             if not response:
@@ -371,8 +372,8 @@ class McpSessionManager:
             # 메시지 전송
             await self._send_message(session, tools_message)
             
-            # 응답 대기
-            response = await self._read_message(session, timeout=30)
+            # 응답 대기 (메시지 ID 매칭)
+            response = await self._read_message(session, timeout=30, expected_id=tools_message['id'])
             
             if not response or response.get('id') != tools_message['id']:
                 raise Exception("Invalid tools list response")
@@ -415,69 +416,67 @@ class McpSessionManager:
             logger.error(f"❌ Failed to send message: {e}")
             raise
     
-    async def _read_message(self, session: McpSession, timeout: int = 60) -> Optional[Dict]:
-        """메시지 읽기 - MCP 공식 패턴 적용 (청크 기반 + split 방식)"""
+    async def _read_message(self, session: McpSession, timeout: int = 60, expected_id: Optional[int] = None) -> Optional[Dict]:
+        """메시지 읽기 - ID 기반 매칭 지원"""
         try:
-            # 세션에 읽기 버퍼가 없으면 초기화
+            # 세션에 읽기 버퍼와 메시지 큐가 없으면 초기화
             if not hasattr(session, '_read_buffer'):
                 session._read_buffer = ""
+            if not hasattr(session, '_message_queue'):
+                session._message_queue = []
             
-            # 완전한 라인이 버퍼에 있는지 먼저 확인
-            if '\n' in session._read_buffer:
-                lines = session._read_buffer.split('\n')
-                session._read_buffer = lines.pop()  # 마지막 불완전한 라인은 버퍼에 유지
+            # 먼저 큐에서 expected_id와 일치하는 메시지 찾기
+            if expected_id is not None:
+                for i, queued_message in enumerate(session._message_queue):
+                    if queued_message.get('id') == expected_id:
+                        # 일치하는 메시지 발견, 큐에서 제거하고 반환
+                        return session._message_queue.pop(i)
+            
+            while True:
+                # 완전한 라인이 버퍼에 있는지 먼저 확인
+                if '\n' in session._read_buffer:
+                    lines = session._read_buffer.split('\n')
+                    session._read_buffer = lines.pop()  # 마지막 불완전한 라인은 버퍼에 유지
+                    
+                    # 모든 완전한 라인 처리
+                    for line_text in lines:
+                        line_text = line_text.strip()
+                        if line_text:
+                            try:
+                                response = json.loads(line_text)
+                                logger.debug(f"📥 Received message ({len(line_text)} bytes): {response.get('method', response.get('id'))}")
+                                logger.debug(f"📥 Message content: {response}")
+                                
+                                # expected_id가 지정되었고 일치하면 즉시 반환
+                                if expected_id is not None and response.get('id') == expected_id:
+                                    return response
+                                # expected_id가 지정되지 않았으면 첫 번째 메시지 반환
+                                elif expected_id is None:
+                                    return response
+                                # ID가 일치하지 않으면 큐에 저장
+                                else:
+                                    session._message_queue.append(response)
+                                    logger.debug(f"📦 Queued message ID {response.get('id')}, waiting for ID {expected_id}")
+                                    
+                            except json.JSONDecodeError as e:
+                                logger.error(f"❌ JSON decode error: {e}")
+                                logger.error(f"❌ Invalid JSON content: {line_text[:500]}...")
+                                # JSON 파싱 오류는 무시하고 다음 라인 처리
+                                continue
                 
-                # 첫 번째 완전한 라인 처리
-                if lines:
-                    line_text = lines[0].strip()
-                    if line_text:
-                        try:
-                            response = json.loads(line_text)
-                            logger.debug(f"📥 Received message ({len(line_text)} bytes): {response.get('method', response.get('id'))}")
-                            logger.debug(f"📥 Message content: {response}")
-                            return response
-                        except json.JSONDecodeError as e:
-                            logger.error(f"❌ JSON decode error in first buffer check: {e}")
-                            logger.error(f"❌ Invalid JSON content: {line_text[:500]}...")
-                            # JSON 파싱 오류 시 재귀 호출하여 다음 메시지 읽기
-                            return await self._read_message(session, timeout)
-            
-            # MCP SDK와 동일한 패턴: 청크 기반 읽기
-            chunk = await asyncio.wait_for(
-                session.read_stream.read(8192),  # 8KB 청크 크기
-                timeout=timeout
-            )
-            
-            if not chunk:
-                # 연결이 닫혔을 때
-                logger.warning("⚠️ Connection closed by MCP server")
-                return None
-            
-            # 버퍼에 새 청크 추가
-            session._read_buffer += chunk.decode('utf-8')
-            
-            # 완전한 라인이 있는지 확인
-            if '\n' in session._read_buffer:
-                lines = session._read_buffer.split('\n')
-                session._read_buffer = lines.pop()  # 마지막 불완전한 라인은 버퍼에 유지
+                # MCP SDK와 동일한 패턴: 청크 기반 읽기
+                chunk = await asyncio.wait_for(
+                    session.read_stream.read(8192),  # 8KB 청크 크기
+                    timeout=timeout
+                )
                 
-                # 첫 번째 완전한 라인 처리
-                if lines:
-                    line_text = lines[0].strip()
-                    if line_text:
-                        try:
-                            response = json.loads(line_text)
-                            logger.debug(f"📥 Received message ({len(line_text)} bytes): {response.get('method', response.get('id'))}")
-                            logger.debug(f"📥 Message content: {response}")
-                            return response
-                        except json.JSONDecodeError as e:
-                            logger.error(f"❌ JSON decode error in chunk buffer check: {e}")
-                            logger.error(f"❌ Invalid JSON content: {line_text[:500]}...")
-                            # JSON 파싱 오류 시 재귀 호출하여 다음 메시지 읽기
-                            return await self._read_message(session, timeout)
-            
-            # 완전한 라인이 없으면 재귀 호출하여 더 읽기
-            return await self._read_message(session, timeout)
+                if not chunk:
+                    # 연결이 닫혔을 때
+                    logger.warning("⚠️ Connection closed by MCP server")
+                    return None
+                
+                # 버퍼에 새 청크 추가
+                session._read_buffer += chunk.decode('utf-8')
             
         except asyncio.TimeoutError:
             logger.error(f"❌ Message read timeout after {timeout} seconds")
