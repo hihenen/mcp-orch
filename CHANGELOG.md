@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_120] Add comprehensive database management guidelines to prevent schema corruption (2025-06-27)
+  - Create CLAUDE.md with strict database modification policies
+  - Enforce Alembic-only migration policy with zero exceptions
+  - Prohibit direct SQL execution, psql usage, and manual DDL operations
+  - Establish proper model-first development workflow for all schema changes
+  - Add emergency response procedures that maintain migration integrity
+  - Include comprehensive checklist for all database modifications
 - [TASK_120] Fix tool preference database schema and service layer issues (2025-06-27)
   - Add missing updated_at column to tool_preferences table via proper Alembic migration
   - Fix ToolFilteringService to use datetime objects instead of Unix timestamps
