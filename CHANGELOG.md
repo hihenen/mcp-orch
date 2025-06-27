@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_107] Fix Unified MCP initialize response schema validation errors in Inspector (2025-06-27)
+  - Change capabilities.prompts and capabilities.resources from null to empty objects {} 
+  - Resolve Inspector schema validation errors that expected object types instead of null values
+  - Enable proper Inspector compatibility and tools/list functionality in unified mode
+  - Individual MCP servers (MCPSSETransport) left unchanged to maintain compatibility
 - [TASK_106] Fix Unified MCP SSE message queue handling for initialize/tools responses (2025-06-27)
   - Modify UnifiedMCPTransport to use message queue instead of direct JSONResponse returns
   - Fix handle_initialize() method to queue responses for SSE transmission compatibility

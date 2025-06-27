@@ -655,10 +655,10 @@ class UnifiedMCPTransport(MCPSSETransport):
                     "experimental": {},  # 개별 서버와 동일한 구조
                     "tools": {
                         "listChanged": False  # Inspector가 tools/list를 자동 호출하도록 유도
-                    } if active_servers else None,
+                    } if active_servers else {},
                     "logging": {},
-                    "prompts": None,
-                    "resources": None
+                    "prompts": {},  # 🔧 FIX: null → {} for Inspector schema validation
+                    "resources": {}  # 🔧 FIX: null → {} for Inspector schema validation
                 },
                 "serverInfo": {
                     "name": f"mcp-orch-unified",
