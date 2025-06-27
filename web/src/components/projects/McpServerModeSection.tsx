@@ -23,7 +23,7 @@ interface McpServerModeSectionProps {
 
 export function McpServerModeSection({ projectId }: McpServerModeSectionProps) {
   const [settings, setSettings] = useState<McpServerModeSettings>({
-    unified_mcp_enabled: true
+    unified_mcp_enabled: false  // 베타 기능이므로 기본 비활성화
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +43,7 @@ export function McpServerModeSection({ projectId }: McpServerModeSectionProps) {
       if (response.ok) {
         const data = await response.json();
         setSettings({
-          unified_mcp_enabled: data.unified_mcp_enabled ?? true
+          unified_mcp_enabled: data.unified_mcp_enabled ?? false  // 베타 기능이므로 기본 비활성화
         });
       } else {
         console.error('Failed to load MCP server mode settings');
@@ -150,9 +150,14 @@ export function McpServerModeSection({ projectId }: McpServerModeSectionProps) {
             <div className="flex items-center gap-3">
               <Server className="h-5 w-5 text-green-600" />
               <div>
-                <Label className="font-medium">Unified MCP Server Mode</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="font-medium">Unified MCP Server Mode</Label>
+                  <Badge variant="outline" className="text-xs bg-orange-50 border-orange-200 text-orange-800">
+                    BETA
+                  </Badge>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Enable unified MCP server mode for streamlined server management. When enabled, all project servers are accessible through a single unified endpoint.
+                  Enable unified MCP server mode for streamlined server management. When enabled, all project servers are accessible through a single unified endpoint. <strong>This is a beta feature.</strong>
                 </p>
               </div>
             </div>

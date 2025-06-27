@@ -56,7 +56,7 @@ class Project(Base):
     allowed_ip_ranges: Optional[str] = Column(JSON, default=list)  # 허용된 IP 범위 목록
     
     # MCP 서버 운영 모드 설정
-    unified_mcp_enabled: bool = Column(Boolean, default=True, nullable=False)  # Unified MCP Server 모드 활성화 여부
+    unified_mcp_enabled: bool = Column(Boolean, default=False, nullable=False)  # Unified MCP Server 모드 활성화 여부 (베타)
     
     # 관계
     creator = relationship("User", foreign_keys=[created_by])

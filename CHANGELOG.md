@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_094] Set Unified MCP Server as disabled by default for new projects (2025-06-27)
+  - Change Project model unified_mcp_enabled default value from True to False
+  - Add validation in Unified SSE endpoint to check project setting before allowing connections
+  - Update project settings UI to default to disabled state with BETA badge indication
+  - Create migration to set existing projects' unified_mcp_enabled to False for safety
+  - Unified MCP Server now requires explicit user activation in project settings
+
 ### Fixed
+- [TASK_101] Simplify MCP message reading implementation while maintaining large message support (2025-06-27)
+  - Replace complex chunk-based message reading with simple asyncio.StreamReader.readuntil() approach
+  - Eliminate data loss issues from "remaining data" handling that couldn't be properly buffered
+  - Fix MCP initialization response failures that prevented tool discovery and loading
+  - Maintain 100MB message size limit for database query results and other large responses
+  - Improve error handling with proper IncompleteReadError detection for closed connections
+  - Resolve database table information query failures and tool loading issues after recent commits
 - [TASK_119] Fix multiple critical errors in MCP tool execution (2025-06-27)
   - Add missing CallStatus.FAILED enum value to resolve tool execution errors
   - Add missing LogCategory.TOOL_EXECUTION enum value for server logging  

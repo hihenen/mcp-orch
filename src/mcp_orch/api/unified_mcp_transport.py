@@ -513,21 +513,24 @@ class UnifiedMCPTransport(MCPSSETransport):
         # 활성 서버 수 확인
         active_servers = [s for s in self.project_servers if s.is_enabled]
         
-        # MCP 표준 초기화 응답 (개별 서버 호환성)
+        # MCP 표준 초기화 응답 (개별 서버 완전 호환성)
         response = {
             "jsonrpc": "2.0",
             "id": request_id,
             "result": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": "2025-03-26",  # 개별 서버와 동일한 버전
                 "capabilities": {
-                    "tools": {} if active_servers else None,
+                    "experimental": {},  # 개별 서버와 동일한 구조
+                    "tools": {
+                        "listChanged": False  # Inspector가 tools/list를 자동 호출하도록 유도
+                    } if active_servers else None,
                     "logging": {},
                     "prompts": None,
                     "resources": None
                 },
                 "serverInfo": {
                     "name": f"mcp-orch-unified",
-                    "version": "1.0.0"
+                    "version": "1.9.4"  # 개별 서버와 동일한 버전
                 },
                 "instructions": f"MCP Orchestrator unified proxy for project {self.project_id}. Use tools/list to see available tools."
             }
@@ -1278,6 +1281,24 @@ async def unified_mcp_endpoint(
             logger.info(f"🔓 Unified MCP connection (no auth): project={project_id}")
         
         logger.info(f"🎯 Using global namespace separator: '{NAMESPACE_SEPARATOR}'")
+        
+        # 2. 프로젝트 조회 및 Unified MCP 활성화 상태 확인
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found"
+            )
+        
+        # 3. Unified MCP 기능 활성화 상태 확인 (베타 기능)
+        if not project.unified_mcp_enabled:
+            logger.warning(f"🚫 Unified MCP access denied: project={project_id}, feature is disabled")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Unified MCP feature is disabled for this project. Please enable it in project settings or use individual server endpoints."
+            )
+        
+        logger.info(f"✅ Unified MCP enabled for project {project_id}")
         
         # 4. 프로젝트 서버 조회 (활성/비활성 모두 포함)
         servers = db.query(McpServer).filter(
