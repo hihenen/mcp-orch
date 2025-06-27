@@ -301,12 +301,15 @@ class UnifiedMCPTransport(MCPSSETransport):
         - tools/call: 네임스페이스 기반 툴 라우팅
         - notifications/*: 알림 처리
         """
+        logger.info(f"🚀 UNIFIED handle_post_message called for session {self.session_id}")
+        logger.info(f"🚀 Class type: {type(self).__name__}")
+        
         try:
             message = await request.json()
             method = message.get("method")
             request_id = message.get("id")
             
-            logger.info(f"📥 Unified session {self.session_id} received: {method} (id={request_id})")
+            logger.info(f"📥 🎯 UNIFIED session {self.session_id} received: {method} (id={request_id})")
             logger.debug(f"🔍 Unified message content: {json.dumps(message, indent=2)}")
             
             # JSON-RPC 2.0 검증
@@ -324,20 +327,20 @@ class UnifiedMCPTransport(MCPSSETransport):
             
             # Unified 메서드별 처리 (기본 MCPSSETransport와 다른 라우팅)
             if method == "initialize":
-                logger.info(f"🎯 Unified initialize for session {self.session_id}")
+                logger.info(f"🎯 🚀 UNIFIED initialize for session {self.session_id}")
                 return await self.handle_initialize(message)
             elif method == "tools/list":
-                logger.info(f"📋 Unified tools/list for session {self.session_id}")
+                logger.info(f"📋 🚀 UNIFIED tools/list for session {self.session_id}")
                 return await self.handle_tools_list(message)
             elif method == "tools/call":
-                logger.info(f"🔧 Unified tools/call for session {self.session_id}")
+                logger.info(f"🔧 🚀 UNIFIED tools/call for session {self.session_id}")
                 return await self.handle_tool_call(message)
             elif method.startswith("notifications/"):
-                logger.info(f"📢 Unified notification for session {self.session_id}: {method}")
+                logger.info(f"📢 🚀 UNIFIED notification for session {self.session_id}: {method}")
                 return await self.handle_notification(message)
             else:
                 # 알 수 없는 메서드
-                logger.warning(f"❓ Unknown unified method received: {method}")
+                logger.warning(f"❓ 🚀 UNIFIED unknown method received: {method}")
                 error_response = {
                     "jsonrpc": "2.0",
                     "id": request_id,
@@ -351,7 +354,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"❌ Error processing unified message in session {self.session_id}: {e}")
+            logger.error(f"❌ 🚀 UNIFIED error processing message in session {self.session_id}: {e}")
             
             # JSON-RPC 오류 응답
             error_response = {

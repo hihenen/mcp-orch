@@ -11,7 +11,6 @@ import {
   Link, 
   Globe, 
   Code, 
-  AlertCircle,
   InfoIcon
 } from 'lucide-react';
 
@@ -20,7 +19,6 @@ interface UnifiedConnectionInfo {
   project_name: string;
   unified_mcp_enabled: boolean;
   sse_endpoint: string;
-  api_key_prefix?: string;
   cline_config: {
     mcpServers: Record<string, {
       transport: string;
@@ -171,37 +169,6 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
           </div>
         </div>
 
-        {/* API Key Status */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <InfoIcon className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">API Key Status</span>
-          </div>
-          <div className="p-3 bg-white rounded-lg border border-blue-200">
-            {connectionInfo.api_key_prefix ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Active API Key:</span>
-                <code className="text-sm font-mono text-gray-800">{connectionInfo.api_key_prefix}***</code>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                  Active
-                </Badge>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                <span className="text-sm text-amber-700">No active API key found</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
-                  className="ml-2 text-amber-700 border-amber-300 hover:bg-amber-50"
-                >
-                  Create API Key
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Cline/Cursor Configuration */}
         <div className="space-y-2">
@@ -245,14 +212,6 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
-            className="text-blue-600 border-blue-300 hover:bg-blue-100"
-          >
-            Manage API Keys
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => window.location.href = `/projects/${projectId}/servers`}
             className="text-blue-600 border-blue-300 hover:bg-blue-100"
           >
@@ -265,6 +224,14 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
             className="text-blue-600 border-blue-300 hover:bg-blue-100"
           >
             MCP Settings
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
+            className="text-blue-600 border-blue-300 hover:bg-blue-100"
+          >
+            API Keys
           </Button>
         </div>
       </CardContent>

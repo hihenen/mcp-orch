@@ -49,32 +49,15 @@ export const GET = auth(async function GET(req: NextRequest, { params }: { param
     const baseUrl = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
     const sseEndpoint = `${baseUrl}/projects/${projectId}/unified/sse`;
     
-    // 6. API 키 조회 (첫 번째 활성 API 키 사용)
-    const apiKeysResponse = await fetch(`${BACKEND_URL}/api/projects/${projectId}/api-keys`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${jwtToken}`,
-      },
-    });
-
-    let apiKey = null;
-    if (apiKeysResponse.ok) {
-      const apiKeys = await apiKeysResponse.json();
-      const activeKeys = apiKeys.filter((key: any) => key.is_active);
-      if (activeKeys.length > 0) {
-        apiKey = activeKeys[0].key_prefix;
-      }
-    }
-
-    // 7. Cline/Cursor 설정 생성
+    // 6. Cline/Cursor 설정 생성
     const clineConfig = {
       mcpServers: {
         [`${project.name}-unified`]: {
           transport: "sse",
           url: sseEndpoint,
-          headers: apiKey ? {
-            "Authorization": `Bearer ${apiKey}***`
-          } : {}
+          headers: {
+            "Authorization": "Bearer YOUR_API_TOKEN"
+          }
         }
       }
     };
@@ -84,13 +67,10 @@ export const GET = auth(async function GET(req: NextRequest, { params }: { param
       project_name: project.name,
       unified_mcp_enabled: project.unified_mcp_enabled,
       sse_endpoint: sseEndpoint,
-      api_key_prefix: apiKey,
       cline_config: clineConfig,
       instructions: {
         setup: "Copy the configuration below to your Cline/Cursor MCP settings",
-        note: apiKey 
-          ? "API key is partially hidden for security. Use the full key from your API Keys page."
-          : "No active API key found. Please create an API key first.",
+        note: "Replace YOUR_API_TOKEN with your actual API key from the API Keys page.",
         namespace_info: "In unified mode, tools are namespaced by server name (e.g., server_name.tool_name)"
       }
     };
