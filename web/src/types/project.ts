@@ -11,6 +11,8 @@ export interface Project {
   updated_at: string;
   member_count: number;
   server_count: number;
+  // MCP Server mode setting
+  unified_mcp_enabled?: boolean;
   // Notification-related information
   notification_count?: number;
   error_count?: number;

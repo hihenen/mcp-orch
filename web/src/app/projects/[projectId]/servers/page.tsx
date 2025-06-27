@@ -34,6 +34,7 @@ import { AddServerDialog } from '@/components/servers/AddServerDialog';
 import { ServerDetailModal } from '@/components/servers/ServerDetailModal';
 import { DeleteServerDialog } from '@/components/servers/DeleteServerDialog';
 import { ProjectLayout } from '@/components/projects/ProjectLayout';
+import { UnifiedMcpConnectionInfo } from '@/components/projects/UnifiedMcpConnectionInfo';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -261,6 +262,12 @@ export default function ProjectServersPage() {
             Add Server
           </Button>
         </div>
+
+        {/* Unified MCP Connection Info Section */}
+        <UnifiedMcpConnectionInfo 
+          projectId={projectId} 
+          unified_mcp_enabled={selectedProject?.unified_mcp_enabled}
+        />
 
       {/* 검색 및 필터 */}
       <div className="flex items-center gap-4">

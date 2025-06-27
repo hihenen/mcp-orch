@@ -115,6 +115,30 @@
 - [x] CHANGELOG.md 업데이트
   - [x] UI 개선 및 설정 분리 내용 문서화
 
+### TASK_111: Unified MCP Server 연결 정보 표시 기능 구현
+- [x] Project 타입에 unified_mcp_enabled 필드 추가
+  - [x] TypeScript 인터페이스 업데이트
+- [x] 백엔드 API - unified 연결 정보 제공 엔드포인트 구현
+  - [x] `/api/projects/[projectId]/unified-connection/route.ts` 생성
+  - [x] JWT 인증 기반 프로젝트 정보 조회
+  - [x] SSE 엔드포인트 URL 생성
+  - [x] API 키 정보 조회 및 Cline/Cursor 설정 생성
+- [x] Unified MCP Connection Info 컴포넌트 생성
+  - [x] `UnifiedMcpConnectionInfo.tsx` 컴포넌트 구현
+  - [x] SSE 엔드포인트 URL 표시
+  - [x] Cline/Cursor JSON 설정 표시
+  - [x] Copy to Clipboard 기능 구현
+  - [x] API 키 상태 표시
+  - [x] 설정 안내 및 네임스페이스 정보 제공
+- [x] 프로젝트 Overview 페이지에 unified 연결 정보 섹션 추가
+  - [x] 조건부 렌더링 (unified_mcp_enabled=true 시에만 표시)
+  - [x] Header Section 아래에 배치
+- [x] Server 목록 페이지에 unified 연결 정보 섹션 추가
+  - [x] 페이지 헤더 아래에 배치
+  - [x] 조건부 렌더링 구현
+- [x] CHANGELOG.md 업데이트
+  - [x] 새로운 기능 추가 사항 문서화 (2025-06-27)
+
 ### TASK_100: 프론트엔드 JWT 인증 UI 단일화
 - [x] 프로젝트 설정 UI에서 SSE/Message 분리 토글 제거
 - [x] 단일 JWT Authentication 토글로 UI 교체
@@ -914,10 +938,10 @@
 - [ ] CHANGELOG.md 업데이트
 
 ## Progress Status  
-- Current Progress: TASK_110 - Unified MCP Server Mode를 별도 설정 섹션으로 분리
-- Next Task: TASK_110 완료 - 모든 하위 작업 완료
+- Current Progress: TASK_111 완료 - Unified MCP Server 연결 정보 표시 기능 구현
+- Next Task: 사용자의 다음 요청 대기
 - Last Update: 2025-06-27
-- Automatic Check Feedback: TASK_110 완료 - Unified MCP Server Mode 설정을 Security Settings에서 분리하여 별도의 MCP 서버 운영 모드 설정 섹션으로 성공적으로 이동시켰습니다. McpServerModeSection 컴포넌트 생성, SecuritySettingsSection에서 MCP 관련 코드 제거, 프로젝트 설정 페이지 레이아웃 조정, CHANGELOG.md 업데이트가 모두 완료되었습니다.
+- Automatic Check Feedback: TASK_111 완료 - Unified MCP Server 연결 정보를 웹 UI에 표시하는 기능을 성공적으로 구현했습니다. UnifiedMcpConnectionInfo 컴포넌트 생성, 백엔드 API 엔드포인트 구현, Project Overview 및 Server 목록 페이지에 통합, Copy to Clipboard 기능, API 키 상태 표시, 설정 안내 및 네임스페이스 정보 제공이 모두 완료되었습니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

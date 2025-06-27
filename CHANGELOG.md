@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_111] Unified MCP Server connection information display in web UI (2025-06-27)
+  - Add UnifiedMcpConnectionInfo component for displaying Cline/Cursor connection details
+  - Show unified SSE endpoint URL and JSON configuration when unified mode is enabled
+  - Integrated in both Project Overview and Server listing pages with conditional display
+  - Include copy-to-clipboard functionality for easy configuration sharing
+  - Display API key status and provide navigation to management pages
+  - Add comprehensive setup instructions and namespace information for unified mode
+
 ### Changed
 - [TASK_110] Separated Unified MCP Server Mode from Security Settings into dedicated section (2025-06-27)
   - Created new McpServerModeSection component for MCP operation mode management

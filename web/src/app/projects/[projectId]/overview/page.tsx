@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useProjectStore, ProjectActivity } from '@/stores/projectStore';
 import { ProjectLayout } from '@/components/projects/ProjectLayout';
+import { UnifiedMcpConnectionInfo } from '@/components/projects/UnifiedMcpConnectionInfo';
 import { formatDate, formatRelativeTime } from '@/lib/date-utils';
 
 function getInitials(name: string): string {
@@ -189,6 +190,12 @@ export default function ProjectOverviewPage() {
             {selectedProject.description || 'View comprehensive project status and key information at a glance.'}
           </p>
         </div>
+
+        {/* Unified MCP Connection Info Section */}
+        <UnifiedMcpConnectionInfo 
+          projectId={projectId} 
+          unified_mcp_enabled={selectedProject.unified_mcp_enabled}
+        />
 
         {/* Main Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
