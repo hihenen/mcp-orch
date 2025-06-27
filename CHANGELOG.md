@@ -16,19 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unified MCP Server now requires explicit user activation in project settings
 
 ### Fixed
-- [TASK_101] Simplify MCP message reading implementation while maintaining large message support (2025-06-27)
-  - Replace complex chunk-based message reading with simple asyncio.StreamReader.readuntil() approach
-  - Add 100MB limit parameter to readuntil() method to handle large database query results
-  - Eliminate data loss issues from "remaining data" handling that couldn't be properly buffered
-  - Fix "Separator is not found, chunk exceed limit" errors in database table information queries
-  - Fix MCP initialization response failures that prevented tool discovery and loading
-  - Maintain support for 100MB message size limit for database query results and other large responses
-  - Improve error handling with proper IncompleteReadError detection for closed connections
-  - Resolve database table information query failures and tool loading issues after recent commits
-- [TASK_119] Fix multiple critical errors in MCP tool execution (2025-06-27)
-  - Add missing CallStatus.FAILED enum value to resolve tool execution errors
-  - Add missing LogCategory.TOOL_EXECUTION enum value for server logging  
-  - Implement input_data and output_data property setters for ToolCallLog model
+- [TASK_101] Implement MCP official SDK pattern for message reading with large message support (2025-06-27)
+  - Adopt official MCP Python SDK chunk-based reading pattern from /mcp/python-sdk
+  - Replace problematic readuntil() approach with buffer management and split('\n') processing
+  - Fix Python version compatibility issues (readuntil limit parameter not supported in older versions)
+  - Implement 8KB chunk reading with proper buffer handling for incomplete lines
+  - Resolve "Failed to receive initialization response" errors that prevented MCP tool loading
+  - Fix "Separator is not found, chunk exceed limit" errors for large database query results
+  - Maintain support for 100MB+ messages through automatic buffer management
+  - Add comprehensive error handling and debug logging for message parsing issues
+- [TASK_102] Improve MCP tool call debugging and error handling (2025-06-27)
+  - Add comprehensive debug logging for MCP message ID matching and response validation
+  - Implement detailed error messages for message ID mismatches and empty responses
+  - Add execution_time property setter to ToolCallLog model for compatibility
+  - Enhance JSON parsing error handling with truncated content logging for debugging
+  - Fix "Invalid tool call response" errors by improving response validation and logging
   - Increase maximum MCP message size to 100MB to handle large query results
   - Improve MCP message reading with custom chunked implementation for better reliability
   - Fix "Separator is not found, chunk exceed limit" errors in database queries

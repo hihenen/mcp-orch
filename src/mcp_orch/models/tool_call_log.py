@@ -113,6 +113,14 @@ class ToolCallLog(Base):
         """실행 시간을 초 단위로 반환 (호환성을 위해)"""
         return (self.execution_time_ms / 1000.0) if self.execution_time_ms else None
     
+    @execution_time.setter
+    def execution_time(self, value):
+        """execution_time setter - execution_time_ms 필드에 밀리초로 저장"""
+        if value is not None:
+            self.execution_time_ms = int(value * 1000)  # 초를 밀리초로 변환
+        else:
+            self.execution_time_ms = None
+    
     @property
     def duration_ms(self):
         """실행 시간을 밀리초로 반환"""
