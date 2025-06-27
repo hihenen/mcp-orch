@@ -81,13 +81,16 @@ export function formatDateTime(
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: options.timeZone,
+      // TEMPORARY FIX: Force UTC timezone until backend @field_serializer is fixed
+      // TODO: Remove this after backend properly serializes datetime with 'Z' suffix
+      timeZone: options.timeZone || 'UTC',
       ...options
     };
     
-    // Only show timezone name if explicitly requested
-    // Default behavior: show clean local time without timezone indicator
-    if (options.timeZoneName) {
+    // Show UTC indicator for temporary fix
+    if (!options.timeZoneName && !options.timeZone) {
+      formatOptions.timeZoneName = 'short'; // Will show "UTC"
+    } else if (options.timeZoneName) {
       formatOptions.timeZoneName = options.timeZoneName;
     }
     
@@ -123,12 +126,15 @@ export function formatTime(
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZone: options.timeZone,
+      // TEMPORARY FIX: Force UTC timezone until backend @field_serializer is fixed
+      timeZone: options.timeZone || 'UTC',
       ...options
     };
     
-    // Only show timezone name if explicitly requested
-    if (options.timeZoneName) {
+    // Show UTC indicator for temporary fix
+    if (!options.timeZoneName && !options.timeZone) {
+      formatOptions.timeZoneName = 'short'; // Will show "UTC"
+    } else if (options.timeZoneName) {
       formatOptions.timeZoneName = options.timeZoneName;
     }
     

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_127] Implement temporary UTC time display to resolve 9-hour offset issue (2025-06-27)
+  - Force UTC timezone in formatDateTime and formatTime functions as temporary fix
+  - Display "UTC" timezone indicator to inform users of current time reference
+  - Add TODO comments for future removal once backend @field_serializer is properly working
+  - Resolve immediate user experience issue where times showed 9 hours behind actual values
+  - Ensure consistent and accurate time display across all components until backend fix
 - [TASK_125] Improve datetime display to show clean local time without timezone indicators (2025-06-27)
   - Remove timeZoneName from default formatDateTime and formatTime functions
   - Display times in user's browser timezone without GMT+9 suffix for cleaner UI

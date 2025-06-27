@@ -72,9 +72,13 @@ class ServerResponse(BaseModel):
             return None
         # Add 'Z' suffix for UTC timestamps to ensure JavaScript Date() interprets correctly
         if value.tzinfo is None:
-            return value.isoformat() + 'Z'
+            result = value.isoformat() + 'Z'
+            logger.info(f"🕐 [DATETIME SERIALIZER] Converted naive datetime {value} to {result}")
+            return result
         else:
-            return value.astimezone(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
+            result = value.astimezone(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
+            logger.info(f"🕐 [DATETIME SERIALIZER] Converted aware datetime {value} to {result}")
+            return result
 
 
 # 사용자 인증 dependency 함수

@@ -168,6 +168,16 @@
   - [x] 개발자 콘솔에서 실시간 모니터링 가능하도록 구현
 - [x] CHANGELOG.md 업데이트 및 변경사항 문서화
 
+### TASK_127: 임시 UTC 시간 표시로 9시간 차이 문제 해결 ✅
+- [x] 프론트엔드에서 UTC 시간으로 표시하도록 formatDateTime 함수 수정
+  - [x] timeZone: 'UTC' 강제 설정으로 올바른 시간 표시
+  - [x] timeZoneName: 'short' 추가로 "UTC" 표시하여 사용자 인지 가능
+  - [x] TODO 주석 추가로 향후 백엔드 수정 후 제거 예정 명시
+- [x] formatTime 함수도 동일하게 UTC 시간 표시로 수정
+- [x] CHANGELOG.md 업데이트 및 변경사항 문서화
+  - [x] 임시 해결책임을 명확히 기록
+  - [x] 향후 백엔드 @field_serializer 수정 후 제거 예정 명시
+
 ### TASK_122: 코드베이스 datetime 필드 및 날짜 파싱 분석
 - [ ] FastAPI 응답 모델의 datetime 필드 검색
   - [ ] *.py 파일에서 datetime 필드가 포함된 Pydantic 모델 찾기
@@ -183,10 +193,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_125 - 사용자 친화적 로컬 시간 표시 개선 완료
-- Next Task: 브라우저에서 깔끔한 로컬 시간 표시 확인 (GMT+9 표시 제거됨)
+- Current Progress: TASK_127 - 임시 UTC 시간 표시로 9시간 차이 문제 해결 완료
+- Next Task: 브라우저에서 UTC 시간 표시 확인 (14:25 UTC ≈ 23:25 KST)
 - Last Update: 2025-06-27
-- Automatic Check Feedback: datetime 표시 개선 완료. timeZoneName 제거로 깔끔한 로컬 시간 표시 구현. 향후 사용자 개인화 옵션을 위한 헬퍼 함수도 준비됨
+- Automatic Check Feedback: 임시 해결책으로 UTC 시간 표시 구현. 9시간 차이 문제 즉시 해결. "UTC" 표시로 사용자 혼란 방지. 향후 백엔드 @field_serializer 수정 후 로컬 시간으로 변경 예정
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
