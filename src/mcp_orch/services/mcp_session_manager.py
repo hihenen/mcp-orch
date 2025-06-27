@@ -14,7 +14,9 @@ from dataclasses import dataclass, field
 from sqlalchemy.orm import Session
 
 from ..models import McpServer, ToolCallLog, CallStatus, ClientSession, ServerLog, LogLevel, LogCategory
+from ..models.mcp_server import McpServerStatus
 from ..config import MCPSessionConfig
+from .server_status_service import ServerStatusService
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +231,22 @@ class McpSessionManager:
             
             session.is_initialized = True
             logger.info(f"✅ MCP session initialized for server {session.server_id}")
+            
+            # 🔄 서버 상태 자동 업데이트: MCP 세션 초기화 성공 시 ACTIVE로 설정
+            try:
+                # server_id에서 프로젝트 ID 추출 (server_id가 "project_id.server_name" 형태인 경우)
+                if '.' in session.server_id:
+                    project_id_str, server_name = session.server_id.split('.', 1)
+                    project_id = UUID(project_id_str)
+                    
+                    await ServerStatusService.update_server_status_on_connection(
+                        server_id=session.server_id,
+                        project_id=project_id,
+                        status=McpServerStatus.ACTIVE,
+                        connection_type="MCP_SESSION_INIT"
+                    )
+            except Exception as e:
+                logger.error(f"❌ Failed to update server status on MCP session init: {e}")
     
     async def call_tool(
         self, 
@@ -528,6 +546,22 @@ class McpSessionManager:
             
         except Exception as e:
             logger.error(f"❌ Error closing session for {session.server_id}: {e}")
+        
+        # 🔄 서버 상태 자동 업데이트: MCP 세션 종료 시 INACTIVE로 설정
+        try:
+            # server_id에서 프로젝트 ID 추출 (server_id가 "project_id.server_name" 형태인 경우)
+            if '.' in session.server_id:
+                project_id_str, server_name = session.server_id.split('.', 1)
+                project_id = UUID(project_id_str)
+                
+                await ServerStatusService.update_server_status_on_connection(
+                    server_id=session.server_id,
+                    project_id=project_id,
+                    status=McpServerStatus.INACTIVE,
+                    connection_type="MCP_SESSION_CLOSE"
+                )
+        except Exception as e:
+            logger.error(f"❌ Failed to update server status on MCP session close: {e}")
     
     async def _cleanup_expired_sessions(self) -> None:
         """
@@ -553,6 +587,21 @@ class McpSessionManager:
                     if session:
                         await self._close_session(session)
                         logger.info(f"🧹 Cleaned up expired session for server {server_id}")
+                        
+                        # 🔄 만료된 세션에 대한 추가 상태 업데이트
+                        try:
+                            if '.' in server_id:
+                                project_id_str, server_name = server_id.split('.', 1)
+                                project_id = UUID(project_id_str)
+                                
+                                await ServerStatusService.update_server_status_on_connection(
+                                    server_id=server_id,
+                                    project_id=project_id,
+                                    status=McpServerStatus.INACTIVE,
+                                    connection_type="MCP_SESSION_EXPIRED"
+                                )
+                        except Exception as e:
+                            logger.error(f"❌ Failed to update server status on session expiry: {e}")
                 
             except asyncio.CancelledError:
                 break

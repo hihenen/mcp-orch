@@ -18,8 +18,9 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import McpServer, Project, WorkerConfig
-from ..models.mcp_server import McpTool
+from ..models.mcp_server import McpTool, McpServerStatus
 from ..services.mcp_connection_service import mcp_connection_service
+from ..services.server_status_service import ServerStatusService
 
 logger = logging.getLogger(__name__)
 
@@ -230,8 +231,7 @@ class SchedulerService:
                             unique_server_id, server_config
                         )
                         
-                        # 상태 매핑
-                        from ..models.mcp_server import McpServerStatus
+                        # 🔄 개선된 상태 업데이트: ServerStatusService 사용
                         if status == "online":
                             new_status = McpServerStatus.ACTIVE
                         elif status == "offline":
@@ -241,10 +241,25 @@ class SchedulerService:
                             
                         # 상태가 변경된 경우만 업데이트
                         if server.status != new_status:
-                            server.status = new_status
-                            server.last_used_at = datetime.utcnow()
-                            updated_count += 1
-                            logger.info(f"Updated server {server.name} status to {new_status.value}")
+                            # ServerStatusService를 통한 통합 상태 업데이트
+                            success = await ServerStatusService.update_server_status_by_name(
+                                server_name=server.name,
+                                project_id=server.project_id,
+                                status=new_status,
+                                db=db,
+                                connection_type="SCHEDULER_CHECK",
+                                error_message=str(e) if new_status == McpServerStatus.ERROR else None
+                            )
+                            
+                            if success:
+                                updated_count += 1
+                                logger.info(f"📊 [SCHEDULER] Updated server {server.name} status: {server.status} → {new_status.value}")
+                            else:
+                                logger.warning(f"⚠️ [SCHEDULER] Failed to update server {server.name} status via ServerStatusService")
+                                # 폴백: 직접 업데이트
+                                server.status = new_status
+                                server.last_used_at = datetime.utcnow()
+                                updated_count += 1
                         
                         # 온라인 서버의 도구 목록 동기화
                         if new_status == McpServerStatus.ACTIVE:
@@ -263,10 +278,22 @@ class SchedulerService:
                         error_count += 1
                         logger.error(f"Error checking server {server.name}: {e}")
                         
-                        # 에러 상태로 업데이트
-                        server.status = McpServerStatus.ERROR
-                        server.last_error = str(e)
-                        server.last_used_at = datetime.utcnow()
+                        # 🔄 에러 상태 업데이트: ServerStatusService 사용
+                        try:
+                            await ServerStatusService.update_server_status_by_name(
+                                server_name=server.name,
+                                project_id=server.project_id,
+                                status=McpServerStatus.ERROR,
+                                db=db,
+                                connection_type="SCHEDULER_ERROR",
+                                error_message=str(e)
+                            )
+                        except Exception as update_error:
+                            logger.error(f"❌ Failed to update error status via ServerStatusService: {update_error}")
+                            # 폴백: 직접 업데이트
+                            server.status = McpServerStatus.ERROR
+                            server.last_error = str(e)
+                            server.last_used_at = datetime.utcnow()
                         
                 # 변경사항 커밋
                 db.commit()

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_106] Implement automatic MCP server status update system (2025-06-27)
+  - Add ServerStatusService for centralized server status management across all connection types
+  - Enable automatic status updates on SSE connections (connect/disconnect) to reflect real-time states
+  - Add MCP session manager integration for status synchronization on session lifecycle events
+  - Enhance existing scheduler service to use unified status update system for consistency
+  - Enable real-time status updates for server initialization, connection failures, and session expiry
+  - Set default live_check=true in frontend for immediate accurate status display
+  - Add comprehensive logging and metrics for server status change tracking
+
 ### Fixed
 - [TASK_109] Fix Roo client compatibility by adding resources/list and resources/templates/list support to UnifiedMCPTransport (2025-06-27)
   - Add handle_resources_list method to return empty resources array for Roo client compatibility

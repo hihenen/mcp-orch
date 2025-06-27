@@ -18,8 +18,10 @@ from sqlalchemy import and_
 
 from ..database import get_db
 from ..models import Project, McpServer, User
+from ..models.mcp_server import McpServerStatus
 from .jwt_auth import get_user_from_jwt_token
 from ..services.mcp_connection_service import mcp_connection_service
+from ..services.server_status_service import ServerStatusService
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +164,17 @@ async def generate_mcp_sse_stream(
         
         logger.info(f"MCP SSE connection {connection_id} established")
         
+        # 🔄 서버 상태 자동 업데이트: SSE 연결 시 ACTIVE로 설정
+        try:
+            await ServerStatusService.update_server_status_by_name(
+                server_name=server_name,
+                project_id=project_id,
+                status=McpServerStatus.ACTIVE,
+                connection_type="SSE_CONNECT"
+            )
+        except Exception as e:
+            logger.error(f"❌ Failed to update server status on SSE connect: {e}")
+        
         # 1. 연결 설정 완료 대기 (Inspector Transport 초기화 대기)
         await asyncio.sleep(0.1)
         
@@ -289,6 +302,19 @@ async def generate_mcp_sse_stream(
         }
         yield f"data: {json.dumps(error_event)}\n\n"
     finally:
+        # 🔄 서버 상태 자동 업데이트: SSE 연결 해제 시 INACTIVE로 설정
+        connection_info = active_sse_connections.get(connection_id)
+        if connection_info:
+            try:
+                await ServerStatusService.update_server_status_by_name(
+                    server_name=connection_info["server_name"],
+                    project_id=connection_info["project_id"],
+                    status=McpServerStatus.INACTIVE,
+                    connection_type="SSE_DISCONNECT"
+                )
+            except Exception as e:
+                logger.error(f"❌ Failed to update server status on SSE disconnect: {e}")
+        
         # 연결 정리
         if connection_id in active_sse_connections:
             del active_sse_connections[connection_id]

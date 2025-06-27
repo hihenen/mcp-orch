@@ -421,8 +421,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  // 프로젝트 서버 관리 (빠른 캐시 기반)
-  loadProjectServers: async (projectId: string, liveCheck: boolean = false) => {
+  // 프로젝트 서버 관리 (기본적으로 실시간 상태 확인 활성화)
+  loadProjectServers: async (projectId: string, liveCheck: boolean = true) => {
     const mode = liveCheck ? '실시간' : '빠른 캐시';
     console.log(`📞 API 호출: loadProjectServers 시작 (${mode} 모드)`, projectId);
     set({ isLoading: true, error: null });
