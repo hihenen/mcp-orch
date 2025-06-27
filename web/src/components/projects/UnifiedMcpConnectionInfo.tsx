@@ -11,7 +11,9 @@ import {
   Link, 
   Globe, 
   Code, 
-  InfoIcon
+  InfoIcon,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 interface UnifiedConnectionInfo {
@@ -43,6 +45,7 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // unified 모드가 비활성화된 경우 컴포넌트를 렌더링하지 않음
   if (!unified_mcp_enabled) {
@@ -169,71 +172,95 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
           </div>
         </div>
 
-
-        {/* Cline/Cursor Configuration */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Code className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">Cline/Cursor Configuration</span>
-          </div>
-          <div className="relative">
-            <pre className="text-xs font-mono bg-white p-4 rounded-lg border border-blue-200 overflow-x-auto">
-              {formatJson(connectionInfo.cline_config)}
-            </pre>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyToClipboard(formatJson(connectionInfo.cline_config), 'config')}
-              className="absolute top-2 right-2 text-blue-600 border-blue-300 hover:bg-blue-100"
-            >
-              {copiedField === 'config' ? (
-                <CheckCircle className="h-4 w-4" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Instructions */}
-        <Alert className="border-blue-200 bg-white">
-          <InfoIcon className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <div className="space-y-2">
-              <p className="font-medium">{connectionInfo.instructions.setup}</p>
-              <p className="text-sm">{connectionInfo.instructions.note}</p>
-              <p className="text-sm">{connectionInfo.instructions.namespace_info}</p>
+        {/* Configuration Toggle */}
+        <div className="border-t border-blue-200 pt-4">
+          <Button
+            variant="ghost"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-between p-3 text-blue-900 hover:bg-blue-100 rounded-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              <span className="text-sm font-medium">Configuration Details</span>
             </div>
-          </AlertDescription>
-        </Alert>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = `/projects/${projectId}/servers`}
-            className="text-blue-600 border-blue-300 hover:bg-blue-100"
-          >
-            View Servers
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = `/projects/${projectId}/settings`}
-            className="text-blue-600 border-blue-300 hover:bg-blue-100"
-          >
-            MCP Settings
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
-            className="text-blue-600 border-blue-300 hover:bg-blue-100"
-          >
-            API Keys
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </Button>
         </div>
+
+
+        {/* Expandable Configuration Section */}
+        {isExpanded && (
+          <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+            {/* Cline/Cursor Configuration */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Code className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">Cline/Cursor Configuration</span>
+              </div>
+              <div className="relative">
+                <pre className="text-xs font-mono bg-white p-4 rounded-lg border border-blue-200 overflow-x-auto">
+                  {formatJson(connectionInfo.cline_config)}
+                </pre>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyToClipboard(formatJson(connectionInfo.cline_config), 'config')}
+                  className="absolute top-2 right-2 text-blue-600 border-blue-300 hover:bg-blue-100"
+                >
+                  {copiedField === 'config' ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <Alert className="border-blue-200 bg-white">
+              <InfoIcon className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <div className="space-y-2">
+                  <p className="font-medium">{connectionInfo.instructions.setup}</p>
+                  <p className="text-sm">{connectionInfo.instructions.note}</p>
+                  <p className="text-sm">{connectionInfo.instructions.namespace_info}</p>
+                </div>
+              </AlertDescription>
+            </Alert>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = `/projects/${projectId}/servers`}
+                className="text-blue-600 border-blue-300 hover:bg-blue-100"
+              >
+                View Servers
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = `/projects/${projectId}/settings`}
+                className="text-blue-600 border-blue-300 hover:bg-blue-100"
+              >
+                MCP Settings
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
+                className="text-blue-600 border-blue-300 hover:bg-blue-100"
+              >
+                API Keys
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

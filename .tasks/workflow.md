@@ -18,7 +18,13 @@
   - [x] 구조화된 로깅 통합
 - [x] CHANGELOG.md 업데이트
 - [x] .tasks/workflow.md 업데이트
-- [ ] 기능 테스트: unified endpoint에서 tools/list가 모든 서버의 네임스페이스 툴 반환 확인
+- [x] 기능 테스트: unified endpoint에서 tools/list가 모든 서버의 네임스페이스 툴 반환 확인
+
+### TASK_114: JWT 미들웨어에서 MCP API 키 처리 시 JWT 디코딩 오류 수정
+- [ ] 문제 분석: MCP API 키(mch_)가 JWT 토큰으로 잘못 인식되어 base64 디코딩 오류 발생
+- [ ] JWT 미들웨어 수정: API 키 타입 확인 후 JWT 처리 건너뛰기
+- [ ] 로깅 개선: API 키 타입별 구분된 로깅 추가
+- [ ] 테스트: unified MCP 엔드포인트에서 JWT 오류 없이 정상 작동 확인
 
 ### TASK_095: 프로젝트 식별자 사용 패턴 조사 및 slug 필요성 평가
 - [x] 실제 SSE 엔드포인트 URL 패턴 조사 (project_id vs slug)
