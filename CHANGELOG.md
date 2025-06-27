@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Add proper handling for "disabled" status in frontend interface
   - Enhance backend live check logging with detailed debug information
   - Change default unknown status from 'Error' to 'Unknown' for better UX
+- [TASK_122] Fix datetime timezone handling for accurate timestamp display (2025-06-27)
+  - Add UTC timezone information to all datetime API responses using Pydantic JSON encoders
+  - Resolve JavaScript date parsing issues causing timestamps to display 10+ hours behind
+  - Ensure ISO 8601 compliance with 'Z' suffix for UTC timestamps
+  - Maintain backward compatibility with existing API clients
+  - Create comprehensive timezone handling documentation in docs/timezone-handling.md
 
 ### Added
 - [TASK_120] Add comprehensive database management guidelines to prevent schema corruption (2025-06-27)

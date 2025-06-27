@@ -64,6 +64,10 @@ class ServerResponse(BaseModel):
     
     class Config:
         from_attributes = True
+        # Ensure datetime fields are serialized with timezone information
+        json_encoders = {
+            datetime: lambda v: v.isoformat() + 'Z' if v.tzinfo is None else v.astimezone(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
+        }
 
 
 # 사용자 인증 dependency 함수

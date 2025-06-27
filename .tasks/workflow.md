@@ -107,14 +107,21 @@
 - [ ] 변경사항 테스트
 - [ ] 변경사항 커밋
 
-### TASK_121: 서버 상태 "Error" 표시 문제 해결
+### TASK_121: 서버 상태 "Error" 표시 문제 해결 ✅
 - [x] 문제 분석: 백엔드에서 "error" 상태 전송하나 프론트엔드에서 미처리
 - [x] 프론트엔드 상태 매핑에 "error" 케이스 추가
 - [x] 백엔드 실시간 상태 확인 로깅 강화
 - [x] 변경사항 커밋
 - [x] 근본 원인 발견: 백엔드 "online" vs 프론트엔드 "active" 불일치
 - [x] 프론트엔드를 백엔드 상태 체계로 통일 (online/offline/error/disabled)
-- [ ] 변경사항 테스트
+- [x] 변경사항 커밋
+
+### TASK_122: 시간 표시 오류 문제 해결 ✅
+- [x] 문제 분석: 백엔드 datetime에 timezone 정보 누락으로 JavaScript 잘못 해석
+- [x] 영향도 분석: 최소 변경으로 최대 효과 가능한 안전한 해결책 확인
+- [x] Pydantic JSON encoder 추가하여 datetime에 UTC timezone 정보 포함
+- [x] 영어 문서 작성: docs/timezone-handling.md
+- [x] 변경사항 커밋
 
 ### TASK_120: MCP Tool Filtering System 구현 완료 ✅
 - [x] Phase 1: Database Layer and Core Services (2일)
@@ -133,11 +140,25 @@
 - [ ] Phase 3: Real-time UI Integration (2일)
 - [ ] Phase 4: Testing and Optimization (1일)
 
+### TASK_122: 코드베이스 datetime 필드 및 날짜 파싱 분석
+- [ ] FastAPI 응답 모델의 datetime 필드 검색
+  - [ ] *.py 파일에서 datetime 필드가 포함된 Pydantic 모델 찾기
+  - [ ] datetime, date, time 타입 사용 현황 분석
+- [ ] 프론트엔드 날짜 파싱 코드 검색
+  - [ ] *.ts, *.tsx 파일에서 날짜 문자열 파싱 코드 찾기
+  - [ ] Date 객체 생성 및 포맷팅 코드 분석
+- [ ] 타임존 처리 및 날짜 포맷팅 유틸리티 검색
+  - [ ] 기존 날짜 처리 유틸리티 함수 확인
+  - [ ] 타임존 변환 로직 분석
+- [ ] 검색 결과 종합 및 리포트 작성
+  - [ ] 파일명과 라인 번호를 포함한 상세 리스트 작성
+  - [ ] 현재 datetime 처리 패턴 분석
+
 ## Progress Status  
-- Current Progress: TASK_121 - 서버 상태 "Error" 표시 문제 해결 중
-- Next Task: TASK_121 - 프론트엔드 상태 매핑에 "error" 케이스 추가
+- Current Progress: TASK_122 - 코드베이스 datetime 필드 및 날짜 파싱 분석 시작
+- Next Task: TASK_122 - FastAPI 응답 모델의 datetime 필드 검색
 - Last Update: 2025-06-27
-- Automatic Check Feedback: 서버 상태 매핑 문제 분석 완료. 백엔드는 "error" 상태를 보내지만 프론트엔드가 이를 처리하지 못함
+- Automatic Check Feedback: 새로운 작업 시작. 코드베이스 전체에서 datetime 관련 코드를 체계적으로 분석할 예정
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
