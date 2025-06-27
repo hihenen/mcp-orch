@@ -87,6 +87,11 @@ class McpServer(Base):
         back_populates="server",
         cascade="all, delete-orphan"
     )
+    tool_preferences = relationship(
+        "ToolPreference",
+        back_populates="server",
+        cascade="all, delete-orphan"
+    )
     
     def __repr__(self) -> str:
         return f"<McpServer(id={self.id}, name={self.name}, project_id={self.project_id})>"

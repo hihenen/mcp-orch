@@ -64,6 +64,7 @@ class Project(Base):
     servers = relationship("McpServer", back_populates="project", cascade="all, delete-orphan")
     api_keys = relationship("ApiKey", back_populates="project", cascade="all, delete-orphan")
     client_sessions = relationship("ClientSession", back_populates="project", cascade="all, delete-orphan")
+    tool_preferences = relationship("ToolPreference", back_populates="project", cascade="all, delete-orphan")
     # ToolCallLog 관계는 ForeignKey가 없으므로 주석 처리
     # tool_call_logs = relationship("ToolCallLog", back_populates="project", cascade="all, delete-orphan")
     

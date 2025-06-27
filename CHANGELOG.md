@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_048] Implement Phase 1 - Core tool filtering system foundation (2025-06-27)
+  - Add ToolPreference database model with project-server-tool unique constraints
+  - Implement ToolFilteringService with ServerStatusService pattern integration for consistent DB session management
+  - Add CacheInvalidationService for unified cache management across MCP session manager integration
+  - Create database migration for tool_preferences table with performance-optimized indexes
+  - Include relationship mappings between Project, McpServer, and ToolPreference models
+  - Add comprehensive logging with ServerStatusService-style metrics for monitoring and debugging
 - [TASK_048] Complete MCP tool filtering system design documentation with existing system integration (2025-06-27)
   - Add comprehensive design document for web UI-based tool enable/disable control system
   - Support for both Unified MCP Transport and Individual MCP Transport filtering
