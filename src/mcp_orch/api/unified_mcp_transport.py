@@ -368,6 +368,31 @@ class UnifiedMCPTransport(MCPSSETransport):
             }
             return JSONResponse(content=error_response, status_code=200)
     
+    async def handle_notification(self, message: Dict[str, Any]) -> JSONResponse:
+        """
+        🎯 Unified MCP 알림 처리 (오버라이드)
+        
+        UnifiedMCPTransport용 알림 처리:
+        - notifications/initialized: 초기화 완료 알림
+        - 기타 알림: 로깅 및 응답
+        """
+        method = message.get("method")
+        logger.info(f"📢 Unified notification received in session {self.session_id}: {method}")
+        
+        # notifications/initialized 특별 처리 - Inspector 연결 완료 핵심
+        if method == "notifications/initialized":
+            logger.info(f"🎯 CRITICAL: Unified notifications/initialized received for session {self.session_id}")
+            
+            # 구조화된 로깅
+            self.structured_logger.session_event(
+                "initialized_notification_received",
+                servers_count=len(self.project_servers),
+                active_servers_count=len([s for s in self.project_servers if s.is_enabled])
+            )
+        
+        # 알림은 응답이 필요 없으므로 200 OK 응답
+        return JSONResponse(content={"status": "ok"}, status_code=200)
+    
     def _register_servers(self):
         """프로젝트 서버들을 네임스페이스 레지스트리에 등록"""
         for server in self.project_servers:

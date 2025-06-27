@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_113] Fix UnifiedMCPTransport missing handle_post_message method causing tools/list failure (2025-06-27)
+  - Add missing handle_post_message method override in UnifiedMCPTransport class
+  - Fix tools/list request routing to use unified handle_tools_list method instead of parent class
+  - Add unified handle_notification method for proper notification handling
+  - Enable proper tools/list response with namespace-prefixed tools from all servers
+  - Resolve issue where Cline connects successfully but receives no tools from unified endpoint
 - [TASK_112] Fix UnifiedMCPTransport tool_naming attribute initialization error (2025-06-27)
   - Resolve AttributeError when Cline connects to unified MCP endpoint
   - Add missing UnifiedToolNaming class import and initialization in UnifiedMCPTransport

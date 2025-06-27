@@ -7,6 +7,19 @@
 
 ## Task List
 
+### TASK_113: UnifiedMCPTransport handle_post_message 메서드 누락으로 인한 tools/list 실패 수정
+- [x] 문제 분석: UnifiedMCPTransport가 부모 클래스의 handle_post_message를 사용하여 tools/list가 개별 서버만 조회
+- [x] handle_post_message 메서드 오버라이드 추가
+  - [x] tools/list 요청을 handle_tools_list로 라우팅
+  - [x] initialize, tools/call, notifications/* 메서드도 unified 버전으로 라우팅
+  - [x] 상세한 로깅 및 에러 처리 추가
+- [x] handle_notification 메서드 추가
+  - [x] notifications/initialized 특별 처리
+  - [x] 구조화된 로깅 통합
+- [x] CHANGELOG.md 업데이트
+- [x] .tasks/workflow.md 업데이트
+- [ ] 기능 테스트: unified endpoint에서 tools/list가 모든 서버의 네임스페이스 툴 반환 확인
+
 ### TASK_095: 프로젝트 식별자 사용 패턴 조사 및 slug 필요성 평가
 - [x] 실제 SSE 엔드포인트 URL 패턴 조사 (project_id vs slug)
   - [x] Cline MCP 설정 파일에서 실제 SSE URL 확인: `/projects/{project_id}/servers/{server_name}/sse`
