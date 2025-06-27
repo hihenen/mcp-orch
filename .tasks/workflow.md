@@ -21,9 +21,12 @@
 - [x] 기능 테스트: unified endpoint에서 tools/list가 모든 서버의 네임스페이스 툴 반환 확인
 
 ### TASK_114: JWT 미들웨어에서 MCP API 키 처리 시 JWT 디코딩 오류 수정
-- [ ] 문제 분석: MCP API 키(mch_)가 JWT 토큰으로 잘못 인식되어 base64 디코딩 오류 발생
-- [ ] JWT 미들웨어 수정: API 키 타입 확인 후 JWT 처리 건너뛰기
-- [ ] 로깅 개선: API 키 타입별 구분된 로깅 추가
+- [x] 문제 분석: MCP API 키(mch_)가 JWT 토큰으로 잘못 인식되어 base64 디코딩 오류 발생
+- [x] JWT 미들웨어 수정: API 키 타입 확인 후 JWT 처리 건너뛰기
+  - [x] 토큰 접두사별 타입 구분 로직 추가 (project_, mch_, JWT)
+  - [x] MCP API 키 처리 메서드 추가 (_get_user_from_mcp_api_key)
+  - [x] JWT 처리 로직을 JWT 토큰에만 적용하도록 수정
+- [x] 로깅 개선: API 키 타입별 구분된 로깅 추가
 - [ ] 테스트: unified MCP 엔드포인트에서 JWT 오류 없이 정상 작동 확인
 
 ### TASK_095: 프로젝트 식별자 사용 패턴 조사 및 slug 필요성 평가
@@ -992,10 +995,10 @@
   - [ ] 수정 필요 사항 정리
 
 ## Progress Status  
-- Current Progress: TASK_097 - UnifiedMcpConnectionInfo 컴포넌트 표시 문제 조사 시작
-- Next Task: 백엔드 API 프로젝트 조회 응답에서 unified_mcp_enabled 필드 포함 여부 확인
+- Current Progress: TASK_114 - JWT 미들웨어에서 MCP API 키 처리 시 JWT 디코딩 오류 수정
+- Next Task: JWT 미들웨어 수정으로 MCP API 키가 JWT 토큰으로 잘못 처리되지 않도록 개선
 - Last Update: 2025-06-27
-- Automatic Check Feedback: 새로운 조사 작업 시작, unified_mcp_enabled 필드 관련 문제 분석 계획 수립
+- Automatic Check Feedback: JWT 오류 원인 파악 완료, MCP API 키 처리 시 JWT 디코딩 시도로 인한 base64 오류 발생
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

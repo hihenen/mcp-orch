@@ -271,23 +271,41 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             token = auth_header.split(" ")[1]
             print(f"🔍 Extracted token (first 20 chars): {token[:20]}...")
             
-            # 프로젝트 API 키인지 확인 (project_ 접두사로 시작)
+            # API 키 타입 확인 (접두사로 구분)
             if token.startswith("project_"):
-                print("🔍 Detected project API key")
+                print("🔑 Detected project API key - processing as project API key")
                 
-                # 데이터베이스에서 API 키 검증
+                # 데이터베이스에서 프로젝트 API 키 검증
                 db = next(get_db())
                 try:
                     user = await self._get_user_from_project_api_key(token, db)
                     if user:
-                        print(f"✅ API key authentication successful: {user.email}")
+                        print(f"✅ Project API key authentication successful: {user.email}")
                         request.state.user = user
                     else:
-                        print("❌ API key not found or inactive")
+                        print("❌ Project API key not found or inactive")
                         request.state.user = None
                 finally:
                     db.close()
+                    
+            elif token.startswith("mch_"):
+                print("🔑 Detected MCP API key - processing as MCP API key")
+                
+                # 데이터베이스에서 MCP API 키 검증
+                db = next(get_db())
+                try:
+                    user = await self._get_user_from_mcp_api_key(token, db)
+                    if user:
+                        print(f"✅ MCP API key authentication successful: {user.email}")
+                        request.state.user = user
+                    else:
+                        print("❌ MCP API key not found or inactive")
+                        request.state.user = None
+                finally:
+                    db.close()
+                    
             else:
+                print("🎫 Processing as JWT token")
                 # JWT 토큰 처리
                 try:
                     # 토큰 헤더 확인하여 알고리즘 결정
@@ -334,7 +352,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
                     
                     user_id = payload.get("sub")
                     if user_id:
-                        print(f"✅ User ID from token: {user_id}")
+                        print(f"✅ User ID from JWT token: {user_id}")
                         
                         # 데이터베이스에서 사용자 조회
                         db = next(get_db())
@@ -429,6 +447,65 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             
         except Exception as e:
             print(f"❌ Error processing project API key: {e}")
+            return None
+
+    async def _get_user_from_mcp_api_key(self, api_key: str, db: Session) -> Optional[User]:
+        """
+        MCP API 키를 검증하고 해당 사용자를 반환합니다.
+        
+        Args:
+            api_key: MCP API 키 (mch_ 접두사로 시작)
+            db: 데이터베이스 세션
+            
+        Returns:
+            User 객체 또는 None
+        """
+        try:
+            from ..models.api_key import ApiKey
+            from ..models.project import Project
+            import hashlib
+            
+            # API 키 해시 생성 (프로젝트 API 키와 동일한 방식)
+            key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+            
+            print(f"🔍 Looking for MCP API key with hash: {key_hash[:20]}...")
+            
+            # 데이터베이스에서 API 키 조회
+            api_key_record = db.query(ApiKey).filter(
+                ApiKey.key_hash == key_hash,
+                ApiKey.is_active == True
+            ).first()
+            
+            if not api_key_record:
+                print("❌ MCP API key not found or inactive")
+                return None
+            
+            print(f"✅ Found MCP API key: {api_key_record.name}")
+            
+            # API 키 사용 시간 업데이트
+            from datetime import datetime
+            api_key_record.last_used_at = datetime.utcnow()
+            db.commit()
+            
+            # 프로젝트 조회 (MCP API 키도 프로젝트에 연결됨)
+            project = db.query(Project).filter(Project.id == api_key_record.project_id).first()
+            if not project:
+                print("❌ Project not found for MCP API key")
+                return None
+            
+            print(f"✅ Found project for MCP key: {project.name}")
+            
+            # 프로젝트 생성자 조회 (API 키로 인증된 사용자로 간주)
+            user = db.query(User).filter(User.id == api_key_record.created_by_id).first()
+            if not user:
+                print("❌ User not found for MCP API key")
+                return None
+            
+            print(f"✅ Authenticated user via MCP API key: {user.email}")
+            return user
+            
+        except Exception as e:
+            print(f"❌ Error processing MCP API key: {e}")
             return None
 
 def get_current_user_from_request(request: Request) -> Optional[JWTUser]:
