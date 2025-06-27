@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_120] Fix ToolPreference model import errors and server startup issues (2025-06-27)
+  - Fix BaseModel import error by changing to Base class inheritance for SQLAlchemy compatibility
+  - Add missing UUID primary key to ToolPreference model for proper database table creation
+  - Remove unused get_admin_user import from ServerStatusService to resolve module dependency error
+  - Verify successful server startup with Tool Filtering System integration complete
 - [TASK_120] Complete Phase 2 - Tool filtering system transport layer integration (2025-06-27)
   - Integrate real-time filtering into MCP Session Manager for both cached and new tool retrieval
   - Connect Scheduler Service with cache invalidation system for automatic refresh on tool changes

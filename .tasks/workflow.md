@@ -119,6 +119,8 @@
   - [x] Unified/Individual MCP Transport 로깅 업데이트
   - [x] Tool Preferences REST API 구현 (GET/PUT/DELETE)
   - [x] FastAPI 애플리케이션에 API 라우터 등록
+  - [x] ToolPreference 모델 Base 클래스 수정 및 Primary Key 추가
+  - [x] 서버 시작 import 오류 해결 (BaseModel → Base 수정)
 - [ ] Phase 3: Real-time UI Integration (2일)
 - [ ] Phase 4: Testing and Optimization (1일)
 

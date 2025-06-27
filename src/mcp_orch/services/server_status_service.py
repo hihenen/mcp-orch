@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 
 from ..models.mcp_server import McpServer, McpServerStatus
 from ..database import get_db
-from ..core.dependencies import get_admin_user
 
 logger = logging.getLogger(__name__)
 

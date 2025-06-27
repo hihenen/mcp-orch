@@ -2,18 +2,20 @@
 Tool Preference Model - 프로젝트별 툴 사용 설정 관리
 """
 
+from uuid import uuid4
 from sqlalchemy import Column, String, Boolean, ForeignKey, UniqueConstraint, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from .base import BaseModel
+from .base import Base
 
 
-class ToolPreference(BaseModel):
+class ToolPreference(Base):
     """프로젝트별 툴 사용 설정"""
     __tablename__ = "tool_preferences"
     
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     server_id = Column(UUID(as_uuid=True), ForeignKey("mcp_servers.id", ondelete="CASCADE"), nullable=False)
     tool_name = Column(String(255), nullable=False)
