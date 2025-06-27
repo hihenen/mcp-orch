@@ -617,7 +617,7 @@ async def delete_project_api_key(
 @router.get("/projects/{project_id}/cline-config")
 async def get_project_cline_config(
     project_id: UUID,
-    unified: bool = False,
+    unified: Optional[bool] = None,
     current_user: User = Depends(get_current_user_for_project_sse),
     db: Session = Depends(get_db)
 ):
@@ -625,10 +625,14 @@ async def get_project_cline_config(
     
     Args:
         unified: True일 경우 통합 MCP 서버 엔드포인트 사용, False일 경우 개별 서버 설정
+                None일 경우 프로젝트 설정값(unified_mcp_enabled) 사용
     """
     
     # 프로젝트 접근 권한 확인
     project = await _verify_project_access(project_id, current_user, db)
+    
+    # unified 모드 결정: 파라미터가 제공되지 않으면 프로젝트 설정 사용
+    use_unified = unified if unified is not None else project.unified_mcp_enabled
     
     # 프로젝트 서버 목록 조회
     servers = db.query(McpServer).filter(
@@ -660,7 +664,7 @@ async def get_project_cline_config(
     # Cline 설정 생성
     mcp_servers = {}
     
-    if unified:
+    if use_unified:
         # 통합 MCP 서버 모드 - 하나의 SSE 엔드포인트로 모든 서버 접근
         server_key = f"mcp-orch-unified-{project_id}"
         

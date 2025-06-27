@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_110] Separated Unified MCP Server Mode from Security Settings into dedicated section (2025-06-27)
+  - Created new McpServerModeSection component for MCP operation mode management
+  - Moved unified_mcp_enabled setting from Security to separate MCP Server Operation Mode section
+  - Improved UI organization with logical separation of security and operational settings
+  - Enhanced user experience with clear categorization of project settings
+  - Positioned MCP server mode settings above security settings for better workflow
+
 ### Added
 - [TASK_093] Enhanced Cline/Cursor configuration generation with unified MCP server support (2025-06-27)
   - Add unified endpoint option to project and team Cline configuration APIs

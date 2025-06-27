@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { ProjectLayout } from '@/components/projects/ProjectLayout';
+import { McpServerModeSection } from '@/components/projects/McpServerModeSection';
 import { SecuritySettingsSection } from '@/components/projects/SecuritySettingsSection';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -201,19 +202,11 @@ export default function ProjectSettingsPage() {
           </CardContent>
         </Card>
 
+        {/* MCP Server Operation Mode Settings */}
+        <McpServerModeSection projectId={projectId} />
+
         {/* Security settings section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Security Settings
-            </CardTitle>
-            <CardDescription>Manage security and access control settings for your project</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SecuritySettingsSection projectId={projectId} />
-          </CardContent>
-        </Card>
+        <SecuritySettingsSection projectId={projectId} />
 
         {/* Danger zone */}
         {canEdit && (

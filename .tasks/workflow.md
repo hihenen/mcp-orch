@@ -97,6 +97,24 @@
   - [x] JWT 인증 통합 기능 문서화
   - [x] 깔끔한 구현 방향 명시
 
+### TASK_110: Unified MCP Server Mode를 별도 설정 섹션으로 분리
+- [x] 새로운 MCP 서버 운영 모드 설정 컴포넌트 생성 (McpServerModeSection.tsx)
+  - [x] 프로젝트별 unified_mcp_enabled 설정 관리
+  - [x] 직관적인 UI 및 설명 텍스트 포함
+  - [x] 자동 저장 기능
+- [x] SecuritySettingsSection에서 Unified MCP 관련 코드 제거
+  - [x] TypeScript 인터페이스에서 unified_mcp_enabled 필드 제거
+  - [x] UI 컴포넌트에서 MCP 서버 모드 설정 부분 삭제
+  - [x] 보안 관련 설정만 남기기
+- [ ] 별도 API 엔드포인트 생성 또는 기존 활용
+  - [ ] /api/projects/{projectId}/mcp-mode 엔드포인트 고려
+  - [ ] 또는 기존 security API에서 분리된 로직 구현
+- [x] 프로젝트 설정 페이지 레이아웃 조정
+  - [x] MCP 서버 모드 설정이 Security Settings 위에 배치
+  - [x] 논리적 설정 순서로 재배열
+- [x] CHANGELOG.md 업데이트
+  - [x] UI 개선 및 설정 분리 내용 문서화
+
 ### TASK_100: 프론트엔드 JWT 인증 UI 단일화
 - [x] 프로젝트 설정 UI에서 SSE/Message 분리 토글 제거
 - [x] 단일 JWT Authentication 토글로 UI 교체
@@ -873,11 +891,33 @@
   - [x] 8단계 배포 과정에 환경 확인 단계 추가
 - [x] CHANGELOG.md 업데이트 (2025-06-27)
 
+### TASK_108: 프로젝트별 Unified MCP Server 모드 설정 기능 추가
+- [x] Project 모델에 unified_mcp_enabled 필드 추가
+  - [x] Boolean 타입, 기본값 True (기본 활성화)
+  - [x] 데이터베이스 마이그레이션 생성 및 실행
+- [x] 백엔드 보안 설정 API 업데이트
+  - [x] SecuritySettings 모델에 unified_mcp_enabled 필드 추가
+  - [x] GET/PUT 엔드포인트에서 새 필드 처리
+- [x] 프론트엔드 Security Settings 섹션 업데이트
+  - [x] SecuritySettingsSection 컴포넌트에 Unified MCP Server 토글 추가
+  - [x] TypeScript 인터페이스 업데이트
+  - [x] 자동 저장 기능 연동
+  - [x] UI 섹션 제목 및 설명 업데이트
+  - [x] 현재 상태 표시 및 권장사항 업데이트
+- [x] Cline 설정 생성 로직 업데이트
+  - [x] 프로젝트 설정에 따라 unified/individual 모드 선택
+  - [x] getProjectClineConfig API에서 설정값 우선 적용
+  - [x] unified 파라미터를 Optional로 변경 (설정값 우선)
+- [ ] 사용자 경험 개선
+  - [ ] 설정 변경 시 적절한 안내 메시지 제공
+  - [ ] 도움말 텍스트 및 권장사항 추가
+- [ ] CHANGELOG.md 업데이트
+
 ## Progress Status  
-- Current Progress: TASK_107 - 운영환경 배포 설정 가이드 문서화 및 표준화 완료 ✅
-- Next Task: 커밋 및 푸시 준비
+- Current Progress: TASK_110 - Unified MCP Server Mode를 별도 설정 섹션으로 분리
+- Next Task: TASK_110 완료 - 모든 하위 작업 완료
 - Last Update: 2025-06-27
-- Automatic Check Feedback: 포괄적인 프로덕션 배포 가이드 문서 생성, .env.hybrid.example 주석 개선, README.md 배포 섹션 추가, quickstart.sh 자동 환경 감지 기능 등 모든 운영환경 배포 관련 개선사항이 성공적으로 구현되었습니다. 이제 사용자들이 운영환경에 안전하고 체계적으로 배포할 수 있는 완전한 가이드를 제공합니다.
+- Automatic Check Feedback: TASK_110 완료 - Unified MCP Server Mode 설정을 Security Settings에서 분리하여 별도의 MCP 서버 운영 모드 설정 섹션으로 성공적으로 이동시켰습니다. McpServerModeSection 컴포넌트 생성, SecuritySettingsSection에서 MCP 관련 코드 제거, 프로젝트 설정 페이지 레이아웃 조정, CHANGELOG.md 업데이트가 모두 완료되었습니다.
 
 ## Lessons Learned and Insights
 - MCP 표준에서는 Resource Connection(지속적 세션) 방식이 권장됨

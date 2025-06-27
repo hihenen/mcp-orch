@@ -85,10 +85,15 @@ async def get_current_user_for_project_servers(
 @router.get("/projects/{project_id}/servers", response_model=List[ServerResponse])
 async def list_project_servers(
     project_id: UUID,
+    live_check: bool = False,
     current_user: User = Depends(get_current_user_for_project_servers),
     db: Session = Depends(get_db)
 ):
-    """프로젝트별 MCP 서버 목록 조회"""
+    """프로젝트별 MCP 서버 목록 조회
+    
+    Args:
+        live_check: True일 경우 실시간 서버 상태 확인 (성능 저하 가능성)
+    """
     
     # 프로젝트 접근 권한 확인
     project_member = db.query(ProjectMember).filter(
@@ -111,14 +116,32 @@ async def list_project_servers(
     
     result = []
     for server in servers:
-        # DB에 저장된 상태 정보 사용 (실시간 확인 제거)
-        server_status = "offline"
-        tools_count = 0
-        
         # 서버가 비활성화된 경우
         if not server.is_enabled:
             server_status = "disabled"
+            tools_count = 0
+        elif live_check:
+            # 실시간 상태 확인 (성능 저하 가능성)
+            server_status = "offline"
+            tools_count = 0
+            try:
+                server_config = mcp_connection_service._build_server_config_from_db(server)
+                if server_config:
+                    # 프로젝트별 고유 서버 식별자 생성
+                    unique_server_id = mcp_connection_service._generate_unique_server_id(server)
+                    server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
+                    if server_status == "online":
+                        tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
+                        tools_count = len(tools)
+                        logger.info(f"✅ Live check: Retrieved {tools_count} tools for server {server.name}")
+            except Exception as e:
+                logger.error(f"Error in live check for server {server.name}: {e}")
+                server_status = "error"
         else:
+            # DB에 저장된 상태 정보 사용 (기본값)
+            server_status = "offline"
+            tools_count = 0
+            
             # 데이터베이스에서 마지막 알려진 상태 사용
             if hasattr(server, 'status') and server.status:
                 # McpServerStatus enum을 문자열로 변환

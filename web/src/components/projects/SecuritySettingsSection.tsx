@@ -136,25 +136,24 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
-          Authentication Settings
+          Security Settings
         </CardTitle>
         <CardDescription>
-          Set default JWT authentication policy for project servers. Individual servers can override these settings.
+          Manage security and access control settings for your project.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* 인증 설정 */}
+        {/* JWT 인증 설정 */}
         <div className="space-y-4">
-          <h4 className="font-medium">JWT Authentication</h4>
+          <h4 className="font-medium">Authentication Policy</h4>
           
-          {/* JWT 인증 설정 */}
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-blue-600" />
               <div>
                 <Label className="font-medium">Default JWT Authentication Required</Label>
                 <p className="text-sm text-muted-foreground">
-                  Default authentication policy for all project servers. Individual servers can override this setting.
+                  Set default JWT authentication policy for project servers. Individual servers can override these settings.
                 </p>
               </div>
             </div>
@@ -223,7 +222,7 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
             <div>
-              <h4 className="font-medium text-blue-900">Current Authentication Status</h4>
+              <h4 className="font-medium text-blue-900">Current Project Settings</h4>
               <div className="text-sm text-blue-700 mt-2 space-y-1">
                 <div className="flex items-center gap-2">
                   <span>Default JWT Authentication:</span>
@@ -248,10 +247,10 @@ export function SecuritySettingsSection({ projectId }: SecuritySettingsSectionPr
           <div className="flex items-start gap-3">
             <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
             <div>
-              <h4 className="font-medium text-green-900">Recommended Settings</h4>
+              <h4 className="font-medium text-green-900">Settings Information</h4>
               <ul className="text-sm text-green-700 mt-2 space-y-1">
                 <li>• <strong>Default Authentication:</strong> Sets the default JWT requirement for all project servers</li>
-                <li>• <strong>Server Override:</strong> Individual servers can override this default in their settings</li>
+                <li>• <strong>Server Override:</strong> Individual servers can override the authentication default in their settings</li>
                 <li>• <strong>API Keys:</strong> Use project API keys for external MCP client access</li>
                 <li>• <strong>IP Restriction:</strong> Currently under development - coming in future updates</li>
                 <li>• Settings changes are automatically saved</li>

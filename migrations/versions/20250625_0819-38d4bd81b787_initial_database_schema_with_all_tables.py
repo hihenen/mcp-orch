@@ -96,6 +96,7 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(), nullable=False),
             sa.Column('updated_at', sa.DateTime(), nullable=False),
             sa.Column('jwt_auth_required', sa.Boolean(), nullable=False, server_default='true'),
+            sa.Column('unified_mcp_enabled', sa.Boolean(), nullable=False, server_default='true'),
             sa.Column('allowed_ip_ranges', sa.JSON(), nullable=True, default=list),
             sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id')

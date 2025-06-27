@@ -55,6 +55,9 @@ class Project(Base):
     jwt_auth_required: bool = Column(Boolean, default=True, nullable=False)  # JWT 인증 필수 여부 (SSE + Message 통합)
     allowed_ip_ranges: Optional[str] = Column(JSON, default=list)  # 허용된 IP 범위 목록
     
+    # MCP 서버 운영 모드 설정
+    unified_mcp_enabled: bool = Column(Boolean, default=True, nullable=False)  # Unified MCP Server 모드 활성화 여부
+    
     # 관계
     creator = relationship("User", foreign_keys=[created_by])
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")

@@ -23,11 +23,13 @@ router = APIRouter(prefix="/api", tags=["project-security"])
 class SecuritySettings(BaseModel):
     jwt_auth_required: bool = True
     allowed_ip_ranges: List[str] = []
+    unified_mcp_enabled: bool = True
 
 
 class SecurityResponse(BaseModel):
     jwt_auth_required: bool
     allowed_ip_ranges: List[str]
+    unified_mcp_enabled: bool
     
     class Config:
         from_attributes = True
@@ -81,7 +83,8 @@ async def get_project_security_settings(
     
     return SecurityResponse(
         jwt_auth_required=project.jwt_auth_required,
-        allowed_ip_ranges=project.allowed_ip_ranges or []
+        allowed_ip_ranges=project.allowed_ip_ranges or [],
+        unified_mcp_enabled=project.unified_mcp_enabled
     )
 
 
@@ -120,6 +123,7 @@ async def update_project_security_settings(
     # 보안 설정 업데이트 (통합된 JWT 인증 사용)
     project.jwt_auth_required = security_data.jwt_auth_required
     project.allowed_ip_ranges = security_data.allowed_ip_ranges
+    project.unified_mcp_enabled = security_data.unified_mcp_enabled
     project.updated_at = datetime.utcnow()
     
     db.commit()
@@ -127,5 +131,6 @@ async def update_project_security_settings(
     
     return SecurityResponse(
         jwt_auth_required=project.jwt_auth_required,
-        allowed_ip_ranges=project.allowed_ip_ranges or []
+        allowed_ip_ranges=project.allowed_ip_ranges or [],
+        unified_mcp_enabled=project.unified_mcp_enabled
     )
