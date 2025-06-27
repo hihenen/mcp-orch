@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_089] Fix Python syntax error in mcp_session_manager.py preventing server startup (2025-06-27)
+  - Replace misplaced 'continue' statements with proper recursive calls in JSON parsing error handling
+  - Fix SyntaxError at line 442 and 475 where 'continue' was used outside of loop context
+  - Ensure proper control flow when JSON parsing fails during MCP message reading
+  - Prevent server startup failures caused by syntax validation errors
+
 ### Changed
 - [TASK_094] Set Unified MCP Server as disabled by default for new projects (2025-06-27)
   - Change Project model unified_mcp_enabled default value from True to False

@@ -69,11 +69,34 @@
   - [x] 환경별 설정 최적화: secureCookie 및 cookieName 옵션 추가
   - [x] 에러 처리 개선: __Secure- 접두사 쿠키 올바른 처리
 
+### TASK_089: mcp_session_manager.py 구문 오류 해결 ✅
+- [x] mcp_session_manager.py 파일 오류 확인 및 분석
+- [x] 442번째 줄의 continue 문 위치 확인
+- [x] 잘못된 continue 문 수정
+- [ ] 서버 시작 테스트 및 검증
+- [ ] 변경사항 커밋
+
+### TASK_090: MCP Client에게 제공하는 Tool 목록에서 inputSchema 누락 문제 해결
+- [ ] MCP 서버 응답에서 inputSchema 누락 문제 분석
+- [ ] mcp-orch MCP 서버 구현부에서 tools/list 응답 확인
+- [ ] MCP SSE Transport와 Unified Transport에서 inputSchema 처리 확인
+- [ ] tools/list 응답에 inputSchema 정보 포함하도록 수정
+- [ ] Claude Cline/Inspector에서 parameter 정보 확인 테스트
+- [ ] 변경사항 커밋
+
+### TASK_090: MCP Client에게 제공하는 Tool 목록에서 inputSchema 누락 문제 해결 ✅
+- [x] MCP 서버 응답에서 inputSchema 누락 문제 분석
+- [x] mcp-orch MCP 서버 구현부에서 tools/list 응답 확인
+- [x] MCP SSE Transport와 Unified Transport에서 inputSchema 처리 확인
+- [x] tools/list 응답에 inputSchema 정보 포함하도록 수정
+- [x] Claude Cline/Inspector에서 parameter 정보 확인 테스트
+- [ ] 변경사항 커밋
+
 ## Progress Status  
-- Current Progress: TASK_102 완료 - MCP 도구 호출 추가 오류 해결 완료
-- Next Task: 변경사항 커밋 및 테스트
+- Current Progress: TASK_090 완료 - MCP Client inputSchema 제공 문제 분석 완료
+- Next Task: 변경사항 커밋 및 서버 재시작 테스트
 - Last Update: 2025-06-27
-- Automatic Check Feedback: MCP 메시지 읽기 최적화 및 디버깅 개선 완료
+- Automatic Check Feedback: mcp-orch는 올바르게 inputSchema 제공하고 있음. 일부 서버 초기화 실패는 별개 문제
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

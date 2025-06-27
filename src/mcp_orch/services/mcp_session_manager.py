@@ -439,7 +439,8 @@ class McpSessionManager:
                         except json.JSONDecodeError as e:
                             logger.error(f"❌ JSON decode error in first buffer check: {e}")
                             logger.error(f"❌ Invalid JSON content: {line_text[:500]}...")
-                            continue
+                            # JSON 파싱 오류 시 재귀 호출하여 다음 메시지 읽기
+                            return await self._read_message(session, timeout)
             
             # MCP SDK와 동일한 패턴: 청크 기반 읽기
             chunk = await asyncio.wait_for(
@@ -472,7 +473,8 @@ class McpSessionManager:
                         except json.JSONDecodeError as e:
                             logger.error(f"❌ JSON decode error in chunk buffer check: {e}")
                             logger.error(f"❌ Invalid JSON content: {line_text[:500]}...")
-                            continue
+                            # JSON 파싱 오류 시 재귀 호출하여 다음 메시지 읽기
+                            return await self._read_message(session, timeout)
             
             # 완전한 라인이 없으면 재귀 호출하여 더 읽기
             return await self._read_message(session, timeout)
