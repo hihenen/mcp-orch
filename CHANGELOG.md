@@ -18,9 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [TASK_101] Simplify MCP message reading implementation while maintaining large message support (2025-06-27)
   - Replace complex chunk-based message reading with simple asyncio.StreamReader.readuntil() approach
+  - Add 100MB limit parameter to readuntil() method to handle large database query results
   - Eliminate data loss issues from "remaining data" handling that couldn't be properly buffered
+  - Fix "Separator is not found, chunk exceed limit" errors in database table information queries
   - Fix MCP initialization response failures that prevented tool discovery and loading
-  - Maintain 100MB message size limit for database query results and other large responses
+  - Maintain support for 100MB message size limit for database query results and other large responses
   - Improve error handling with proper IncompleteReadError detection for closed connections
   - Resolve database table information query failures and tool loading issues after recent commits
 - [TASK_119] Fix multiple critical errors in MCP tool execution (2025-06-27)

@@ -409,9 +409,9 @@ class McpSessionManager:
         """메시지 읽기 - 단순하면서 대용량 메시지 지원"""
         try:
             # readuntil()을 사용하여 개행문자까지 한 번에 읽기
-            # 이 방법이 복잡한 청크 조합보다 훨씬 안정적임
+            # 100MB 제한으로 대용량 데이터베이스 쿼리 결과 지원
             line_bytes = await asyncio.wait_for(
-                session.read_stream.readuntil(b'\n'), 
+                session.read_stream.readuntil(b'\n', limit=100*1024*1024), 
                 timeout=timeout
             )
             
