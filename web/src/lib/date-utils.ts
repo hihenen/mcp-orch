@@ -75,16 +75,23 @@ export function formatDateTime(
   const locale = options.locale || getUserLocale();
   
   try {
-    return new Intl.DateTimeFormat(locale, {
+    const formatOptions: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short',
       timeZone: options.timeZone,
       ...options
-    }).format(date);
+    };
+    
+    // Only show timezone name if explicitly requested
+    // Default behavior: show clean local time without timezone indicator
+    if (options.timeZoneName) {
+      formatOptions.timeZoneName = options.timeZoneName;
+    }
+    
+    return new Intl.DateTimeFormat(locale, formatOptions).format(date);
   } catch (error) {
     // Fallback to basic formatting if Intl fails
     console.warn('DateTime formatting failed, using fallback:', error);
@@ -112,14 +119,20 @@ export function formatTime(
   const locale = options.locale || getUserLocale();
   
   try {
-    return new Intl.DateTimeFormat(locale, {
+    const formatOptions: Intl.DateTimeFormatOptions = {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZoneName: 'short',
       timeZone: options.timeZone,
       ...options
-    }).format(date);
+    };
+    
+    // Only show timezone name if explicitly requested
+    if (options.timeZoneName) {
+      formatOptions.timeZoneName = options.timeZoneName;
+    }
+    
+    return new Intl.DateTimeFormat(locale, formatOptions).format(date);
   } catch (error) {
     // Fallback to basic formatting if Intl fails
     console.warn('Time formatting failed, using fallback:', error);
@@ -231,4 +244,36 @@ export function formatSmartDate(
     // Show absolute date for older dates
     return formatDate(date, options);
   }
+}
+
+/**
+ * Format date with timezone display (for user preference settings)
+ * @param dateString - ISO 8601 date string from API
+ * @param options - Formatting options
+ * @returns Formatted date string with timezone indicator
+ */
+export function formatDateTimeWithTimezone(
+  dateString: string | Date,
+  options: DateFormatOptions = {}
+): string {
+  return formatDateTime(dateString, { 
+    ...options, 
+    timeZoneName: 'short' 
+  });
+}
+
+/**
+ * Format time with timezone display (for user preference settings)
+ * @param dateString - ISO 8601 date string from API
+ * @param options - Formatting options
+ * @returns Formatted time string with timezone indicator
+ */
+export function formatTimeWithTimezone(
+  dateString: string | Date,
+  options: DateFormatOptions = {}
+): string {
+  return formatTime(dateString, { 
+    ...options, 
+    timeZoneName: 'short' 
+  });
 }

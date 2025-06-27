@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_125] Improve datetime display to show clean local time without timezone indicators (2025-06-27)
+  - Remove timeZoneName from default formatDateTime and formatTime functions
+  - Display times in user's browser timezone without GMT+9 suffix for cleaner UI
+  - Add formatDateTimeWithTimezone and formatTimeWithTimezone for future user preference settings
+  - Enable consistent user experience with localized time display across all components
+  - Prepare foundation for future timezone display customization options
 - [TASK_124] Fix Pydantic V2 datetime serialization using field_serializer decorator (2025-06-27)
   - Replace deprecated json_encoders with @field_serializer for ServerResponse model
   - Ensure datetime fields are properly serialized with UTC 'Z' suffix for JavaScript compatibility

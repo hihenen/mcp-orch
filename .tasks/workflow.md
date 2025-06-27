@@ -140,6 +140,15 @@
 - [ ] Phase 3: Real-time UI Integration (2일)
 - [ ] Phase 4: Testing and Optimization (1일)
 
+### TASK_125: 사용자 친화적 로컬 시간 표시로 개선 ✅
+- [x] formatDateTime 함수에서 timeZoneName 옵션 제거하여 사용자 로컬 시간대로 깔끔하게 표시
+  - [x] 기본 동작: GMT+9 표시 없이 "2025년 6월 27일 오후 11:25" 형태로 표시
+  - [x] formatTime 함수도 동일하게 수정
+- [x] 사용자 개인화 옵션을 위한 formatDateTimeWithTimezone 헬퍼 함수 추가
+  - [x] formatTimeWithTimezone 함수도 추가
+  - [x] 향후 사용자 설정에서 timezone 표시 옵션 제공 가능하도록 준비
+- [x] CHANGELOG.md 업데이트 및 변경사항 문서화
+
 ### TASK_124: Pydantic V2 datetime 직렬화 수정으로 'Z' 접미사 누락 문제 해결 ✅
 - [x] Context7을 통한 Pydantic V2에서 json_encoders deprecated 확인
 - [x] ServerResponse 모델에 @field_serializer 데코레이터로 datetime 필드 직렬화 수정
@@ -174,10 +183,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_124 - Pydantic V2 datetime 직렬화 수정 완료
-- Next Task: 서버 재시작 후 브라우저에서 'Z' 접미사 포함 확인
+- Current Progress: TASK_125 - 사용자 친화적 로컬 시간 표시 개선 완료
+- Next Task: 브라우저에서 깔끔한 로컬 시간 표시 확인 (GMT+9 표시 제거됨)
 - Last Update: 2025-06-27
-- Automatic Check Feedback: Pydantic V2 호환 @field_serializer로 datetime 직렬화 수정 완료. json_encoders 대신 현대적인 방식으로 UTC timezone 정보 포함
+- Automatic Check Feedback: datetime 표시 개선 완료. timeZoneName 제거로 깔끔한 로컬 시간 표시 구현. 향후 사용자 개인화 옵션을 위한 헬퍼 함수도 준비됨
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
