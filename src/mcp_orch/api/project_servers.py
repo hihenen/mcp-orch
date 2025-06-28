@@ -54,7 +54,7 @@ class ServerResponse(BaseModel):
     args: List[str]
     env: dict
     cwd: Optional[str]
-    disabled: bool
+    is_enabled: bool
     status: str = "offline"
     tools_count: int = 0
     tools: List[dict] = []
