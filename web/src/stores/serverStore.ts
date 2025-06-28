@@ -113,7 +113,7 @@ export const useServerStore = create<ServerState>()(
                 args: server.args || [],
                 transportType: server.transportType || server.transport_type || 'stdio',
                 transport_type: server.transport_type,
-                disabled: server.disabled || false,
+                is_enabled: server.is_enabled ?? true,
                 status: server.status === 'online' ? 'online' : 'offline',
                 connected: server.connected,
                 lastError: server.lastError || server.error,
@@ -160,7 +160,7 @@ export const useServerStore = create<ServerState>()(
         getActiveServers: () => {
           const state = get();
           return state.servers.filter(
-            (server) => server.status === 'online' && !server.disabled
+            (server) => server.status === 'online' && server.is_enabled
           );
         },
         
@@ -168,7 +168,7 @@ export const useServerStore = create<ServerState>()(
           const state = get();
           const total = state.servers.length;
           const active = state.servers.filter(
-            (server) => server.status === 'online' && !server.disabled
+            (server) => server.status === 'online' && server.is_enabled
           ).length;
           return { total, active };
         },

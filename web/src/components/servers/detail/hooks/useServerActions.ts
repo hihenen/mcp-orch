@@ -45,7 +45,7 @@ export function useServerActions({
       // 서버 정보 새로고침
       await onServerUpdated();
       
-      toast.success(`서버가 ${server.disabled ? '활성화' : '비활성화'}되었습니다.`);
+      toast.success(`서버가 ${server.is_enabled ? '비활성화' : '활성화'}되었습니다.`);
     } catch (error) {
       console.error('서버 토글 오류:', error);
       toast.error(`서버 상태 변경 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);

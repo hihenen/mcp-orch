@@ -217,7 +217,7 @@ export function ServerDetailModal({
                  currentServer.status === 'offline' ? '오프라인' :
                  currentServer.status === 'connecting' ? '연결 중' : '에러'}
               </Badge>
-              {currentServer.disabled && (
+              {!currentServer.is_enabled && (
                 <Badge variant="outline">비활성화</Badge>
               )}
             </div>
@@ -253,8 +253,8 @@ export function ServerDetailModal({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">활성화</span>
-                    <Badge variant={currentServer.disabled ? 'outline' : 'default'}>
-                      {currentServer.disabled ? '비활성화' : '활성화'}
+                    <Badge variant={!currentServer.is_enabled ? 'outline' : 'default'}>
+                      {!currentServer.is_enabled ? '비활성화' : '활성화'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
@@ -351,10 +351,10 @@ export function ServerDetailModal({
               <Button 
                 variant="outline" 
                 onClick={handleToggleServer}
-                className={currentServer.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
+                className={!currentServer.is_enabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
               >
-                {currentServer.disabled ? <Power className="h-4 w-4 mr-2" /> : <PowerOff className="h-4 w-4 mr-2" />}
-                {currentServer.disabled ? '활성화' : '비활성화'}
+                {!currentServer.is_enabled ? <Power className="h-4 w-4 mr-2" /> : <PowerOff className="h-4 w-4 mr-2" />}
+                {!currentServer.is_enabled ? '활성화' : '비활성화'}
               </Button>
               <Button 
                 variant="outline" 

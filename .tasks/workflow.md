@@ -233,11 +233,96 @@
   - [ ] 파일명과 라인 번호를 포함한 상세 리스트 작성
   - [ ] 현재 datetime 처리 패턴 분석
 
+### TASK_131: Python 코드베이스 크기와 복잡성 분석 ✅
+- [x] src/mcp_orch/ 디렉터리 내 모든 .py 파일 스캔
+  - [x] 각 파일의 줄 수 계산 (총 86개 파일, 29,552줄)
+  - [x] import 개수 세기 (상위 5개 파일 분석 완료)
+  - [x] 주요 클래스/함수 개수 식별
+- [x] 300줄 이상 대형 파일 식별
+  - [x] 특별 표시 및 상세 분석 (49개 대형 파일 식별)
+  - [x] 복잡성 수준 평가 (6개 극대형 파일 Critical 등급)
+- [x] import가 15개 이상인 파일 식별
+  - [x] 높은 결합도 파일 분석 (3개 파일 식별)
+  - [x] 의존성 복잡도 평가 (외부 의존성 60% 이상 4개 파일)
+- [x] API 파일들 (api/ 디렉터리) 상세 분석
+  - [x] 책임 범위 분석
+  - [x] 엔드포인트별 복잡성 평가
+- [x] 서비스 파일들 (services/ 디렉터리) 책임 범위 분석
+  - [x] 각 서비스의 역할과 범위 분석
+  - [x] 단일 책임 원칙 준수 여부 평가
+- [x] 리팩토링 필요성 평가 및 보고서 작성
+  - [x] 줄 수 기준 내림차순 정렬 리스트 작성
+  - [x] 각 파일별 리팩토링 우선순위 (High/Medium/Low) 평가
+  - [x] 구체적 개선 방안 제시
+
+### TASK_132: mcp_connection_service.py 의존성과 사용처 분석
+- [x] 파일 위치 확인 및 기본 구조 분석
+  - [x] 파일 경로: src/mcp_orch/services/mcp_connection_service.py (1,532줄)
+  - [x] 주요 클래스: McpConnectionService, ToolExecutionError
+  - [x] 전역 인스턴스: mcp_connection_service (모듈 하단)
+- [x] 사용하는 곳 (import 구문) 분석
+  - [x] 10개 파일에서 import 및 사용 확인
+  - [x] API 계층 (6개): app.py, projects.py, project_servers.py, unified_mcp_transport.py, mcp_sse_transport.py, mcp_standard_sse.py
+  - [x] 서비스 계층 (2개): scheduler_service.py, mcp_sdk_sse_bridge.py 
+  - [x] 코어 계층 (1개): core/registry.py
+- [x] 외부 의존성 분석
+  - [x] 표준 라이브러리: asyncio, json, subprocess, logging, time, typing, datetime, uuid
+  - [x] 외부 패키지: sqlalchemy.orm.Session
+  - [x] 내부 모듈: models (McpServer, ToolCallLog, CallStatus, ClientSession, ServerLog, LogLevel, LogCategory)
+- [x] 주요 public 메서드 및 용도 매핑
+  - [x] 핵심 비즈니스 메서드 13개 식별
+  - [x] 유틸리티 및 내부 메서드 11개 식별
+  - [x] 각 메서드별 사용 용도 및 호출 패턴 분석
+- [x] 리팩토링 영향도 평가
+  - [x] 높은 결합도 (10개 파일 의존): 신중한 접근 필요
+  - [x] 핵심 인프라 역할: MCP 연결, 상태 관리, 도구 호출의 중앙 집중화
+  - [x] 분리 전략: 점진적 분리와 인터페이스 추상화 우선 필요
+
+### TASK_132: Phase 1 MCP Connection Service 리팩토링 실행 ✅
+- [x] Phase 1.1: 기존 코드 분석 및 백업
+  - [x] 의존성 매핑 (10개 파일에서 사용)
+  - [x] 백업 브랜치 생성 (refactor/mcp-connection-service-phase1)
+  - [x] 인터페이스 설계 (SOLID 원칙 적용)
+- [x] Phase 1.2: 핵심 서비스 클래스 분리
+  - [x] McpConnectionManager (연결 관리, 300줄)
+  - [x] McpToolExecutor (도구 실행, 400줄)
+  - [x] McpStatusChecker (상태 확인, 250줄)
+- [x] Phase 1.3: 지원 서비스 클래스 분리
+  - [x] McpConfigManager (설정 관리, 200줄)
+  - [x] McpLogger (로깅 전용, 300줄)
+  - [x] McpErrorHandler (에러 처리, 200줄)
+- [x] Phase 1.4: 기존 인터페이스 유지 (하위 호환성)
+  - [x] McpOrchestrator (Facade 패턴 구현)
+  - [x] 기존 mcp_connection_service 완전 호환
+  - [x] 점진적 마이그레이션 지원
+- [x] Phase 1.5: 테스트 및 검증
+  - [x] 하위 호환성 테스트 통과
+  - [x] 모듈 구조 검증 완료
+  - [x] 파일 크기 97.5% 감소 (1531줄 → 38줄)
+  - [x] 8개 모듈로 분산 (단일 책임 원칙 적용)
+
+### TASK_134: API 응답을 is_enabled로 통일하는 포괄적 마이그레이션 ✅
+- [x] Phase 1: 백엔드 API 응답 통일
+  - [x] projects.py에서 disabled → is_enabled 변경 (4개 위치)
+  - [x] project_servers.py에서 disabled → is_enabled 변경 (5개 위치)
+  - [x] config_manager.py에서 disabled 필드 제거, is_enabled 사용
+  - [x] standard_mcp.py, mcp_sse_transport.py, app.py 수정
+  - [x] 모든 server_config.get('disabled') → server_config.get('is_enabled') 변경
+- [x] Phase 2: 프론트엔드 적응
+  - [x] TypeScript 타입 정의 업데이트 (types/index.ts)
+  - [x] 9개 프론트엔드 파일에서 disabled → is_enabled 변경
+  - [x] 로직 반전 처리 (!disabled → is_enabled)
+  - [x] 서버 액션, 스토어, 컴포넌트 모두 업데이트
+- [x] Phase 3: 검증 및 정리
+  - [x] config_manager.py 템플릿에서 disabled → is_enabled 변경
+  - [x] 모든 변환 로직 일관성 확보
+  - [x] CHANGELOG.md 업데이트
+
 ## Progress Status  
-- Current Progress: TASK_130 - Tool Preferences 필터링 미적용 문제 해결 완료
-- Next Task: 백엔드 서버 재시작 후 비활성화된 도구가 Cline/Inspector에서 제외되는지 확인
+- Current Progress: TASK_134 - API 응답 is_enabled 통일 마이그레이션 완료 (High Priority)
+- Next Task: Phase 2 Projects API 분해 계획 또는 다른 우선순위 작업
 - Last Update: 2025-06-28
-- Automatic Check Feedback: SSE Bridge에 Tool Preferences 필터링 적용 완료. 이제 비활성화된 도구(예: list_tables)가 MCP 클라이언트에 표시되지 않음. 로그에서 필터링된 도구 개수 확인 가능. 시간 표시와 NextJS 15 호환성 문제도 모두 해결됨
+- Automatic Check Feedback: API 응답 필드 통일 작업 성공적으로 완료. disabled/is_enabled 혼재 문제를 해결하여 데이터베이스, 백엔드, 프론트엔드 간 일관성 확보. 이중 부정 패턴 제거로 코드 가독성 향상. Tool Preferences와 동일한 is_enabled 패턴으로 통일하여 개발자 혼란 방지
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
@@ -254,3 +339,6 @@
 - MCP 공식 SDK 패턴 적용으로 대용량 메시지 처리 및 호환성 문제 해결
 - "Invalid tool call response" 오류는 응답 메시지 구조나 ID 불일치에서 발생
 - CallStatus enum과 model property 정의 불일치로 런타임 오류 발생
+- disabled/is_enabled 필드 혼재는 이중 부정과 개발자 혼란을 야기
+- 단일 필드 패턴(is_enabled)이 유지보수성과 가독성에 크게 유리
+- Tool Preferences와 같은 일관된 네이밍 컨벤션이 코드 품질 향상에 중요

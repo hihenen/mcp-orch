@@ -66,10 +66,10 @@ class StandardMCPHandler:
             'args': db_server.args or [],
             'env': db_server.env or {},
             'timeout': 30,
-            'disabled': not db_server.is_enabled
+            'is_enabled': db_server.is_enabled
         }
         
-        if self.actual_server_config.get('disabled', False):
+        if not self.actual_server_config.get('is_enabled', True):
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Server '{self.server_name}' is disabled"

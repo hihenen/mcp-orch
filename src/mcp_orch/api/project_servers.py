@@ -199,7 +199,7 @@ async def list_project_servers(
             args=server.args or [],
             env=server.env or {},
             cwd=server.cwd,
-            disabled=not server.is_enabled,
+            is_enabled=server.is_enabled,
             status=server_status,
             tools_count=tools_count,
             last_connected=server.last_used_at,
@@ -280,7 +280,7 @@ async def get_project_server_detail(
         "args": server.args or [],
         "env": server.env or {},
         "cwd": server.cwd,
-        "disabled": not server.is_enabled,
+        "is_enabled": server.is_enabled,
         "status": server_status,
         "tools_count": tools_count,
         "tools": tools if server_status == "online" else [],
@@ -357,7 +357,7 @@ async def create_project_server(
         args=new_server.args or [],
         env=new_server.env or {},
         cwd=new_server.cwd,
-        disabled=not new_server.is_enabled,
+        is_enabled=new_server.is_enabled,
         status="offline",
         tools_count=0,
         last_connected=new_server.last_used_at,
@@ -581,7 +581,7 @@ async def toggle_project_server(
     status_text = "비활성화" if not server.is_enabled else "활성화"
     return {
         "message": f"서버 '{server.name}'가 {status_text}되었습니다.",
-        "disabled": not server.is_enabled
+        "is_enabled": server.is_enabled
     }
 
 

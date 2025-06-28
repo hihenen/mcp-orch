@@ -208,7 +208,7 @@ class MCPSSETransport:
         # 실제 서버 기능 확인 - Inspector에서 의미 있는 정보 표시
         try:
             server_config = self._build_server_config()
-            has_tools = server_config and not server_config.get('disabled', False)
+            has_tools = server_config and server_config.get('is_enabled', True)
         except Exception:
             has_tools = False
             

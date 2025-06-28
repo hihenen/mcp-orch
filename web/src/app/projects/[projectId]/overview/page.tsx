@@ -260,13 +260,13 @@ export default function ProjectOverviewPage() {
               <div className="flex justify-between">
                 <span className="text-sm">Active Servers</span>
                 <span className="text-sm font-medium">
-                  {projectServers ? projectServers.filter(s => !s.disabled).length : 0}
+                  {projectServers ? projectServers.filter(s => s.is_enabled).length : 0}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">Disabled Servers</span>
                 <span className="text-sm font-medium">
-                  {projectServers ? projectServers.filter(s => s.disabled).length : 0}
+                  {projectServers ? projectServers.filter(s => !s.is_enabled).length : 0}
                 </span>
               </div>
               <div className="flex justify-between">

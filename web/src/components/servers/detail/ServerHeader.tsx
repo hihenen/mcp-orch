@@ -74,7 +74,7 @@ export function ServerHeader({
                   <span className="text-xs text-muted-foreground">Connecting...</span>
                 </div>
               )}
-              {server.disabled && (
+              {!server.is_enabled && (
                 <Badge variant="outline">Disabled</Badge>
               )}
             </div>
@@ -107,11 +107,11 @@ export function ServerHeader({
             variant="outline"
             onClick={onToggleServer}
             disabled={!canEdit}
-            className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
+            className={!server.is_enabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
             title={!canEdit ? "You don't have permission to control this server. (Owner or Developer only)" : undefined}
           >
-            {server.disabled ? <Play className="h-4 w-4 mr-2" /> : <Pause className="h-4 w-4 mr-2" />}
-            {server.disabled ? 'Enable' : 'Disable'}
+            {!server.is_enabled ? <Play className="h-4 w-4 mr-2" /> : <Pause className="h-4 w-4 mr-2" />}
+            {!server.is_enabled ? 'Enable' : 'Disable'}
           </Button>
           <Button 
             variant="outline" 

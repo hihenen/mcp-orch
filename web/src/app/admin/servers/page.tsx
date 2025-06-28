@@ -115,9 +115,9 @@ export default function AdminServersPage() {
             args: server.args || [],
             env: server.env || {},
             transportType: 'stdio' as const,
-            status: server.disabled ? 'offline' : 'online',
+            status: server.is_enabled ? 'online' : 'offline',
             availableTools: 0, // 서버별 도구 수는 별도로 계산
-            disabled: server.disabled || false,
+            is_enabled: server.is_enabled ?? true,
           }));
           useServerStore.getState().setServers(servers);
         }

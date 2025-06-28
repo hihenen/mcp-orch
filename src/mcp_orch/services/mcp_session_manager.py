@@ -290,7 +290,7 @@ class McpSessionManager:
             logger.info(f"🔧 Calling tool {tool_name} on server {server_id} (MCP Session)")
             
             # 서버가 비활성화된 경우
-            if server_config.get('disabled', False):
+            if not server_config.get('is_enabled', True):
                 raise ValueError(f"Server {server_id} is disabled")
             
             # 세션 가져오기 또는 생성

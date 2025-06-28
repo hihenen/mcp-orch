@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [TASK_134] Unify API responses to use is_enabled field instead of disabled for consistency (2025-06-28)
+  - Change all API responses from disabled: not is_enabled to is_enabled: is_enabled
+  - Update TypeScript interfaces to use is_enabled field
+  - Update all frontend components to use is_enabled instead of disabled
+  - Modify config_manager.py to use is_enabled field from database model
+  - Update all server status checks to use is_enabled consistently
+  - Eliminate double negation patterns and improve code readability
+  - Align with Tool Preferences pattern that already uses is_enabled
+  - Ensure single source of truth across database, API, and frontend
+
 ### Removed
 - [TASK_137] Remove orchestrator meta tools to align with MCP ecosystem simplicity (2025-06-28)
   - Remove OrchestratorMetaTools class and get_meta_tool_prefix() function from namespace.py

@@ -427,10 +427,10 @@ def create_app(settings: Settings = None) -> FastAPI:
                     'args': db_server.args or [],
                     'env': db_server.env or {},
                     'timeout': 30,
-                    'disabled': not db_server.is_enabled
+                    'is_enabled': db_server.is_enabled
                 }
                 
-                if server_config.get('disabled', False):
+                if not server_config.get('is_enabled', True):
                     return JSONResponse(
                         {"error": f"Server '{server_name}' is disabled"}, 
                         status_code=503

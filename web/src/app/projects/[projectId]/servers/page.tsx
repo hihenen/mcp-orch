@@ -346,7 +346,7 @@ export default function ProjectServersPage() {
                          server.status === 'starting' ? 'Starting' :
                          server.status === 'stopping' ? 'Stopping' : 'Unknown'}
                       </Badge>
-                      {server.disabled && (
+                      {!server.is_enabled && (
                         <Badge variant="outline">Disabled</Badge>
                       )}
                     </div>
@@ -374,10 +374,10 @@ export default function ProjectServersPage() {
                         e.stopPropagation();
                         handleToggleServer(server);
                       }}
-                      className={server.disabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
-                      title={server.disabled ? 'Enable server' : 'Disable server'}
+                      className={!server.is_enabled ? 'text-green-600 hover:text-green-700' : 'text-orange-600 hover:text-orange-700'}
+                      title={!server.is_enabled ? 'Enable server' : 'Disable server'}
                     >
-                      {server.disabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
+                      {!server.is_enabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

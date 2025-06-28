@@ -648,7 +648,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const allTools: Tool[] = [];
       
       for (const server of servers) {
-        if (server.disabled) {
+        if (!server.is_enabled) {
           console.log('⏭️ 비활성 서버 스킵:', server.id);
           continue; // 비활성화된 서버는 스킵
         }

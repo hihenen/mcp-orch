@@ -10,7 +10,7 @@ export interface MCPServer {
   autoApprove?: string[];
   transportType: 'stdio' | 'http';
   transport_type?: 'stdio' | 'http'; // Backend compatibility
-  disabled: boolean;
+  is_enabled: boolean;
   status: 'online' | 'offline' | 'connecting' | 'error';
   connected?: boolean; // Backend field
   lastError?: string;

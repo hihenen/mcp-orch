@@ -91,7 +91,7 @@ class ApiClient {
         args: server.args || [],
         transportType: server.transport_type || 'stdio',
         transport_type: server.transport_type, // Keep backend field
-        disabled: server.disabled || false,
+        is_enabled: server.is_enabled ?? true,
         status: server.connected ? 'online' : 'offline',
         connected: server.connected,
         lastError: server.error,
