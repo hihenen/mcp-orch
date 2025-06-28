@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_130] Fix Tool Preferences filtering not applied in SSE Bridge connections (2025-06-28)
+  - Add Tool Preferences filtering to MCP SDK SSE Bridge list_tools handler
+  - Ensure disabled tools are properly filtered out before sending to MCP clients
+  - Update tool loading logs to show filtered tool count vs total tool count
+  - Resolve issue where disabled tools like list_tables still appeared in Cline/Inspector
+  - Maintain consistency with MCP Session Manager filtering behavior
 - [TASK_128] Fix NextJS 15 async params compatibility issue in unified-connection API route (2025-06-28)
   - Change function signature from destructured params to ctx pattern for consistency
   - Add await to ctx.params access to comply with NextJS 15 async dynamic APIs

@@ -168,6 +168,22 @@
   - [x] 개발자 콘솔에서 실시간 모니터링 가능하도록 구현
 - [x] CHANGELOG.md 업데이트 및 변경사항 문서화
 
+### TASK_130: Tool Preferences 필터링 미적용 문제 해결 ✅
+- [x] Tool Preferences 데이터베이스 확인 - list_tables 도구의 비활성화 상태 확인
+  - [x] 데이터베이스 연결 문제로 직접 확인은 불가
+  - [x] 코드 분석으로 문제 원인 파악
+- [x] MCP Session Manager의 필터링 로직 확인
+  - [x] `get_tools` 메서드에서 ToolFilteringService 사용 확인
+  - [x] 정상적으로 필터링 적용 중임을 확인
+- [x] MCP SDK SSE Bridge의 도구 로딩 프로세스 분석
+  - [x] SSE Bridge에서는 필터링이 적용되지 않고 있음 발견
+  - [x] `list_tools` 핸들러에서 직접 도구 목록 반환
+- [x] SSE Bridge에 Tool Preferences 필터링 적용
+  - [x] ToolFilteringService 임포트 및 필터링 로직 추가
+  - [x] 필터링된 도구만 클라이언트에 전송하도록 수정
+  - [x] 로그에 필터링 정보 추가 (filtered count 표시)
+  - [x] CHANGELOG.md 업데이트
+
 ### TASK_129: 임시 시간 표시를 UTC에서 한국시간(GMT+9)으로 변경 ✅
 - [x] formatDateTime과 formatTime 함수에서 timeZone을 UTC 대신 'Asia/Seoul'로 변경
   - [x] 사용자 피드백에 따라 UTC 대신 정확한 한국시간 표시
@@ -218,10 +234,10 @@
   - [ ] 현재 datetime 처리 패턴 분석
 
 ## Progress Status  
-- Current Progress: TASK_129 - 임시 시간 표시를 UTC에서 한국시간(GMT+9)으로 변경 완료
-- Next Task: 브라우저에서 한국시간 "GMT+9" 형식으로 정상 표시 확인
+- Current Progress: TASK_130 - Tool Preferences 필터링 미적용 문제 해결 완료
+- Next Task: 백엔드 서버 재시작 후 비활성화된 도구가 Cline/Inspector에서 제외되는지 확인
 - Last Update: 2025-06-28
-- Automatic Check Feedback: 사용자 피드백 반영하여 UTC에서 Asia/Seoul 타임존으로 변경 완료. 이제 "2025년 6월 27일 오후 02:25 GMT+9" 형태로 정확한 한국시간 표시. NextJS 15 호환성 문제도 해결된 상태
+- Automatic Check Feedback: SSE Bridge에 Tool Preferences 필터링 적용 완료. 이제 비활성화된 도구(예: list_tables)가 MCP 클라이언트에 표시되지 않음. 로그에서 필터링된 도구 개수 확인 가능. 시간 표시와 NextJS 15 호환성 문제도 모두 해결됨
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

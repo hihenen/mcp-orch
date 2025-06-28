@@ -436,9 +436,20 @@ async def run_mcp_bridge_session(
                     logger.warning(f"No tools found for server {server_name}")
                     return []
                 
+                # Tool Preferences 필터링 적용
+                from ..services.tool_filtering_service import ToolFilteringService
+                filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+                    project_id=project_id,
+                    server_id=server_record.id,
+                    tools=tools,
+                    db=None  # 별도 DB 세션 사용
+                )
+                
+                logger.info(f"🎯 Applied tool filtering: {len(filtered_tools)}/{len(tools)} tools enabled for {server_name}")
+                
                 # python-sdk 형식으로 변환
                 tool_list = []
-                for tool in tools:
+                for tool in filtered_tools:
                     tool_obj = types.Tool(
                         name=tool.get("name", ""),
                         description=tool.get("description", ""),
@@ -463,11 +474,12 @@ async def run_mcp_bridge_session(
                             project_id=project_id,
                             level=LogLevel.INFO,
                             category=LogCategory.SYSTEM,
-                            message=f"Tools loaded successfully: {len(tool_list)} tools available",
+                            message=f"Tools loaded successfully: {len(tool_list)} tools available (filtered from {len(tools)} total)",
                             details={
                                 "session_id": session_id,
                                 "tool_count": len(tool_list),
-                                "tool_names": [tool.name for tool in tool_list]
+                                "tool_names": [tool.name for tool in tool_list],
+                                "filtered_count": len(tools) - len(tool_list)
                             }
                         )
                     logger.info(f"📝 Tool loading log recorded for session {session_id}")
