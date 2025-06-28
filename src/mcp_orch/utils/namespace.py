@@ -45,11 +45,6 @@ def is_namespaced(tool_name: str) -> bool:
     return NAMESPACE_SEPARATOR in tool_name
 
 
-def get_meta_tool_prefix() -> str:
-    """메타 도구 접두사 반환"""
-    return f"orchestrator{NAMESPACE_SEPARATOR}"
-
-
 def _sanitize_server_name(server_name: str) -> str:
     """서버명 안전화 (구분자 충돌 방지)"""
     # 1. 구분자가 포함된 경우 언더스코어로 변환
@@ -120,102 +115,6 @@ class NamespaceRegistry:
 
 
 # ============================================================================
-# 오케스트레이터 메타 도구
-# ============================================================================
-
-class OrchestratorMetaTools:
-    """오케스트레이터 메타 도구 정의"""
-    
-    @staticmethod
-    def get_meta_tools() -> List[Dict]:
-        """오케스트레이터 메타 도구 목록 반환"""
-        prefix = get_meta_tool_prefix()
-        
-        return [
-            {
-                "name": f"{prefix}list_servers",
-                "description": "List all active MCP servers in this project",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                },
-                "_meta": {
-                    "type": "orchestrator",
-                    "category": "server_management"
-                }
-            },
-            {
-                "name": f"{prefix}server_status", 
-                "description": "Get status information for a specific server",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "server_name": {
-                            "type": "string",
-                            "description": "Name of the server to check"
-                        }
-                    },
-                    "required": ["server_name"]
-                },
-                "_meta": {
-                    "type": "orchestrator",
-                    "category": "server_management"
-                }
-            },
-            {
-                "name": f"{prefix}project_info",
-                "description": "Get information about the current project and its configuration",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                },
-                "_meta": {
-                    "type": "orchestrator", 
-                    "category": "information"
-                }
-            },
-            {
-                "name": f"{prefix}recover_failed_servers",
-                "description": "Attempt to recover failed servers by retesting their connections",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "server_name": {
-                            "type": "string",
-                            "description": "Specific server name to recover (optional - if not provided, all failed servers will be tested)"
-                        }
-                    },
-                    "required": []
-                },
-                "_meta": {
-                    "type": "orchestrator",
-                    "category": "recovery"
-                }
-            },
-            {
-                "name": f"{prefix}health_report",
-                "description": "Get comprehensive health report of all servers with suggested actions",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                },
-                "_meta": {
-                    "type": "orchestrator",
-                    "category": "monitoring"
-                }
-            }
-        ]
-    
-    @staticmethod
-    def is_meta_tool(tool_name: str) -> bool:
-        """툴이 오케스트레이터 메타 도구인지 확인"""
-        return tool_name.startswith(get_meta_tool_prefix())
-
-
-# ============================================================================
 # 하위 호환성을 위한 클래스 (기존 코드 지원)
 # ============================================================================
 
@@ -241,8 +140,6 @@ class UnifiedToolNaming:
     def is_namespaced(self, tool_name: str) -> bool:
         return is_namespaced(tool_name)
     
-    def get_meta_tool_prefix(self) -> str:
-        return get_meta_tool_prefix()
     
     def _sanitize_server_name(self, server_name: str) -> str:
         return _sanitize_server_name(server_name)

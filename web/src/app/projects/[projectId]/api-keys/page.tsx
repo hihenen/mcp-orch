@@ -128,11 +128,7 @@ export default function ProjectApiKeysPage() {
     }
   };
 
-  // Key copy handler
-  const handleCopyKey = (keyValue: string) => {
-    navigator.clipboard.writeText(keyValue);
-    toast.success('API key has been copied to clipboard.');
-  };
+  // Key copy handler removed - keys are only copyable during creation
 
   if (!selectedProject) {
     return (
@@ -355,6 +351,9 @@ export default function ProjectApiKeysPage() {
                             <div className="text-sm text-muted-foreground">
                               {apiKey.description || 'No description'}
                             </div>
+                            <div className="text-xs font-mono text-gray-500 mt-1">
+                              {apiKey.key_prefix}...{apiKey.key_suffix || '****'}
+                            </div>
                           </td>
                           <td className="p-4">
                             <Badge 
@@ -405,14 +404,6 @@ export default function ProjectApiKeysPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleCopyKey(apiKey.key_prefix || apiKey.id)}>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Copy Key
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                  Regenerate Key
-                                </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   className="text-red-600"
                                   onClick={() => handleDeleteApiKey(apiKey.id, apiKey.name)}

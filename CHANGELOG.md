@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- [TASK_137] Remove orchestrator meta tools to align with MCP ecosystem simplicity (2025-06-28)
+  - Remove OrchestratorMetaTools class and get_meta_tool_prefix() function from namespace.py
+  - Remove all meta tool handler methods from unified_mcp_transport.py 
+  - Remove meta tool detection and processing logic from tools/list and tool_call handlers
+  - Eliminate complexity that doesn't align with standard MCP server philosophy
+  - Focus on core business logic tools for cleaner ecosystem leadership
+
 ### Fixed
+- [TASK_131] Fix Tool Preferences filtering not applied in Unified MCP Transport (2025-06-28)
+  - Add Tool Preferences filtering to UnifiedMCPTransport handle_tools_list handler
+  - Apply filtering to each server's tools before namespace conversion
+  - Update tool collection logs to show filtered vs total tool count per server
+  - Ensure consistent filtering behavior across Individual SSE, Session Manager, and Unified modes
+  - Resolve issue where disabled tools appeared in unified mode Inspector connections
 - [TASK_130] Fix Tool Preferences filtering not applied in SSE Bridge connections (2025-06-28)
   - Add Tool Preferences filtering to MCP SDK SSE Bridge list_tools handler
   - Ensure disabled tools are properly filtered out before sending to MCP clients

@@ -842,6 +842,7 @@ class ApiKeyResponse(BaseModel):
     name: str
     description: Optional[str]
     key_prefix: str
+    key_suffix: str
     expires_at: Optional[datetime]
     last_used_at: Optional[datetime]
     last_used_ip: Optional[str]
@@ -899,6 +900,7 @@ async def list_project_api_keys(
             name=api_key.name,
             description=api_key.description,
             key_prefix=api_key.key_prefix or "",
+            key_suffix=api_key.key_suffix or "",
             expires_at=api_key.expires_at,
             last_used_at=api_key.last_used_at,
             last_used_ip=api_key.last_used_ip,
@@ -973,7 +975,8 @@ async def create_project_api_key(
     
     # 키 해시 생성 (저장용)
     key_hash = hashlib.sha256(full_api_key.encode()).hexdigest()
-    key_prefix = full_api_key[:16] + "..."
+    key_prefix = full_api_key[:8]  # GitHub style: show first 8 chars
+    key_suffix = full_api_key[-4:]  # Show last 4 chars for preview
     
     logger.info(f"🔍 API 키 객체 생성 시작 - key_prefix: {key_prefix}")
     
@@ -984,6 +987,7 @@ async def create_project_api_key(
             description=api_key_data.description,
             key_hash=key_hash,
             key_prefix=key_prefix,
+            key_suffix=key_suffix,
             expires_at=api_key_data.expires_at,
             created_by_id=current_user.id
         )

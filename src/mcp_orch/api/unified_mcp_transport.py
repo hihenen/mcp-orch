@@ -25,9 +25,9 @@ from .jwt_auth import get_user_from_jwt_token
 from .mcp_sse_transport import MCPSSETransport, sse_transports
 from ..services.mcp_connection_service import mcp_connection_service
 from ..utils.namespace import (
-    NamespaceRegistry, OrchestratorMetaTools, UnifiedToolNaming,
+    NamespaceRegistry, UnifiedToolNaming,
     create_namespaced_name, parse_namespaced_name, is_namespaced, 
-    get_meta_tool_prefix, NAMESPACE_SEPARATOR
+    NAMESPACE_SEPARATOR
 )
 
 logger = logging.getLogger(__name__)
@@ -694,7 +694,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         request_id = message.get("id")
         legacy_mode = getattr(self, '_legacy_mode', True)  # 기본값 True (Inspector 호환성)
         
-        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers (legacy_mode: {legacy_mode}, filtering: enabled)")
+        logger.info(f"📋 Listing unified tools from {len(active_servers)} servers (legacy_mode: {legacy_mode}, tool_preferences: enabled)")
         
         # 각 서버에서 툴 수집 (강화된 에러 격리)
         for server in active_servers:
@@ -725,6 +725,18 @@ class UnifiedMCPTransport(MCPSSETransport):
                     self._record_server_failure(server.name, Exception(error_msg))
                     failed_servers.append(server.name)
                     continue
+                
+                # Tool Preferences 필터링 적용
+                from ..services.tool_filtering_service import ToolFilteringService
+                filtered_tools = await ToolFilteringService.filter_tools_by_preferences(
+                    project_id=self.project_id,
+                    server_id=server.id,
+                    tools=tools,
+                    db=None  # 별도 DB 세션 사용
+                )
+                
+                logger.info(f"🎯 Applied tool filtering for {server.name}: {len(filtered_tools)}/{len(tools)} tools enabled")
+                tools = filtered_tools  # 필터링된 도구로 교체
                 
                 # 네임스페이스 적용
                 namespace_name = self.namespace_registry.get_original_name(server.name)
@@ -766,24 +778,15 @@ class UnifiedMCPTransport(MCPSSETransport):
                     except Exception as e:
                         logger.error(f"Error processing tool {tool.get('name', 'unknown')} from {server.name}: {e}")
                         
-                # 서버 성공 기록
-                self._record_server_success(server.name, len(tools))
-                logger.info(f"✅ Collected {len(tools)} tools from server: {server.name}")
+                # 서버 성공 기록 (필터링된 도구 개수 사용)
+                self._record_server_success(server.name, len(filtered_tools))
+                logger.info(f"✅ Collected {len(filtered_tools)} tools from server: {server.name} (filtered from {len(tools)} total)")
                 
             except Exception as e:
                 logger.error(f"❌ Failed to get tools from server {server.name}: {e}")
                 self._record_server_failure(server.name, e)
                 failed_servers.append(server.name)
                 # 개별 서버 실패가 전체를 망가뜨리지 않도록 continue
-        
-        # 오케스트레이터 메타 도구 추가 (레거시 모드에서는 제외)
-        if not legacy_mode:
-            try:
-                meta_tools = OrchestratorMetaTools.get_meta_tools()
-                all_tools.extend(meta_tools)
-                logger.info(f"✅ Added {len(meta_tools)} orchestrator meta tools")
-            except Exception as e:
-                logger.error(f"❌ Failed to add meta tools: {e}")
         
         # 응답 구성
         response_data = {
@@ -803,7 +806,6 @@ class UnifiedMCPTransport(MCPSSETransport):
                 "failed_servers": failed_servers,
                 "namespace_separator": NAMESPACE_SEPARATOR,
                 "total_tools": len(all_tools),
-                "meta_tools": len([t for t in all_tools if t.get('_meta', {}).get('type') == 'orchestrator']),
                 "server_health": self._get_server_health_summary()
             }
         
@@ -827,10 +829,6 @@ class UnifiedMCPTransport(MCPSSETransport):
                 raise ValueError("Missing tool name")
             
             logger.info(f"🔧 Unified tool call: {namespaced_tool_name}")
-            
-            # 오케스트레이터 메타 도구 처리
-            if OrchestratorMetaTools.is_meta_tool(namespaced_tool_name):
-                return await self._handle_meta_tool_call(message)
             
             # 네임스페이스 파싱
             try:
@@ -1069,394 +1067,7 @@ class UnifiedMCPTransport(MCPSSETransport):
             # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
             return JSONResponse(content={"status": "processing"}, status_code=202)
     
-    async def _handle_meta_tool_call(self, message: Dict[str, Any]) -> JSONResponse:
-        """오케스트레이터 메타 도구 처리"""
-        try:
-            params = message.get("params", {})
-            tool_name = params.get("name")
-            arguments = params.get("arguments", {})
-            
-            logger.info(f"🔧 Meta tool call: {tool_name}")
-            
-            meta_prefix = get_meta_tool_prefix()
-            
-            if tool_name == f"{meta_prefix}list_servers":
-                return await self._meta_list_servers(message)
-            elif tool_name == f"{meta_prefix}server_status":
-                return await self._meta_server_status(message, arguments)
-            elif tool_name == f"{meta_prefix}project_info":
-                return await self._meta_project_info(message)
-            elif tool_name == f"{meta_prefix}recover_failed_servers":
-                return await self._meta_recover_failed_servers(message, arguments)
-            elif tool_name == f"{meta_prefix}health_report":
-                return await self._meta_health_report(message)
-            else:
-                raise ValueError(f"Unknown meta tool: {tool_name}")
-                
-        except Exception as e:
-            logger.error(f"❌ Meta tool error: {e}")
-            return JSONResponse(content={
-                "jsonrpc": "2.0",
-                "id": message.get("id"),
-                "error": {
-                    "code": -32000,
-                    "message": f"Meta tool execution failed: {str(e)}"
-                }
-            })
     
-    async def _meta_list_servers(self, message: Dict[str, Any]) -> JSONResponse:
-        """서버 목록 조회 메타 도구"""
-        servers_info = []
-        
-        for server in self.project_servers:
-            namespace_name = next(
-                (ns for ns, orig in self.namespace_registry.get_all_mappings().items() if orig == server.name),
-                server.name
-            )
-            
-            # 서버 헬스 정보 추가
-            health_info = self.server_health.get(server.name)
-            if health_info:
-                status = health_info.status.value
-                tools_count = health_info.tools_available
-                consecutive_failures = health_info.consecutive_failures
-            else:
-                status = "unknown"
-                tools_count = 0
-                consecutive_failures = 0
-            
-            servers_info.append({
-                "name": server.name,
-                "namespace": namespace_name,
-                "enabled": server.is_enabled,
-                "status": status,
-                "command": server.command,
-                "description": getattr(server, 'description', None),
-                "tools_count": tools_count,
-                "consecutive_failures": consecutive_failures
-            })
-        
-        result_text = f"📋 Project Servers ({len(self.project_servers)} total):\n\n"
-        for info in servers_info:
-            # 상태별 아이콘 결정
-            if info["status"] == "failed":
-                status_icon = "❌"
-            elif info["status"] == "degraded":
-                status_icon = "⚠️"
-            elif info["status"] == "healthy" and info["enabled"]:
-                status_icon = "✅"
-            elif not info["enabled"]:
-                status_icon = "⏸️"
-            else:
-                status_icon = "❓"
-            
-            result_text += f"{status_icon} {info['namespace']} ({info['name']})\n"
-            result_text += f"   Status: {info['status']}\n"
-            result_text += f"   Command: {info['command']}\n"
-            result_text += f"   Tools Available: {info['tools_count']}\n"
-            
-            if info['consecutive_failures'] > 0:
-                result_text += f"   Consecutive Failures: {info['consecutive_failures']}\n"
-            
-            if info['description']:
-                result_text += f"   Description: {info['description']}\n"
-            result_text += "\n"
-        
-        return JSONResponse(content={
-            "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "result": {
-                "content": [{"type": "text", "text": result_text}],
-                "_meta": {"servers": servers_info}
-            }
-        })
-    
-    async def _meta_server_status(self, message: Dict[str, Any], arguments: Dict[str, Any]) -> JSONResponse:
-        """서버 상태 조회 메타 도구"""
-        server_name = arguments.get("server_name")
-        if not server_name:
-            raise ValueError("server_name argument required")
-        
-        # 서버 찾기 (네임스페이스명 또는 원본명으로)
-        target_server = self._find_server_by_namespace(server_name)
-        if not target_server:
-            target_server = next((s for s in self.project_servers if s.name == server_name), None)
-        
-        if not target_server:
-            raise ValueError(f"Server '{server_name}' not found")
-        
-        # 상태 정보 수집
-        status_info = {
-            "name": target_server.name,
-            "enabled": target_server.is_enabled,
-            "failed": target_server.name in self.failed_servers,
-            "command": target_server.command,
-            "args": target_server.args or [],
-            "env": target_server.env or {},
-            "description": getattr(target_server, 'description', None)
-        }
-        
-        # 실시간 연결 테스트 (옵션)
-        try:
-            if target_server.is_enabled and target_server.name not in self.failed_servers:
-                server_config = self._build_server_config_for_server(target_server)
-                # 간단한 상태 확인 (타임아웃 짧게)
-                connection_status = await mcp_connection_service.check_server_status(
-                    str(target_server.id), server_config
-                )
-                status_info["connection_status"] = connection_status
-        except Exception as e:
-            status_info["connection_status"] = f"error: {str(e)}"
-        
-        result_text = f"🔍 Server Status: {target_server.name}\n\n"
-        result_text += f"Enabled: {'✅' if status_info['enabled'] else '❌'}\n"
-        result_text += f"Failed: {'❌' if status_info['failed'] else '✅'}\n"
-        result_text += f"Command: {status_info['command']}\n"
-        if status_info['args']:
-            result_text += f"Args: {' '.join(status_info['args'])}\n"
-        if status_info.get('connection_status'):
-            result_text += f"Connection: {status_info['connection_status']}\n"
-        
-        return JSONResponse(content={
-            "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "result": {
-                "content": [{"type": "text", "text": result_text}],
-                "_meta": {"server_status": status_info}
-            }
-        })
-    
-    async def _meta_switch_namespace(self, message: Dict[str, Any], arguments: Dict[str, Any]) -> JSONResponse:
-        """네임스페이스 구분자 변경 메타 도구"""
-        new_separator = arguments.get("separator")
-        if not new_separator:
-            raise ValueError("separator argument required")
-        
-        if not NamespaceConfig.validate_separator(new_separator):
-            raise ValueError(f"Invalid separator '{new_separator}'. Valid separators: {[s.value for s in NamespaceConfig.NamespaceSeparator]}")
-        
-        old_separator = self.tool_naming.separator
-        
-        # 새로운 구분자로 업데이트
-        self.tool_naming = UnifiedToolNaming(new_separator)
-        
-        # 네임스페이스 레지스트리 재구성
-        self.namespace_registry.clear()
-        self._register_servers()
-        
-        result_text = f"🔄 Namespace separator changed: '{old_separator}' → '{new_separator}'\n\n"
-        result_text += "All tool names will now use the new separator format.\n"
-        result_text += "Use tools/list to see updated tool names."
-        
-        logger.info(f"🔄 Namespace separator changed: '{old_separator}' → '{new_separator}' (session: {self.session_id})")
-        
-        return JSONResponse(content={
-            "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "result": {
-                "content": [{"type": "text", "text": result_text}],
-                "_meta": {
-                    "old_separator": old_separator,
-                    "new_separator": new_separator
-                }
-            }
-        })
-    
-    async def _meta_project_info(self, message: Dict[str, Any]) -> JSONResponse:
-        """프로젝트 정보 조회 메타 도구"""
-        project_info = {
-            "project_id": str(self.project_id),
-            "total_servers": len(self.project_servers),
-            "active_servers": len([s for s in self.project_servers if s.is_enabled]),
-            "failed_servers": len(self.failed_servers),
-            "namespace_separator": self.tool_naming.separator,
-            "session_id": self.session_id
-        }
-        
-        result_text = f"📊 Project Information\n\n"
-        result_text += f"Project ID: {project_info['project_id']}\n"
-        result_text += f"Total Servers: {project_info['total_servers']}\n"
-        result_text += f"Active Servers: {project_info['active_servers']}\n"
-        result_text += f"Failed Servers: {project_info['failed_servers']}\n"
-        result_text += f"Namespace Separator: '{project_info['namespace_separator']}'\n"
-        result_text += f"Session ID: {project_info['session_id']}\n"
-        
-        return JSONResponse(content={
-            "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "result": {
-                "content": [{"type": "text", "text": result_text}],
-                "_meta": {"project_info": project_info}
-            }
-        })
-    
-    async def _meta_recover_failed_servers(self, message: Dict[str, Any], arguments: Dict[str, Any]) -> JSONResponse:
-        """실패한 서버 복구 시도 메타 도구"""
-        target_server_name = arguments.get("server_name")
-        
-        if target_server_name:
-            # 특정 서버 복구
-            servers_to_recover = [s for s in self.project_servers if s.name == target_server_name]
-            if not servers_to_recover:
-                raise ValueError(f"Server '{target_server_name}' not found")
-        else:
-            # 모든 실패한 서버 복구
-            failed_server_names = self._get_failed_servers()
-            servers_to_recover = [s for s in self.project_servers if s.name in failed_server_names]
-        
-        recovery_results = []
-        
-        for server in servers_to_recover:
-            health_info = self.server_health.get(server.name)
-            if not health_info:
-                continue
-            
-            logger.info(f"🔄 Attempting to recover server: {server.name}")
-            
-            # 복구 시도 기록
-            health_info.start_recovery()
-            
-            try:
-                # 서버 설정 구성 시도
-                server_config = self._build_server_config_for_server(server)
-                if not server_config:
-                    recovery_results.append({
-                        "server": server.name,
-                        "success": False,
-                        "error": "Failed to build server configuration"
-                    })
-                    continue
-                
-                # 서버 도구 목록 가져오기 시도 (연결 테스트)
-                tools = await mcp_connection_service.get_server_tools(
-                    str(server.id), server_config
-                )
-                
-                if tools is not None:
-                    # 복구 성공
-                    self._record_server_success(server.name, len(tools))
-                    recovery_results.append({
-                        "server": server.name,
-                        "success": True,
-                        "tools_count": len(tools)
-                    })
-                    
-                    # 구조화된 로깅
-                    self.structured_logger.session_event(
-                        "server_recovered",
-                        server_name=server.name,
-                        tools_count=len(tools),
-                        recovery_attempts=health_info.recovery_attempts
-                    )
-                else:
-                    recovery_results.append({
-                        "server": server.name,
-                        "success": False,
-                        "error": "Server returned no tools"
-                    })
-                    
-            except Exception as e:
-                # 복구 실패
-                self._record_server_failure(server.name, e)
-                recovery_results.append({
-                    "server": server.name,
-                    "success": False,
-                    "error": str(e)
-                })
-        
-        # 결과 정리
-        successful_recoveries = [r for r in recovery_results if r["success"]]
-        failed_recoveries = [r for r in recovery_results if not r["success"]]
-        
-        result_text = f"🔄 Server Recovery Results:\n\n"
-        
-        if successful_recoveries:
-            result_text += f"✅ Successfully Recovered ({len(successful_recoveries)}):\n"
-            for result in successful_recoveries:
-                result_text += f"   • {result['server']} ({result.get('tools_count', 0)} tools)\n"
-            result_text += "\n"
-        
-        if failed_recoveries:
-            result_text += f"❌ Failed to Recover ({len(failed_recoveries)}):\n"
-            for result in failed_recoveries:
-                result_text += f"   • {result['server']}: {result['error']}\n"
-            result_text += "\n"
-        
-        if not recovery_results:
-            result_text += "ℹ️ No servers found for recovery.\n"
-        
-        result_text += f"Use {get_meta_tool_prefix()}health_report for detailed status information."
-        
-        return JSONResponse(content={
-            "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "result": {
-                "content": [{"type": "text", "text": result_text}],
-                "_meta": {
-                    "total_attempted": len(recovery_results),
-                    "successful": len(successful_recoveries),
-                    "failed": len(failed_recoveries),
-                    "results": recovery_results
-                }
-            }
-        })
-    
-    async def _meta_health_report(self, message: Dict[str, Any]) -> JSONResponse:
-        """종합 헬스 리포트 및 권장 사항 메타 도구"""
-        health_summary = self._get_server_health_summary()
-        
-        result_text = f"🏥 Server Health Report\n\n"
-        
-        # 전체 요약
-        result_text += f"📊 Summary:\n"
-        result_text += f"   Total Servers: {health_summary['total_servers']}\n"
-        result_text += f"   ✅ Healthy: {health_summary['healthy_servers']}\n"
-        result_text += f"   ⚠️ Degraded: {health_summary['degraded_servers']}\n"
-        result_text += f"   ❌ Failed: {health_summary['failed_servers']}\n\n"
-        
-        # 개별 서버 상세 정보
-        recommendations = []
-        
-        for server_name, server_health in health_summary['servers'].items():
-            status = server_health['status']
-            
-            if status == 'failed':
-                result_text += f"❌ {server_name}:\n"
-                result_text += f"   Status: Failed ({server_health['consecutive_failures']} consecutive failures)\n"
-                result_text += f"   Last Error: {server_health['last_error_type']} - {server_health['last_error_message']}\n"
-                result_text += f"   Last Success: {server_health['last_success']}\n"
-                
-                recommendations.append(f"• Try recovering {server_name} using {get_meta_tool_prefix()}recover_failed_servers")
-                
-            elif status == 'degraded':
-                result_text += f"⚠️ {server_name}:\n"
-                result_text += f"   Status: Degraded ({server_health['consecutive_failures']} recent failures)\n"
-                result_text += f"   Tools Available: {server_health['tools_available']}\n"
-                result_text += f"   Last Error: {server_health['last_error_type']}\n"
-                
-                recommendations.append(f"• Monitor {server_name} closely - may need attention")
-                
-            elif status == 'healthy':
-                result_text += f"✅ {server_name}: Healthy ({server_health['tools_available']} tools)\n"
-            
-            result_text += "\n"
-        
-        # 권장 사항
-        if recommendations:
-            result_text += "💡 Recommendations:\n"
-            for rec in recommendations:
-                result_text += f"   {rec}\n"
-        else:
-            result_text += "✨ All servers are operating normally!\n"
-        
-        return JSONResponse(content={
-            "jsonrpc": "2.0",
-            "id": message.get("id"),
-            "result": {
-                "content": [{"type": "text", "text": result_text}],
-                "_meta": health_summary
-            }
-        })
     
     def _find_server_by_namespace(self, namespace_name: str) -> Optional[McpServer]:
         """네임스페이스명으로 서버 찾기"""

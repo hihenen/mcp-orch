@@ -32,6 +32,7 @@ class ApiKey(Base):
     description = Column(String(1000), nullable=True)  # Optional description
     key_hash = Column(String(255), unique=True, nullable=False)  # Store hashed version
     key_prefix = Column(String(50), nullable=False)  # First chars for identification (expanded from 10)
+    key_suffix = Column(String(10), nullable=False)  # Last chars for preview display
     
     # Key settings
     is_active = Column(Boolean, default=True, nullable=False)
