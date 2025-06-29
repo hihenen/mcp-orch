@@ -406,10 +406,12 @@
     - [x] ApiKey 모델의 api_key_hash → key_hash 필드명 수정
     - [x] 누락된 key_prefix 필드 추가
     - [x] "api_key_hash is an invalid keyword argument" 오류 해결
+  - [x] Step 1.7: MCP 서버 "No Auth" 상태 표시 문제 수정 ✅
+    - [x] McpServerResponse와 McpServerDetailResponse 모델에 jwt_auth_required 필드 추가
+    - [x] server.get_effective_jwt_auth_required() 메서드 사용으로 변경
+    - [x] 프로젝트 기본 인증 설정 상속 로직 적용
+    - [x] 프론트엔드에서 올바른 인증 상태 표시되도록 수정
 
-### TASK_144: MCP 서버 'No Auth' 상태 문제 조사 및 해결 ✅
-- [x] 문제 원인 분석 완료
-  - [x] 프론트엔드에서 `jwt_auth_required` 필드값에 따라 "No Auth" 표시 확인
   - [x] 백엔드 `list_project_servers`에서 `server.jwt_auth_required` 직접 반환 (null일 수 있음)
   - [x] 실제로는 `server.get_effective_jwt_auth_required()` 사용해야 함 (프로젝트 기본값 적용)
 - [x] 백엔드 API 수정
@@ -420,9 +422,9 @@
 - [x] CHANGELOG.md 업데이트 및 문서화
 
 ## Progress Status  
-- Current Progress: TASK_144 - MCP 서버 'No Auth' 상태 문제 해결 완료 ✅ 
+- Current Progress: TASK_143 Phase 1 - MCP 서버 "No Auth" 상태 문제 해결 완료, Phase 1 모든 Critical Issues 완전 해결 ✅
 - Next Task: TASK_143 Phase 1 긴급 기능 검증 또는 Phase 2 백엔드 안정화 시작
-- Last Update: 2025-06-29 16:29
+- Last Update: 2025-06-29 16:42
 - Automatic Check Feedback: Projects.py 리팩토링 현황 분석 완료! 52% 완성 상태에서 Owner 권한 문제 등 Critical 이슈 발견. 체계적인 4단계 계획 수립으로 100% 완료 목표. 긴급히 프론트엔드 호환성 문제부터 해결 필요.
 
 ## Lessons Learned and Insights

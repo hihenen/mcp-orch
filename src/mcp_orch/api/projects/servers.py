@@ -56,6 +56,9 @@ class McpServerResponse(BaseModel):
     updated_at: datetime
     last_used_at: Optional[datetime] = None
     
+    # Authentication settings
+    jwt_auth_required: bool
+    
     # 상태 정보 (서버 목록에서도 표시)
     status: str = "unknown"  # online, offline, error, disabled
     tools_count: int = 0
@@ -76,6 +79,9 @@ class McpServerDetailResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     last_used_at: Optional[datetime] = None
+    
+    # Authentication settings
+    jwt_auth_required: bool
     
     # 추가 정보
     status: str = "unknown"  # online, offline, error, disabled
@@ -255,6 +261,7 @@ async def list_project_servers(
                 created_at=server.created_at,
                 updated_at=server.updated_at,
                 last_used_at=server.last_used_at,
+                jwt_auth_required=server.get_effective_jwt_auth_required(),
                 status=status_info["status"],
                 tools_count=len(status_info["tools"])
             ))
@@ -273,6 +280,7 @@ async def list_project_servers(
                 created_at=server.created_at,
                 updated_at=server.updated_at,
                 last_used_at=server.last_used_at,
+                jwt_auth_required=server.get_effective_jwt_auth_required(),
                 status="unknown",
                 tools_count=0
             ))
@@ -353,6 +361,7 @@ async def create_project_server(
         created_at=new_server.created_at,
         updated_at=new_server.updated_at,
         last_used_at=new_server.last_used_at,
+        jwt_auth_required=new_server.get_effective_jwt_auth_required(),
         status=status_info["status"],
         tools_count=len(status_info["tools"])
     )
@@ -401,6 +410,7 @@ async def get_project_server_detail(
         created_at=server.created_at,
         updated_at=server.updated_at,
         last_used_at=server.last_used_at,
+        jwt_auth_required=server.get_effective_jwt_auth_required(),
         status=status_info["status"],
         tools_count=len(status_info["tools"]),
         tools=status_info["tools"]  # 툴 목록도 포함
@@ -502,6 +512,7 @@ async def update_project_server(
         created_at=server.created_at,
         updated_at=server.updated_at,
         last_used_at=server.last_used_at,
+        jwt_auth_required=server.get_effective_jwt_auth_required(),
         status=status_info["status"],
         tools_count=len(status_info["tools"])
     )
