@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_144] Fix MCP server "No Auth" status display issue by using effective JWT authentication (2025-06-29)
+  - Replace direct jwt_auth_required field usage with get_effective_jwt_auth_required() method
+  - Ensure servers properly inherit JWT authentication settings from project defaults
+  - Apply fix across projects.py, projects_original.py, and servers.py API endpoints
+  - Server authentication status now correctly shows project default when server-level setting is null
+  - Resolves incorrect "🚫 No Auth" display for servers that should inherit project authentication
 - [TASK_143] Fix API key creation field naming mismatch error (2025-06-29)
   - Change api_key_hash to key_hash in ApiKey creation to match SQLAlchemy model
   - Add missing key_prefix field to prevent database constraint errors

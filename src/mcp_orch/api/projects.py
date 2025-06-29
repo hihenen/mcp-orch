@@ -1216,7 +1216,7 @@ async def list_project_servers(
             last_connected=server.last_used_at,
             created_at=server.created_at,
             updated_at=server.updated_at,
-            jwt_auth_required=server.jwt_auth_required
+            jwt_auth_required=server.get_effective_jwt_auth_required()
         ))
     
     return result
@@ -1321,7 +1321,7 @@ async def get_project_server_detail(
         last_connected=server.last_used_at,
         created_at=server.created_at,
         updated_at=server.updated_at,
-        jwt_auth_required=server.jwt_auth_required
+        jwt_auth_required=server.get_effective_jwt_auth_required()
     )
 
 
@@ -1399,7 +1399,7 @@ async def create_project_server(
         last_connected=new_server.last_used_at,
         created_at=new_server.created_at,
         updated_at=new_server.updated_at,
-        jwt_auth_required=new_server.jwt_auth_required
+        jwt_auth_required=new_server.get_effective_jwt_auth_required()
     )
 
 
@@ -1516,7 +1516,7 @@ async def update_project_server(
         last_connected=server.last_used_at,
         created_at=server.created_at,
         updated_at=server.updated_at,
-        jwt_auth_required=server.jwt_auth_required
+        jwt_auth_required=server.get_effective_jwt_auth_required()
     )
 
 

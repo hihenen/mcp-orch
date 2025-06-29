@@ -64,7 +64,7 @@ async def get_servers(
             last_used=server.last_used_at,
             created_at=server.created_at,
             updated_at=server.updated_at,
-            jwt_auth_required=server.jwt_auth_required,
+            jwt_auth_required=server.get_effective_jwt_auth_required(),
             computed_jwt_auth_required=server.get_effective_jwt_auth_required()
         )
         for server in servers
