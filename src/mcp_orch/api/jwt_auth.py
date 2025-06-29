@@ -411,11 +411,19 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             
             print(f"🔍 Looking for API key with hash: {key_hash[:20]}...")
             
-            # 데이터베이스에서 API 키 조회
+            # 데이터베이스에서 API 키 조회 (해시로 먼저 검색)
             api_key_record = db.query(ApiKey).filter(
                 ApiKey.key_hash == key_hash,
                 ApiKey.is_active == True
             ).first()
+            
+            # 해시로 찾지 못하면 평문으로 검색 (기존 데이터 호환성)
+            if not api_key_record:
+                print("🔍 Hash search failed, trying plaintext for backward compatibility...")
+                api_key_record = db.query(ApiKey).filter(
+                    ApiKey.key_hash == api_key,
+                    ApiKey.is_active == True
+                ).first()
             
             if not api_key_record:
                 print("❌ API key not found or inactive")
@@ -624,11 +632,19 @@ async def _get_user_from_project_api_key(api_key: str, db: Session) -> Optional[
         
         logger.info(f"🔍 Looking for API key with hash: {key_hash[:20]}...")
         
-        # 데이터베이스에서 API 키 조회
+        # 데이터베이스에서 API 키 조회 (해시로 먼저 검색)
         api_key_record = db.query(ApiKey).filter(
             ApiKey.key_hash == key_hash,
             ApiKey.is_active == True
         ).first()
+        
+        # 해시로 찾지 못하면 평문으로 검색 (기존 데이터 호환성)
+        if not api_key_record:
+            logger.info("🔍 Hash search failed, trying plaintext for backward compatibility...")
+            api_key_record = db.query(ApiKey).filter(
+                ApiKey.key_hash == api_key,
+                ApiKey.is_active == True
+            ).first()
         
         if not api_key_record:
             logger.warning("❌ API key not found or inactive")
@@ -684,11 +700,19 @@ async def _get_user_from_mcp_api_key(api_key: str, db: Session) -> Optional[User
         
         logger.info(f"🔍 Looking for MCP API key with hash: {key_hash[:20]}...")
         
-        # 데이터베이스에서 API 키 조회
+        # 데이터베이스에서 API 키 조회 (해시로 먼저 검색)
         api_key_record = db.query(ApiKey).filter(
             ApiKey.key_hash == key_hash,
             ApiKey.is_active == True
         ).first()
+        
+        # 해시로 찾지 못하면 평문으로 검색 (기존 데이터 호환성)
+        if not api_key_record:
+            logger.info("🔍 Hash search failed, trying plaintext for backward compatibility...")
+            api_key_record = db.query(ApiKey).filter(
+                ApiKey.key_hash == api_key,
+                ApiKey.is_active == True
+            ).first()
         
         if not api_key_record:
             logger.warning("❌ MCP API key not found or inactive")

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_169] API key security enhancement with hash-based storage (2025-06-30)
+  - Implement SHA-256 hash storage for newly generated API keys
+  - Add hybrid search mechanism for backward compatibility with existing plaintext keys
+  - Ensure new API keys are stored securely while maintaining existing key functionality
+- [TASK_168] Fix API key prefix compatibility for SSE authentication (2025-06-30)
+  - Change API key generation from sk_ to mch_ prefix for MCP compatibility
+  - Ensure consistent API key format across all MCP server connections
+  - Fix SSE authentication failures caused by unsupported key prefixes
+- [TASK_167] Add database migration script for development workflow (2025-06-30)
+  - Create scripts/migrate.sh for automated post-git-pull migration and restart process
+  - Include comprehensive error handling and service health checks
+  - Provide single command solution for development environment updates
+
+### Added
 - [TASK_162] Improve landing page UX and content strategy (2025-06-29)
   - Fix language inconsistency by standardizing all content to English
   - Add target audience badge "For Developers & AI Teams" to clarify user focus

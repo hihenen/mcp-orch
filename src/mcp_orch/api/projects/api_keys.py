@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import logging
 import secrets
 import string
+import hashlib
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
@@ -69,8 +70,8 @@ def generate_api_key() -> tuple[str, str]:
     alphabet = string.ascii_letters + string.digits
     api_key = ''.join(secrets.choice(alphabet) for _ in range(48))
     
-    # sk- 접두사 추가
-    full_key = f"sk-{api_key}"
+    # mch_ 접두사 추가 (MCP 호환성)
+    full_key = f"mch_{api_key}"
     
     # 마지막 8자리를 접미사로 사용
     suffix = api_key[-8:]
@@ -170,17 +171,17 @@ async def create_project_api_key(
         )
     
     # API 키 생성
-    api_key, key_suffix = generate_api_key()
+    full_api_key, key_suffix = generate_api_key()
     
     # key_prefix 생성 (앞의 8자리)
-    key_prefix = api_key[:8]  # sk- 포함하여 앞 8자리
+    key_prefix = full_api_key[:8]  # mch_ 포함하여 앞 8자리
     
     new_api_key = ApiKey(
         project_id=project_id,
         created_by_id=current_user.id,
         name=key_data.name,
         description=key_data.description,
-        key_hash=api_key,  # 실제로는 해시해서 저장해야 함
+        key_hash=hashlib.sha256(full_api_key.encode()).hexdigest(),  # 보안을 위해 해시로 저장
         key_prefix=key_prefix,
         key_suffix=key_suffix,
         expires_at=key_data.expires_at
@@ -214,7 +215,7 @@ async def create_project_api_key(
         id=str(new_api_key.id),
         name=new_api_key.name,
         description=new_api_key.description,
-        api_key=api_key,  # 전체 키는 생성 시에만 반환
+        api_key=full_api_key,  # 전체 키는 생성 시에만 반환
         key_suffix=new_api_key.key_suffix,
         expires_at=new_api_key.expires_at,
         created_at=new_api_key.created_at
