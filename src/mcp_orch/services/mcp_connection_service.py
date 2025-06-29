@@ -19,15 +19,15 @@ from ..services.mcp import McpOrchestrator, McpConnectionManager, etc.
 This file maintains the original interface for backward compatibility.
 """
 
-# Import refactored components
-from .mcp_connection_service_refactored import (
-    McpConnectionService,
-    mcp_connection_service,
-    ToolExecutionError
-)
+# Import refactored components from the new modular structure
+from .mcp import ToolExecutionError
+from .mcp.orchestrator import McpConnectionService
 
 import logging
 logger = logging.getLogger(__name__)
+
+# Create global instance for backward compatibility
+mcp_connection_service = McpConnectionService()
 
 # Re-export for backward compatibility
 __all__ = ['McpConnectionService', 'mcp_connection_service', 'ToolExecutionError']
