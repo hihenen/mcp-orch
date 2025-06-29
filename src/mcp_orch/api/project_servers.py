@@ -43,6 +43,7 @@ class ServerUpdate(BaseModel):
     args: Optional[List[str]] = None
     env: Optional[dict] = None
     cwd: Optional[str] = None
+    jwt_auth_required: Optional[bool] = None
 
 
 class ServerResponse(BaseModel):
@@ -55,6 +56,7 @@ class ServerResponse(BaseModel):
     env: dict
     cwd: Optional[str]
     is_enabled: bool
+    jwt_auth_required: Optional[bool] = None
     status: str = "offline"
     tools_count: int = 0
     tools: List[dict] = []
@@ -200,6 +202,7 @@ async def list_project_servers(
             env=server.env or {},
             cwd=server.cwd,
             is_enabled=server.is_enabled,
+            jwt_auth_required=server.get_effective_jwt_auth_required(),
             status=server_status,
             tools_count=tools_count,
             last_connected=server.last_used_at,
@@ -281,6 +284,7 @@ async def get_project_server_detail(
         "env": server.env or {},
         "cwd": server.cwd,
         "is_enabled": server.is_enabled,
+        "jwt_auth_required": server.jwt_auth_required,
         "status": server_status,
         "tools_count": tools_count,
         "tools": tools if server_status == "online" else [],
@@ -358,6 +362,7 @@ async def create_project_server(
         env=new_server.env or {},
         cwd=new_server.cwd,
         is_enabled=new_server.is_enabled,
+        jwt_auth_required=new_server.jwt_auth_required,
         status="offline",
         tools_count=0,
         last_connected=new_server.last_used_at,
@@ -455,6 +460,9 @@ async def update_project_server(
     if server_data.cwd is not None:
         logger.info(f"🔥 Updating cwd: {server.cwd} -> {server_data.cwd}")
         server.cwd = server_data.cwd
+    if hasattr(server_data, 'jwt_auth_required'):
+        logger.info(f"🔥 Updating jwt_auth_required: {server.jwt_auth_required} -> {server_data.jwt_auth_required}")
+        server.jwt_auth_required = server_data.jwt_auth_required
     
     server.updated_at = datetime.utcnow()
     
@@ -472,7 +480,8 @@ async def update_project_server(
         args=server.args or [],
         env=server.env or {},
         cwd=server.cwd,
-        disabled=not server.is_enabled,
+        is_enabled=server.is_enabled,
+        jwt_auth_required=server.jwt_auth_required,
         status="offline",
         tools_count=0,
         last_connected=server.last_used_at,

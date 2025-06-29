@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_144] Fix MCP server JWT authentication setting update not persisting (2025-06-29)
+  - Add jwt_auth_required field to ServerUpdate Pydantic model in project_servers.py
+  - Add jwt_auth_required processing logic in update_project_server function  
+  - Include jwt_auth_required field in all ServerResponse models for consistent API responses
+  - Update both original and refactored projects API modules for complete coverage
+  - Resolve issue where JWT auth setting changes from frontend were ignored by backend
+  - Ensure "Project Default" to "Inherit" changes properly save as null in database
 - [TASK_143] Fix MCP server 'No Auth' status display issue (2025-06-29)
   - Add jwt_auth_required field to McpServerResponse and McpServerDetailResponse models
   - Use server.get_effective_jwt_auth_required() method instead of direct field access

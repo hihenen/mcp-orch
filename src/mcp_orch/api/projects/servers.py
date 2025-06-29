@@ -41,6 +41,7 @@ class McpServerUpdate(BaseModel):
     env: Optional[Dict[str, str]] = Field(None, description="환경변수")
     timeout: Optional[int] = Field(None, gt=0, le=300, description="연결 타임아웃 (초)")
     is_enabled: Optional[bool] = Field(None, description="서버 활성화 상태")
+    jwt_auth_required: Optional[bool] = Field(None, description="JWT 인증 필요 여부")
 
 
 class McpServerResponse(BaseModel):

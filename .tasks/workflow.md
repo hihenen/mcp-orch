@@ -421,11 +421,27 @@
   - [x] `projects_original.py`와 `servers.py`에서도 동일하게 수정
 - [x] CHANGELOG.md 업데이트 및 문서화
 
+### TASK_144: MCP 서버 JWT 인증 설정 업데이트 불가 문제 해결 ✅
+- [x] 문제 원인 분석 완료
+  - [x] 프론트엔드: jwt_auth_required 필드로 올바르게 전송
+  - [x] 데이터베이스: jwt_auth_required 컬럼 존재 확인
+  - [x] 백엔드 문제 확인: ServerUpdate 모델에 jwt_auth_required 필드 누락
+  - [x] 백엔드 문제 확인: update_project_server 함수에 jwt_auth_required 처리 로직 없음
+- [x] 백엔드 API 수정 완료
+  - [x] project_servers.py의 ServerUpdate 모델에 jwt_auth_required 필드 추가
+  - [x] update_project_server 함수에 jwt_auth_required 처리 로직 추가
+  - [x] ServerResponse 모델에 jwt_auth_required 필드 추가
+  - [x] 모든 서버 응답 함수에서 jwt_auth_required 필드 포함
+- [x] 리팩토링된 API 동기화
+  - [x] api/projects/servers.py의 McpServerUpdate 모델에 jwt_auth_required 필드 추가
+  - [x] 리팩토링된 API는 범용 업데이트 로직으로 이미 지원됨 확인
+- [x] CHANGELOG.md 업데이트 및 문서화
+
 ## Progress Status  
-- Current Progress: TASK_143 Phase 1 - MCP 서버 "No Auth" 상태 문제 해결 완료, Phase 1 모든 Critical Issues 완전 해결 ✅
-- Next Task: TASK_143 Phase 1 긴급 기능 검증 또는 Phase 2 백엔드 안정화 시작
-- Last Update: 2025-06-29 16:42
-- Automatic Check Feedback: Projects.py 리팩토링 현황 분석 완료! 52% 완성 상태에서 Owner 권한 문제 등 Critical 이슈 발견. 체계적인 4단계 계획 수립으로 100% 완료 목표. 긴급히 프론트엔드 호환성 문제부터 해결 필요.
+- Current Progress: TASK_144 - MCP 서버 JWT 인증 설정 업데이트 문제 완전 해결 ✅
+- Next Task: TASK_144 수정사항 커밋 및 사용자 테스트 안내  
+- Last Update: 2025-06-29 17:01
+- Automatic Check Feedback: MCP 서버 JWT 인증 설정 업데이트 문제의 근본 원인을 정확히 파악하고 완전히 해결했습니다. 프론트엔드-백엔드 API 일치성 문제였으며, 백엔드에서 누락된 필드 및 처리 로직을 추가하여 해결 완료.
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
