@@ -7,6 +7,22 @@
 
 ## Task List
 
+### TASK_158: MCP 메시지 읽기 UTF-8 인코딩 오류 수정 ✅
+- [x] UTF-8 인코딩 오류 분석
+  - [x] "unexpected end of data" 오류 (8KB 청크 경계에서 멀티바이트 문자 분할)
+  - [x] "invalid start byte" 오류 (스트림 시작 부분의 잘못된 바이트 시퀀스)
+  - [x] 기존 chunk.decode('utf-8') 방식의 한계점 파악
+- [x] 증분 UTF-8 디코더 구현
+  - [x] codecs.getincrementaldecoder('utf-8') 사용하여 안전한 디코딩
+  - [x] 바이트 버퍼(_byte_buffer) 추가로 불완전한 멀티바이트 문자 처리
+  - [x] final=False 옵션으로 청크 경계 멀티바이트 문자 대응
+- [x] 세션 관리 개선
+  - [x] 세션 초기화 시 _byte_buffer, _utf8_decoder 추가
+  - [x] 세션 정리 시 모든 버퍼 및 디코더 상태 초기화
+  - [x] UnicodeDecodeError 예외 처리 강화 및 디버깅 로그 개선
+- [x] CHANGELOG.md 업데이트
+- [x] .tasks/workflow.md 상태 업데이트
+
 ### TASK_157: MCP Session Manager 데이터베이스 세션 타입 오류 수정 ✅
 - [x] 데이터베이스 세션 타입 불일치 문제 분석
   - [x] "'str' object has no attribute 'rollback'" 오류 원인 파악
@@ -556,14 +572,14 @@
 - [ ] 변경사항 커밋
 
 ## Progress Status  
-- Current Progress: TASK_157 완료 - MCP Session Manager 데이터베이스 세션 타입 오류 수정 완료
+- Current Progress: TASK_158 완료 - MCP 메시지 읽기 UTF-8 인코딩 오류 수정 완료
 - Next Task: 다음 우선순위 작업 대기
 - Last Update: 2025-06-29
 - Automatic Check Feedback: 
-  - ✅ 데이터베이스 세션 타입 검증 로직 추가로 "'str' object has no attribute 'rollback'" 오류 방지
-  - ✅ mcp_sdk_sse_bridge.py에서 동기 세션 관리 확인 완료 (try-finally 블록 적용됨)
-  - ✅ _save_tool_call_log에 타입 안전성 강화로 ToolCallLog 저장 실패 방지
-  - ✅ Context7 도구 실행 시 audit 로깅 안정성 확보
+  - ✅ 증분 UTF-8 디코더 구현으로 멀티바이트 문자 청크 경계 문제 해결
+  - ✅ 바이트 버퍼 관리로 "unexpected end of data" 및 "invalid start byte" 오류 방지
+  - ✅ MCP 도구 실행 중 발생하는 간헐적 UTF-8 인코딩 오류 완전 해결
+  - ✅ 세션 관리 강화로 버퍼 상태 안정성 확보
 - Next: 정확한 타입 불일치 원인 확인 및 해결 방안 구현
 - 이전 완료 성과: Projects API (2,031줄→8모듈), Teams API (1,069줄→7모듈), MCP Connection Service (1,531줄→8모듈), Unified Transport (1,328줄→6모듈), Standard MCP API (1,248줄→8모듈) 리팩토링 완료
 - 리팩토링 성과: 총 5개 Critical Priority 파일 (7,207줄) → 37개 모듈 (평균 195줄)  

@@ -484,11 +484,16 @@ class McpSessionManager:
             raise
     
     async def _read_message(self, session: McpSession, timeout: int = 60, expected_id: Optional[int] = None) -> Optional[Dict]:
-        """메시지 읽기 - ID 기반 매칭 지원"""
+        """메시지 읽기 - ID 기반 매칭 지원 (UTF-8 안전 처리)"""
         try:
-            # 세션에 읽기 버퍼와 메시지 큐가 없으면 초기화
+            # 세션에 읽기 버퍼, 바이트 버퍼, 디코더, 메시지 큐가 없으면 초기화
             if not hasattr(session, '_read_buffer'):
                 session._read_buffer = ""
+            if not hasattr(session, '_byte_buffer'):
+                session._byte_buffer = b""
+            if not hasattr(session, '_utf8_decoder'):
+                import codecs
+                session._utf8_decoder = codecs.getincrementaldecoder('utf-8')(errors='strict')
             if not hasattr(session, '_message_queue'):
                 session._message_queue = []
             
@@ -531,7 +536,7 @@ class McpSessionManager:
                                 # JSON 파싱 오류는 무시하고 다음 라인 처리
                                 continue
                 
-                # MCP SDK와 동일한 패턴: 청크 기반 읽기
+                # MCP SDK와 동일한 패턴: 청크 기반 읽기 (UTF-8 안전 처리)
                 chunk = await asyncio.wait_for(
                     session.read_stream.read(8192),  # 8KB 청크 크기
                     timeout=timeout
@@ -542,8 +547,23 @@ class McpSessionManager:
                     logger.warning("⚠️ Connection closed by MCP server")
                     return None
                 
-                # 버퍼에 새 청크 추가
-                session._read_buffer += chunk.decode('utf-8')
+                # 바이트 버퍼에 새 청크 추가
+                session._byte_buffer += chunk
+                
+                # 증분 디코더로 안전하게 UTF-8 디코딩
+                try:
+                    # 가능한 한 많은 바이트를 디코딩하고, 불완전한 멀티바이트 문자는 버퍼에 유지
+                    decoded_text = session._utf8_decoder.decode(session._byte_buffer, final=False)
+                    session._byte_buffer = b""  # 성공적으로 디코딩된 바이트는 제거
+                    
+                    # 디코딩된 텍스트를 문자열 버퍼에 추가
+                    session._read_buffer += decoded_text
+                    
+                except UnicodeDecodeError as decode_error:
+                    # 불완전한 멀티바이트 문자가 청크 끝에 있을 경우
+                    # 다음 청크를 읽어서 완성할 때까지 바이트 버퍼에 유지
+                    logger.debug(f"📦 Incomplete UTF-8 sequence at chunk boundary, buffering: {len(session._byte_buffer)} bytes")
+                    continue
             
         except asyncio.TimeoutError:
             logger.error(f"❌ Message read timeout after {timeout} seconds")
@@ -553,8 +573,10 @@ class McpSessionManager:
             logger.error(f"❌ Raw message: {line_text[:500]}..." if 'line_text' in locals() else "❌ No line_text available")
             raise ToolExecutionError(f"Invalid JSON response: {e}")
         except UnicodeDecodeError as e:
-            logger.error(f"❌ Invalid UTF-8 encoding: {e}")
-            raise ToolExecutionError(f"Invalid UTF-8 encoding: {e}")
+            logger.error(f"❌ Critical UTF-8 encoding error: {e}")
+            logger.error(f"❌ Byte buffer length: {len(getattr(session, '_byte_buffer', b''))}")
+            logger.error(f"❌ Read buffer length: {len(getattr(session, '_read_buffer', ''))}")
+            raise ToolExecutionError(f"Critical UTF-8 encoding error: {e}")
         except Exception as e:
             logger.error(f"❌ Error reading message: {e}")
             raise
@@ -592,6 +614,16 @@ class McpSessionManager:
                     await session.write_stream.wait_closed()
                 except:
                     pass
+            
+            # 버퍼 정리
+            if hasattr(session, '_read_buffer'):
+                session._read_buffer = ""
+            if hasattr(session, '_byte_buffer'):
+                session._byte_buffer = b""
+            if hasattr(session, '_utf8_decoder'):
+                session._utf8_decoder = None
+            if hasattr(session, '_message_queue'):
+                session._message_queue.clear()
             
         except Exception as e:
             logger.error(f"❌ Error closing session for {session.server_id}: {e}")

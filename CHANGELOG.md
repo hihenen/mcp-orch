@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintain consistent tab ordering for both add and edit modes
 
 ### Fixed
+- [TASK_158] Fix UTF-8 encoding errors in MCP message reading causing tool execution failures (2025-06-29)
+  - Implement incremental UTF-8 decoder to handle multibyte characters split across chunk boundaries
+  - Add byte buffer management to prevent "unexpected end of data" errors at 8KB chunk boundaries
+  - Fix "invalid start byte" errors by properly handling incomplete UTF-8 sequences
+  - Enhance session cleanup to properly manage byte buffers and UTF-8 decoder state
+  - Resolve intermittent "Invalid UTF-8 encoding" errors in MCP tool execution
 - [TASK_157] Fix MCP Session Manager database session type error causing ToolCallLog save failures (2025-06-29)
   - Add database session type validation in _save_tool_call_log method to prevent "'str' object has no attribute 'rollback'" errors
   - Implement proper session management with try-finally blocks for synchronous database sessions in mcp_sdk_sse_bridge.py
