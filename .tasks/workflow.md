@@ -466,14 +466,29 @@
 - [x] 라우터 통합 및 하위 호환성 보장 (Facade 패턴)
 - [x] 테스트 및 검증 (import 테스트 통과)
 
+### TASK_148: Standard MCP 리팩토링 후 호환성 오류 해결
+- [ ] 문제 1: "McpOrchestrator.call_tool() got an unexpected keyword argument 'session_id'" 해결
+  - [ ] McpOrchestrator.call_tool() 메서드에 session_id 매개변수 추가
+  - [ ] 기존 MCP Session Manager와 호환성 유지
+  - [ ] 하위 호환성 보장 (선택적 매개변수)
+- [ ] 문제 2: "'UnifiedToolNaming' object has no attribute 'parse_tool_name'" 해결
+  - [ ] UnifiedToolNaming 클래스에 parse_tool_name 메서드 추가
+  - [ ] 기존 parse_namespaced_name 메서드와 동일한 기능으로 구현
+  - [ ] 하위 호환성 유지
+- [ ] 모든 MCP 서버 연결 및 도구 호출 테스트
+- [ ] 변경사항 커밋
+
 ## Progress Status  
-- Current Progress: TASK_147 - Standard MCP API 리팩토링 완료 ✅
-- 성과: Standard MCP API (1,248줄→8모듈, 114줄 Facade) - 90.9% 파일 크기 감소
+- Current Progress: TASK_148 - Standard MCP 리팩토링 후 호환성 오류 해결 🏃
+- 문제 상황: Standard MCP API 리팩토링 후 MCP 서버 연결 시 2가지 오류 발생
+  - McpOrchestrator.call_tool() session_id 매개변수 누락
+  - UnifiedToolNaming.parse_tool_name() 메서드 누락
+- 이전 성과: Standard MCP API (1,248줄→8모듈, 114줄 Facade) - 90.9% 파일 크기 감소
 - 전체 성과: Projects API (2,031줄→8모듈), Teams API (1,069줄→7모듈), MCP Connection Service (1,531줄→8모듈), Unified Transport (1,328줄→6모듈), Standard MCP API (1,248줄→8모듈) 리팩토링 완료
 - 리팩토링 성과: 총 5개 Critical Priority 파일 (7,207줄) → 37개 모듈 (평균 195줄)
-- Next Task: 다른 High Priority API 파일 리팩토링 또는 커밋
-- Last Update: 2025-06-29 19:42
-- Automatic Check Feedback: Phase 1의 모든 Critical Priority 리팩토링이 성공적으로 완료되었고 사용자 테스트를 통과했습니다. SOLID 원칙 적용, 코드 품질 대폭 향상, 하위 호환성 100% 유지를 달성했습니다.
+- Next Task: TASK_148 호환성 문제 해결
+- Last Update: 2025-06-29 21:30
+- Automatic Check Feedback: 리팩토링은 성공했으나 호환성 문제로 긴급 수정 필요
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

@@ -137,6 +137,10 @@ class UnifiedToolNaming:
     def parse_namespaced_name(self, namespaced_name: str) -> Tuple[str, str]:
         return parse_namespaced_name(namespaced_name)
     
+    def parse_tool_name(self, namespaced_name: str) -> Tuple[str, str]:
+        """하위 호환성을 위한 메서드 - parse_namespaced_name과 동일"""
+        return self.parse_namespaced_name(namespaced_name)
+    
     def is_namespaced(self, tool_name: str) -> bool:
         return is_namespaced(tool_name)
     

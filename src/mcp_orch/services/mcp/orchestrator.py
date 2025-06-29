@@ -159,7 +159,8 @@ class McpOrchestrator:
         db: Optional[Session] = None,
         project_id: Optional[str] = None,
         user_id: Optional[str] = None,
-        execution_id: Optional[str] = None
+        execution_id: Optional[str] = None,
+        session_id: Optional[str] = None
     ) -> Any:
         """
         BACKWARD COMPATIBILITY: Original call_tool method
