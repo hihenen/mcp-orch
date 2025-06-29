@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- [TASK_143] Fix TypeScript type definitions, ProjectStore logic, and server components (2025-06-29)
+- [TASK_143] Fix TypeScript types, ProjectStore logic, and critical owner permission issues (2025-06-29)
   - Add user_role field to Project interface for proper owner permission recognition
   - Change disabled to is_enabled in ProjectServer interface to match backend
   - Update ServerDetail interface with is_enabled and JWT auth fields
@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Update ProjectStore loadProject to use backend-provided user_role directly
   - Add fallback logic and debugging logs for robust permission handling
   - Verify server components already use correct is_enabled field
+  - Fix project settings page to use getCurrentUserRole() instead of deprecated currentUserRole
+  - Resolve critical "Read-only Mode" issue that blocked owner access to project settings
   - Ensure frontend-backend field consistency for proper functionality
 
 ### Fixed

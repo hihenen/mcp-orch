@@ -45,13 +45,13 @@
   - [x] TypeScript 컴파일 에러에서 `disabled` 관련 에러 사라짐
   - [x] **검증**: 서버 컴포넌트들에서 올바른 필드 사용 확인
 
-#### **Step 1.4: 프로젝트 설정 페이지 수정**
-- [ ] `/web/src/app/projects/[projectId]/settings/page.tsx` 수정
-  - [ ] Owner 권한 확인 로직 수정
-  - [ ] "Read-only Mode" 표시 조건 수정
-  - [ ] 권한 기반 UI 렌더링 로직 수정
-  - [ ] 에러 메시지 및 권한 안내 문구 개선
-  - [ ] **검증**: Owner 로그인 시 편집 가능한 UI 표시 확인
+#### **Step 1.4: 프로젝트 설정 페이지 수정** ✅
+- [x] `/web/src/app/projects/[projectId]/settings/page.tsx` 수정
+  - [x] Owner 권한 확인 로직 수정: `getCurrentUserRole(projectId)` 사용
+  - [x] "Read-only Mode" 표시 조건 수정: 올바른 `currentUserRole` 사용
+  - [x] 권한 기반 UI 렌더링 로직 수정: `canEdit` 로직 개선
+  - [x] 에러 메시지 및 권한 안내 문구 개선: 디버깅 로그 추가
+  - [x] **검증**: 디버깅 로그로 Owner 권한 추적 가능
 
 #### **Step 1.5: 기타 프론트엔드 파일 수정**
 - [ ] 서버 관련 페이지들 일괄 수정

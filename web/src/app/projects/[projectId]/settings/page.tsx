@@ -31,7 +31,7 @@ export default function ProjectSettingsPage() {
     loadProject,
     updateProject,
     deleteProject,
-    currentUserRole
+    getCurrentUserRole
   } = useProjectStore();
 
   // State management
@@ -62,7 +62,17 @@ export default function ProjectSettingsPage() {
   }, [selectedProject]);
 
   // Check edit permission (Only Owner can edit)
-  const canEdit = currentUserRole?.toLowerCase() === 'owner';
+  const currentUserRole = getCurrentUserRole(projectId);
+  const canEdit = currentUserRole === 'owner';
+  
+  // 🔐 DEBUG: 권한 확인 로그
+  console.log('🔐 [SettingsPage] Permission check:', {
+    projectId,
+    selectedProject_user_role: selectedProject?.user_role,
+    currentUserRole,
+    canEdit,
+    project_name: selectedProject?.name
+  });
 
   // Settings save handler
   const handleSaveSettings = async () => {
@@ -156,7 +166,7 @@ export default function ProjectSettingsPage() {
                 <div>
                   <h4 className="font-medium text-yellow-900">Read-only Mode</h4>
                   <p className="text-sm text-yellow-700 mt-1">
-                    Owner permission is required to change project settings. Current role: {currentUserRole}
+                    Owner permission is required to change project settings. Current role: {currentUserRole || 'Unknown'}
                   </p>
                 </div>
               </div>
