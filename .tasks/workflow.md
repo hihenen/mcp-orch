@@ -411,6 +411,11 @@
     - [x] server.get_effective_jwt_auth_required() 메서드 사용으로 변경
     - [x] 프로젝트 기본 인증 설정 상속 로직 적용
     - [x] 프론트엔드에서 올바른 인증 상태 표시되도록 수정
+  - [x] Step 1.8: MCP 서버 JWT 인증 설정 업데이트 문제 수정 ✅
+    - [x] 서버 편집 모달에서 jwt_auth_required 필드 누락 문제 해결
+    - [x] editServer 객체에 jwt_auth_required 필드 추가
+    - [x] JWT 인증 설정 변경사항이 백엔드로 전송되도록 수정
+    - [x] 프론트엔드-백엔드 간 JWT 인증 설정 동기화 완료
 
   - [x] 백엔드 `list_project_servers`에서 `server.jwt_auth_required` 직접 반환 (null일 수 있음)
   - [x] 실제로는 `server.get_effective_jwt_auth_required()` 사용해야 함 (프로젝트 기본값 적용)
@@ -438,9 +443,9 @@
 - [x] CHANGELOG.md 업데이트 및 문서화
 
 ## Progress Status  
-- Current Progress: TASK_144 - MCP 서버 JWT 인증 설정 업데이트 문제 완전 해결 ✅
-- Next Task: TASK_144 수정사항 커밋 및 사용자 테스트 안내  
-- Last Update: 2025-06-29 17:01
+- Current Progress: TASK_143 Phase 1 - JWT 인증 설정 업데이트 문제 완전 해결, Phase 1 모든 Critical Issues 해결 완료 ✅
+- Next Task: TASK_143 Phase 1 긴급 기능 검증 또는 Phase 2 백엔드 안정화 시작
+- Last Update: 2025-06-29 17:05
 - Automatic Check Feedback: MCP 서버 JWT 인증 설정 업데이트 문제의 근본 원인을 정확히 파악하고 완전히 해결했습니다. 프론트엔드-백엔드 API 일치성 문제였으며, 백엔드에서 누락된 필드 및 처리 로직을 추가하여 해결 완료.
 
 ## Lessons Learned and Insights

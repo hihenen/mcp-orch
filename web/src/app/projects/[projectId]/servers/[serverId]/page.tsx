@@ -239,7 +239,8 @@ export default function ProjectServerDetailPage() {
             command: server.command || '',
             args: server.args || [],
             env: server.env || {},
-            cwd: server.cwd || ''
+            cwd: server.cwd || '',
+            jwt_auth_required: server.jwt_auth_required
           }}
         />
       )}
