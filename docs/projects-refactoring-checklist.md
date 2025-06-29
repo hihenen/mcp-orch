@@ -53,13 +53,14 @@
   - [x] 에러 메시지 및 권한 안내 문구 개선: 디버깅 로그 추가
   - [x] **검증**: 디버깅 로그로 Owner 권한 추적 가능
 
-#### **Step 1.5: 기타 프론트엔드 파일 수정**
-- [ ] 서버 관련 페이지들 일괄 수정
-  - [ ] `/web/src/app/projects/[projectId]/servers/page.tsx`
-  - [ ] 기타 `disabled` 필드 사용하는 컴포넌트들 검색 후 수정
-- [ ] API 호출 부분 검증
-  - [ ] fetch 요청에서 올바른 필드명 사용 확인
-  - [ ] 응답 처리에서 새로운 필드 구조 반영
+#### **Step 1.5: 기타 프론트엔드 파일 수정** ✅
+- [x] 서버 관련 페이지들 일괄 수정
+  - [x] `/web/src/app/projects/[projectId]/servers/page.tsx` 이미 올바른 `is_enabled` 사용
+  - [x] `/web/src/app/projects/[projectId]/overview/page.tsx` 이미 올바른 `is_enabled` 사용
+  - [x] 기타 `disabled` 필드 사용하는 컴포넌트들 검색 후 수정 완료
+- [x] API 호출 부분 검증
+  - [x] TypeScript 컴파일 에러에서 `disabled` 관련 에러 모두 사라짐
+  - [x] 전체 코드베이스에서 `is_enabled` 필드 일관성 확보 완료
 
 #### **Step 1.6: 긴급 기능 검증** 🧪
 - [ ] **Owner 권한 테스트**
