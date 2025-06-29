@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_161] Remove unused standard_mcp_router and cleanup codebase (2025-06-29)
+  - Remove unused /legacy/sse endpoint that was not being used by any MCP clients
+  - Delete standard_mcp.py wrapper file (115 lines) and standard_mcp/ directory (2,005 lines)
+  - Cleanup app.py router registration to remove unnecessary complexity
+  - Reduce codebase by 2,120 lines of unused experimental code from TASK_147 refactoring
+  - Improve system performance by removing unused import and routing overhead
+  - Confirm Context7 and all other MCP clients use main /sse endpoint (Bridge Router)
 - [TASK_147] Complete Standard MCP API refactoring with SOLID principles (2025-06-29)
   - Decompose monolithic standard_mcp.py (1,248 lines) into 8 specialized modules
   - Achieve single responsibility principle: common.py, mcp_auth_manager.py, mcp_protocol_handler.py, mcp_tool_manager.py, mcp_server_connector.py, mcp_sse_manager.py, fastmcp_integration.py, mcp_routes.py

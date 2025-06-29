@@ -287,6 +287,33 @@
   - [x] 각 파일별 리팩토링 우선순위 (High/Medium/Low) 평가
   - [x] 구체적 개선 방안 제시
 
+### TASK_160: MCP-Orch의 5개 MCP 엔드포인트 분석 및 목적 파악 ✅
+- [x] unified_mcp_transport 파일 분석 (/projects/{id}/unified/sse)
+- [x] mcp_sdk_sse_bridge 파일 분석 (/projects/{id}/servers/{name}/bridge/sse)
+- [x] mcp_sse_transport 파일 분석 (/projects/{id}/servers/{name}/transport/sse)
+- [x] mcp_standard_sse 파일 분석 (/projects/{id}/servers/{name}/standard/sse)
+- [x] standard_mcp 파일 분석 (/projects/{id}/servers/{name}/legacy/sse)
+- [x] Router 경로 충돌 해결 방식 분석 (TASK_149)
+- [x] FastAPI 라우터 우선순위 및 경로 매칭 규칙 확인
+- [x] 실제 Context7 URL 작동 원리 파악
+- [x] 각 엔드포인트의 고유 기능과 목적 정리
+- [x] MCP 프로토콜 처리 방식 차이점 분석
+
+### TASK_159: MCP-Orch 리팩토링 우선순위 분석
+- [ ] Phase 1: 대용량 파일 스캔 및 분석
+  - [ ] src/mcp_orch/api/ 디렉터리 전체 스캔
+  - [ ] src/mcp_orch/services/ 디렉터리 전체 스캔 
+  - [ ] web/src/ 디렉터리 큰 컴포넌트 스캔
+- [ ] Phase 2: 리팩토링 후보 우선순위 결정
+  - [ ] 파일 크기 (줄 수) 기준 평가
+  - [ ] 복잡도 (다중 책임) 분석
+  - [ ] 사용 빈도 및 버그 발생률 평가
+  - [ ] 예상 개선 효과 계산
+- [ ] Phase 3: 상위 5개 우선순위 제시
+  - [ ] 각 후보별 현재 줄 수 및 주요 책임
+  - [ ] 분리 가능한 모듈 구구 제안
+  - [ ] 구체적 개선 방안 및 예상 효과
+
 ### TASK_132: mcp_connection_service.py 의존성과 사용처 분석
 - [x] 파일 위치 확인 및 기본 구조 분석
   - [x] 파일 경로: src/mcp_orch/services/mcp_connection_service.py (1,532줄)
@@ -572,8 +599,17 @@
 - [ ] 변경사항 커밋
 
 ## Progress Status  
-- Current Progress: TASK_158 완료 - MCP 메시지 읽기 UTF-8 인코딩 오류 수정 완료
-- Next Task: 다음 우선순위 작업 대기
+### TASK_161: 사용하지 않는 Standard MCP Router 완전 삭제 ✅
+- [x] app.py에서 standard_mcp_router import 및 등록 제거
+- [x] standard_mcp.py 래퍼 파일 삭제 (115줄)
+- [x] standard_mcp/ 디렉터리 완전 삭제 (2,005줄)
+- [x] 삭제 후 서버 시작 테스트 통과
+- [x] CHANGELOG.md 업데이트 및 문서화
+- [x] 총 2,120줄의 불필요한 코드 제거 완료
+
+## Progress Status  
+- Current Progress: TASK_161 완료 - 사용하지 않는 Standard MCP Router 완전 삭제 완료
+- Next Task: 새로운 작업 계획 또는 추가 코드베이스 정리 
 - Last Update: 2025-06-29
 - Automatic Check Feedback: 
   - ✅ 증분 UTF-8 디코더 구현으로 멀티바이트 문자 청크 경계 문제 해결
