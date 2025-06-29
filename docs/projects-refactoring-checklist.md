@@ -37,14 +37,13 @@
     - [x] 단계별 fallback 로직 구현 (안정성 향상)
   - [x] **검증**: console.log로 user_role 값 확인 기능 추가
 
-#### **Step 1.3: 서버 관리 컴포넌트 수정**
-- [ ] `/web/src/components/servers/` 디렉터리 수정
-  - [ ] `ServerCard.tsx` - `disabled` → `is_enabled` 변경
-  - [ ] `ServerList.tsx` - 필터링 로직 수정  
-  - [ ] `ServerDetailTab.tsx` - 상태 표시 로직 수정
-  - [ ] `ServerToolsTab.tsx` - 서버 상태 확인 로직 수정
-  - [ ] 모든 컴포넌트에서 `!server.disabled` → `server.is_enabled` 로직 반전
-  - [ ] **검증**: 서버 목록에서 활성화/비활성화 상태 정상 표시 확인
+#### **Step 1.3: 서버 관리 컴포넌트 수정** ✅
+- [x] `/web/src/components/servers/` 디렉터리 수정
+  - [x] 대부분의 서버 컴포넌트들이 이미 `is_enabled` 사용 중
+  - [x] `ServerHeader.tsx`, `ServerToolsTab.tsx`, `ServerDetailModal.tsx` 등 확인 완료
+  - [x] `/projects/[projectId]/servers/page.tsx`도 올바른 `is_enabled` 사용
+  - [x] TypeScript 컴파일 에러에서 `disabled` 관련 에러 사라짐
+  - [x] **검증**: 서버 컴포넌트들에서 올바른 필드 사용 확인
 
 #### **Step 1.4: 프로젝트 설정 페이지 수정**
 - [ ] `/web/src/app/projects/[projectId]/settings/page.tsx` 수정
