@@ -17,7 +17,11 @@ from ..config import Settings
 from ..core.controller import DualModeController
 from .jwt_auth import JWTAuthMiddleware
 from .users import router as users_router
-from .teams import router as teams_router
+# 기존 모놀리식 teams 라우터 임시 비활성화
+# from .teams import router as teams_router
+
+# 새로운 모듈화된 teams 라우터 import
+from .teams import router as teams_modular_router
 # 기존 모놀리식 프로젝트 라우터 임시 비활성화
 # from .projects import router as projects_router
 
@@ -341,7 +345,8 @@ def create_app(settings: Settings = None) -> FastAPI:
     # 라우터 등록 (순서 중요: 일반 API 라우터 먼저, SSE 라우터 나중에)
     # 1. 일반 REST API 라우터들 (/api/* 경로) - 프론트엔드용
     app.include_router(users_router)
-    app.include_router(teams_router)
+    # app.include_router(teams_router)  # 기존 모놀리식 라우터 비활성화
+    app.include_router(teams_modular_router)  # 새로운 모듈화된 라우터 활성화
     # app.include_router(projects_router)  # 기존 모놀리식 라우터 비활성화
     app.include_router(projects_modular_router)  # 새로운 모듈화된 라우터 활성화
     app.include_router(project_servers_router)  # 🔧 프로젝트 서버 관리 API (도구 실행 포함)
