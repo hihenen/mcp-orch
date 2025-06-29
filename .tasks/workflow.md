@@ -361,11 +361,17 @@
 - [x] 메시지 엔드포인트 경로도 동일하게 수정
 - [x] 하위 호환성 확보 및 MCP 클라이언트 연결 정상화
 
+### TASK_141: Orchestrator 메타 툴 제거 ✅
+- [x] 문제 분석: orchestrator 메타 툴들이 실제 서버 툴 대신 표시됨
+- [x] orchestrator_list_servers, orchestrator_server_health, orchestrator_set_namespace_separator 툴 제거
+- [x] _get_orchestrator_meta_tools() 및 _handle_meta_tool_call() 메서드 제거
+- [x] 실제 MCP 서버 툴들만 표시되도록 수정
+
 ## Progress Status  
-- Current Progress: TASK_140 - Unified MCP 엔드포인트 수정 완료 ✅
+- Current Progress: TASK_141 - Orchestrator 메타 툴 제거 완료 ✅
 - Next Task: TASK_139 - Standard MCP 리팩토링 계획 수립
 - Last Update: 2025-06-29
-- Automatic Check Feedback: Unified MCP Transport 리팩토링 완료! 1,328줄을 6개 모듈로 분해하고 404 오류 해결. 원본 API 경로 복원으로 Inspector와 Cline 호환성 유지. Phase 2 리팩토링 다음 단계 준비 완료.
+- Automatic Check Feedback: Unified MCP Transport 완전 수정! orchestrator 메타 툴 제거로 실제 서버 툴들만 표시. 404 오류 해결 및 API 경로 복원 완료. Inspector에서 실제 MCP 서버 기능 정상 표시 예상.
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

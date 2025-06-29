@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensure backward compatibility with existing MCP client connections
   - Maintain Inspector and Cline integration functionality
 
+- [TASK_141] Remove orchestrator meta-tools from unified MCP transport (2025-06-29)
+  - Remove orchestrator_list_servers, orchestrator_server_health, orchestrator_set_namespace_separator tools
+  - Show only actual MCP server tools instead of meta-tools per user request
+  - Clean up tool listing to display real server functionality
+  - Improve tool discovery for actual MCP server implementations
+
 ### Changed
 - [TASK_134] Unify API responses to use is_enabled field instead of disabled for consistency (2025-06-28)
   - Change all API responses from disabled: not is_enabled to is_enabled: is_enabled

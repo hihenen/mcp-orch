@@ -147,9 +147,8 @@ class UnifiedProtocolHandler:
                 failed_servers.append(server.name)
                 self.transport._record_server_failure(server.name, e)
         
-        # Add orchestrator meta-tools
-        meta_tools = self._get_orchestrator_meta_tools()
-        all_tools.extend(meta_tools)
+        # Note: Orchestrator meta-tools removed per user request
+        # Only show actual MCP server tools
         
         # Log summary
         logger.info(f"✅ Unified tools collected: {len(all_tools)} tools from {len(active_servers)} servers")
@@ -191,9 +190,7 @@ class UnifiedProtocolHandler:
             await self.transport.message_queue.put(error_response)
             return JSONResponse(content={"status": "processing"}, status_code=202)
         
-        # Handle meta-tools
-        if tool_name.startswith("orchestrator_"):
-            return await self._handle_meta_tool_call(message)
+        # Note: Orchestrator meta-tools removed per user request
         
         # Parse namespace and route to server
         namespace_info = self.transport.tool_naming.parse_tool_name(tool_name)
@@ -258,63 +255,6 @@ class UnifiedProtocolHandler:
             "inputSchema": tool.get("inputSchema", {})
         }
     
-    def _get_orchestrator_meta_tools(self) -> List[Dict[str, Any]]:
-        """Get orchestrator meta-tools"""
-        return [
-            {
-                "name": "orchestrator_list_servers",
-                "description": "List all available MCP servers and their status",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            },
-            {
-                "name": "orchestrator_server_health",
-                "description": "Get detailed health information for all servers",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "server_name": {
-                            "type": "string",
-                            "description": "Optional server name for specific health info"
-                        }
-                    },
-                    "required": []
-                }
-            },
-            {
-                "name": "orchestrator_set_namespace_separator",
-                "description": "Set the namespace separator character (default: '.')",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "separator": {
-                            "type": "string",
-                            "description": "The separator character to use",
-                            "enum": [".", "::", "__", "/"]
-                        }
-                    },
-                    "required": ["separator"]
-                }
-            }
-        ]
-    
-    async def _handle_meta_tool_call(self, message: Dict[str, Any]) -> JSONResponse:
-        """Handle orchestrator meta-tool calls"""
-        # Implementation would go here
-        # For now, return a placeholder response
-        request_id = message.get("id")
-        response_data = {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "result": {
-                "status": "Meta-tool execution not implemented yet"
-            }
-        }
-        await self.transport.message_queue.put(response_data)
-        return JSONResponse(content={"status": "processing"}, status_code=202)
     
     async def _execute_tool_on_server(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> Any:
         """Execute tool on specific server"""
