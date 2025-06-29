@@ -47,16 +47,16 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // unified 모드가 비활성화된 경우 컴포넌트를 렌더링하지 않음
-  if (!unified_mcp_enabled) {
-    return null;
-  }
-
   useEffect(() => {
     if (projectId && unified_mcp_enabled) {
       loadConnectionInfo();
     }
   }, [projectId, unified_mcp_enabled]);
+
+  // unified 모드가 비활성화된 경우 컴포넌트를 렌더링하지 않음
+  if (!unified_mcp_enabled) {
+    return null;
+  }
 
   const loadConnectionInfo = async () => {
     try {
