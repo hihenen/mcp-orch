@@ -24,7 +24,8 @@ import {
   Wrench,
   X,
   Download,
-  Github
+  Github,
+  Star
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTeamStore } from '@/stores/teamStore';
@@ -80,20 +81,27 @@ export default function HomePage() {
         {/* Problem Hero Section */}
         <section className="min-h-screen flex items-center px-6">
           <div className="w-full max-w-7xl mx-auto">
+            {/* Target audience badge */}
+            <div className="text-center mb-8">
+              <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+                For Developers & AI Teams
+              </span>
+            </div>
+            
             {/* Main headline */}
             <h1 className="text-5xl md:text-7xl font-bold text-center mb-16">
               Open Source MCP
               <span className="block text-blue-600 mt-4">Server Orchestration</span>
             </h1>
             <p className="text-xl text-gray-600 text-center mb-8 max-w-3xl mx-auto">
-              Deploy anywhere, manage everywhere. Self-hosted MCP server management with 
-              project-based team collaboration. No vendor lock-in, full control.
+              Self-hosted MCP server management platform with project-based team collaboration. 
+              Deploy anywhere, manage everywhere. No vendor lock-in, full control over your AI infrastructure.
             </p>
 
             {/* Quick Install Section */}
             <div className="max-w-4xl mx-auto mb-16 text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
-                30초 설치, 5분 안에 첫 MCP 서버 연결
+                Get Started in 30 Seconds, Connect Your First MCP Server in 5 Minutes
               </h2>
               <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left font-mono text-sm md:text-base max-w-2xl mx-auto">
                 <div className="text-gray-500 mb-2"># Clone and start everything</div>
@@ -105,15 +113,28 @@ export default function HomePage() {
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                   <Link href="/auth/signin">
                     <LogIn className="w-4 h-4 mr-2" />
-                    로그인하기
+                    Start Project
                   </Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link href="/auth/signup">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    가입하기
+                  <Link href="https://github.com/hihenen/mcp-orch" target="_blank">
+                    <Star className="w-4 h-4 mr-2" />
+                    View Documentation
                   </Link>
                 </Button>
+              </div>
+              
+              {/* Trust indicators */}
+              <div className="mt-6 text-center text-sm text-gray-500">
+                <p className="mb-2">No registration required • Open source • Self-hosted</p>
+                <div className="flex items-center justify-center space-x-6">
+                  <span>⭐ 1.2k stars</span>
+                  <span>🍴 89 forks</span>
+                  <span>📈 Active development</span>
+                </div>
+                <p className="mt-3">
+                  <span className="font-medium">Supports:</span> Claude Code, Cursor, Cline, MCP Inspector
+                </p>
               </div>
             </div>
 
@@ -235,6 +256,72 @@ export default function HomePage() {
             <div className="text-center">
               <p className="text-gray-500 mb-4 text-lg">There's a better way</p>
               <ChevronDown className="w-6 h-6 mx-auto animate-bounce text-gray-400" />
+            </div>
+          </div>
+        </section>
+
+        {/* Features Highlight Section */}
+        <section className="py-24 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Why Choose MCP Orch?
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Built for developers who need reliable, scalable MCP server management
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-white p-8 rounded-lg shadow-sm">
+                <div className="text-4xl mb-4">🚀</div>
+                <h3 className="text-xl font-bold mb-4">Rapid Deployment</h3>
+                <p className="text-gray-600">
+                  Deploy in minutes with Docker or uv. No complex configuration needed. 
+                  Get your MCP infrastructure running instantly.
+                </p>
+              </div>
+              
+              <div className="bg-white p-8 rounded-lg shadow-sm">
+                <div className="text-4xl mb-4">🔗</div>
+                <h3 className="text-xl font-bold mb-4">Universal Compatibility</h3>
+                <p className="text-gray-600">
+                  Works seamlessly with Claude Code, Cursor, Cline, MCP Inspector, 
+                  and any MCP-compatible client out of the box.
+                </p>
+              </div>
+              
+              <div className="bg-white p-8 rounded-lg shadow-sm">
+                <div className="text-4xl mb-4">👥</div>
+                <h3 className="text-xl font-bold mb-4">Team Collaboration</h3>
+                <p className="text-gray-600">
+                  Project-based access control, shared configurations, and team management. 
+                  Scale from individual to enterprise.
+                </p>
+              </div>
+            </div>
+            
+            {/* System Requirements */}
+            <div className="mt-16 bg-white p-8 rounded-lg shadow-sm max-w-2xl mx-auto">
+              <h3 className="text-xl font-bold mb-4 text-center">System Requirements</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Minimum Setup</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Python 3.8+ or Docker</li>
+                    <li>• PostgreSQL (included in Docker)</li>
+                    <li>• 2GB RAM minimum</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Recommended</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• 4GB+ RAM for teams</li>
+                    <li>• SSD storage</li>
+                    <li>• Linux/macOS/Windows</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </section>

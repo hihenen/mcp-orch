@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_162] Improve landing page UX and content strategy (2025-06-29)
+  - Fix language inconsistency by standardizing all content to English
+  - Add target audience badge "For Developers & AI Teams" to clarify user focus
+  - Enhance value proposition with specific technical benefits and proof points
+  - Add comprehensive features highlight section with deployment, compatibility, and collaboration benefits
+  - Include social proof elements: GitHub stars, supported clients, and trust indicators
+  - Add detailed system requirements section for better user guidance
+  - Improve CTA buttons with clearer actions and documentation access
+  - Enhance SEO metadata with comprehensive descriptions, keywords, and Open Graph tags
+  - Reduce user confusion and improve conversion rate through strategic content organization
 - [TASK_161] Remove unused standard_mcp_router and cleanup codebase (2025-06-29)
   - Remove unused /legacy/sse endpoint that was not being used by any MCP clients
   - Delete standard_mcp.py wrapper file (115 lines) and standard_mcp/ directory (2,005 lines)
