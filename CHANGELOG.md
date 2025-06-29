@@ -19,7 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Finished Unified MCP Transport refactoring (1,328 → 56 lines wrapper + 6 modules)
   - All Phase 1 critical priority refactoring tasks completed successfully
 
+### Changed
+- [TASK_145] Improve server creation UI by reordering tabs (2025-06-29)
+  - Move JSON Add tab to first position in AddServerDialog for better user experience
+  - Prioritize JSON configuration method over individual field input
+  - Maintain consistent tab ordering for both add and edit modes
+
 ### Fixed
+- [TASK_145] Fix project creation and server registration NOT NULL constraint violations (2025-06-29)
+  - Remove non-existent slug field from ProjectResponse in core.py to resolve AttributeError
+  - Add missing created_by_id field to McpServer creation in servers.py
+  - Fix "null value in column 'created_by_id' of relation 'mcp_servers' violates not-null constraint" error
+  - Ensure proper user tracking for both project and server creation operations
 - [TASK_144] Fix MCP server JWT authentication setting update not persisting (2025-06-29)
   - Add jwt_auth_required field to ServerUpdate Pydantic model in project_servers.py
   - Add jwt_auth_required processing logic in update_project_server function  

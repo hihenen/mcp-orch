@@ -174,7 +174,6 @@ async def create_project(
         id=str(new_project.id),
         name=new_project.name,
         description=new_project.description,
-        slug=new_project.slug,
         created_by=str(new_project.created_by),
         created_at=new_project.created_at,
         updated_at=new_project.updated_at,

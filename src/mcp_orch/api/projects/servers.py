@@ -316,7 +316,8 @@ async def create_project_server(
         env=server_data.env or {},
         timeout=server_data.timeout,
         is_enabled=server_data.is_enabled,
-        project_id=project_id
+        project_id=project_id,
+        created_by_id=current_user.id
     )
     
     db.add(new_server)

@@ -724,13 +724,13 @@ export function AddServerDialog({
         {/* 편집 모드와 추가 모드 모두 탭 표시 */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="individual" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              {isEditMode ? 'Individual Edit' : 'Individual Add'}
-            </TabsTrigger>
             <TabsTrigger value="json" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               {isEditMode ? 'JSON Edit' : 'JSON Add'}
+            </TabsTrigger>
+            <TabsTrigger value="individual" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              {isEditMode ? 'Individual Edit' : 'Individual Add'}
             </TabsTrigger>
           </TabsList>
 
