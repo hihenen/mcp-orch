@@ -523,10 +523,6 @@ async def run_mcp_bridge_session(
                         ip_address=client_ip,
                         db=tool_log_db
                     )
-                finally:
-                    # 동기 세션 정리
-                    if tool_log_db:
-                        tool_log_db.close()
                     
                     # 성공 시 세션 통계 업데이트 (successful_calls는 계산된 속성이므로 제거)
                     # total_requests는 이미 위에서 증가시켰음
@@ -554,7 +550,9 @@ async def run_mcp_bridge_session(
                     raise
                     
                 finally:
-                    tool_log_db.close()
+                    # 동기 세션 정리
+                    if tool_log_db:
+                        tool_log_db.close()
                 
             except Exception as e:
                 logger.error(f"Error calling tool {name} on {server_name}: {e}")
