@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_142] Complete unified MCP transport refactoring with missing features (2025-06-29)
+  - Add missing handle_resources_list and handle_resources_templates_list methods to protocol_handler.py
+  - Restore original SSE message format for Inspector compatibility (data: {json} format)
+  - Fix keep-alive format to match original unified-keepalive pattern
+  - Ensure complete backward compatibility with original unified_mcp_transport.py
+  - Resolve namespace registry method naming to use get_original_name() correctly
 - [TASK_140] Fix unified MCP endpoint 404 error after refactoring (2025-06-29)
   - Restore original API route paths: /projects/{project_id}/unified/sse
   - Fix route path mismatch in refactored unified MCP transport module

@@ -127,25 +127,38 @@ class UnifiedMCPTransport(MCPSSETransport):
                         logger.info(f"📭 Received termination signal for session {self.session_id}")
                         break
                     
-                    # Format and send message
-                    message_data = json.dumps(message, ensure_ascii=False)
-                    yield f"event: message\ndata: {message_data}\n\n"
-                    logger.debug(f"📤 Sent message via SSE: {message.get('method', message.get('id', 'response'))}")
+                    # Format and send message (Inspector 호환 형식)
+                    yield f"data: {json.dumps(message)}\n\n"
+                    logger.debug(f"📤 Sent unified message to session {self.session_id}: {message.get('method', 'unknown')}")
                     
                 except asyncio.TimeoutError:
-                    # Send keep-alive
-                    yield f"event: ping\ndata: {json.dumps({'type': 'ping'})}\n\n"
+                    # Keep-alive 전송 (원본과 동일한 형식)
                     keepalive_count += 1
+                    yield f": unified-keepalive-{keepalive_count}\n\n"
+                    
                     if keepalive_count % 10 == 0:
-                        logger.debug(f"🏓 Sent {keepalive_count} keep-alive pings for session {self.session_id}")
+                        logger.debug(f"💓 Unified keepalive #{keepalive_count} for session {self.session_id}")
                     
                 except Exception as e:
                     logger.error(f"❌ Error in SSE stream for session {self.session_id}: {e}")
                     self.is_connected = False
                     break
             
+        except asyncio.CancelledError:
+            logger.info(f"🔌 Unified SSE stream cancelled for session {self.session_id}")
+            raise
         except Exception as e:
-            logger.error(f"❌ Fatal error in SSE stream: {e}")
+            logger.error(f"❌ Error in unified SSE stream {self.session_id}: {e}")
+            # 오류 이벤트 전송 (원본과 동일)
+            error_event = {
+                "jsonrpc": "2.0",
+                "method": "notifications/error",
+                "params": {
+                    "code": -32000,
+                    "message": f"Unified SSE stream error: {str(e)}"
+                }
+            }
+            yield f"data: {json.dumps(error_event)}\n\n"
         finally:
             self.is_connected = False
             logger.info(f"🔚 SSE stream ended for session {self.session_id}")
@@ -171,6 +184,10 @@ class UnifiedMCPTransport(MCPSSETransport):
                 return await self.protocol_handler.handle_tools_list(message)
             elif method == "tools/call":
                 return await self.protocol_handler.handle_tool_call(message)
+            elif method == "resources/list":
+                return await self.protocol_handler.handle_resources_list(message)
+            elif method == "resources/templates/list":
+                return await self.protocol_handler.handle_resources_templates_list(message)
             elif method == "notifications/initialized":
                 return await self.handle_notification(message)
             elif method == "shutdown":

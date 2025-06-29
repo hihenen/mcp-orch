@@ -234,26 +234,141 @@ class UnifiedProtocolHandler:
         await self.transport.message_queue.put(response_data)
         return JSONResponse(content={"status": "processing"}, status_code=202)
     
+    async def handle_resources_list(self, message: Dict[str, Any]) -> JSONResponse:
+        """
+        📚 Unified MCP resources/list 처리
+        
+        Roo 클라이언트 호환성을 위한 빈 리소스 목록 반환.
+        현재 mcp-orch는 툴 중심으로 구현되어 있어 리소스는 지원하지 않음.
+        """
+        try:
+            request_id = message.get("id")
+            
+            logger.info(f"📚 Processing unified resources/list for session {self.transport.session_id}, id={request_id}")
+            
+            # MCP 표준 리소스 응답 (빈 목록)
+            response_data = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "resources": []
+                }
+            }
+            
+            # Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+            logger.info(f"📤 Queueing resources/list response for Unified SSE session {self.transport.session_id}")
+            await self.transport.message_queue.put(response_data)
+            
+            logger.info(f"✅ Unified resources/list complete: 0 resources (tools-focused implementation)")
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+            
+        except Exception as e:
+            logger.error(f"❌ Unified resources/list error: {e}")
+            
+            # 에러 응답
+            error_response_data = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32000,
+                    "message": f"Resources list failed: {str(e)}"
+                }
+            }
+            
+            # 에러 응답도 메시지 큐를 통해 전송
+            await self.transport.message_queue.put(error_response_data)
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+    
+    async def handle_resources_templates_list(self, message: Dict[str, Any]) -> JSONResponse:
+        """
+        📋 Unified MCP resources/templates/list 처리
+        
+        Roo 클라이언트 호환성을 위한 빈 리소스 템플릿 목록 반환.
+        현재 mcp-orch는 툴 중심으로 구현되어 있어 리소스 템플릿은 지원하지 않음.
+        """
+        try:
+            request_id = message.get("id")
+            
+            logger.info(f"📋 Processing unified resources/templates/list for session {self.transport.session_id}, id={request_id}")
+            
+            # MCP 표준 리소스 템플릿 응답 (빈 목록)
+            response_data = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "resourceTemplates": []
+                }
+            }
+            
+            # Unified SSE에서는 응답을 메시지 큐에 넣어야 함
+            logger.info(f"📤 Queueing resources/templates/list response for Unified SSE session {self.transport.session_id}")
+            await self.transport.message_queue.put(response_data)
+            
+            logger.info(f"✅ Unified resources/templates/list complete: 0 templates (tools-focused implementation)")
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+            
+        except Exception as e:
+            logger.error(f"❌ Unified resources/templates/list error: {e}")
+            
+            # 에러 응답
+            error_response_data = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32000,
+                    "message": f"Resource templates list failed: {str(e)}"
+                }
+            }
+            
+            # 에러 응답도 메시지 큐를 통해 전송
+            await self.transport.message_queue.put(error_response_data)
+            
+            # HTTP 202 Accepted 반환 (실제 응답은 SSE를 통해 전송됨)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
+    
     def _create_namespaced_tool(self, tool: Dict[str, Any], server) -> Dict[str, Any]:
-        """Create namespaced version of tool"""
+        """Create namespaced version of tool (matches original logic)"""
         original_name = tool.get("name", "")
-        namespace = self.transport.namespace_registry.get_namespace(server.name)
+        
+        # Get or create namespace for server (following original logic)
+        namespace_name = self.transport.namespace_registry.get_original_name(server.name)
+        if not namespace_name:
+            namespace_name = self.transport.namespace_registry.register_server(server.name)
         
         # Use legacy mode setting from transport
-        legacy_mode = getattr(self.transport, '_legacy_mode', True)
+        legacy_mode = getattr(self.transport, '_legacy_mode', False)
+        
+        processed_tool = tool.copy()
+        
+        # Fix schema field naming (matches original logic)
+        if 'schema' in processed_tool and 'inputSchema' not in processed_tool:
+            processed_tool['inputSchema'] = processed_tool.pop('schema')
+        elif 'inputSchema' not in processed_tool:
+            processed_tool['inputSchema'] = {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
         
         if legacy_mode:
-            # Legacy mode - use simple dot notation
-            namespaced_name = f"{namespace}.{original_name}"
+            # Legacy mode: no namespace, original tool name
+            pass  # Keep original tool name
         else:
-            # Standard mode - use proper namespace format
-            namespaced_name = create_namespaced_name(namespace, original_name)
+            # Standard mode: apply namespace
+            processed_tool['name'] = create_namespaced_name(namespace_name, original_name)
+            
+            # Add metadata
+            processed_tool['_source_server'] = server.name
+            processed_tool['_original_name'] = original_name
+            processed_tool['_namespace'] = namespace_name
         
-        return {
-            "name": namespaced_name,
-            "description": tool.get("description", ""),
-            "inputSchema": tool.get("inputSchema", {})
-        }
+        return processed_tool
     
     
     async def _execute_tool_on_server(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> Any:
