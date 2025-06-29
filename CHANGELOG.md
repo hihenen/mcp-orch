@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_143] Fix API key creation field naming mismatch error (2025-06-29)
+  - Change api_key_hash to key_hash in ApiKey creation to match SQLAlchemy model
+  - Add missing key_prefix field to prevent database constraint errors
+  - Resolve "'api_key_hash' is an invalid keyword argument for ApiKey" error
+  - Ensure API key creation functionality works properly for project authentication
 - [TASK_143] Complete Phase 1 critical frontend fixes for projects.py refactoring (2025-06-29)
   - Add user_role field to Project interface for proper owner permission recognition
   - Change disabled to is_enabled in ProjectServer interface to match backend

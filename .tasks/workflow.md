@@ -396,11 +396,21 @@
   - [x] Phase 2: 백엔드 안정화 (2-3일)
   - [x] Phase 3: 정리 및 최적화 (1-2일)
   - [x] Phase 4: 최종 검증 및 배포 (1일)
+- [x] Phase 1 실행: Critical Issues 해결
+  - [x] Step 1.1: TypeScript 타입 정의 수정 ✅
+  - [x] Step 1.2: ProjectStore Owner 권한 수정 ✅
+  - [x] Step 1.3: 서버 관리 컴포넌트 수정 ✅
+  - [x] Step 1.4: 프로젝트 설정 페이지 수정 ✅
+  - [x] Step 1.5: 기타 프론트엔드 파일 수정 ✅
+  - [x] Step 1.6: API 키 생성 오류 수정 ✅
+    - [x] ApiKey 모델의 api_key_hash → key_hash 필드명 수정
+    - [x] 누락된 key_prefix 필드 추가
+    - [x] "api_key_hash is an invalid keyword argument" 오류 해결
 
 ## Progress Status  
-- Current Progress: TASK_143 Phase 1 - 기타 프론트엔드 파일 수정 완룼, Step 1.6 긴급 기능 검증 준비
-- Next Task: TASK_143 Phase 1 실행 - 프론트엔드 호환성 긴급 수정
-- Last Update: 2025-06-29 16:30
+- Current Progress: TASK_143 Phase 1 - API 키 생성 오류 수정 완료, Phase 1 모든 Critical Issues 해결 완료 ✅
+- Next Task: TASK_143 Phase 1 긴급 기능 검증 또는 Phase 2 백엔드 안정화 시작
+- Last Update: 2025-06-29 16:22
 - Automatic Check Feedback: Projects.py 리팩토링 현황 분석 완료! 52% 완성 상태에서 Owner 권한 문제 등 Critical 이슈 발견. 체계적인 4단계 계획 수립으로 100% 완료 목표. 긴급히 프론트엔드 호환성 문제부터 해결 필요.
 
 ## Lessons Learned and Insights

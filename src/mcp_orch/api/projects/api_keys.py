@@ -172,12 +172,16 @@ async def create_project_api_key(
     # API 키 생성
     api_key, key_suffix = generate_api_key()
     
+    # key_prefix 생성 (앞의 8자리)
+    key_prefix = api_key[:8]  # sk- 포함하여 앞 8자리
+    
     new_api_key = ApiKey(
         project_id=project_id,
         created_by_id=current_user.id,
         name=key_data.name,
         description=key_data.description,
-        api_key_hash=api_key,  # 실제로는 해시해서 저장해야 함
+        key_hash=api_key,  # 실제로는 해시해서 저장해야 함
+        key_prefix=key_prefix,
         key_suffix=key_suffix,
         expires_at=key_data.expires_at
     )
