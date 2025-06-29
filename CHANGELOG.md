@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_143] Fix TypeScript type definitions for project refactoring Phase 1 (2025-06-29)
+  - Add user_role field to Project interface for proper owner permission recognition
+  - Change disabled to is_enabled in ProjectServer interface to match backend
+  - Update ServerDetail interface with is_enabled and JWT auth fields
+  - Fix admin server page to use is_enabled instead of disabled
+  - Ensure frontend-backend field consistency for proper functionality
+
+### Fixed
 - [TASK_142] Complete unified MCP transport refactoring with missing features (2025-06-29)
   - Add missing handle_resources_list and handle_resources_templates_list methods to protocol_handler.py
   - Restore original SSE message format for Inspector compatibility (data: {json} format)

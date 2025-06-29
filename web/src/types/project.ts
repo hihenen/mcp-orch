@@ -11,6 +11,8 @@ export interface Project {
   updated_at: string;
   member_count: number;
   server_count: number;
+  // User's role in this project
+  user_role?: ProjectRole;
   // MCP Server mode setting
   unified_mcp_enabled?: boolean;
   // Notification-related information
@@ -43,6 +45,7 @@ export interface ProjectMember {
 export interface ProjectDetail extends Project {
   members: ProjectMember[];
   recent_activity: any[]; // To be implemented in the future
+  // User's role is inherited from Project interface
 }
 
 export enum ProjectRole {
@@ -85,7 +88,7 @@ export interface ProjectServer {
   command: string;
   args: string[];
   env: Record<string, string>;
-  disabled: boolean;
+  is_enabled: boolean;
   status: string;
   tools_count?: number;
   created_at?: string;

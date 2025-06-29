@@ -18,7 +18,7 @@ export interface ServerDetail {
   name: string;
   description?: string;
   status: 'online' | 'offline' | 'connecting' | 'error' | 'timeout';
-  disabled: boolean;
+  is_enabled: boolean;
   transport_type: string;
   compatibility_mode?: string;
   command?: string;
@@ -31,6 +31,8 @@ export interface ServerDetail {
   created_at?: string;
   updated_at?: string;
   lastError?: string;
+  jwt_auth_required?: boolean | null;
+  computed_jwt_auth_required?: boolean;
 }
 
 export interface ServerTabProps {

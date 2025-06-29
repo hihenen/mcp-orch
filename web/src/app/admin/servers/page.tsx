@@ -141,7 +141,7 @@ export default function AdminServersPage() {
       transportType: formData.transportType,
       status: "offline",
       availableTools: 0,
-      disabled: false,
+      is_enabled: true,
       timeout: formData.timeout,
       autoApprove: formData.autoApprove.split(",").filter(tool => tool.trim()),
     };
