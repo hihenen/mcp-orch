@@ -72,7 +72,7 @@ async def get_current_user_for_mcp_sse(
     return user
 
 
-@router.get("/projects/{project_id}/servers/{server_name}/sse")
+@router.get("/projects/{project_id}/servers/{server_name}/standard/sse")
 async def mcp_standard_sse_endpoint(
     project_id: UUID,
     server_name: str,
@@ -321,7 +321,7 @@ async def generate_mcp_sse_stream(
         logger.info(f"MCP SSE connection {connection_id} closed")
 
 
-@router.post("/projects/{project_id}/servers/{server_name}/messages")
+@router.post("/projects/{project_id}/servers/{server_name}/standard/messages")
 async def mcp_messages_endpoint(
     project_id: UUID,
     server_name: str,

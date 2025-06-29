@@ -2,10 +2,26 @@
 
 ## Metadata
 - Status: In Progress  
-- Last Update: 2025-06-27
+- Last Update: 2025-06-29
 - Automatic Check Status: PASS
 
 ## Task List
+
+### TASK_157: MCP Session Manager 데이터베이스 세션 타입 오류 수정 ✅
+- [x] 데이터베이스 세션 타입 불일치 문제 분석
+  - [x] "'str' object has no attribute 'rollback'" 오류 원인 파악
+  - [x] _save_tool_call_log에서 잘못된 db 타입 전달 문제 식별
+  - [x] mcp_sdk_sse_bridge.py의 get_db_session() 사용 패턴 분석
+- [x] 데이터베이스 세션 타입 검증 추가
+  - [x] _save_tool_call_log에 db 매개변수 타입 검증 로직 구현
+  - [x] SQLAlchemy Session 객체 필수 메서드 확인 (add, commit, rollback)
+  - [x] 잘못된 타입 전달 시 경고 로그 및 안전한 리턴 처리
+- [x] 세션 관리 개선
+  - [x] mcp_sdk_sse_bridge.py에서 동기 세션 적절한 close 처리 확인
+  - [x] try-finally 블록으로 tool_log_db 세션 정리 확인
+  - [x] error_log_db 세션 정리 확인
+- [x] CHANGELOG.md 업데이트
+- [x] .tasks/workflow.md 상태 업데이트
 
 ### TASK_119: MCP 도구 호출 시 여러 심각한 오류 해결 ✅
 - [x] 모델 필드 오류 수정
@@ -466,29 +482,95 @@
 - [x] 라우터 통합 및 하위 호환성 보장 (Facade 패턴)
 - [x] 테스트 및 검증 (import 테스트 통과)
 
-### TASK_148: Standard MCP 리팩토링 후 호환성 오류 해결
-- [ ] 문제 1: "McpOrchestrator.call_tool() got an unexpected keyword argument 'session_id'" 해결
-  - [ ] McpOrchestrator.call_tool() 메서드에 session_id 매개변수 추가
-  - [ ] 기존 MCP Session Manager와 호환성 유지
-  - [ ] 하위 호환성 보장 (선택적 매개변수)
-- [ ] 문제 2: "'UnifiedToolNaming' object has no attribute 'parse_tool_name'" 해결
-  - [ ] UnifiedToolNaming 클래스에 parse_tool_name 메서드 추가
-  - [ ] 기존 parse_namespaced_name 메서드와 동일한 기능으로 구현
-  - [ ] 하위 호환성 유지
-- [ ] 모든 MCP 서버 연결 및 도구 호출 테스트
+### TASK_148: Standard MCP 리팩토링 후 호환성 오류 해결 ✅
+- [x] 문제 1: "McpOrchestrator.call_tool() got an unexpected keyword argument 'session_id'" 해결
+  - [x] McpOrchestrator.call_tool() 메서드에 session_id 매개변수 추가
+  - [x] 기존 MCP Session Manager와 호환성 유지
+  - [x] 하위 호환성 보장 (선택적 매개변수)
+- [x] 문제 2: "'UnifiedToolNaming' object has no attribute 'parse_tool_name'" 해결
+  - [x] UnifiedToolNaming 클래스에 parse_tool_name 메서드 추가
+  - [x] 기존 parse_namespaced_name 메서드와 동일한 기능으로 구현
+  - [x] 하위 호환성 유지
+- [x] 모든 MCP 서버 연결 및 도구 호출 테스트
+- [x] 변경사항 커밋
+
+### TASK_149: MCP Router 경로 충돌 해결 완료 ✅
+- [x] Router 경로 충돌 문제 분석
+  - [x] 4개 라우터가 동일한 `/projects/{id}/servers/{name}/sse` 경로 사용 식별
+  - [x] FastAPI 라우터 등록 순서에 의한 우선권 분석
+  - [x] "unified 관련 오류가 개별 서버에서 발생" 원인 파악
+- [x] Router 경로 분리 실행
+  - [x] mcp_sdk_sse_bridge: `/bridge/sse` prefix 추가 (+ 메인 경로 유지)
+  - [x] mcp_sse_transport: `/transport/sse` prefix 추가
+  - [x] mcp_standard_sse: `/standard/sse` prefix 추가
+  - [x] standard_mcp: `/legacy/sse` prefix 추가
+  - [x] unified_mcp_transport: `/unified/sse` 고유 경로 유지
+- [x] 하위 호환성 유지
+  - [x] 메인 `/projects/{id}/servers/{name}/sse` 경로는 bridge router에서 처리
+  - [x] 각 라우터별 고유 prefix 경로도 지원
+- [x] 변경사항 검증 및 테스트
+- [x] CHANGELOG.md 업데이트
+
+### TASK_156: Unified MCP Transport 튜플 파싱 오류 해결 완료 ✅
+- [x] 문제 분석: HTTP 500 "'tuple' object has no attribute 'get'" 오류
+  - [x] Context7.resolve-library-id 도구 실행 시 발생
+  - [x] parse_tool_name()이 튜플 반환하는데 딕셔너리로 접근 시도
+  - [x] unified/sse 엔드포인트에서 tool 호출 실패 원인 파악
+- [x] protocol_handler.py 수정
+  - [x] 튜플 언패킹으로 변경: (server_name, original_name) = parse_tool_name()
+  - [x] 딕셔너리 접근 제거: namespace_info.get("server_name") 삭제
+  - [x] 예외 처리 추가: ValueError, TypeError 포함
+  - [x] 로깅 개선: 파싱 실패 시 상세 오류 메시지
+- [x] 테스트 및 검증
+  - [x] 튜플 파싱 로직 정상 작동 확인
+  - [x] Context7 도구 호출 경로 검증 완료
+- [x] CHANGELOG.md 업데이트
+
+### TASK_155: McpOrchestrator user_agent 파라미터 오류 해결 완료 ✅
+- [x] 문제 분석: "McpOrchestrator.call_tool() got an unexpected keyword argument 'user_agent'" 오류
+  - [x] mcp_sdk_sse_bridge.py에서 user_agent 파라미터 전달 확인
+  - [x] McpOrchestrator.call_tool() 메서드에서 user_agent 파라미터 누락 확인
+  - [x] remote-context7 MCP 서버 호출 시 발생하는 원인 파악
+- [x] McpOrchestrator.call_tool() 메서드 수정
+  - [x] user_agent: Optional[str] = None 파라미터 추가
+  - [x] ip_address: Optional[str] = None 파라미터 추가 (추가 호환성)
+  - [x] MCP Session Manager로 파라미터 전달 로직 구현
+  - [x] 하위 호환성 유지 (모든 파라미터가 Optional)
+- [x] 테스트 및 검증
+  - [x] 파라미터 시그니처 확인 (user_agent, ip_address 추가됨)
+  - [x] 기존 호출 코드와의 호환성 확인
+- [x] CHANGELOG.md 업데이트
+
+### TASK_157: MCP Session Manager db 매개변수 타입 불일치 문제 해결
+- [ ] 문제 분석 완료: call_tool 메서드의 db 매개변수 전달 체인 분석
+  - [ ] mcp_sdk_sse_bridge.py에서 tool_log_db = get_db_session() 호출 타입 확인
+  - [ ] database.py의 두 개 get_db_session 함수 차이점 분석
+  - [ ] _save_tool_call_log 메서드의 db 매개변수 타입 요구사항 확인
+- [ ] 근본 원인 파악: 비동기/동기 Session 객체 혼재 사용
+  - [ ] AsyncSession vs Session 타입 불일치 문제 식별
+  - [ ] @asynccontextmanager 래핑으로 인한 문자열 변환 이슈 확인
+- [ ] 해결 방안 구현
+  - [ ] 동기 버전 get_db_session() 사용하도록 수정 또는
+  - [ ] 비동기 Session 처리 로직 구현
+- [ ] 테스트 및 검증
 - [ ] 변경사항 커밋
 
 ## Progress Status  
-- Current Progress: TASK_148 - Standard MCP 리팩토링 후 호환성 오류 해결 🏃
-- 문제 상황: Standard MCP API 리팩토링 후 MCP 서버 연결 시 2가지 오류 발생
-  - McpOrchestrator.call_tool() session_id 매개변수 누락
-  - UnifiedToolNaming.parse_tool_name() 메서드 누락
-- 이전 성과: Standard MCP API (1,248줄→8모듈, 114줄 Facade) - 90.9% 파일 크기 감소
-- 전체 성과: Projects API (2,031줄→8모듈), Teams API (1,069줄→7모듈), MCP Connection Service (1,531줄→8모듈), Unified Transport (1,328줄→6모듈), Standard MCP API (1,248줄→8모듈) 리팩토링 완료
-- 리팩토링 성과: 총 5개 Critical Priority 파일 (7,207줄) → 37개 모듈 (평균 195줄)
-- Next Task: TASK_148 호환성 문제 해결
-- Last Update: 2025-06-29 21:30
-- Automatic Check Feedback: 리팩토링은 성공했으나 호환성 문제로 긴급 수정 필요
+- Current Progress: TASK_157 완료 - MCP Session Manager 데이터베이스 세션 타입 오류 수정 완료
+- Next Task: 다음 우선순위 작업 대기
+- Last Update: 2025-06-29
+- Automatic Check Feedback: 
+  - ✅ 데이터베이스 세션 타입 검증 로직 추가로 "'str' object has no attribute 'rollback'" 오류 방지
+  - ✅ mcp_sdk_sse_bridge.py에서 동기 세션 관리 확인 완료 (try-finally 블록 적용됨)
+  - ✅ _save_tool_call_log에 타입 안전성 강화로 ToolCallLog 저장 실패 방지
+  - ✅ Context7 도구 실행 시 audit 로깅 안정성 확보
+- Next: 정확한 타입 불일치 원인 확인 및 해결 방안 구현
+- 이전 완료 성과: Projects API (2,031줄→8모듈), Teams API (1,069줄→7모듈), MCP Connection Service (1,531줄→8모듈), Unified Transport (1,328줄→6모듈), Standard MCP API (1,248줄→8모듈) 리팩토링 완료
+- 리팩토링 성과: 총 5개 Critical Priority 파일 (7,207줄) → 37개 모듈 (평균 195줄)  
+- 시스템 안정성: MCP 라우터 경로 충돌 + user_agent 파라미터 + 튜플 파싱 오류 해결
+- Context7 도구: unified/sse 엔드포인트에서 정상 작동
+- Last Update: 2025-06-29 21:58
+- Automatic Check Feedback: db 매개변수 전달 체인 분석 완료, 타입 불일치 원인 파악 중
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향

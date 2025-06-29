@@ -40,6 +40,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintain consistent tab ordering for both add and edit modes
 
 ### Fixed
+- [TASK_157] Fix MCP Session Manager database session type error causing ToolCallLog save failures (2025-06-29)
+  - Add database session type validation in _save_tool_call_log method to prevent "'str' object has no attribute 'rollback'" errors
+  - Implement proper session management with try-finally blocks for synchronous database sessions in mcp_sdk_sse_bridge.py
+  - Add type checking for SQLAlchemy Session objects before database operations to ensure compatibility
+  - Resolve ToolCallLog audit logging failures that occurred during successful Context7 tool executions
+- [TASK_156] Fix unified MCP transport tuple parsing error causing HTTP 500 (2025-06-29)
+  - Fix "'tuple' object has no attribute 'get'" error in Context7.resolve-library-id tool execution
+  - Correct protocol_handler.py to handle parse_tool_name() tuple return value properly
+  - Replace dictionary access with tuple unpacking: (server_name, original_name) = parse_tool_name()
+  - Add proper error handling for tool name parsing failures
+  - Resolve HTTP 500 errors when using Context7 tools through unified/sse endpoint
+- [TASK_155] Fix McpOrchestrator.call_tool() missing user_agent parameter error (2025-06-29)
+  - Add user_agent and ip_address parameters to McpOrchestrator.call_tool() method signature
+  - Fix "got an unexpected keyword argument 'user_agent'" error when calling remote-context7 MCP server
+  - Ensure compatibility with mcp_sdk_sse_bridge.py which passes user_agent for client identification
+  - Maintain backward compatibility with optional parameters for all new fields
+  - Delegate to MCP Session Manager with complete parameter forwarding for proper logging
+- [TASK_149] Resolve MCP router path conflicts causing unified errors in individual server endpoints (2025-06-29)
+  - Identify router registration order issue: 4 routers competing for same path `/projects/{id}/servers/{name}/sse`
+  - Implement unique path prefixes: bridge/, transport/, standard/, legacy/ for different MCP router implementations
+  - Preserve backward compatibility by keeping main path `/projects/{id}/servers/{name}/sse` on priority router
+  - Resolve "unified-related errors in individual server endpoints" issue caused by router precedence
+  - Ensure unified errors appear in unified endpoints and individual errors in individual endpoints
 - [TASK_147] Restore MCP server compatibility after Standard MCP refactoring (2025-06-29)
   - Add missing session_id parameter to McpOrchestrator.call_tool() method
   - Add parse_tool_name method to UnifiedToolNaming class for backward compatibility

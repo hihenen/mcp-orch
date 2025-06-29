@@ -160,6 +160,7 @@ async def get_current_user_for_mcp_sse_bridge(
 
 
 @router.get("/projects/{project_id}/servers/{server_name}/sse")
+@router.get("/projects/{project_id}/servers/{server_name}/bridge/sse")
 async def mcp_sse_bridge_endpoint(
     project_id: UUID,
     server_name: str,
@@ -253,6 +254,7 @@ def create_post_message_handler(project_id: str, server_name: str):
 
 
 @router.post("/projects/{project_id}/servers/{server_name}/messages")
+@router.post("/projects/{project_id}/servers/{server_name}/bridge/messages")
 async def mcp_bridge_post_messages(
     project_id: UUID,
     server_name: str,
@@ -521,6 +523,10 @@ async def run_mcp_bridge_session(
                         ip_address=client_ip,
                         db=tool_log_db
                     )
+                finally:
+                    # 동기 세션 정리
+                    if tool_log_db:
+                        tool_log_db.close()
                     
                     # 성공 시 세션 통계 업데이트 (successful_calls는 계산된 속성이므로 제거)
                     # total_requests는 이미 위에서 증가시켰음

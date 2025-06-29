@@ -193,8 +193,21 @@ class UnifiedProtocolHandler:
         # Note: Orchestrator meta-tools removed per user request
         
         # Parse namespace and route to server
-        namespace_info = self.transport.tool_naming.parse_tool_name(tool_name)
-        server_name = namespace_info.get("server_name")
+        try:
+            # parse_tool_name returns a tuple (server_name, original_name)
+            server_name, original_name = self.transport.tool_naming.parse_tool_name(tool_name)
+        except (ValueError, TypeError) as e:
+            logger.error(f"Failed to parse tool name '{tool_name}': {e}")
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32601,
+                    "message": f"Tool not found: {tool_name}"
+                }
+            }
+            await self.transport.message_queue.put(error_response)
+            return JSONResponse(content={"status": "processing"}, status_code=202)
         
         if not server_name:
             error_response = {
@@ -211,7 +224,7 @@ class UnifiedProtocolHandler:
         # Execute tool on target server
         try:
             result = await self._execute_tool_on_server(
-                server_name, namespace_info["original_name"], arguments
+                server_name, original_name, arguments
             )
             
             response_data = {

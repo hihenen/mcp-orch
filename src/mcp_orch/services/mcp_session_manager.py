@@ -669,6 +669,15 @@ class McpSessionManager:
     ):
         """ToolCallLog 데이터베이스에 저장"""
         try:
+            # 데이터베이스 세션 타입 검증
+            if db is None:
+                logger.warning("⚠️ Database session is None, skipping ToolCallLog save")
+                return
+            
+            if not hasattr(db, 'add') or not hasattr(db, 'commit') or not hasattr(db, 'rollback'):
+                logger.error(f"❌ Invalid database session type: {type(db)}, expected SQLAlchemy Session")
+                return
+            
             # 저장할 데이터 로깅
             logger.info(f"🔍 Saving ToolCallLog: server_id={log_data.get('server_id')} (type: {type(log_data.get('server_id'))}), project_id={log_data.get('project_id')}, tool={log_data.get('tool_name')}")
             

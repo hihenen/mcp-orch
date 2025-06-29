@@ -29,8 +29,8 @@ protocol_handler = McpProtocolHandler()
 fastmcp_integration = FastMcpIntegration()
 
 
-@router.get("/projects/{project_id}/servers/{server_name}/sse")
-@router.post("/projects/{project_id}/servers/{server_name}/sse")
+@router.get("/projects/{project_id}/servers/{server_name}/legacy/sse")
+@router.post("/projects/{project_id}/servers/{server_name}/legacy/sse")
 async def standard_mcp_sse_endpoint(
     project_id: str,
     server_name: str,

@@ -431,7 +431,7 @@ async def get_current_user_for_mcp_sse(
     return user
 
 
-@router.get("/projects/{project_id}/servers/{server_name}/sse")
+@router.get("/projects/{project_id}/servers/{server_name}/transport/sse")
 async def mcp_sse_endpoint(
     project_id: UUID,
     server_name: str,
@@ -530,7 +530,7 @@ async def mcp_sse_endpoint(
         )
 
 
-@router.post("/projects/{project_id}/servers/{server_name}/messages")
+@router.post("/projects/{project_id}/servers/{server_name}/transport/messages")
 async def mcp_messages_endpoint(
     project_id: UUID,
     server_name: str,

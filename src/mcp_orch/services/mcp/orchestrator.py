@@ -160,7 +160,9 @@ class McpOrchestrator:
         project_id: Optional[str] = None,
         user_id: Optional[str] = None,
         execution_id: Optional[str] = None,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None
     ) -> Any:
         """
         BACKWARD COMPATIBILITY: Original call_tool method
@@ -169,22 +171,26 @@ class McpOrchestrator:
         try:
             logger.info(f"🔧 Executing tool {tool_name} via orchestrator")
             
-            # Validate server configuration
-            if not await self.status_checker.validate_server_config(server_config):
-                raise ToolExecutionError(
-                    f"Invalid server configuration for {server_id}",
-                    "INVALID_CONFIG"
-                )
+            if not server_config.get('is_enabled', True):
+                logger.info("⚠️ Server is disabled, cannot execute tool")
+                raise ToolExecutionError(f"Server {server_id} is disabled", "SERVER_DISABLED")
             
-            # Get or create connection
-            connection = await self.connection_manager.connect(server_config)
+            # For now, delegate to session manager to maintain compatibility
+            # TODO: Gradually migrate this to use tool_executor + connection_manager
+            from ..mcp_session_manager import get_session_manager
             
-            # Execute tool using new tool executor
-            result = await self.tool_executor.execute_tool(
-                connection, tool_name, arguments, db, project_id, server_id
+            session_manager = await get_session_manager()
+            return await session_manager.call_tool(
+                server_id=server_id,
+                server_config=server_config,
+                tool_name=tool_name,
+                arguments=arguments,
+                session_id=session_id,
+                project_id=project_id,
+                user_agent=user_agent,
+                ip_address=ip_address,
+                db=db
             )
-            
-            return result
             
         except ToolExecutionError:
             # Re-raise tool execution errors as-is
