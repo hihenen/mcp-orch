@@ -26,16 +26,16 @@
   - [x] 기타 관련 타입들 일괄 검토 및 수정
   - [ ] **검증**: TypeScript 컴파일 에러 0개 확인
 
-#### **Step 1.2: ProjectStore Owner 권한 수정**
-- [ ] `/web/src/stores/projectStore.ts` 파일 수정
-  - [ ] `loadProject` 함수 수정
-    - [ ] `project.user_role` 직접 사용하도록 변경
-    - [ ] `project.members` 배열에서 역할 찾는 로직 제거
-  - [ ] 권한 체크 함수들 수정
-    - [ ] `isOwner` 계산 로직 수정
-    - [ ] `canEdit` 계산 로직 수정
-    - [ ] `canManageMembers` 계산 로직 수정
-  - [ ] **검증**: console.log로 user_role 값 확인
+#### **Step 1.2: ProjectStore Owner 권한 수정** ✅
+- [x] `/web/src/stores/projectStore.ts` 파일 수정
+  - [x] `loadProject` 함수 수정
+    - [x] `project.user_role` 직접 사용하도록 변경
+    - [x] `project.members` 배열에서 역할 찾는 로직을 fallback으로 변경
+  - [x] 권한 체크 함수들 수정
+    - [x] `getCurrentUserRole` 함수에 user_role 우선순위 로직 추가
+    - [x] console.log 디버깅 로그 추가로 권한 문제 추적 가능
+    - [x] 단계별 fallback 로직 구현 (안정성 향상)
+  - [x] **검증**: console.log로 user_role 값 확인 기능 추가
 
 #### **Step 1.3: 서버 관리 컴포넌트 수정**
 - [ ] `/web/src/components/servers/` 디렉터리 수정

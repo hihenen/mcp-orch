@@ -211,11 +211,32 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       
       const project = await response.json();
       
-      // 현재 사용자의 역할 계산
-      const currentUserMember = project.members?.find(
-        (member: any) => member.is_current_user
-      );
-      const currentUserRole = currentUserMember?.role || null;
+      // 백엔드에서 직접 제공하는 user_role 사용
+      const currentUserRole = project.user_role || null;
+      
+      // 디버깅을 위한 로그
+      console.log('🔐 [ProjectStore] loadProject:', {
+        projectId,
+        user_role: project.user_role,
+        currentUserRole,
+        members: project.members?.length || 0
+      });
+      
+      // 기존 방식 fallback (user_role이 없을 경우)
+      if (!currentUserRole && project.members) {
+        const currentUserMember = project.members?.find(
+          (member: any) => member.is_current_user
+        );
+        if (currentUserMember) {
+          console.log('🔐 [ProjectStore] Fallback to member search, found:', currentUserMember.role);
+          set({ 
+            selectedProject: project, 
+            currentUserRole: currentUserMember.role, 
+            isLoading: false 
+          });
+          return project;
+        }
+      }
       
       set({ 
         selectedProject: project, 
@@ -850,19 +871,40 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   getCurrentUserRole: (projectId: string) => {
     const state = get();
     
-    // selectedProject에서 현재 사용자의 역할 확인
+    // selectedProject에서 user_role 직접 확인 (우선순위 1)
+    if (state.selectedProject?.id === projectId && state.selectedProject.user_role) {
+      console.log('🔐 [getCurrentUserRole] Using project.user_role:', state.selectedProject.user_role);
+      return state.selectedProject.user_role;
+    }
+    
+    // currentUserRole 사용 (우선순위 2)
+    if (state.currentUserRole && state.selectedProject?.id === projectId) {
+      console.log('🔐 [getCurrentUserRole] Using currentUserRole:', state.currentUserRole);
+      return state.currentUserRole;
+    }
+    
+    // selectedProject members에서 확인 (fallback)
     if (state.selectedProject?.id === projectId) {
       const currentUserMember = state.selectedProject.members?.find(
         member => member.is_current_user
       );
-      return currentUserMember?.role || null;
+      if (currentUserMember?.role) {
+        console.log('🔐 [getCurrentUserRole] Fallback to member search:', currentUserMember.role);
+        return currentUserMember.role;
+      }
     }
     
-    // projectMembers에서 현재 사용자의 역할 확인
+    // projectMembers에서 현재 사용자의 역할 확인 (last resort)
     const currentUserMember = state.projectMembers.find(
       member => member.is_current_user
     );
-    return currentUserMember?.role || null;
+    if (currentUserMember?.role) {
+      console.log('🔐 [getCurrentUserRole] Last resort member search:', currentUserMember.role);
+      return currentUserMember.role;
+    }
+    
+    console.log('🔐 [getCurrentUserRole] No role found for project:', projectId);
+    return null;
   },
 
   checkUserPermission: (projectId: string, requiredRole: ProjectRole) => {
