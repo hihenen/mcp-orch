@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintain consistent tab ordering for both add and edit modes
 
 ### Fixed
+- [TASK_147] Restore MCP server compatibility after Standard MCP refactoring (2025-06-29)
+  - Add missing session_id parameter to McpOrchestrator.call_tool() method
+  - Add parse_tool_name method to UnifiedToolNaming class for backward compatibility
+  - Fix "unexpected keyword argument 'session_id'" error in MCP Session Manager
+  - Fix "'UnifiedToolNaming' object has no attribute 'parse_tool_name'" error in Unified Transport
+  - Ensure 100% compatibility with existing MCP server implementations
 - [TASK_145] Fix project creation and server registration NOT NULL constraint violations (2025-06-29)
   - Remove non-existent slug field from ProjectResponse in core.py to resolve AttributeError
   - Add missing created_by_id field to McpServer creation in servers.py
