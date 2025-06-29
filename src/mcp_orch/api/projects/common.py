@@ -88,6 +88,48 @@ def verify_project_owner(project_id: UUID, user: User, db: Session) -> tuple[Pro
     return verify_project_access(project_id, user, db, ProjectRole.OWNER)
 
 
+def verify_project_member(
+    project_id: UUID, 
+    user: User, 
+    db: Session,
+    min_role: ProjectRole = ProjectRole.DEVELOPER
+) -> tuple[Project, ProjectMember]:
+    """
+    프로젝트 멤버 권한 확인 (최소 권한 이상)
+    
+    Args:
+        project_id: 프로젝트 ID
+        user: 현재 사용자
+        db: 데이터베이스 세션
+        min_role: 최소 필요 권한 (기본값: DEVELOPER)
+    
+    Returns:
+        tuple[Project, ProjectMember]: 프로젝트와 멤버 정보
+        
+    Raises:
+        HTTPException: 권한이 없거나 프로젝트를 찾을 수 없는 경우
+    """
+    # 프로젝트 접근 권한 먼저 확인
+    project, project_member = verify_project_access(project_id, user, db)
+    
+    # 권한 계층: OWNER > DEVELOPER
+    role_hierarchy = {
+        ProjectRole.DEVELOPER: 1,
+        ProjectRole.OWNER: 2
+    }
+    
+    user_role_level = role_hierarchy.get(project_member.role, 0)
+    min_role_level = role_hierarchy.get(min_role, 0)
+    
+    if user_role_level < min_role_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Minimum {min_role.value} role required for this action"
+        )
+    
+    return project, project_member
+
+
 def check_project_name_availability(name: str, user: User, db: Session, exclude_project_id: Optional[UUID] = None) -> bool:
     """
     프로젝트 이름 중복 확인
@@ -115,27 +157,3 @@ def check_project_name_availability(name: str, user: User, db: Session, exclude_
     return existing_project is None
 
 
-def generate_project_slug(name: str) -> str:
-    """
-    프로젝트 이름으로부터 URL-safe한 슬러그 생성
-    
-    Args:
-        name: 프로젝트 이름
-        
-    Returns:
-        str: URL-safe한 슬러그
-    """
-    import re
-    import unicodedata
-    
-    # 유니코드 정규화 및 소문자 변환
-    slug = unicodedata.normalize('NFKD', name).lower()
-    
-    # 특수문자를 하이픈으로 변경
-    slug = re.sub(r'[^\w\s-]', '', slug)
-    slug = re.sub(r'[-\s]+', '-', slug)
-    
-    # 앞뒤 하이픈 제거
-    slug = slug.strip('-')
-    
-    return slug or 'untitled'

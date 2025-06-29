@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_140] Fix unified MCP endpoint 404 error after refactoring (2025-06-29)
+  - Restore original API route paths: /projects/{project_id}/unified/sse
+  - Fix route path mismatch in refactored unified MCP transport module
+  - Ensure backward compatibility with existing MCP client connections
+  - Maintain Inspector and Cline integration functionality
+
 ### Changed
 - [TASK_134] Unify API responses to use is_enabled field instead of disabled for consistency (2025-06-28)
   - Change all API responses from disabled: not is_enabled to is_enabled: is_enabled

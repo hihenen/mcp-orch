@@ -318,28 +318,54 @@
   - [x] 모든 변환 로직 일관성 확보
   - [x] CHANGELOG.md 업데이트
 
-### TASK_135: Projects API 파일 구조 분석 및 분해 계획 수립
-- [ ] Phase 1: 현재 구조 상세 분석
+### TASK_135: Projects API 파일 구조 분석 및 분해 계획 수립 ✅
+- [x] Phase 1: 현재 구조 상세 분석
   - [x] 전체 엔드포인트 목록 파악 (26개 엔드포인트, 2031줄)
   - [x] 각 엔드포인트별 라인 범위 및 기능 분류
   - [x] 6개 도메인 책임 영역 식별
-  - [ ] 공통 의존성 및 Pydantic 모델 분석
-  - [ ] 상호 의존성 매핑 분석
-- [ ] Phase 2: 도메인별 분해 설계
-  - [ ] 각 도메인별 파일 구조 설계
-  - [ ] 공통 모듈 추출 계획
-  - [ ] 순환 의존성 방지 전략
-  - [ ] 점진적 마이그레이션 로드맵 작성
-- [ ] Phase 3: 실행 계획 및 검증 방안
-  - [ ] 우선순위별 실행 순서 결정
-  - [ ] 하위 호환성 보장 방안
-  - [ ] 테스트 전략 수립
+  - [x] 공통 의존성 및 Pydantic 모델 분석
+  - [x] 상호 의존성 매핑 분석
+- [x] Phase 2A: 도메인별 분해 실행 (모듈화 완료)
+  - [x] core.py: 프로젝트 기본 CRUD (398줄)
+  - [x] members.py: 멤버 관리 (380줄)
+  - [x] servers.py: MCP 서버 관리 (672줄)
+  - [x] teams.py: 팀 관리 (218줄)
+  - [x] favorites.py: 즐겨찾기 관리 (214줄)
+  - [x] api_keys.py: API 키 관리 (286줄)
+  - [x] common.py: 공통 유틸리티 및 인증
+- [x] Phase 2B: 라우터 통합 및 하위 호환성
+  - [x] __init__.py에 모든 서브 라우터 통합
+  - [x] app.py에서 새로운 모듈화된 라우터 활성화
+  - [x] 기존 모놀리식 라우터 안전하게 비활성화
+  - [x] 동일한 엔드포인트 경로 유지 (하위 호환성 보장)
+
+### TASK_138: Unified MCP Transport 리팩토링 완료 ✅
+- [x] Phase 1: 구조 분석 및 도메인 분리
+  - [x] 1,328줄 파일의 책임 영역 분석 완료
+  - [x] 6개 모듈로 분해 계획 수립
+- [x] Phase 2: 모듈화 실행  
+  - [x] api/mcp/unified/ 디렉터리 생성
+  - [x] structured_logger.py (106줄) - 로깅 기능
+  - [x] health_monitor.py (117줄) - 서버 상태 추적
+  - [x] auth.py (70줄) - 인증 처리
+  - [x] protocol_handler.py (276줄) - MCP 프로토콜 처리
+  - [x] transport.py (331줄) - 핵심 전송 클래스
+  - [x] routes.py (124줄) - HTTP 엔드포인트
+- [x] Phase 3: 하위 호환성 유지
+  - [x] 백워드 호환 래퍼 구현
+  - [x] 모든 기존 인터페이스 유지
+
+### TASK_140: Unified MCP 엔드포인트 404 오류 해결 ✅
+- [x] 문제 분석: 리팩토링 후 경로 불일치 발견
+- [x] 경로 수정: /api/v1/mcp/unified/{project_id}/sse → /projects/{project_id}/unified/sse
+- [x] 메시지 엔드포인트 경로도 동일하게 수정
+- [x] 하위 호환성 확보 및 MCP 클라이언트 연결 정상화
 
 ## Progress Status  
-- Current Progress: TASK_135 - Projects API 파일 구조 분석 (Phase 1 진행 중)
-- Next Task: 공통 의존성 및 Pydantic 모델 분석 
-- Last Update: 2025-06-28
-- Automatic Check Feedback: Projects API 파일 분석 시작. 26개 엔드포인트와 2031줄의 대형 파일 분해를 위한 상세 분석 진행 중. 6개 도메인 영역 식별 완료: 프로젝트 기본 CRUD, 서버 관리, 멤버 관리, 즐겨찾기 관리, API 키 관리, 팀 관리
+- Current Progress: TASK_140 - Unified MCP 엔드포인트 수정 완료 ✅
+- Next Task: TASK_139 - Standard MCP 리팩토링 계획 수립
+- Last Update: 2025-06-29
+- Automatic Check Feedback: Unified MCP Transport 리팩토링 완료! 1,328줄을 6개 모듈로 분해하고 404 오류 해결. 원본 API 경로 복원으로 Inspector와 Cline 호환성 유지. Phase 2 리팩토링 다음 단계 준비 완료.
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
