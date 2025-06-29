@@ -14,7 +14,7 @@ from sqlalchemy import and_, func
 from pydantic import BaseModel, Field
 
 from ...database import get_db
-from ...models import Project, ProjectMember, User, ProjectRole, McpServer
+from ...models import Project, ProjectMember, User, ProjectRole, InviteSource, McpServer
 from ...services.activity_logger import ActivityLogger
 from .common import get_current_user_for_projects, verify_project_access, verify_project_owner, check_project_name_availability
 
@@ -143,6 +143,7 @@ async def create_project(
         project_id=new_project.id,
         user_id=current_user.id,
         role=ProjectRole.OWNER,
+        invited_as=InviteSource.INDIVIDUAL,  # 프로젝트 생성자는 개인으로 초대된 것으로 간주
         invited_by=current_user.id
     )
     
