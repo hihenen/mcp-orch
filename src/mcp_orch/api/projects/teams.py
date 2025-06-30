@@ -500,19 +500,23 @@ async def create_or_connect_team_to_project(
             )
         
         # 팀이 이미 프로젝트에 연결되어 있는지 확인
-        existing_connection = db.query(ProjectMember).join(
+        existing_connections = db.query(ProjectMember).join(
             TeamMember, and_(
                 ProjectMember.user_id == TeamMember.user_id,
                 TeamMember.team_id == team.id
             )
         ).filter(
             ProjectMember.project_id == project_id
-        ).first()
+        ).all()
         
-        if existing_connection:
+        if existing_connections:
+            # 팀의 현재 역할들 수집 (중복 제거)
+            existing_roles = list(set([conn.role.value for conn in existing_connections]))
+            role_info = ", ".join(existing_roles)
+            
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Team is already connected to this project"
+                detail=f"Team '{team.name}' is already connected to this project with role(s): {role_info}. To update team member roles, please use the project members management interface."
             )
         
         action_description = f"기존 팀 '{team.name}' 프로젝트에 연결"

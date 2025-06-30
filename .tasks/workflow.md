@@ -731,6 +731,13 @@
 - [x] 동일한 문제가 있는 다른 위치 확인 및 수정
 - [x] .tasks/workflow.md 업데이트
 
+### TASK_103: Improve team connection error message with existing role information ✅
+- [x] 중복 팀 연결 체크 로직 개선
+- [x] 팀의 현재 역할 정보를 포함한 상세 에러 메시지 제공
+- [x] 역할 업데이트 방법 안내 추가
+- [x] 에러 메시지 예시: "Team 'team-name' is already connected to this project with role(s): owner, developer"
+- [x] 사용자 경험 개선을 위한 명확한 안내 제공
+
 ### TASK_174: Teams API 422 validation 오류 해결 완료 ✅
 - [x] 422 오류 원인 분석: name 필드가 필수로 설정되어 기존 팀 연결 시 오류 발생
 - [x] TeamCreateRequest 모델 수정: name 필드를 Optional로 변경
@@ -779,9 +786,9 @@
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
 ## Progress Status  
-- Current Progress: TASK_102 완료 - Fix verify_project_owner TypeError in teams endpoint
+- Current Progress: TASK_103 완료 - Improve team connection error message with existing role information
 - Next Task: 다음 개발 작업 대기  
-- Last Update: 2025-06-30 23:40
+- Last Update: 2025-06-30 23:27
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화
