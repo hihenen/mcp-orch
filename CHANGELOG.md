@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added team name and existing role information in error response
   - Included guidance for updating team member roles through the proper interface
   - Improved user experience with more informative error messages
+- [TASK_104] Filter out already connected teams from available teams list (2025-06-30)
+  - Modified GET /api/projects/{projectId}/available-teams endpoint to exclude fully connected teams
+  - Teams where all members are already in the project are no longer shown in the selection list
+  - Prevents users from attempting to connect already connected teams
+  - Improves UX by showing only teams that can actually be added to the project
 
 ### Added
 - [TASK_175] Fix Teams API 500 internal server error (2025-06-30)

@@ -130,17 +130,21 @@ async def get_available_teams_for_project(
         existing_members = check_existing_team_membership(project_id, team.id, db)
         participating_members = len(existing_members)
         
+        # 모든 팀 멤버가 이미 프로젝트에 참여 중이면 목록에서 제외
+        if total_members == participating_members:
+            continue
+            
         available_teams.append({
             "id": str(team.id),
             "name": team.name,
             "description": team.description,
             "total_members": total_members,
             "participating_members": participating_members,
-            "can_invite": total_members > participating_members,
-            "is_fully_participating": total_members == participating_members
+            "can_invite": True,  # 이미 필터링되었으므로 항상 true
+            "is_fully_participating": False  # 이미 필터링되었으므로 항상 false
         })
     
-    logger.info(f"Found {len(available_teams)} available teams for project {project_id}")
+    logger.info(f"Found {len(available_teams)} available teams for project {project_id} (excluded fully participating teams)")
     
     return available_teams
 

@@ -738,6 +738,12 @@
 - [x] 에러 메시지 예시: "Team 'team-name' is already connected to this project with role(s): owner, developer"
 - [x] 사용자 경험 개선을 위한 명확한 안내 제공
 
+### TASK_104: Filter out already connected teams from available teams list ✅
+- [x] GET /api/projects/{projectId}/available-teams 엔드포인트 수정
+- [x] 모든 팀 멤버가 이미 프로젝트에 참여 중인 팀은 목록에서 제외
+- [x] 사용자가 이미 연결된 팀을 선택할 수 없도록 근본적 해결
+- [x] 에러 메시지를 볼 필요가 없도록 UX 개선
+
 ### TASK_174: Teams API 422 validation 오류 해결 완료 ✅
 - [x] 422 오류 원인 분석: name 필드가 필수로 설정되어 기존 팀 연결 시 오류 발생
 - [x] TeamCreateRequest 모델 수정: name 필드를 Optional로 변경
@@ -786,9 +792,9 @@
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
 ## Progress Status  
-- Current Progress: TASK_103 완료 - Improve team connection error message with existing role information
+- Current Progress: TASK_104 완료 - Filter out already connected teams from available teams list
 - Next Task: 다음 개발 작업 대기  
-- Last Update: 2025-06-30 23:27
+- Last Update: 2025-06-30 23:32
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화
