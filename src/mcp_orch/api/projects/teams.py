@@ -51,7 +51,7 @@ class ProjectMemberResponse(BaseModel):
 
 
 class TeamCreateRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100, description="팀 이름")
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="팀 이름 (새 팀 생성 시 필수)")
     description: Optional[str] = Field(None, max_length=500, description="팀 설명")
     team_id: Optional[str] = Field(None, description="기존 팀 ID (연결하려는 경우)")
 
@@ -519,6 +519,12 @@ async def create_or_connect_team_to_project(
         
     else:
         # 새 팀 생성
+        if not team_request.name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Team name is required when creating a new team"
+            )
+        
         team = Team(
             name=team_request.name,
             slug=team_request.name.lower().replace(' ', '-').replace('_', '-'),

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_174] Fix Teams API 422 validation error for team connection (2025-06-30)
+  - Make team name field optional in TeamCreateRequest for existing team connections
+  - Add validation to require team name only when creating new teams
+  - Support seamless team connection without redundant name requirement
+  - Improve user experience by removing unnecessary field requirements
 - [TASK_173] Fix Teams API 404 error by implementing missing POST endpoint (2025-06-30)
   - Add POST /api/projects/{project_id}/teams endpoint for team creation and connection
   - Support both new team creation and existing team connection to projects

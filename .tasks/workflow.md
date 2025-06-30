@@ -717,6 +717,21 @@
   - [x] 5개 핵심 API 파일 수정 완료 (api_keys.py, teams.py, members.py, core.py, servers.py)
   - [x] CHANGELOG.md 업데이트 및 커밋 완료 (commit: 9a798f9)
 
+### TASK_173: Teams API 404 오류 해결 완료 ✅
+- [x] POST /api/projects/{project_id}/teams 엔드포인트 분석
+  - [x] 404 오류 원인 파악: 누락된 엔드포인트 확인
+  - [x] 기존 라우터 등록 상태 검증 (teams_modular_router 정상 등록됨)
+  - [x] 사용 가능한 대안 엔드포인트 확인 (invite, available-teams 등)
+- [x] 누락된 POST /api/projects/{project_id}/teams 엔드포인트 구현
+  - [x] TeamCreateRequest, TeamResponse Pydantic 모델 추가
+  - [x] 새 팀 생성 및 기존 팀 연결 기능 모두 지원
+  - [x] 팀 역할을 프로젝트 역할로 매핑 (Owner→Owner, Admin→Admin, Member→Developer)
+  - [x] 중복 연결 방지 및 권한 검증 로직 구현
+  - [x] ActivityLogger 통합으로 팀 생성/연결 이벤트 추적
+  - [x] 프로덕션 로그에서 보고된 404 오류 근본 해결
+- [x] CHANGELOG.md 업데이트 및 커밋 완료 (commit: 581b2d2)
+- [x] 기능 완성도: 팀 관리 API 완전성 100% 달성
+
 ### TASK_172: ActivityLogger 14개 파일 사용 패턴 분석 및 표준화
 - [x] ActivityLogger import 및 사용 파일 스캔
   - [x] src/mcp_orch/api/ 디렉터리 전체 ActivityLogger 사용 검색 완료 (13개 파일)
@@ -743,9 +758,9 @@
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
 ## Progress Status  
-- Current Progress: TASK_171 완료 - Activity 기능 완전 구현 완료 (85%→100% 달성)
+- Current Progress: TASK_173 완료 - Teams API 404 오류 해결 완료 (누락 엔드포인트 구현)
 - Next Task: 다음 개발 작업 대기
-- Last Update: 2025-06-30 22:50
+- Last Update: 2025-06-30 23:05
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화
