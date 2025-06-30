@@ -465,7 +465,7 @@ async def create_or_connect_team_to_project(
     - team_id가 없으면 새 팀을 생성하고 프로젝트에 연결
     """
     # 프로젝트 존재 및 권한 확인
-    project = verify_project_access(db, project_id, current_user.id)
+    project, project_member = verify_project_access(project_id, current_user, db)
     verify_project_owner(project, current_user.id)
     
     if team_request.team_id:

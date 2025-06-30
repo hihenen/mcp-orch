@@ -717,6 +717,13 @@
   - [x] 5개 핵심 API 파일 수정 완료 (api_keys.py, teams.py, members.py, core.py, servers.py)
   - [x] CHANGELOG.md 업데이트 및 커밋 완료 (commit: 9a798f9)
 
+### TASK_174: Teams API 422 validation 오류 해결 완료 ✅
+- [x] 422 오류 원인 분석: name 필드가 필수로 설정되어 기존 팀 연결 시 오류 발생
+- [x] TeamCreateRequest 모델 수정: name 필드를 Optional로 변경
+- [x] 새 팀 생성 시에만 name 필드 필수 validation 추가
+- [x] CHANGELOG.md 업데이트 및 커밋 완료 (commit: 3bd76b2)
+- [x] 사용자 경험 개선: 불필요한 필드 요구사항 제거
+
 ### TASK_173: Teams API 404 오류 해결 완료 ✅
 - [x] POST /api/projects/{project_id}/teams 엔드포인트 분석
   - [x] 404 오류 원인 파악: 누락된 엔드포인트 확인
@@ -758,9 +765,9 @@
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
 ## Progress Status  
-- Current Progress: TASK_173 완료 - Teams API 404 오류 해결 완료 (누락 엔드포인트 구현)
-- Next Task: 다음 개발 작업 대기
-- Last Update: 2025-06-30 23:05
+- Current Progress: TASK_174 완료 - Teams API 422 validation 오류 해결 완료
+- Next Task: 다음 개발 작업 대기  
+- Last Update: 2025-06-30 23:13
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화

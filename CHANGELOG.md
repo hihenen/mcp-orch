@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_175] Fix Teams API 500 internal server error (2025-06-30)
+  - Fix parameter order in verify_project_access function call
+  - Pass User object instead of user ID for proper authentication
+  - Return tuple unpacking for project and member objects
+  - Resolve AttributeError: 'UUID' object has no attribute 'query'
 - [TASK_174] Fix Teams API 422 validation error for team connection (2025-06-30)
   - Make team name field optional in TeamCreateRequest for existing team connections
   - Add validation to require team name only when creating new teams
