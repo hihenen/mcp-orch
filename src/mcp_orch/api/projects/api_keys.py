@@ -158,16 +158,35 @@ async def create_project_api_key(
     
     # API 키 이름 중복 확인
     if not validate_api_key_name(key_data.name, project_id, current_user, db):
+        # 사용자에게 대안 제시
+        suggested_names = [
+            f"{key_data.name}-{datetime.utcnow().strftime('%Y%m%d')}",
+            f"{key_data.name}-v2",
+            f"{key_data.name}-prod",
+            f"{key_data.name}-dev"
+        ]
+        
+        # 제안된 이름 중에서 사용 가능한 것들만 필터링
+        available_suggestions = []
+        for suggestion in suggested_names[:3]:  # 최대 3개만 제안
+            if validate_api_key_name(suggestion, project_id, current_user, db):
+                available_suggestions.append(suggestion)
+        
+        suggestion_text = ""
+        if available_suggestions:
+            suggestion_text = f" Try: {', '.join(available_suggestions)}"
+        
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="API key with this name already exists"
+            detail=f"API key name '{key_data.name}' already exists. Please choose a different name.{suggestion_text}"
         )
     
     # 만료 날짜 검증
     if key_data.expires_at and key_data.expires_at <= datetime.utcnow():
+        current_date = datetime.utcnow().strftime('%Y-%m-%d')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Expiration date must be in the future"
+            detail=f"Expiration date must be in the future. Current date is {current_date}. Please select a date after today."
         )
     
     # API 키 생성
@@ -245,7 +264,7 @@ async def delete_project_api_key(
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found"
+            detail="API key not found. It may have been already deleted or you don't have permission to delete it."
         )
     
     # API 키 삭제

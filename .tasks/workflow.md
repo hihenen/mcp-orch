@@ -744,6 +744,13 @@
 - [x] 사용자가 이미 연결된 팀을 선택할 수 없도록 근본적 해결
 - [x] 에러 메시지를 볼 필요가 없도록 UX 개선
 
+### TASK_105: Improve API key name duplicate error message and add user-friendly error guidelines ✅
+- [x] API 키 이름 중복 시 명확한 에러 메시지 제공
+- [x] 사용 가능한 대체 이름 제안 (test-20250630, test-v2, test-prod 등)
+- [x] 만료 날짜 오류 메시지도 개선 (현재 날짜 표시)
+- [x] API 키 삭제 시 오류 메시지 개선
+- [x] CLAUDE.md에 사용자 친화적 에러 메시지 가이드라인 추가
+
 ### TASK_174: Teams API 422 validation 오류 해결 완료 ✅
 - [x] 422 오류 원인 분석: name 필드가 필수로 설정되어 기존 팀 연결 시 오류 발생
 - [x] TeamCreateRequest 모델 수정: name 필드를 Optional로 변경
@@ -792,9 +799,9 @@
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
 ## Progress Status  
-- Current Progress: TASK_104 완료 - Filter out already connected teams from available teams list
+- Current Progress: TASK_105 완료 - Improve API key name duplicate error message and add user-friendly error guidelines
 - Next Task: 다음 개발 작업 대기  
-- Last Update: 2025-06-30 23:32
+- Last Update: 2025-06-30 23:38
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화

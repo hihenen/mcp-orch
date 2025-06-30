@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Teams where all members are already in the project are no longer shown in the selection list
   - Prevents users from attempting to connect already connected teams
   - Improves UX by showing only teams that can actually be added to the project
+- [TASK_105] Improve API key name duplicate error message and add user-friendly error guidelines (2025-06-30)
+  - Enhanced duplicate API key name error message with specific suggestions
+  - Added alternative name suggestions (e.g., name-20250630, name-v2, name-prod)
+  - Improved expiration date error message to show current date
+  - Enhanced API key not found error message with more context
+  - Added comprehensive user-friendly error message guidelines to CLAUDE.md
 
 ### Added
 - [TASK_175] Fix Teams API 500 internal server error (2025-06-30)
