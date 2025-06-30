@@ -16,44 +16,34 @@ from .base import Base
 
 
 class ActivityType(str, Enum):
-    """활동 타입 (확장 가능)"""
+    """활동 타입 (데이터베이스 enum과 일치)"""
     # 서버 관련
-    SERVER_CREATED = "server.created"
-    SERVER_UPDATED = "server.updated"
-    SERVER_DELETED = "server.deleted"
-    SERVER_STARTED = "server.started"
-    SERVER_STOPPED = "server.stopped"
-    SERVER_RESTARTED = "server.restarted"
+    SERVER_CREATED = "SERVER_CREATED"
+    SERVER_UPDATED = "SERVER_UPDATED"
+    SERVER_DELETED = "SERVER_DELETED"
+    SERVER_STARTED = "SERVER_STARTED"
+    SERVER_STOPPED = "SERVER_STOPPED"
     
     # 도구 실행 관련
-    TOOL_EXECUTED = "tool.executed"
-    TOOL_FAILED = "tool.failed"
+    TOOL_CALLED = "TOOL_CALLED"  # 데이터베이스와 일치
     
-    # 멤버 관리 관련
-    MEMBER_INVITED = "member.invited"
-    MEMBER_JOINED = "member.joined"
-    MEMBER_REMOVED = "member.removed"
-    MEMBER_ROLE_CHANGED = "member.role_changed"
+    # 사용자 관련
+    USER_JOINED = "USER_JOINED"
+    USER_LEFT = "USER_LEFT"
     
     # API 키 관련
-    API_KEY_CREATED = "api_key.created"
-    API_KEY_DELETED = "api_key.deleted"
-    API_KEY_ROTATED = "api_key.rotated"
+    API_KEY_CREATED = "API_KEY_CREATED"
+    API_KEY_DELETED = "API_KEY_DELETED"
     
-    # 프로젝트 설정 관련
-    PROJECT_SETTINGS_UPDATED = "project.settings_updated"
-    PROJECT_CREATED = "project.created"
-    PROJECT_DELETED = "project.deleted"
+    # 프로젝트 관련
+    PROJECT_CREATED = "PROJECT_CREATED"
+    PROJECT_UPDATED = "PROJECT_UPDATED"
+    PROJECT_DELETED = "PROJECT_DELETED"
     
     # 팀 관리 관련
-    TEAM_CREATED = "team.created"
-    TEAM_UPDATED = "team.updated"
-    TEAM_DELETED = "team.deleted"
-    TEAM_SETTINGS_UPDATED = "team.settings_updated"
-    
-    # 세션 관리 관련
-    SESSION_CREATED = "session.created"
-    SESSION_ENDED = "session.ended"
+    TEAM_CREATED = "TEAM_CREATED"
+    TEAM_UPDATED = "TEAM_UPDATED"
+    TEAM_DELETED = "TEAM_DELETED"
 
 
 class ActivitySeverity(str, Enum):

@@ -140,17 +140,17 @@ export default function ProjectActivityPage() {
 
   // Return activity type icons and colors
   const getActivityIcon = (action: string) => {
-    if (action.startsWith('server.')) {
+    if (action.startsWith('SERVER_')) {
       return { icon: Server, bgColor: 'bg-blue-100', iconColor: 'text-blue-600' };
-    } else if (action.startsWith('member.')) {
+    } else if (action.startsWith('MEMBER_')) {
       return { icon: Users, bgColor: 'bg-green-100', iconColor: 'text-green-600' };
-    } else if (action.startsWith('project.')) {
+    } else if (action.startsWith('PROJECT_')) {
       return { icon: Settings, bgColor: 'bg-orange-100', iconColor: 'text-orange-600' };
-    } else if (action.startsWith('api_key.')) {
+    } else if (action.startsWith('API_KEY_')) {
       return { icon: Key, bgColor: 'bg-purple-100', iconColor: 'text-purple-600' };
-    } else if (action.startsWith('tool.')) {
+    } else if (action.startsWith('TOOL_')) {
       return { icon: Play, bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600' };
-    } else if (action.startsWith('session.')) {
+    } else if (action.startsWith('SESSION_')) {
       return { icon: RefreshCw, bgColor: 'bg-gray-100', iconColor: 'text-gray-600' };
     } else {
       return { icon: Activity, bgColor: 'bg-gray-100', iconColor: 'text-gray-600' };
@@ -252,13 +252,13 @@ export default function ProjectActivityPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Activities</SelectItem>
-                  <SelectItem value="server.created">Server Created</SelectItem>
-                  <SelectItem value="server.deleted">Server Deleted</SelectItem>
-                  <SelectItem value="member.invited">Member Invited</SelectItem>
-                  <SelectItem value="project.settings_updated">Settings Updated</SelectItem>
-                  <SelectItem value="api_key.created">API Key Created</SelectItem>
-                  <SelectItem value="api_key.deleted">API Key Deleted</SelectItem>
-                  <SelectItem value="tool.executed">Tool Executed</SelectItem>
+                  <SelectItem value="SERVER_CREATED">Server Created</SelectItem>
+                  <SelectItem value="SERVER_DELETED">Server Deleted</SelectItem>
+                  <SelectItem value="MEMBER_INVITED">Member Invited</SelectItem>
+                  <SelectItem value="PROJECT_SETTINGS_UPDATED">Settings Updated</SelectItem>
+                  <SelectItem value="API_KEY_CREATED">API Key Created</SelectItem>
+                  <SelectItem value="API_KEY_DELETED">API Key Deleted</SelectItem>
+                  <SelectItem value="TOOL_EXECUTED">Tool Executed</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={timeFilter} onValueChange={setTimeFilter}>

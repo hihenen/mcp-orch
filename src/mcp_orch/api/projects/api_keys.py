@@ -216,7 +216,7 @@ async def create_project_api_key(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            action="api_key.created",  # 점(.) 추가하여 ActivityType과 일치시킴
+            action="API_KEY_CREATED",  # 데이터베이스 enum과 일치
             description=f"API 키 '{key_data.name}' 생성",
             meta_data={
                 "api_key_id": str(new_api_key.id),
@@ -278,7 +278,7 @@ async def delete_project_api_key(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            action="api_key.deleted",  # 점(.) 추가하여 ActivityType과 일치시킴
+            action="API_KEY_DELETED",  # 데이터베이스 enum과 일치
             description=f"API 키 '{key_name}' 삭제",
             meta_data={
                 "api_key_id": str(key_id),

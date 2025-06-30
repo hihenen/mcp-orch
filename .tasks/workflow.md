@@ -829,6 +829,8 @@
   - [x] action 값을 "api_key_deleted"에서 "api_key.deleted"로 수정
   - [x] ActivityLogger 필드 매핑 수정 (type, resource_type, resource_id, activity_metadata)
   - [x] 프론트엔드 필터 옵션에 api_key.deleted 추가
+  - [x] 데이터베이스 enum 오류 해결 - Python enum을 데이터베이스 enum과 일치시킴
+  - [x] 점 표기법 대신 언더스코어 대문자 표기법으로 통일 (API_KEY_CREATED)
 
 ## Progress Status  
 - Current Progress: TASK_109 완료 - API 키 생성 활동이 Activity 페이지에 표시되지 않는 문제 해결

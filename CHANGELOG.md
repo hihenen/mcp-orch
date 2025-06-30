@@ -9,15 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [TASK_109] Fix API key creation activities not appearing in Activity page (2025-06-30)
-  - Fixed action parameter mismatch: changed from "api_key_created" to "api_key.created"
-  - Fixed action parameter mismatch: changed from "api_key_deleted" to "api_key.deleted"
+  - Fixed PostgreSQL enum value mismatch by standardizing to uppercase underscore format
+  - Changed Python ActivityType enum values to match database enum (e.g., API_KEY_CREATED)
+  - Updated API calls to use database-compatible enum values instead of dot notation
   - Fixed ActivityLogger database field mapping issues:
     - Changed from `action=` to `type=` for Activity model compatibility
     - Changed from `target_type=` to `resource_type=` for proper field mapping
     - Changed from `target_id=` to `resource_id=` for proper field mapping
     - Changed from `meta_data=` to `activity_metadata=` for correct database column
-  - Added api_key.deleted filter option to frontend Activity page
-  - Resolved ActivityType enum value mismatch causing ValueError in ActivityLogger
+  - Updated frontend filters to use uppercase underscore format (SERVER_CREATED, API_KEY_CREATED, etc.)
+  - Updated frontend icon matching to work with new enum format
+  - Removed complex enum mapping logic in favor of single consistent format
 - [TASK_102] Fix verify_project_owner TypeError in teams endpoint (2025-06-30)
   - Fixed missing db parameter in verify_project_owner function call
   - Changed from verify_project_owner(project, current_user.id) to verify_project_owner(project_id, current_user, db)
