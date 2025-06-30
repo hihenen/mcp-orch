@@ -7,6 +7,18 @@
 
 ## Task List
 
+### TASK_177: .env 파일 기반 Docker Compose 프론트엔드 배포 설정 통합 ✅
+- [x] 현재 docker-compose.yml 분석 (프론트엔드 빌드 설정 확인)
+- [x] .env 파일과 .env.example 비교 분석
+- [x] docker-compose.yml에서 .env 참조 방식 확인
+- [x] 프론트엔드 빌드 시 필요한 환경변수 식별
+- [x] JWT 암호화 관련 환경변수 통합 (AUTH_SECRET, NEXTAUTH_SECRET 등)
+- [x] INITIAL_ADMIN_PASSWORD 설정 확인 및 적용
+- [x] .env 파일에서 모든 필요 환경변수 중앙 관리하도록 설정
+- [x] docker-compose.yml 환경변수 참조 수정
+- [x] 프론트엔드 빌드 테스트 및 검증 (테스트 가이드 제공)
+- [x] 변경사항 문서화
+
 ### TASK_176: migrate.sh 스크립트 단순화 ✅
 - [x] 현재 스크립트 분석 및 복잡성 검토
 - [x] 사용자 제안에 따른 단순한 워크플로우 구현
@@ -848,7 +860,7 @@
   - [x] 누락된 ActivityType enum 값들을 데이터베이스에 추가하는 마이그레이션 생성 및 실행
 
 ## Progress Status  
-- Current Progress: TASK_176 - migrate.sh 스크립트 단순화 ✅ 완료
+- Current Progress: TASK_177 - .env 파일 기반 Docker Compose 프론트엔드 배포 설정 통합 ✅ 완료
 - Next Task: 다음 개발 작업 대기
 - Last Update: 2025-07-01
 - Automatic Check Feedback: 

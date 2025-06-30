@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_177] Fix Docker Compose frontend deployment and JWT token encryption issues (2025-07-01)
+  - Fix JWT token mismatch between frontend and backend by standardizing AUTH_SECRET usage
+  - Add missing NEXTAUTH_SECRET environment variable for NextAuth.js compatibility
+  - Add missing INITIAL_ADMIN_PASSWORD environment variable for admin account setup
+  - Centralize all required environment variables in .env file for single-point configuration
+  - Ensure consistent JWT encryption keys across frontend-backend communication
+  - Fix Docker Compose environment variable references and defaults
+  - Enable seamless frontend build and deployment with only .env file modification
+
 ### Changed
 - [TASK_176] Simplify migrate.sh script based on user feedback (2025-07-01)
   - Reduce script complexity from 393 lines to 82 lines (79% reduction)
