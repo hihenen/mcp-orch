@@ -257,6 +257,7 @@ export default function ProjectActivityPage() {
                   <SelectItem value="member.invited">Member Invited</SelectItem>
                   <SelectItem value="project.settings_updated">Settings Updated</SelectItem>
                   <SelectItem value="api_key.created">API Key Created</SelectItem>
+                  <SelectItem value="api_key.deleted">API Key Deleted</SelectItem>
                   <SelectItem value="tool.executed">Tool Executed</SelectItem>
                 </SelectContent>
               </Select>

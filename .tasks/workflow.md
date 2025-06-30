@@ -805,10 +805,35 @@
   - [x] **동기 호출**: await 키워드 제거
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
+### TASK_102: ActivityLogger 액션 타입 분석 ✅
+- [x] mcp-orch 코드베이스에서 ActivityLogger.log_activity 호출 검색
+- [x] 각 호출에서 action= 파라미터 값 추출
+- [x] 고유한 action 타입 목록 정리
+- [x] 각 action 타입이 사용되는 컨텍스트 파악
+
+### TASK_109: API 키 생성 활동이 Activity 페이지에 표시되지 않는 문제 해결 ✅
+- [x] API 키 생성 코드에서 ActivityLogger 호출 부분 확인
+  - [x] api_keys.py에서 ActivityLogger.log_activity() 호출 확인
+  - [x] 매개변수가 올바르게 전달되는지 확인
+  - [x] 예외가 발생하는지 로그 확인
+- [x] ActivityLogger 실패 원인 파악 (데이터베이스 필드 불일치 등)
+  - [x] log_activity() 메서드가 실제로 데이터베이스에 저장하는지 확인
+  - [x] 트랜잭션 커밋 여부 확인
+  - [x] 예외 처리가 올바르게 되어 있는지 확인
+- [x] Activity 모델과 ActivityLogger 간의 필드 매핑 문제 해결
+  - [x] action vs type 필드 매핑 문제 해결
+  - [x] metadata vs activity_metadata 필드 매핑 문제 해결
+  - [x] target vs resource 필드 매핑 문제 해결
+- [x] API 키 생성 시 activity가 제대로 기록되도록 수정
+  - [x] action 값을 "api_key_created"에서 "api_key.created"로 수정
+  - [x] action 값을 "api_key_deleted"에서 "api_key.deleted"로 수정
+  - [x] ActivityLogger 필드 매핑 수정 (type, resource_type, resource_id, activity_metadata)
+  - [x] 프론트엔드 필터 옵션에 api_key.deleted 추가
+
 ## Progress Status  
-- Current Progress: TASK_106 완료 - Fix frontend to display detailed API key error messages
+- Current Progress: TASK_109 완료 - API 키 생성 활동이 Activity 페이지에 표시되지 않는 문제 해결
 - Next Task: 다음 개발 작업 대기  
-- Last Update: 2025-06-30 23:44
+- Last Update: 2025-06-30
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화

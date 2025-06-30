@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- [TASK_109] Fix API key creation activities not appearing in Activity page (2025-06-30)
+  - Fixed action parameter mismatch: changed from "api_key_created" to "api_key.created"
+  - Fixed action parameter mismatch: changed from "api_key_deleted" to "api_key.deleted"
+  - Fixed ActivityLogger database field mapping issues:
+    - Changed from `action=` to `type=` for Activity model compatibility
+    - Changed from `target_type=` to `resource_type=` for proper field mapping
+    - Changed from `target_id=` to `resource_id=` for proper field mapping
+    - Changed from `meta_data=` to `activity_metadata=` for correct database column
+  - Added api_key.deleted filter option to frontend Activity page
+  - Resolved ActivityType enum value mismatch causing ValueError in ActivityLogger
 - [TASK_102] Fix verify_project_owner TypeError in teams endpoint (2025-06-30)
   - Fixed missing db parameter in verify_project_owner function call
   - Changed from verify_project_owner(project, current_user.id) to verify_project_owner(project_id, current_user, db)

@@ -187,15 +187,17 @@ class ActivityLogger:
                 project_id=project_id,
                 team_id=team_id,
                 user_id=user_id,
-                action=action,
+                type=action,  # DB 필드명은 'type'
                 title=description or action.value,  # title 필드 필수
                 description=description,
                 severity=severity,
-                target_type=target_type,
-                target_id=target_id,
-                meta_data=safe_meta_data,
-                context=safe_context
+                resource_type=target_type,  # DB 필드명은 'resource_type'
+                resource_id=target_id,  # DB 필드명은 'resource_id'
+                activity_metadata=safe_meta_data  # DB 필드명은 'activity_metadata'
             )
+            # context는 metadata 내부에 포함
+            if safe_context:
+                activity.activity_metadata['context'] = safe_context
             
             db.add(activity)
             db.commit()
