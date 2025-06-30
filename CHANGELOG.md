@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [TASK_102] Fix verify_project_owner TypeError in teams endpoint (2025-06-30)
+  - Fixed missing db parameter in verify_project_owner function call
+  - Changed from verify_project_owner(project, current_user.id) to verify_project_owner(project_id, current_user, db)
+  - Resolved TypeError: verify_project_owner() missing 1 required positional argument: 'db'
+
 ### Added
 - [TASK_175] Fix Teams API 500 internal server error (2025-06-30)
   - Fix parameter order in verify_project_access function call

@@ -466,7 +466,7 @@ async def create_or_connect_team_to_project(
     """
     # 프로젝트 존재 및 권한 확인
     project, project_member = verify_project_access(project_id, current_user, db)
-    verify_project_owner(project, current_user.id)
+    verify_project_owner(project_id, current_user, db)
     
     if team_request.team_id:
         # 기존 팀을 프로젝트에 연결
