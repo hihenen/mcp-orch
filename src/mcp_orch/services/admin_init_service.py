@@ -6,7 +6,6 @@
 
 import logging
 from typing import Optional
-import bcrypt
 from sqlalchemy.orm import Session
 
 from ..models.user import User
@@ -14,13 +13,6 @@ from ..database import get_db
 from ..config import Settings
 
 logger = logging.getLogger(__name__)
-
-
-def hash_password(password: str) -> str:
-    """비밀번호 해싱"""
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-    return hashed.decode('utf-8')
 
 
 async def initialize_admin_user(settings: Settings) -> Optional[str]:
@@ -36,7 +28,6 @@ async def initialize_admin_user(settings: Settings) -> Optional[str]:
     try:
         # 초기 관리자 설정 확인
         admin_email = settings.security.initial_admin_email
-        admin_password = settings.security.initial_admin_password
         
         if not admin_email:
             logger.info("INITIAL_ADMIN_EMAIL이 설정되지 않음. 관리자 초기화 스킵.")

@@ -7,6 +7,15 @@
 
 ## Task List
 
+### TASK_178: INITIAL_ADMIN_PASSWORD 사용 현황 확인 및 제거 ✅
+- [x] 백엔드 코드에서 INITIAL_ADMIN_PASSWORD 사용 여부 확인
+- [x] 현재 admin 계정 생성 로직 분석
+- [x] INITIAL_ADMIN_EMAIL 기반 시스템 확인
+- [x] 불필요한 INITIAL_ADMIN_PASSWORD 환경변수 제거
+- [x] docker-compose.yml에서 해당 변수 제거
+- [x] .env 파일에서 해당 변수 제거
+- [x] 관련 문서 업데이트
+
 ### TASK_177: .env 파일 기반 Docker Compose 프론트엔드 배포 설정 통합 ✅
 - [x] 현재 docker-compose.yml 분석 (프론트엔드 빌드 설정 확인)
 - [x] .env 파일과 .env.example 비교 분석
@@ -860,7 +869,7 @@
   - [x] 누락된 ActivityType enum 값들을 데이터베이스에 추가하는 마이그레이션 생성 및 실행
 
 ## Progress Status  
-- Current Progress: TASK_177 - .env 파일 기반 Docker Compose 프론트엔드 배포 설정 통합 ✅ 완료
+- Current Progress: TASK_178 - INITIAL_ADMIN_PASSWORD 사용 현황 확인 및 제거 ✅ 완료
 - Next Task: 다음 개발 작업 대기
 - Last Update: 2025-07-01
 - Automatic Check Feedback: 

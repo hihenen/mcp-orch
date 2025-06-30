@@ -74,9 +74,8 @@ class SecurityConfig(BaseModel):
     api_keys: List[Dict[str, Any]] = Field(default_factory=list)
     cors_origins: List[str] = Field(default_factory=lambda: ["*"])
     
-    # 초기 관리자 계정 설정
+    # 초기 관리자 계정 설정 (INITIAL_ADMIN_EMAIL 기반)
     initial_admin_email: Optional[str] = None
-    initial_admin_password: Optional[str] = None
     
     # 사용자 자동 프로비저닝 설정
     auto_provision: bool = False
@@ -291,7 +290,6 @@ class Settings(BaseSettings):
             
             # 보안 설정
             "INITIAL_ADMIN_EMAIL": ("security", "initial_admin_email"),
-            "INITIAL_ADMIN_PASSWORD": ("security", "initial_admin_password"),
         }
         
         kwargs = {}

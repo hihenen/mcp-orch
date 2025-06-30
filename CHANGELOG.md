@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- [TASK_178] Remove unused INITIAL_ADMIN_PASSWORD environment variable (2025-07-01)
+  - Remove INITIAL_ADMIN_PASSWORD from .env, docker-compose.yml, and backend code
+  - Current admin system only uses INITIAL_ADMIN_EMAIL for existing user privilege elevation
+  - Admin accounts work through OAuth (Google/GitHub) with email-based privilege assignment
+  - Remove unused hash_password function and bcrypt import from admin_init_service.py
+  - Simplify SecurityConfig and environment variable mapping
+
 ### Fixed
 - [TASK_177] Fix Docker Compose frontend deployment and JWT token encryption issues (2025-07-01)
   - Fix JWT token mismatch between frontend and backend by standardizing AUTH_SECRET usage
   - Add missing NEXTAUTH_SECRET environment variable for NextAuth.js compatibility
-  - Add missing INITIAL_ADMIN_PASSWORD environment variable for admin account setup
   - Centralize all required environment variables in .env file for single-point configuration
   - Ensure consistent JWT encryption keys across frontend-backend communication
   - Fix Docker Compose environment variable references and defaults
