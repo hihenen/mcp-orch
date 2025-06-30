@@ -94,6 +94,7 @@ class ActivityLogger:
         Returns:
             bool: 성공 여부
         """
+        logger.info(f"[ActivityLogger] log_activity called with action={action}, description={description}, project_id={project_id}")
         try:
             # 유효성 검사: project_id 또는 team_id 중 하나는 필수
             if not project_id and not team_id:
@@ -135,6 +136,7 @@ class ActivityLogger:
         """
         Phase 1: 데이터베이스에 직접 저장
         """
+        logger.info(f"[ActivityLogger] _log_to_database called with action={action}, db={type(db)}")
         should_close_db = False
         
         try:
@@ -155,10 +157,13 @@ class ActivityLogger:
             
             # ActivityType enum 변환
             if isinstance(action, str):
+                logger.info(f"[ActivityLogger] Converting action string '{action}' to ActivityType")
                 try:
                     action = ActivityType(action)
-                except ValueError:
+                    logger.info(f"[ActivityLogger] Successfully converted to ActivityType: {action}")
+                except ValueError as e:
                     # 알 수 없는 액션은 메타데이터에 기록하고 INFO로 저장
+                    logger.warning(f"[ActivityLogger] Unknown action type '{action}': {e}")
                     meta_data = meta_data or {}
                     meta_data['original_action'] = action
                     action = ActivityType.PROJECT_SETTINGS_UPDATED  # 기본 값
@@ -183,6 +188,7 @@ class ActivityLogger:
             safe_context = _ensure_json_serializable(context)
             
             # 활동 기록 생성
+            logger.info(f"[ActivityLogger] Creating Activity object with type={action}, title={description}")
             activity = Activity(
                 project_id=project_id,
                 team_id=team_id,
@@ -199,8 +205,11 @@ class ActivityLogger:
             if safe_context:
                 activity.activity_metadata['context'] = safe_context
             
+            logger.info(f"[ActivityLogger] Adding activity to database: {activity}")
             db.add(activity)
+            logger.info(f"[ActivityLogger] Committing activity to database")
             db.commit()
+            logger.info(f"[ActivityLogger] Activity committed successfully with ID: {activity.id}")
             
             resource_info = f"project {project_id}" if project_id else f"team {team_id}"
             logger.info(f"Activity logged: {action.value} for {resource_info}")
