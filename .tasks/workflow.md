@@ -7,6 +7,20 @@
 
 ## Task List
 
+### TASK_176: migrate.sh 스크립트 단순화 ✅
+- [x] 현재 스크립트 분석 및 복잡성 검토
+- [x] 사용자 제안에 따른 단순한 워크플로우 구현
+  - [x] git pull 추가
+  - [x] 프로세스 kill 로직 단순화
+  - [x] uv run alembic upgrade head 무조건 실행
+  - [x] uv run mcp-orch serve 시작
+- [x] 기본적인 에러 처리만 유지 (필수적인 것만)
+- [x] 불필요한 데이터베이스 연결 테스트 제거
+- [x] 복잡한 fallback 로직 제거
+- [x] 82줄의 간단한 스크립트로 재작성 (393줄 → 82줄, 79% 감소)
+- [x] CHANGELOG.md 업데이트
+- [x] .tasks/workflow.md 상태 업데이트
+
 ### TASK_170: MCP-Orch 리팩토링 전체 여정 심층 분석 보고서 (AI 개발 과제 포함) ✅
 - [x] 리팩토링 관련 문서들 분석
   - [x] 기존 mcp-orch-refactoring-journey-report.md (773줄) 분석
@@ -834,9 +848,9 @@
   - [x] 누락된 ActivityType enum 값들을 데이터베이스에 추가하는 마이그레이션 생성 및 실행
 
 ## Progress Status  
-- Current Progress: TASK_109 완료 - API 키 생성 활동이 Activity 페이지에 표시되지 않는 문제 해결
-- Next Task: 다음 개발 작업 대기  
-- Last Update: 2025-06-30
+- Current Progress: TASK_176 - migrate.sh 스크립트 단순화 ✅ 완료
+- Next Task: 다음 개발 작업 대기
+- Last Update: 2025-07-01
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화
