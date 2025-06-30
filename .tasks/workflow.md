@@ -751,6 +751,13 @@
 - [x] API 키 삭제 시 오류 메시지 개선
 - [x] CLAUDE.md에 사용자 친화적 에러 메시지 가이드라인 추가
 
+### TASK_106: Fix frontend to display detailed API key error messages ✅
+- [x] projectStore.ts에서 createProjectApiKey 함수 에러 처리 개선
+- [x] response.statusText 대신 백엔드에서 보낸 detail 메시지 파싱
+- [x] deleteProjectApiKey 함수도 동일하게 개선
+- [x] 프론트엔드 toast 에러 메시지에 상세 내용 표시
+- [x] 사용자가 백엔드의 친칠한 에러 메시지를 볼 수 있도록 개선
+
 ### TASK_174: Teams API 422 validation 오류 해결 완료 ✅
 - [x] 422 오류 원인 분석: name 필드가 필수로 설정되어 기존 팀 연결 시 오류 발생
 - [x] TeamCreateRequest 모델 수정: name 필드를 Optional로 변경
@@ -799,9 +806,9 @@
   - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
 
 ## Progress Status  
-- Current Progress: TASK_105 완료 - Improve API key name duplicate error message and add user-friendly error guidelines
+- Current Progress: TASK_106 완료 - Fix frontend to display detailed API key error messages
 - Next Task: 다음 개발 작업 대기  
-- Last Update: 2025-06-30 23:38
+- Last Update: 2025-06-30 23:44
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화

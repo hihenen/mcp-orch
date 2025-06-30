@@ -790,7 +790,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to create project API key: ${response.statusText}`);
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.detail || errorData?.message || response.statusText;
+        throw new Error(errorMessage);
       }
       
       const apiKey = await response.json();
@@ -821,7 +823,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to delete project API key: ${response.statusText}`);
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.detail || errorData?.message || response.statusText;
+        throw new Error(errorMessage);
       }
       
       // API 키 목록에서 제거

@@ -84,7 +84,8 @@ export default function ProjectApiKeysPage() {
       setIsSuccessDialogOpen(true);
     } catch (error) {
       console.error('API key creation error:', error);
-      toast.error('Failed to create API key.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create API key.';
+      toast.error(errorMessage);
     }
   };
 
@@ -98,7 +99,8 @@ export default function ProjectApiKeysPage() {
       toast.success('API key has been deleted.');
     } catch (error) {
       console.error('API key deletion error:', error);
-      toast.error('Failed to delete API key.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete API key.';
+      toast.error(errorMessage);
     }
   };
 

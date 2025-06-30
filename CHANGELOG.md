@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed missing db parameter in verify_project_owner function call
   - Changed from verify_project_owner(project, current_user.id) to verify_project_owner(project_id, current_user, db)
   - Resolved TypeError: verify_project_owner() missing 1 required positional argument: 'db'
+- [TASK_106] Fix frontend to display detailed API key error messages (2025-06-30)
+  - Fixed projectStore to properly parse backend error responses
+  - Changed from using response.statusText to parsing response.json().detail
+  - Applied same fix to both createProjectApiKey and deleteProjectApiKey functions
+  - Updated toast error messages to show detailed backend error messages
+  - Now users can see helpful error messages like "API key name 'test' already exists. Try: test-20250630, test-v2"
 
 ### Changed
 - [TASK_103] Improve team connection error message with existing role information (2025-06-30)
