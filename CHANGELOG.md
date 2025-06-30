@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [TASK_109] Fix API key creation activities not appearing in Activity page (2025-06-30)
-  - Fixed PostgreSQL enum value mismatch by standardizing to uppercase underscore format
-  - Changed Python ActivityType enum values to match database enum (e.g., API_KEY_CREATED)
-  - Updated API calls to use database-compatible enum values instead of dot notation
+  - Fixed PostgreSQL enum value mismatch by adding missing enum values to database
+  - Added migration to include new ActivityType enum values: TOOL_EXECUTED, TOOL_FAILED, MEMBER_INVITED, etc.
+  - Standardized all code to use uppercase underscore format (e.g., API_KEY_CREATED)
   - Fixed ActivityLogger database field mapping issues:
     - Changed from `action=` to `type=` for Activity model compatibility
     - Changed from `target_type=` to `resource_type=` for proper field mapping
