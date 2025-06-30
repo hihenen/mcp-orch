@@ -239,14 +239,13 @@ async def invite_team_to_project(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="team_invited",
+            action="team_invited",
             description=f"팀 '{team.name}' 초대 ({total_invited}명 추가)",
-            metadata={
+            meta_data={
                 "team_id": str(team.id),
                 "team_name": team.name,
                 "role": invite_data.role.value,
@@ -411,14 +410,13 @@ async def remove_team_from_project(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="team_removed",
+            action="team_removed",
             description=f"팀 '{team.name}' 제거 ({removed_count}명)",
-            metadata={
+            meta_data={
                 "team_id": str(team.id),
                 "team_name": team.name,
                 "removed_members_count": removed_count

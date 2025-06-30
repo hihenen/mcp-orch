@@ -193,14 +193,13 @@ async def create_project_api_key(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="api_key_created",
+            action="api_key_created",
             description=f"API 키 '{key_data.name}' 생성",
-            metadata={
+            meta_data={
                 "api_key_id": str(new_api_key.id),
                 "key_suffix": key_suffix,
                 "expires_at": key_data.expires_at.isoformat() if key_data.expires_at else None
@@ -256,14 +255,13 @@ async def delete_project_api_key(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="api_key_deleted",
+            action="api_key_deleted",
             description=f"API 키 '{key_name}' 삭제",
-            metadata={
+            meta_data={
                 "api_key_id": str(key_id),
                 "key_suffix": api_key.key_suffix
             }

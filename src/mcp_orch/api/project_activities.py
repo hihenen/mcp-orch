@@ -73,7 +73,7 @@ async def get_project_activities(
     )
     
     if action_filter:
-        query = query.filter(Activity.action == action_filter)
+        query = query.filter(Activity.type == action_filter)
     
     if severity_filter:
         query = query.filter(Activity.severity == severity_filter)

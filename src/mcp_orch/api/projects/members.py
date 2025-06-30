@@ -195,14 +195,13 @@ async def invite_project_member(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="member_invited",
+            action="member_invited",
             description=f"사용자 '{invited_user.name}' 초대 ({member_data.role.value})",
-            metadata={
+            meta_data={
                 "invited_user_id": str(invited_user.id),
                 "invited_user_email": invited_user.email,
                 "role": member_data.role.value,
@@ -284,14 +283,13 @@ async def update_project_member(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="member_role_updated",
+            action="member_role_updated",
             description=f"사용자 '{user.name}' 권한 변경: {old_role.value} → {member_data.role.value}",
-            metadata={
+            meta_data={
                 "member_user_id": str(member.user_id),
                 "old_role": old_role.value,
                 "new_role": member_data.role.value
@@ -358,14 +356,13 @@ async def remove_project_member(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="member_removed",
+            action="member_removed",
             description=f"사용자 '{user.name if user else 'Unknown'}' 제거",
-            metadata={
+            meta_data={
                 "removed_user_id": str(member.user_id),
                 "removed_user_email": user.email if user else "unknown@example.com",
                 "role": member.role.value

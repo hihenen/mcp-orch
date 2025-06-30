@@ -326,14 +326,13 @@ async def create_project_server(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="server_created",
+            action="server_created",
             description=f"MCP 서버 '{server_data.name}' 생성",
-            metadata={
+            meta_data={
                 "server_id": str(new_server.id),
                 "server_name": server_data.name,
                 "command": server_data.command
@@ -476,14 +475,13 @@ async def update_project_server(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="server_updated",
+            action="server_updated",
             description=f"MCP 서버 '{server.name}' 설정 수정",
-            metadata={
+            meta_data={
                 "server_id": str(server.id),
                 "server_name": server.name,
                 "updated_fields": update_data,
@@ -554,14 +552,13 @@ async def delete_project_server(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="server_deleted",
+            action="server_deleted",
             description=f"MCP 서버 '{server_name}' 삭제",
-            metadata={
+            meta_data={
                 "deleted_server_id": str(server_id),
                 "server_name": server_name,
                 "command": server.command
@@ -633,14 +630,13 @@ async def test_project_server_connection(
     
     # 활동 로깅 (테스트이므로 선택적)
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="server_connection_tested",
+            action="server_connection_tested",
             description=f"MCP 서버 연결 테스트",
-            metadata={
+            meta_data={
                 "command": test_request.command,
                 "test_success": test_result["success"],
                 "error_message": test_result.get("error_message")
@@ -690,14 +686,13 @@ async def toggle_project_server_status(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="server_status_toggled",
+            action="server_status_toggled",
             description=f"MCP 서버 '{server.name}' {'활성화' if server.is_enabled else '비활성화'}",
-            metadata={
+            meta_data={
                 "server_id": str(server.id),
                 "server_name": server.name,
                 "old_status": old_status,

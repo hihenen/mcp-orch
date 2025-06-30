@@ -153,14 +153,13 @@ async def create_project(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=new_project.id,
-            activity_type="project_created",
+            action="project_created",
             description=f"프로젝트 '{project_data.name}' 생성",
-            metadata={
+            meta_data={
                 "project_id": str(new_project.id),
                 "project_name": project_data.name
             }
@@ -280,14 +279,13 @@ async def update_project(
     
     # 활동 로깅
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=project_id,
-            activity_type="project_updated",
+            action="project_updated",
             description=f"프로젝트 정보 수정",
-            metadata={
+            meta_data={
                 "updated_fields": {
                     k: v for k, v in project_data.dict(exclude_unset=True).items()
                 }
@@ -332,14 +330,13 @@ async def delete_project(
     
     # 활동 로깅 (프로젝트 삭제 후에는 project_id가 None)
     try:
-        activity_logger = ActivityLogger()
-        await activity_logger.log_activity(
+        ActivityLogger.log_activity(
             db=db,
             user_id=current_user.id,
             project_id=None,  # 프로젝트가 삭제되었으므로 None
-            activity_type="project_deleted",
+            action="project_deleted",
             description=f"프로젝트 '{project_name}' 삭제",
-            metadata={
+            meta_data={
                 "deleted_project_id": str(project_id),
                 "project_name": project_name
             }

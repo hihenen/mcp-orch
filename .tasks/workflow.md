@@ -2,10 +2,40 @@
 
 ## Metadata
 - Status: In Progress  
-- Last Update: 2025-06-29
+- Last Update: 2025-06-30
 - Automatic Check Status: PASS
 
 ## Task List
+
+### TASK_170: MCP-Orch 리팩토링 전체 여정 심층 분석 보고서 (AI 개발 과제 포함) ✅
+- [x] 리팩토링 관련 문서들 분석
+  - [x] 기존 mcp-orch-refactoring-journey-report.md (773줄) 분석
+  - [x] projects-refactoring-analysis.md (187줄) 검토
+  - [x] projects-refactoring-plan.md (213줄) 검토
+  - [x] CHANGELOG.md 현재 상태 확인
+- [x] AI 기반 리팩토링의 한계와 해결방안 섹션 추가
+  - [x] LLM 유사도 기반 매칭 문제점 분석
+  - [x] 컨텍스트 윈도우 제한으로 인한 논리적 오류 문제
+  - [x] 히스토리 정보 부족으로 인한 의도 왜곡 이슈
+  - [x] 확률적 특성으로 인한 일관성 부족 문제
+  - [x] 테스트 의존적 검증 필요성 강조
+- [x] 실제 발생한 문제 사례들 구체적 문서화
+  - [x] 타입 불일치 오류 (런타임 에러 발생)
+  - [x] 로직 흐름 오류 (예상과 다른 동작)
+  - [x] 의존성 관계 오류 (import 경로 문제)
+  - [x] 네이밍 불일치 (컨벤션 무시)
+  - [x] 상태 관리 오류 (컴포넌트/DB 상태)
+- [x] AI 도구 사용 가이드라인 작성
+  - [x] 단계별 검증 프로세스
+  - [x] 컨텍스트 명시 방법
+  - [x] 히스토리 문서화 중요성
+  - [x] 인간 검토 단계 포함
+  - [x] 작은 단위 작업 분할
+- [x] 오류 방지 체크리스트 작성
+  - [x] 8개 항목 AI 리팩토링 오류 방지 체크리스트
+  - [x] 재발 방지 전략 5가지 방안
+- [x] CHANGELOG.md 업데이트
+- [x] .tasks/workflow.md 상태 업데이트
 
 ### TASK_158: MCP 메시지 읽기 UTF-8 인코딩 오류 수정 ✅
 - [x] UTF-8 인코딩 오류 분석
@@ -661,21 +691,73 @@
 - [x] CTA 버튼 및 사용자 여정 최적화
 - [x] SEO 메타데이터 강화
 
+### TASK_171: Activity 기능 현재 상태 분석 및 문제점 파악 ✅
+- [x] 프론트엔드 Activity 페이지 구현 상태 확인
+  - [x] 프로젝트 Activity 페이지: `/Users/yun/work/ai/mcp/mcp-orch/web/src/app/projects/[projectId]/activity/page.tsx` (420줄)
+  - [x] 팀 Activity 페이지: `/Users/yun/work/ai/mcp/mcp-orch/web/src/app/teams/[teamId]/activity/page.tsx` (179줄)
+  - [x] 프론트엔드 API 라우트 모두 구현됨: activities/, activities/summary, teams/activity
+- [x] 백엔드 Activity API 구현 상태 확인
+  - [x] 프로젝트 Activities API: `/Users/yun/work/ai/mcp/mcp-orch/src/mcp_orch/api/project_activities.py` (174줄)
+  - [x] 팀 Activities API: `/Users/yun/work/ai/mcp/mcp-orch/src/mcp_orch/api/teams/activity.py` (62줄)
+  - [x] FastAPI 라우터 등록 완료: app.py 353번째 줄에 project_activities_router 등록됨
+- [x] ActivityLogger 서비스 구현 상태 확인
+  - [x] ActivityLogger: `/Users/yun/work/ai/mcp/mcp-orch/src/mcp_orch/services/activity_logger.py` (362줄)
+  - [x] 단일 진입점 패턴으로 설계됨, 14개 파일에서 사용 중
+  - [x] 편의 메소드들 포함: log_server_created, log_tool_executed, log_member_invited 등
+- [x] 데이터베이스 모델 구현 상태 확인
+  - [x] Activity 모델: `/Users/yun/work/ai/mcp/mcp-orch/src/mcp_orch/models/activity.py` (214줄)
+  - [x] activities 테이블 초기 마이그레이션에 포함됨 (20250625_0819 migration)
+  - [x] 호환성 alias 포함 (action↔type, meta_data↔activity_metadata 등)
+- [x] 현재 작동하지 않는 부분 식별
+  - [x] 프론트엔드-백엔드 데이터 매핑 불일치 확인 (action vs type 필드명)
+  - [x] ActivityLogger 사용 방식 불일치 확인 (동기/비동기 혼재)
+  - [x] 일부 이벤트 로깅 누락 확인 (MCP 도구 실행, 설정 변경)
+  - [x] Demo 데이터 사용 부분 확인 (일부 API에서 실제 데이터 대신)
+
+### TASK_172: ActivityLogger 14개 파일 사용 패턴 분석 및 표준화
+- [x] ActivityLogger import 및 사용 파일 스캔
+  - [x] src/mcp_orch/api/ 디렉터리 전체 ActivityLogger 사용 검색 완료 (13개 파일)
+  - [x] src/mcp_orch/services/ 디렉터리 ActivityLogger 자체 구현 확인 (1개 파일)
+  - [x] 각 파일별 사용 패턴 (동기/비동기, 매개변수 전달) 분석 완료
+- [x] 동기/비동기 호출 방식 분석
+  - [x] **잘못된 패턴**: 모든 파일에서 `await activity_logger.log_activity()` 비동기 호출 사용
+  - [x] **실제 구현**: ActivityLogger.log_activity()는 @staticmethod로 동기 메서드임
+  - [x] **핵심 문제**: 비동기 await를 사용하나 실제로는 동기 메서드 호출
+- [x] 데이터베이스 세션 전달 방식 분석
+  - [x] 모든 호출에서 db=db 매개변수 올바르게 전달됨
+  - [x] Session 타입 일관성 유지됨 (동기 세션 사용)
+  - [x] 세션 생명주기: FastAPI dependency로 관리되어 안전함
+- [x] 올바르지 않은 사용 패턴 식별
+  - [x] **인스턴스 생성 오류**: `activity_logger = ActivityLogger()` (정적 메서드인데 인스턴스 생성)
+  - [x] **매개변수명 오류**: `activity_type=` 대신 `action=` 사용해야 함
+  - [x] **매개변수명 오류**: `metadata=` 대신 `meta_data=` 사용해야 함
+  - [x] **비동기 호출 오류**: `await` 키워드 사용하나 동기 메서드임
+  - [x] **예외 처리**: try-except 블록으로 적절히 처리됨 (양호)
+- [x] 표준화 방안 제시
+  - [x] **올바른 호출 패턴**: `ActivityLogger.log_activity()` 정적 호출
+  - [x] **매개변수 표준화**: action, meta_data 올바른 이름 사용
+  - [x] **동기 호출**: await 키워드 제거
+  - [x] **성능 최적화**: 인스턴스 생성 제거로 오버헤드 감소
+
 ## Progress Status  
-- Current Progress: TASK_170 완료 - MCP-Orch 리팩토링 전체 여정 심층 분석 보고서 작성 완료
-- Next Task: 팀 공유 및 피드백 수집
-- Last Update: 2025-06-30
+- Current Progress: TASK_172 완료 - ActivityLogger 14개 파일 사용 패턴 분석 완료
+- Next Task: ActivityLogger 사용 패턴 표준화 적용
+- Last Update: 2025-06-30 22:50
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화
+  - ✅ AI 기반 리팩토링의 한계와 실제 문제 사례 분석 추가 완료
+  - ✅ LLM 유사도 매칭 문제, 컨텍스트 윈도우 제한, 히스토리 정보 부족 등 핵심 이슈 문서화
+  - ✅ 재발 방지를 위한 AI 도구 사용 가이드라인 및 체크리스트 작성
   - ✅ ROI 780% 달성 및 개발 생산성 30% 향상 입증
   - ✅ 팀 공유용 워크플로우 및 템플릿 제공
   - ✅ 향후 발전 방향 및 자동화 계획 수립
 - 리팩토링 성과: Projects API (2,031줄→8모듈), Teams API (1,069줄→7모듈), MCP Connection Service (1,531줄→8모듈), Unified Transport (1,328줄→6모듈), Standard MCP API (1,248줄→8모듈) 완료
 - 시스템 안정성: MCP 연결 성공률 78%→95%, 응답 시간 25% 개선, 에러 발생률 66% 감소
 - 개발 효율성: 신규 기능 개발 30% 단축, 버그 수정 40% 단축, 코드 리뷰 40% 단축
-- Last Update: 2025-06-30 09:43
-- Automatic Check Feedback: 리팩토링 보고서 작성 완료, 팀 공유 준비됨
+- AI 개발 과제: 유사도 기반 매칭 오류, 컨텍스트 윈도우 제한, 테스트 의존적 검증 등 실제 경험 기반 가이드라인 수립
+- Last Update: 2025-06-30 09:57
+- Automatic Check Feedback: AI 개발 과제를 포함한 리팩토링 보고서 완성, 팀 공유 준비됨
 
 ## Lessons Learned and Insights
 - MCP 메시지 크기 제한은 대용량 데이터베이스 쿼리 결과에 중요한 영향
