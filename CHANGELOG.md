@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_173] Fix Teams API 404 error by implementing missing POST endpoint (2025-06-30)
+  - Add POST /api/projects/{project_id}/teams endpoint for team creation and connection
+  - Support both new team creation and existing team connection to projects
+  - Implement proper team role to project role mapping (Owner→Owner, Admin→Admin, Member→Developer)
+  - Add comprehensive team membership validation and duplicate connection prevention
+  - Integrate ActivityLogger for team creation and connection event tracking
+  - Resolve 404 errors reported in production logs for team management functionality
 - [TASK_171] Complete Activity feature implementation with critical bug fixes (2025-06-30)
   - Fix ActivityLogger usage pattern errors across 14 files (15 critical errors resolved)
   - Remove incorrect async/await usage in synchronous ActivityLogger.log_activity() calls

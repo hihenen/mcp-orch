@@ -50,6 +50,24 @@ class ProjectMemberResponse(BaseModel):
         from_attributes = True
 
 
+class TeamCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100, description="팀 이름")
+    description: Optional[str] = Field(None, max_length=500, description="팀 설명")
+    team_id: Optional[str] = Field(None, description="기존 팀 ID (연결하려는 경우)")
+
+
+class TeamResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    member_count: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
 class TeamInviteResponse(BaseModel):
     team_id: str
     team_name: str
@@ -431,3 +449,165 @@ async def remove_team_from_project(
         "message": f"Team '{team.name}' removed from project successfully",
         "removed_members_count": removed_count
     }
+
+
+@router.post("/projects/{project_id}/teams", response_model=TeamResponse)
+async def create_or_connect_team_to_project(
+    project_id: UUID,
+    team_request: TeamCreateRequest,
+    current_user: User = Depends(get_current_user_for_projects),
+    db: Session = Depends(get_db)
+):
+    """
+    프로젝트에 새 팀을 생성하거나 기존 팀을 연결합니다.
+    
+    - team_id가 제공되면 기존 팀을 프로젝트에 연결
+    - team_id가 없으면 새 팀을 생성하고 프로젝트에 연결
+    """
+    # 프로젝트 존재 및 권한 확인
+    project = verify_project_access(db, project_id, current_user.id)
+    verify_project_owner(project, current_user.id)
+    
+    if team_request.team_id:
+        # 기존 팀을 프로젝트에 연결
+        try:
+            team_uuid = UUID(team_request.team_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid team ID format"
+            )
+        
+        team = db.query(Team).filter(Team.id == team_uuid).first()
+        if not team:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Team not found"
+            )
+        
+        # 사용자가 해당 팀의 멤버인지 확인
+        team_membership = db.query(TeamMember).filter(
+            and_(
+                TeamMember.team_id == team.id,
+                TeamMember.user_id == current_user.id
+            )
+        ).first()
+        
+        if not team_membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this team"
+            )
+        
+        # 팀이 이미 프로젝트에 연결되어 있는지 확인
+        existing_connection = db.query(ProjectMember).join(
+            TeamMember, and_(
+                ProjectMember.user_id == TeamMember.user_id,
+                TeamMember.team_id == team.id
+            )
+        ).filter(
+            ProjectMember.project_id == project_id
+        ).first()
+        
+        if existing_connection:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Team is already connected to this project"
+            )
+        
+        action_description = f"기존 팀 '{team.name}' 프로젝트에 연결"
+        
+    else:
+        # 새 팀 생성
+        team = Team(
+            name=team_request.name,
+            slug=team_request.name.lower().replace(' ', '-').replace('_', '-'),
+            description=team_request.description,
+            max_api_keys=10,  # 기본 제한
+            max_members=20    # 기본 제한
+        )
+        
+        db.add(team)
+        db.flush()  # 팀 ID 생성
+        
+        # 생성자를 팀 소유자로 추가
+        team_membership = TeamMember(
+            user_id=current_user.id,
+            team_id=team.id,
+            role=TeamRole.OWNER,
+            invited_by_id=current_user.id,
+            invited_at=datetime.utcnow(),
+            joined_at=datetime.utcnow()
+        )
+        
+        db.add(team_membership)
+        action_description = f"새 팀 '{team.name}' 생성 및 프로젝트에 연결"
+    
+    # 팀 멤버들을 프로젝트에 추가
+    team_members = db.query(TeamMember).filter(TeamMember.team_id == team.id).all()
+    added_members = []
+    
+    for team_member in team_members:
+        # 이미 프로젝트 멤버인지 확인
+        existing_member = db.query(ProjectMember).filter(
+            and_(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id == team_member.user_id
+            )
+        ).first()
+        
+        if not existing_member:
+            # 팀 역할을 프로젝트 역할로 매핑
+            if team_member.role == TeamRole.OWNER:
+                project_role = ProjectRole.OWNER
+            elif team_member.role == TeamRole.ADMIN:
+                project_role = ProjectRole.ADMIN
+            else:
+                project_role = ProjectRole.DEVELOPER
+            
+            project_member = ProjectMember(
+                project_id=project_id,
+                user_id=team_member.user_id,
+                role=project_role,
+                invited_as=InviteSource.TEAM_MEMBER,
+                invited_by=current_user.id,
+                joined_at=datetime.utcnow()
+            )
+            
+            db.add(project_member)
+            added_members.append(team_member.user_id)
+    
+    db.commit()
+    db.refresh(team)
+    
+    # 멤버 수 계산
+    member_count = db.query(TeamMember).filter(TeamMember.team_id == team.id).count()
+    
+    # 활동 로깅
+    try:
+        ActivityLogger.log_activity(
+            db=db,
+            user_id=current_user.id,
+            project_id=project_id,
+            action="team_connected" if team_request.team_id else "team_created",
+            description=action_description,
+            meta_data={
+                "team_id": str(team.id),
+                "team_name": team.name,
+                "added_members_count": len(added_members),
+                "is_new_team": not bool(team_request.team_id)
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Failed to log team creation/connection activity: {e}")
+    
+    logger.info(f"{action_description} - {len(added_members)}명 추가됨")
+    
+    return TeamResponse(
+        id=str(team.id),
+        name=team.name,
+        description=team.description,
+        member_count=member_count,
+        created_at=team.created_at,
+        updated_at=team.updated_at
+    )

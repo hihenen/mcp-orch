@@ -86,11 +86,29 @@
   - [ ] 유연한 API 키 형식 지원 구현
   - [ ] 기존 `mch_` 키와의 호환성 유지 방안
 
+### TASK_055: Projects Teams API 404 오류 조사 및 해결 (완료)
+- [x] app.py에서 teams 관련 라우터 등록 상태 확인
+  - [x] teams_modular_router 정상 등록 확인 (/api/teams prefix)
+  - [x] projects/__init__.py에서 teams_router 정상 등록 확인 (/api prefix)
+- [x] projects/teams.py 파일에서 POST 엔드포인트 구현 여부 확인
+  - [x] POST /api/projects/{project_id}/teams/invite 구현됨
+  - [x] GET /api/projects/{project_id}/available-teams 구현됨
+  - [x] DELETE /api/projects/{project_id}/teams/{team_id}/members 구현됨
+- [x] 경로 매핑이 올바른지 확인
+  - [x] 모든 라우터가 정상 등록되어 있음
+  - [x] **핵심 문제 발견**: POST /api/projects/{project_id}/teams 엔드포인트 누락
+- [x] 리팩토링 과정에서 누락된 라우터나 엔드포인트가 있는지 확인
+  - [x] POST /api/projects/{project_id}/teams 엔드포인트가 완전히 누락됨
+  - [x] 대신 POST /api/projects/{project_id}/teams/invite만 구현되어 있음
+- [x] 기존 projects.py (모놀리식)과 새로운 projects/ 모듈 구조 간의 차이점 분석
+  - [x] 기존 모놀리식에서도 해당 엔드포인트를 찾지 못함
+  - [x] 리팩토링 시 누락된 것으로 판단됨
+
 ## Progress Status
-- Current Progress: TASK_054 - API 키 prefix 변경으로 인한 SSE 인증 실패 문제 분석 시작  
-- Next Task: API 키 prefix 관련 코드 분석
-- Last Update: 2025-06-29
-- Automatic Check Feedback: API 키 prefix 변경 문제 분석 작업 계획 수립 완료
+- Current Progress: TASK_055 완료 - Projects Teams API 404 오류 조사 완료 (핵심 원인 파악)
+- Next Task: TASK_055_06 - 해결방안 제시 및 구현
+- Last Update: 2025-06-30
+- Automatic Check Feedback: POST /api/projects/{project_id}/teams 엔드포인트 누락 확인, 해결방안 제시 필요
 
 ## Lessons Learned and Insights
 - MCP 프로토콜 표준 준수가 중요한 분석 포인트
