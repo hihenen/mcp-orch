@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ServerDetail } from '../types';
+import { showDeleteConfirm } from '@/lib/dialog-utils';
 
 interface UseServerActionsProps {
   projectId: string;
@@ -116,7 +117,8 @@ export function useServerActions({
   const handleDeleteServer = async () => {
     if (!server) return;
 
-    if (!confirm(`정말로 "${server.name}" 서버를 삭제하시겠습니까?`)) {
+    const confirmed = await showDeleteConfirm(server.name, '서버');
+    if (!confirmed) {
       return;
     }
 

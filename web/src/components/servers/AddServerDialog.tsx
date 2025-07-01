@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Plus, FileText, Settings } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { showAlert, showSuccess, showError } from '@/lib/dialog-utils';
 // import { useToast } from '@/hooks/use-toast'; // TODO: Enable after implementing toast system
 
 // Individual server form component
@@ -490,7 +491,7 @@ export function AddServerDialog({
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.command.trim()) {
-      alert("Input Error: Server name and command are required.");
+      await showError("서버 이름과 명령어는 필수 입력 항목입니다.");
       return;
     }
 
@@ -524,7 +525,6 @@ export function AddServerDialog({
         console.log('서버 수정 성공:', result);
         
         onServerUpdated?.(formData);
-        alert(`Server Update Completed: ${formData.name} server has been successfully updated.`);
       } else {
         // 서버 추가 API 호출
         const response = await fetch(`/api/projects/${projectId}/servers`, {
@@ -552,15 +552,22 @@ export function AddServerDialog({
         console.log('서버 추가 성공:', result);
         
         onServerAdded(formData);
-        alert(`Server Addition Completed: ${formData.name} server has been successfully added.`);
       }
 
+      const serverName = formData.name;
       resetForm();
       onOpenChange(false);
       
+      // 다이얼로그가 닫힌 후에 성공 메시지 표시
+      if (isEditMode) {
+        await showSuccess(`서버 업데이트 완료: ${serverName} 서버가 성공적으로 업데이트되었습니다.`);
+      } else {
+        await showSuccess(`서버 추가 완료: ${serverName} 서버가 성공적으로 추가되었습니다.`);
+      }
+      
     } catch (error) {
       console.error(`서버 ${isEditMode ? '수정' : '추가'} 오류:`, error);
-      alert(`Server ${isEditMode ? 'Update' : 'Addition'} Failed: ${error instanceof Error ? error.message : 'An unknown error occurred.'}`);
+      await showError(`서버 ${isEditMode ? '업데이트' : '추가'} 실패: ${error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -569,7 +576,7 @@ export function AddServerDialog({
   // JSON 추가/수정 처리
   const handleJsonSubmit = async () => {
     if (!jsonConfig.trim()) {
-      alert('Please enter JSON settings.');
+      await showError('JSON 설정을 입력해주세요.');
       return;
     }
 
@@ -635,8 +642,8 @@ export function AddServerDialog({
           cwd: server.cwd || ''
         });
         
-        alert(`Server Update Completed: ${serverName} server has been successfully updated.`);
         onOpenChange(false);
+        await showSuccess(`서버 업데이트 완료: ${serverName} 서버가 성공적으로 업데이트되었습니다.`);
         return;
       }
 
@@ -691,18 +698,21 @@ export function AddServerDialog({
 
       // 결과 메시지
       if (successCount > 0 && errorCount === 0) {
-        alert(`Success: All ${successCount} servers have been added.`);
         setJsonConfig('');
         onOpenChange(false);
+        await showSuccess(`성공: 모든 서버 ${successCount}개가 추가되었습니다.`);
       } else if (successCount > 0 && errorCount > 0) {
-        alert(`Partial Success: ${successCount} servers added successfully, ${errorCount} failed\n\nFailed servers:\n${errors.join('\n')}`);
+        await showAlert({ 
+          title: '부분 성공', 
+          message: `${successCount}개 서버가 성공적으로 추가되었으며, ${errorCount}개가 실패했습니다.\n\n실패한 서버들:\n${errors.join('\n')}` 
+        });
       } else {
-        alert(`Failed: All server additions failed.\n\nError list:\n${errors.join('\n')}`);
+        await showError(`실패: 모든 서버 추가가 실패했습니다.\n\n오류 목록:\n${errors.join('\n')}`);
       }
 
     } catch (error) {
       console.error('JSON 파싱 오류:', error);
-      alert(`JSON Format Error: ${error instanceof Error ? error.message : 'Invalid JSON format.'}`);
+      await showError(`JSON 형식 오류: ${error instanceof Error ? error.message : '잘못된 JSON 형식입니다.'}`);
     } finally {
       setIsLoading(false);
     }

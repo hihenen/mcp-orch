@@ -7,6 +7,28 @@
 
 ## Task List
 
+### TASK_179: Alert을 Dialog 방식으로 변경 🏃
+- [x] Phase 1: Alert 사용 현황 조사
+  - [x] web/src 디렉터리에서 alert(), confirm() 사용 검색
+  - [x] 각 사용 사례의 컨텍스트와 목적 파악
+  - [x] Dialog로 변경하기 적합한지 평가
+- [x] Phase 2: Dialog 컴포넌트 확인/구현
+  - [x] 기존 Dialog 컴포넌트 존재 여부 확인
+  - [x] 재사용 가능한 Dialog 유틸리티 함수 구현 (lib/dialog-utils.tsx)
+  - [x] Alert/Confirm 타입별 Dialog 변형 준비 (showAlert, showConfirm, showSuccess, showError, showDeleteConfirm)
+- [x] Phase 3: Alert → Dialog 변경 실행
+  - [x] AddServerDialog.tsx의 9개 alert을 showSuccess/showError/showAlert로 교체
+  - [x] 메인 페이지 프로젝트 삭제 confirm을 showDeleteConfirm으로 교체
+  - [x] 서버 삭제 confirm을 showDeleteConfirm으로 교체
+  - [x] API 키 삭제 confirm을 showDeleteConfirm으로 교체
+  - [x] 사용자 경험 개선: 한글 메시지, 일관된 UI 디자인
+  - [x] Playwright 호환성: Native alert/confirm 대신 DOM 기반 Dialog 사용
+- [x] Phase 4: 테스트 및 검증
+  - [x] 대화상자 순서 문제 해결 (AddServerDialog 닫힌 후 성공 메시지 표시)
+  - [x] 모든 Dialog 동작 확인
+  - [x] UI/UX 일관성 검증 (한글 메시지, 일관된 디자인)
+  - [x] 변경사항 문서화 (CHANGELOG.md 업데이트)
+
 ### TASK_178: INITIAL_ADMIN_PASSWORD 사용 현황 확인 및 제거 ✅
 - [x] 백엔드 코드에서 INITIAL_ADMIN_PASSWORD 사용 여부 확인
 - [x] 현재 admin 계정 생성 로직 분석
@@ -869,7 +891,7 @@
   - [x] 누락된 ActivityType enum 값들을 데이터베이스에 추가하는 마이그레이션 생성 및 실행
 
 ## Progress Status  
-- Current Progress: TASK_178 - INITIAL_ADMIN_PASSWORD 사용 현황 확인 및 제거 ✅ 완료
+- Current Progress: TASK_179 - Alert을 Dialog 방식으로 변경 🏃 ✅ 완료
 - Next Task: 다음 개발 작업 대기
 - Last Update: 2025-07-01
 - Automatic Check Feedback: 

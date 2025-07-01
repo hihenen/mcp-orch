@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { showDeleteConfirm } from '@/lib/dialog-utils';
 import { 
   Plus, 
   Search, 
@@ -925,7 +926,9 @@ cd mcp-orch
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    if (confirm('Are you sure you want to delete this project?')) {
+    const projectName = projects.find(p => p.id === projectId)?.name || '프로젝트';
+    const confirmed = await showDeleteConfirm(projectName, '프로젝트');
+    if (confirmed) {
       try {
         await deleteProject(projectId);
       } catch (error) {

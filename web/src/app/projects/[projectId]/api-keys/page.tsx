@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { formatDate } from '@/lib/date-utils';
+import { showDeleteConfirm } from '@/lib/dialog-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -91,7 +92,7 @@ export default function ProjectApiKeysPage() {
 
   // API key deletion handler
   const handleDeleteApiKey = async (keyId: string, keyName: string) => {
-    const confirmed = window.confirm(`Are you sure you want to delete "${keyName}" API key?`);
+    const confirmed = await showDeleteConfirm(keyName, 'API 키');
     if (!confirmed) return;
 
     try {

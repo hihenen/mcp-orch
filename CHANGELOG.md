@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [TASK_179] Replace JavaScript alert/confirm with Dialog components for better UX and Playwright compatibility (2025-07-01)
+  - Add reusable dialog utility functions: showAlert, showSuccess, showError, showDeleteConfirm
+  - Replace all browser native alert/confirm calls with consistent Dialog UI components
+  - Improve user experience with Korean messages and consistent design
+  - Enhance Playwright test compatibility by removing native browser dialogs
+  - Support multiline messages and customizable button text
+  - Add destructive styling for delete confirmations
+  - Fix dialog sequence issue: show success messages after parent dialog closes
+
 ### Removed
 - [TASK_178] Remove unused INITIAL_ADMIN_PASSWORD environment variable (2025-07-01)
   - Remove INITIAL_ADMIN_PASSWORD from .env, docker-compose.yml, and backend code
