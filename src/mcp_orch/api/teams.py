@@ -1067,3 +1067,95 @@ async def get_team_cline_config(
     }
     
     return config
+
+
+@router.delete("/{team_id}")
+async def delete_team(
+    team_id: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Delete a team and all associated data."""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    # Verify team exists and user has owner access
+    team, membership = get_team_and_verify_access(team_id, current_user, db, TeamRole.OWNER)
+    
+    try:
+        team_uuid = UUID(team_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid team ID format"
+        )
+    
+    # Check if team has any active projects
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    active_projects = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.user_id.in_(
+                db.query(team_member_ids.c.user_id)
+            ),
+            ProjectMember.project_id == Project.id
+        )
+    ).join(Project).filter(
+        Project.is_active == True
+    ).count()
+    
+    # For safety, prevent deletion if team has active projects
+    # Users should disconnect from projects first
+    if active_projects > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete team with {active_projects} active project connections. Please disconnect from all projects first."
+        )
+    
+    try:
+        # Delete team API keys first
+        team_api_keys = db.query(ApiKey).join(Project).join(ProjectMember).filter(
+            ProjectMember.user_id.in_(
+                db.query(team_member_ids.c.user_id)
+            )
+        ).all()
+        
+        for api_key in team_api_keys:
+            db.delete(api_key)
+        
+        # Delete team members
+        db.query(TeamMember).filter(TeamMember.team_id == team.id).delete()
+        
+        # Log team deletion activity
+        try:
+            ActivityLogger.log_activity(
+                action=ActivityType.TEAM_DELETED,
+                user_id=current_user.id,
+                meta_data={
+                    "team_id": str(team.id),
+                    "team_name": team.name,
+                    "deleted_by": current_user.email,
+                    "deletion_timestamp": datetime.utcnow().isoformat()
+                },
+                db=db
+            )
+        except Exception as e:
+            # Log activity failure but don't fail the deletion
+            print(f"Failed to log team deletion activity: {e}")
+        
+        # Delete the team itself
+        db.delete(team)
+        db.commit()
+        
+        return {"message": f"Team '{team.name}' has been successfully deleted"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete team: {str(e)}"
+        )

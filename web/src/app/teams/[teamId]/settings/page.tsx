@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TeamLayout } from '@/components/teams/TeamLayout';
 import { useTeamStore } from '@/stores/teamStore';
 import { toast } from 'sonner';
+import { showDeleteConfirm } from '@/lib/dialog-utils';
 import { 
   Settings, 
   Save,
@@ -100,9 +101,12 @@ export default function TeamSettingsPage() {
   };
 
   const handleDeleteTeam = async () => {
-    const confirmMessage = `Are you sure you want to delete the "${settings.name}" team?\n\nThis action cannot be undone and all data will be permanently deleted.`;
+    const confirmed = await showDeleteConfirm(
+      settings.name,
+      '팀'
+    );
     
-    if (!confirm(confirmMessage)) {
+    if (!confirmed) {
       return;
     }
 
