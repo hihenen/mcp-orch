@@ -529,7 +529,7 @@ async def create_or_connect_team_to_project(
             ]
             
             # 새로운 역할과 기존 최고 역할 비교
-            new_role_priority = role_priority.get(str(role).lower(), 1)
+            new_role_priority = role_priority.get(str(team_request.role).lower(), 1)
             max_existing_priority = max([role_priority.get(str(r).lower(), 1) for r in existing_roles], default=0)
             
             if new_role_priority <= max_existing_priority:
@@ -539,11 +539,11 @@ async def create_or_connect_team_to_project(
                     "message": f"Team '{team.name}' is already connected with higher or equal role(s): {role_info}. Current connection maintained.",
                     "action": "no_change",
                     "existing_roles": existing_roles,
-                    "requested_role": str(role)
+                    "requested_role": str(team_request.role)
                 }
             else:
                 # 새로운 역할이 더 높으면 기존 연결 업데이트
-                action_description = f"팀 '{team.name}' 역할 업그레이드: {max(existing_roles, key=lambda r: role_priority.get(str(r).lower(), 1))} → {role}"
+                action_description = f"팀 '{team.name}' 역할 업그레이드: {max(existing_roles, key=lambda r: role_priority.get(str(r).lower(), 1))} → {team_request.role}"
                 
                 # 기존 연결들 삭제 (더 높은 권한으로 교체)
                 for conn in existing_connections:
@@ -598,18 +598,11 @@ async def create_or_connect_team_to_project(
         ).first()
         
         if not existing_member:
-            # 팀 역할을 프로젝트 역할로 매핑
-            if team_member.role == TeamRole.OWNER:
-                project_role = ProjectRole.OWNER
-            elif team_member.role == TeamRole.ADMIN:
-                project_role = ProjectRole.ADMIN
-            else:
-                project_role = ProjectRole.DEVELOPER
-            
+            # 요청된 역할로 모든 팀 멤버 추가
             project_member = ProjectMember(
                 project_id=project_id,
                 user_id=team_member.user_id,
-                role=project_role,
+                role=team_request.role,
                 invited_as=InviteSource.TEAM_MEMBER,
                 invited_by=current_user.id,
                 joined_at=datetime.utcnow()
@@ -617,6 +610,27 @@ async def create_or_connect_team_to_project(
             
             db.add(project_member)
             added_members.append(team_member.user_id)
+        else:
+            # 기존 멤버가 있는 경우 역할 우선순위 적용
+            role_priority = {
+                'reporter': 1,
+                'developer': 2, 
+                'admin': 3,
+                'owner': 4
+            }
+            
+            existing_role = existing_member.role.value if hasattr(existing_member.role, 'value') else existing_member.role
+            new_role = str(team_request.role)
+            
+            existing_priority = role_priority.get(str(existing_role).lower(), 1)
+            new_priority = role_priority.get(str(new_role).lower(), 1)
+            
+            if new_priority > existing_priority:
+                # 새로운 역할이 더 높으면 업데이트
+                existing_member.role = team_request.role
+                existing_member.invited_as = InviteSource.TEAM_MEMBER
+                existing_member.invited_by = current_user.id
+                added_members.append(team_member.user_id)
     
     db.commit()
     db.refresh(team)
