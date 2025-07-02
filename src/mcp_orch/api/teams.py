@@ -15,6 +15,7 @@ from ..models.api_key import ApiKey
 from ..models.mcp_server import McpServer
 from ..models import Project, ProjectMember, ProjectRole, InviteSource
 from ..models.activity import Activity, ActivityType, ActivitySeverity
+from ..models.tool_call_log import ToolCallLog
 from ..services.activity_logger import ActivityLogger
 from .header_auth import get_user_from_headers
 from .jwt_auth import get_current_user, verify_jwt_token, get_user_from_jwt_token
@@ -67,6 +68,33 @@ class TeamApiKeyResponse(BaseModel):
     expires_at: Optional[datetime]
     created_at: datetime
     last_used_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+class TeamServerResponse(BaseModel):
+    """Team server information."""
+    id: str
+    name: str
+    description: Optional[str]
+    command: str
+    args: List[str]
+    env: dict
+    disabled: bool
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+class TeamToolResponse(BaseModel):
+    """Team tool information."""
+    id: str
+    name: str
+    server_name: str
+    description: Optional[str]
+    usage_count: int = 0
 
     class Config:
         from_attributes = True
@@ -1159,3 +1187,190 @@ async def delete_team(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete team: {str(e)}"
         )
+
+
+@router.get("/{team_id}/servers", response_model=List[TeamServerResponse])
+async def get_team_servers(
+    team_id: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Get all servers accessible by the team."""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    team, _ = get_team_and_verify_access(team_id, current_user, db)
+    
+    # Get team's servers (through projects owned by team members)
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    team_project_ids = db.query(ProjectMember.project_id).filter(
+        ProjectMember.user_id.in_(
+            db.query(team_member_ids.c.user_id)
+        )
+    ).distinct().subquery()
+    
+    servers = db.query(McpServer).filter(
+        McpServer.project_id.in_(
+            db.query(team_project_ids.c.project_id)
+        )
+    ).all()
+    
+    return [
+        TeamServerResponse(
+            id=str(server.id),
+            name=server.name,
+            description=server.description,
+            command=server.command,
+            args=server.args or [],
+            env=server.env or {},
+            disabled=not server.is_enabled,
+            status="active" if server.is_enabled else "disabled"
+        )
+        for server in servers
+    ]
+
+
+@router.post("/{team_id}/servers")
+async def create_team_server(
+    team_id: str,
+    server_data: dict,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Create a new server for the team (requires a specific project)."""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    team, _ = get_team_and_verify_access(team_id, current_user, db, TeamRole.DEVELOPER)
+    
+    # This endpoint requires project_id to be specified
+    project_id = server_data.get('project_id')
+    if not project_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="project_id is required to create a team server"
+        )
+    
+    # Verify project access through team membership
+    try:
+        project_uuid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid project ID format"
+        )
+    
+    # Check if user has access to this project through team membership
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    project_access = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.project_id == project_uuid,
+            ProjectMember.user_id.in_(
+                db.query(team_member_ids.c.user_id)
+            )
+        )
+    ).first()
+    
+    if not project_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No team member has access to this project"
+        )
+    
+    return {
+        "message": "Server creation should be done through the project servers API",
+        "redirect": f"/api/projects/{project_id}/servers"
+    }
+
+
+@router.get("/{team_id}/tools", response_model=List[TeamToolResponse])
+async def get_team_tools(
+    team_id: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Get all tools accessible by the team."""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    team, _ = get_team_and_verify_access(team_id, current_user, db)
+    
+    # Get team's servers (through projects owned by team members)
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    team_project_ids = db.query(ProjectMember.project_id).filter(
+        ProjectMember.user_id.in_(
+            db.query(team_member_ids.c.user_id)
+        )
+    ).distinct().subquery()
+    
+    servers = db.query(McpServer).filter(
+        and_(
+            McpServer.project_id.in_(
+                db.query(team_project_ids.c.project_id)
+            ),
+            McpServer.is_enabled == True
+        )
+    ).all()
+    
+    # Get tool usage statistics
+    tools = []
+    for server in servers:
+        # Get tool usage count from ToolCallLog
+        usage_count = db.query(func.count(ToolCallLog.id)).filter(
+            and_(
+                ToolCallLog.project_id == server.project_id,
+                ToolCallLog.server_name == server.name
+            )
+        ).scalar() or 0
+        
+        # For now, we'll create synthetic tool entries based on server
+        # In a real implementation, you might have a tools table or fetch from the actual MCP server
+        tools.append(TeamToolResponse(
+            id=f"{server.id}-tools",
+            name=f"{server.name} Tools",
+            server_name=server.name,
+            description=f"Tools provided by {server.name} server",
+            usage_count=usage_count
+        ))
+    
+    return tools
+
+
+@router.post("/{team_id}/tools")
+async def create_team_tool(
+    team_id: str,
+    tool_data: dict,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Tools are managed through MCP servers, not created directly."""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    team, _ = get_team_and_verify_access(team_id, current_user, db, TeamRole.DEVELOPER)
+    
+    return {
+        "message": "Tools are automatically discovered from MCP servers. Create or configure servers to add tools.",
+        "available_endpoints": [
+            f"GET /api/teams/{team_id}/servers - View available servers",
+            f"POST /api/teams/{team_id}/servers - Add new server (redirects to project endpoint)",
+            f"GET /api/teams/{team_id}/tools - View tools from all team servers"
+        ]
+    }
