@@ -60,6 +60,29 @@ docker compose up -d
 - Consistent across environments
 - Easy scaling
 
+### 🔧 Option 3: Component-Based Development (New!)
+**Individual component control for advanced development**
+
+```bash
+# Clone the repository
+git clone https://github.com/fnf-ea/mcp-orch.git
+cd mcp-orch
+
+# Start services individually (recommended for development)
+./scripts/database.sh        # PostgreSQL database
+./scripts/backend.sh          # Python backend (native)
+./scripts/frontend.sh         # Frontend (Docker with --no-deps)
+
+# Check all services status
+./scripts/status.sh
+```
+
+✅ **Perfect for component development**
+- Granular control over each service
+- Mix Docker and native execution
+- Independent service management
+- Advanced debugging capabilities
+
 ## What You Get
 
 - **🌐 Web Dashboard**: `http://localhost:3000` - Intuitive project and team management
@@ -69,7 +92,56 @@ docker compose up -d
 
 ## Usage
 
-### Running the Server
+### 🚀 Quick Development Scripts (Recommended)
+
+Our improved scripts provide the easiest way to manage MCP Orchestrator:
+
+#### Individual Service Management
+```bash
+# Start database (PostgreSQL)
+./scripts/database.sh              # Start PostgreSQL
+./scripts/database.sh --migrate    # Run database migrations
+./scripts/database.sh --psql       # Connect to PostgreSQL console
+./scripts/database.sh --logs       # View PostgreSQL logs
+./scripts/database.sh --stop       # Stop PostgreSQL
+
+# Start backend (Python or Docker)
+./scripts/backend.sh               # Python native (recommended)
+./scripts/backend.sh --docker      # Docker mode (with limitations)
+./scripts/backend.sh --help        # Show usage options
+
+# Start frontend (Docker or Node.js)
+./scripts/frontend.sh              # Docker mode (recommended)
+./scripts/frontend.sh --dev        # Local Node.js mode
+./scripts/frontend.sh --rebuild    # Rebuild Docker image
+./scripts/frontend.sh --help       # Show usage options
+
+# Check system status
+./scripts/status.sh                # Full status dashboard
+./scripts/status.sh --quick        # Quick status check
+./scripts/status.sh --health       # Health check with diagnostics
+./scripts/status.sh --ports        # Port usage information
+```
+
+#### Common Development Workflows
+```bash
+# Start full development environment
+./scripts/database.sh && ./scripts/backend.sh && ./scripts/frontend.sh
+
+# Check if everything is running
+./scripts/status.sh
+
+# Quick restart frontend after changes
+./scripts/frontend.sh --rebuild
+
+# Reset database and restart
+./scripts/database.sh --reset
+./scripts/backend.sh
+```
+
+### 🔧 Manual Server Management
+
+For advanced users who prefer direct control:
 
 ```bash
 # Default run (port 8000)
@@ -85,7 +157,7 @@ uv run mcp-orch serve --host 127.0.0.1 --port 8080
 uv run mcp-orch serve --log-level DEBUG
 ```
 
-### Check Tools and Servers
+### 📋 Check Tools and Servers
 
 ```bash
 # List configured servers

@@ -100,16 +100,49 @@ export default function HomePage() {
             </p>
 
             {/* Quick Install Section */}
-            <div className="max-w-4xl mx-auto mb-16 text-center">
+            <div className="max-w-5xl mx-auto mb-16 text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
                 Get Started in 30 Seconds, Connect Your First MCP Server in 5 Minutes
               </h2>
-              <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left font-mono text-sm md:text-base max-w-2xl mx-auto">
-                <div className="text-gray-500 mb-2"># Clone and start everything</div>
-                <div className="text-green-400">git clone https://github.com/hihenen/mcp-orch.git</div>
-                <div className="text-blue-400">cd mcp-orch</div>
-                <div className="text-yellow-400">./scripts/quickstart.sh</div>
+              
+              {/* Installation Options */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                {/* Quick Start Option */}
+                <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left">
+                  <div className="text-blue-400 font-medium mb-3 flex items-center">
+                    🚀 Quick Start (Recommended)
+                  </div>
+                  <div className="font-mono text-sm space-y-1">
+                    <div className="text-gray-500"># Clone and start everything</div>
+                    <div className="text-green-400">git clone https://github.com/hihenen/mcp-orch.git</div>
+                    <div className="text-blue-400">cd mcp-orch</div>
+                    <div className="text-yellow-400">./scripts/quickstart.sh</div>
+                  </div>
+                  <div className="mt-3 text-xs text-gray-400">
+                    ✓ All services ready instantly<br/>
+                    ✓ Web UI at http://localhost:3000
+                  </div>
+                </div>
+
+                {/* Component-Based Option */}
+                <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left">
+                  <div className="text-purple-400 font-medium mb-3 flex items-center">
+                    🔧 Component-Based (Advanced)
+                  </div>
+                  <div className="font-mono text-sm space-y-1">
+                    <div className="text-gray-500"># Individual component control</div>
+                    <div className="text-green-400">./scripts/database.sh</div>
+                    <div className="text-blue-400">./scripts/backend.sh</div>
+                    <div className="text-yellow-400">./scripts/frontend.sh</div>
+                    <div className="text-cyan-400">./scripts/status.sh</div>
+                  </div>
+                  <div className="mt-3 text-xs text-gray-400">
+                    ✓ Granular service control<br/>
+                    ✓ Mix Docker & native execution
+                  </div>
+                </div>
               </div>
+
               <div className="mt-4 flex items-center justify-center space-x-4">
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                   <Link href="/auth/signin">
@@ -636,18 +669,21 @@ $ cat ~/.config/cline/mcp_settings.json
                     Choose from Minimal, Standard, or Production deployment modes.
                   </p>
                   <div className="bg-black text-white p-4 rounded-lg font-mono text-sm max-w-lg">
-                    <pre>{`# Automatic installation script
-$ curl -fsSL install.mcp-orch.dev | sh
+                    <pre>{`# Quick start with all services
+$ git clone https://github.com/your-org/mcp-orch
+$ cd mcp-orch
+$ ./scripts/quickstart.sh
 
-? Choose deployment type:
-  1) Minimal (SQLite + Local)
-  2) Standard (Docker + Native)
-  3) Production (External DB + Service)
+✓ Database ready (PostgreSQL)
+✓ Backend running (Python native)
+✓ Frontend deployed (Docker)
+✓ Web UI → http://localhost:3000
 
-✓ Dependencies installed
-✓ Database configured  
-✓ Services started
-✓ Web UI available at http://localhost:3000`}</pre>
+# Or individual component control
+$ ./scripts/database.sh    # PostgreSQL only
+$ ./scripts/backend.sh     # Python backend
+$ ./scripts/frontend.sh    # Docker frontend
+$ ./scripts/status.sh      # Check all services`}</pre>
                   </div>
                 </div>
                 <div className="flex-shrink-0 order-3 lg:order-3">
@@ -795,29 +831,32 @@ $ curl -fsSL install.mcp-orch.dev | sh
               <div className="bg-gray-900 text-left p-6 rounded-lg">
                 <h3 className="text-white font-semibold mb-4 flex items-center">
                   <span className="text-2xl mr-3">🚀</span>
-                  One-Click Install
-                </h3>
-                <pre className="text-green-400 text-sm font-mono">
-{`curl -fsSL install.mcp-orch.dev | sh
-# or
-wget -qO- install.mcp-orch.dev | sh
-
-# Choose: Minimal, Standard, Production
-# Open http://localhost:3000`}
-                </pre>
-              </div>
-              <div className="bg-gray-900 text-left p-6 rounded-lg">
-                <h3 className="text-white font-semibold mb-4 flex items-center">
-                  <span className="text-2xl mr-3">🐳</span>
-                  Hybrid Deploy
+                  Quick Start (All-in-One)
                 </h3>
                 <pre className="text-green-400 text-sm font-mono">
 {`git clone https://github.com/your-org/mcp-orch
 cd mcp-orch
-./install.sh
+./scripts/quickstart.sh
 
-# DB: Docker, Backend: Native, Frontend: Docker
-# Optimal MCP server compatibility`}
+# All services ready instantly
+# Web UI: http://localhost:3000
+# Optimal for rapid development`}
+                </pre>
+              </div>
+              <div className="bg-gray-900 text-left p-6 rounded-lg">
+                <h3 className="text-white font-semibold mb-4 flex items-center">
+                  <span className="text-2xl mr-3">🔧</span>
+                  Component Control
+                </h3>
+                <pre className="text-green-400 text-sm font-mono">
+{`# Individual service management
+./scripts/database.sh     # PostgreSQL
+./scripts/backend.sh      # Python backend
+./scripts/frontend.sh     # Docker frontend
+./scripts/status.sh       # Check all
+
+# Mix Docker & native execution
+# Perfect for advanced development`}
                 </pre>
               </div>
             </div>

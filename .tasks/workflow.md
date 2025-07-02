@@ -7,7 +7,7 @@
 
 ## Task List
 
-### TASK_179: Alert을 Dialog 방식으로 변경 🏃
+### TASK_179: Alert을 Dialog 방식으로 변경 ✅
 - [x] Phase 1: Alert 사용 현황 조사
   - [x] web/src 디렉터리에서 alert(), confirm() 사용 검색
   - [x] 각 사용 사례의 컨텍스트와 목적 파악
@@ -21,6 +21,8 @@
   - [x] 메인 페이지 프로젝트 삭제 confirm을 showDeleteConfirm으로 교체
   - [x] 서버 삭제 confirm을 showDeleteConfirm으로 교체
   - [x] API 키 삭제 confirm을 showDeleteConfirm으로 교체
+  - [x] 팀 설정 페이지 팀 삭제 confirm을 showDeleteConfirm으로 교체
+  - [x] Admin 팀 관리 페이지 confirm/alert을 Dialog로 교체
   - [x] 사용자 경험 개선: 한글 메시지, 일관된 UI 디자인
   - [x] Playwright 호환성: Native alert/confirm 대신 DOM 기반 Dialog 사용
 - [x] Phase 4: 테스트 및 검증
@@ -28,6 +30,11 @@
   - [x] 모든 Dialog 동작 확인
   - [x] UI/UX 일관성 검증 (한글 메시지, 일관된 디자인)
   - [x] 변경사항 문서화 (CHANGELOG.md 업데이트)
+- [x] Phase 5: 개발 지침 추가
+  - [x] CLAUDE.md에 프론트엔드 Alert/Dialog 정책 추가
+  - [x] Native alert/confirm 사용 금지 지침 작성
+  - [x] Dialog utils 사용법 및 코딩 체크리스트 추가
+  - [x] 코드 리뷰 시 위반 대응 절차 명시
 
 ### TASK_178: INITIAL_ADMIN_PASSWORD 사용 현황 확인 및 제거 ✅
 - [x] 백엔드 코드에서 INITIAL_ADMIN_PASSWORD 사용 여부 확인
@@ -685,6 +692,32 @@
 - [ ] 테스트 및 검증
 - [ ] 변경사항 커밋
 
+### TASK_180: 팀 삭제 Dialog 컴포넌트 구현 및 API 연동 ✅
+- [x] 문제 분석: admin teams 페이지에서 native confirm/alert 사용 중
+  - [x] admin teams 페이지 confirm() → showDeleteConfirm() 교체
+  - [x] admin teams 페이지 alert() → showError() 교체
+  - [x] Dialog utilities import 추가
+- [x] 405 Method Not Allowed 오류 해결
+  - [x] 모듈화된 teams 라우터에 DELETE /{team_id} 엔드포인트 누락 확인
+  - [x] teams/core.py에 팀 삭제 엔드포인트 구현
+  - [x] 기존 teams.py의 삭제 로직을 모듈화된 구조로 이전
+  - [x] 팀 삭제 시 안전성 검증 (활성 프로젝트 연결 확인)
+  - [x] API 키 및 팀 멤버 정리 로직 포함
+  - [x] ActivityLogger 통합으로 삭제 이벤트 추적
+- [x] AttributeError 오류 해결
+  - [x] Project.is_active 필드 오류 수정 (Project 모델에 해당 필드 없음)
+  - [x] 유사도 기반 추측 코딩으로 인한 런타임 오류 해결
+  - [x] 실제 Project 모델 구조 확인 후 올바른 쿼리로 수정
+- [x] CLAUDE.md 개발 지침 업데이트
+  - [x] Alert/Confirm 다이얼로그 정책 (CRITICAL) 섹션 추가
+  - [x] Native alert/confirm 사용 절대 금지 명시
+  - [x] Dialog utils 사용법 및 코딩 체크리스트 제공
+  - [x] 코드 리뷰 시 위반 대응 절차 작성
+  - [x] 모델/스키마 기준 개발 정책 (CRITICAL) 추가
+  - [x] 추측 기반 필드 사용 절대 금지 명시
+  - [x] 모델 파일 직접 확인 필수 절차 정의
+  - [x] 안전한 개발 프로세스 체크리스트 제공
+
 ## Progress Status  
 ### TASK_161: 사용하지 않는 Standard MCP Router 완전 삭제 ✅
 - [x] app.py에서 standard_mcp_router import 및 등록 제거
@@ -891,7 +924,7 @@
   - [x] 누락된 ActivityType enum 값들을 데이터베이스에 추가하는 마이그레이션 생성 및 실행
 
 ## Progress Status  
-- Current Progress: TASK_179 - Alert을 Dialog 방식으로 변경 🏃 ✅ 완료
+- Current Progress: TASK_180 - 팀 삭제 Dialog 컴포넌트 구현 및 API 연동 ✅ 완료
 - Next Task: 다음 개발 작업 대기
 - Last Update: 2025-07-01
 - Automatic Check Feedback: 

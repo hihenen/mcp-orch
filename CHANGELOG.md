@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_180] Complete team deletion Dialog component implementation and API integration (2025-07-01)
+  - Add team deletion endpoint to modular teams/core.py router to fix 405 Method Not Allowed error
+  - Replace native confirm/alert in admin teams page with showDeleteConfirm and showError
+  - Add comprehensive frontend Dialog policy to CLAUDE.md development guidelines
+  - Add model/schema-based development policy to prevent assumption-based coding errors
+  - Implement safety checks for team deletion (project connections verification)
+  - Include API key cleanup and team member removal in deletion process
+  - Integrate ActivityLogger for team deletion event tracking
+  - Fix AttributeError by removing non-existent Project.is_active field usage
 - [TASK_179] Replace JavaScript alert/confirm with Dialog components for better UX and Playwright compatibility (2025-07-01)
   - Add reusable dialog utility functions: showAlert, showSuccess, showError, showDeleteConfirm
   - Replace all browser native alert/confirm calls with consistent Dialog UI components

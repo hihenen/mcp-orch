@@ -38,6 +38,7 @@ import { CreateTeamModal } from './components/CreateTeamModal';
 import { EditTeamModal } from './components/EditTeamModal';
 import { TransferOwnershipModal } from './components/TransferOwnershipModal';
 import { formatDate } from '@/lib/date-utils';
+import { showDeleteConfirm, showError } from '@/lib/dialog-utils';
 
 interface AdminTeamResponse {
   id: string;
@@ -170,7 +171,12 @@ export default function TeamsAdminPage() {
   };
 
   const handleDeleteTeam = async (team: AdminTeamResponse) => {
-    if (!confirm(`Are you sure you want to deactivate team "${team.name}"? This action cannot be undone.`)) {
+    const confirmed = await showDeleteConfirm(
+      team.name,
+      '팀'
+    );
+    
+    if (!confirmed) {
       return;
     }
 
@@ -191,7 +197,7 @@ export default function TeamsAdminPage() {
       fetchTeams();
     } catch (err) {
       console.error('Error deleting team:', err);
-      alert(err instanceof Error ? err.message : 'Failed to delete team');
+      await showError(err instanceof Error ? err.message : '팀 삭제에 실패했습니다.');
     }
   };
 

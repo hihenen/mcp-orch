@@ -9,10 +9,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_
 
 from ...database import get_db
 from ...models.team import Team, TeamMember, TeamRole
+from ...models.project import Project, ProjectMember, InviteSource
+from ...models.api_key import ApiKey
+from ...models.activity import ActivityType, Activity
 from ...services.activity_logger import ActivityLogger
 from .common import (
     TeamResponse, 
@@ -165,3 +168,98 @@ async def create_team(
         member_count=1,
         user_role=TeamRole.OWNER.value
     )
+
+
+@router.delete("/{team_id}")
+async def delete_team(
+    team_id: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Delete a team and all associated data."""
+    current_user = getattr(request.state, 'user', None)
+    
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    # Verify team exists and user has owner access
+    team, membership = get_team_and_verify_access(team_id, current_user, db, TeamRole.OWNER)
+    
+    try:
+        team_uuid = UUID(team_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid team ID format"
+        )
+    
+    # Check if team has any projects (팀으로서 명시적으로 초대된 프로젝트만 확인)
+    team_member_ids = db.query(TeamMember.user_id).filter(
+        TeamMember.team_id == team.id
+    ).subquery()
+    
+    # 팀 멤버로서 초대된 프로젝트만 카운트 (개인 프로젝트 제외)
+    team_projects = db.query(ProjectMember).filter(
+        and_(
+            ProjectMember.user_id.in_(
+                db.query(team_member_ids.c.user_id)
+            ),
+            ProjectMember.invited_as == InviteSource.TEAM_MEMBER
+        )
+    ).count()
+    
+    # For safety, prevent deletion if team has active projects
+    # Users should disconnect from projects first
+    if team_projects > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete team with {team_projects} project connections. Please disconnect from all projects first."
+        )
+    
+    try:
+        # Log team deletion activity BEFORE deletion (팀 삭제 전에 로깅)
+        try:
+            ActivityLogger.log_activity(
+                action=ActivityType.TEAM_DELETED,
+                team_id=team.id,
+                user_id=current_user.id,
+                meta_data={
+                    "team_id": str(team.id),
+                    "team_name": team.name,
+                    "deleted_by": current_user.email,
+                    "deletion_timestamp": datetime.utcnow().isoformat()
+                },
+                db=db
+            )
+        except Exception as e:
+            # Log activity failure but don't fail the deletion
+            print(f"Failed to log team deletion activity: {e}")
+        
+        # Delete team activities (외래 키 제약 조건 해결)
+        db.query(Activity).filter(Activity.team_id == team.id).delete()
+        
+        # Delete team API keys 
+        team_api_keys = db.query(ApiKey).join(Project).join(ProjectMember).filter(
+            ProjectMember.user_id.in_(
+                db.query(team_member_ids.c.user_id)
+            )
+        ).all()
+        
+        for api_key in team_api_keys:
+            db.delete(api_key)
+        
+        # Delete team members
+        db.query(TeamMember).filter(TeamMember.team_id == team.id).delete()
+        
+        # Delete the team itself
+        db.delete(team)
+        db.commit()
+        
+        return {"message": f"Team '{team.name}' has been successfully deleted"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete team: {str(e)}"
+        )
