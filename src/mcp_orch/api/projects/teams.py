@@ -514,8 +514,11 @@ async def create_or_connect_team_to_project(
         ).all()
         
         if existing_connections:
-            # 팀의 현재 역할들 수집 (중복 제거)
-            existing_roles = list(set([conn.role.value for conn in existing_connections]))
+            # 팀의 현재 역할들 수집 (중복 제거) - Enum과 문자열 모두 안전하게 처리
+            existing_roles = list(set([
+                conn.role.value if hasattr(conn.role, 'value') else conn.role 
+                for conn in existing_connections
+            ]))
             role_info = ", ".join(existing_roles)
             
             raise HTTPException(
