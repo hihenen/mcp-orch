@@ -1,0 +1,104 @@
+# MCP Orchestrator Backend Development Docker Image
+# Multi-stage build with Node.js, Python, UV, and development tools
+
+# Stage 1: Node.js base for frontend tools
+FROM node:18-alpine as node-base
+
+# Install pnpm globally
+RUN npm install -g pnpm@latest
+
+# Stage 2: Python base with development tools
+FROM python:3.11-slim as python-base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # Build essentials
+    build-essential \
+    curl \
+    wget \
+    git \
+    # Development tools
+    htop \
+    vim \
+    nano \
+    # Docker CLI for Docker in Docker support
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# Stage 3: Final development environment
+FROM python-base as final
+
+# Copy Node.js and pnpm from node-base
+COPY --from=node-base /usr/local/bin/node /usr/local/bin/
+COPY --from=node-base /usr/local/bin/npm /usr/local/bin/
+COPY --from=node-base /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node-base /usr/local/bin/pnpm /usr/local/bin/
+
+# Create symlinks for npm tools
+RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
+# Install UV (Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
+# Install common Python development tools via UV
+RUN uv tool install ruff black mypy pytest
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files for dependency installation
+COPY pyproject.toml uv.lock* ./
+
+# Install Python dependencies
+RUN uv sync --dev
+
+# Copy the rest of the application
+COPY . .
+
+# Create development user (optional, for better security)
+RUN useradd -m -s /bin/bash developer \
+    && chown -R developer:developer /app
+
+# Development environment variables
+ENV PYTHONPATH=/app/src
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_CACHE_DIR=/app/.uv-cache
+
+# Expose development ports
+EXPOSE 8000
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Development entrypoint with hot reload
+CMD ["uv", "run", "mcp-orch", "serve", "--reload", "--host", "0.0.0.0", "--port", "8000", "--log-level", "DEBUG"]
+
+# Development notes:
+# - Docker socket mount: -v /var/run/docker.sock:/var/run/docker.sock
+# - Source code mount: -v $(pwd):/app
+# - Environment file: --env-file .env
+# - Network access: --network mcp-orch-network
+#
+# Usage example:
+# docker build -f Dockerfile.backend-dev -t mcp-orch-backend-dev .
+# docker run -it --rm \
+#   -v $(pwd):/app \
+#   -v /var/run/docker.sock:/var/run/docker.sock \
+#   --env-file .env \
+#   --network mcp-orch-network \
+#   -p 8000:8000 \
+#   mcp-orch-backend-dev

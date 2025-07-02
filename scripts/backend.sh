@@ -209,17 +209,63 @@ start_docker_backend() {
     # 백엔드 개발용 Docker 서비스 시작
     log_docker "백엔드 개발 컨테이너를 시작하는 중..."
     
-    # 기존 백엔드 컨테이너가 실행 중인지 확인
+    # 기존 백엔드 컨테이너가 실행 중인지 확인 (포트 충돌 방지)
     if docker ps --format "table {{.Names}}" | grep -q "mcp-orch-backend"; then
-        log_warning "기존 백엔드 컨테이너가 실행 중입니다. 중지합니다..."
+        log_warning "프로덕션 백엔드 컨테이너가 실행 중입니다. 중지합니다..."
         docker compose stop mcp-orch-backend
     fi
+    
+    # 로컬 Python 프로세스가 8000 포트를 사용 중인지 확인
+    if lsof -i :8000 >/dev/null 2>&1; then
+        log_warning "포트 8000이 사용 중입니다. 프로세스를 중지해주세요."
+        lsof -i :8000
+        echo ""
+        read -p "계속 진행하시겠습니까? Docker는 8080 포트를 사용합니다. (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Docker 백엔드 시작을 취소했습니다."
+            exit 0
+        fi
+    fi
 
-    # TODO: backend-dev 서비스 구현 필요
-    log_error "Docker 개발 환경이 아직 구현되지 않았습니다."
-    log_info "현재는 Python 직접 실행만 지원됩니다: $0"
-    log_info "Docker 개발 환경 구현이 완료되면 이 기능을 사용할 수 있습니다."
-    exit 1
+    # 개발용 백엔드 컨테이너 시작
+    log_docker "개발용 백엔드 컨테이너를 시작합니다..."
+    docker compose up -d --no-deps mcp-orch-backend-dev
+
+    # 컨테이너 준비 대기
+    log_info "개발용 백엔드 준비를 기다리는 중..."
+    for i in {1..30}; do
+        if curl -f http://localhost:8080/health >/dev/null 2>&1; then
+            log_success "Docker 개발용 백엔드가 정상적으로 시작되었습니다! 🐳"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            log_error "백엔드 시작 시간이 초과되었습니다"
+            log_info "컨테이너 로그를 확인하세요: docker logs mcp-orch-backend-dev"
+            exit 1
+        fi
+        sleep 2
+    done
+
+    echo ""
+    echo "🐳 Docker 백엔드 개발 정보:"
+    echo "  • Backend API: http://localhost:8080 (Docker 포트)"
+    echo "  • Hot Reload: 활성화 🔄"
+    echo "  • Docker in Docker: 지원 ⚠️"
+    echo "  • Source Mount: 실시간 반영"
+    echo ""
+    echo "🔧 유용한 명령어들:"
+    echo "  • 컨테이너 로그: docker logs -f mcp-orch-backend-dev"
+    echo "  • 컨테이너 접속: docker exec -it mcp-orch-backend-dev bash"
+    echo "  • 컨테이너 중지: docker compose stop mcp-orch-backend-dev"
+    echo "  • 프론트엔드 시작: ./scripts/frontend.sh"
+    echo ""
+    echo "⚠️  제약사항:"
+    echo "  • MCP 서버는 컨테이너 내부에서만 접근 가능"
+    echo "  • 호스트 MCP 서버 접근 제한"
+    echo "  • 네트워크 설정 복잡"
+    echo ""
+    echo "✅ Docker 개발용 백엔드가 백그라운드에서 실행 중입니다."
 }
 
 # 메인 스크립트 로직

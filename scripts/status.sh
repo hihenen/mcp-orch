@@ -93,18 +93,29 @@ check_database_status() {
 check_backend_status() {
     echo -n "⚡ Backend API: "
     
-    # Docker 백엔드 확인
+    # Docker 프로덕션 백엔드 확인
     if docker ps --format "table {{.Names}}" | grep -q "mcp-orch-backend"; then
         if curl -f http://localhost:8000/health >/dev/null 2>&1; then
             status_running
-            echo "   (Docker mode)"
-            BACKEND_STATUS="running_docker"
+            echo "   (Docker production mode)"
+            BACKEND_STATUS="running_docker_prod"
         else
             status_warning
-            echo "   Docker container running but API not responding"
-            BACKEND_STATUS="warning_docker"
+            echo "   Docker production container running but API not responding"
+            BACKEND_STATUS="warning_docker_prod"
         fi
-    # 로컬 백엔드 확인
+    # Docker 개발 백엔드 확인
+    elif docker ps --format "table {{.Names}}" | grep -q "mcp-orch-backend-dev"; then
+        if curl -f http://localhost:8080/health >/dev/null 2>&1; then
+            status_running
+            echo "   (Docker development mode - port 8080)"
+            BACKEND_STATUS="running_docker_dev"
+        else
+            status_warning
+            echo "   Docker development container running but API not responding"
+            BACKEND_STATUS="warning_docker_dev"
+        fi
+    # 로컬 Python 백엔드 확인 (8000 포트)
     elif lsof -i :8000 >/dev/null 2>&1; then
         if curl -f http://localhost:8000/health >/dev/null 2>&1; then
             status_running
@@ -163,7 +174,7 @@ check_docker_containers() {
     fi
 
     # MCP Orchestrator 관련 컨테이너들
-    containers=("mcp-orch-postgres" "mcp-orch-backend" "mcp-orch-frontend")
+    containers=("mcp-orch-postgres" "mcp-orch-backend" "mcp-orch-backend-dev" "mcp-orch-frontend")
     
     for container in "${containers[@]}"; do
         echo -n "   $container: "
@@ -192,8 +203,8 @@ check_network_connectivity() {
     echo "======================"
     
     # 포트 확인
-    ports=(5432 8000 3000)
-    port_names=("PostgreSQL" "Backend API" "Frontend Web")
+    ports=(5432 8000 8080 3000)
+    port_names=("PostgreSQL" "Backend API" "Backend Dev" "Frontend Web")
     
     for i in "${!ports[@]}"; do
         port="${ports[$i]}"
@@ -260,8 +271,8 @@ show_ports_info() {
     echo "🔌 Port Usage Information:"
     echo "========================"
     
-    ports=(5432 8000 3000)
-    port_names=("PostgreSQL" "Backend API" "Frontend Web")
+    ports=(5432 8000 8080 3000)
+    port_names=("PostgreSQL" "Backend API" "Backend Dev" "Frontend Web")
     
     for i in "${!ports[@]}"; do
         port="${ports[$i]}"
@@ -302,7 +313,12 @@ run_health_check() {
         status_running
         # API 응답 시간 측정
         response_time=$(curl -o /dev/null -s -w '%{time_total}' http://localhost:8000/health)
-        echo "   Response time: ${response_time}s"
+        echo "   Response time: ${response_time}s (port 8000)"
+    elif curl -f http://localhost:8080/health >/dev/null 2>&1; then
+        status_running
+        # API 응답 시간 측정
+        response_time=$(curl -o /dev/null -s -w '%{time_total}' http://localhost:8080/health)
+        echo "   Response time: ${response_time}s (port 8080 - dev mode)"
     else
         status_stopped
         overall_health="unhealthy"
