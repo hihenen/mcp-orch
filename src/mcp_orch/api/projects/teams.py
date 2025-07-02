@@ -514,19 +514,43 @@ async def create_or_connect_team_to_project(
         ).all()
         
         if existing_connections:
-            # 팀의 현재 역할들 수집 (중복 제거) - Enum과 문자열 모두 안전하게 처리
-            existing_roles = list(set([
+            # 역할 우선순위 정의 (높은 숫자 = 높은 권한)
+            role_priority = {
+                'reporter': 1,
+                'developer': 2, 
+                'admin': 3,
+                'owner': 4
+            }
+            
+            # 기존 역할들 수집
+            existing_roles = [
                 conn.role.value if hasattr(conn.role, 'value') else conn.role 
                 for conn in existing_connections
-            ]))
-            role_info = ", ".join(existing_roles)
+            ]
             
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Team '{team.name}' is already connected to this project with role(s): {role_info}. To update team member roles, please use the project members management interface."
-            )
-        
-        action_description = f"기존 팀 '{team.name}' 프로젝트에 연결"
+            # 새로운 역할과 기존 최고 역할 비교
+            new_role_priority = role_priority.get(str(role).lower(), 1)
+            max_existing_priority = max([role_priority.get(str(r).lower(), 1) for r in existing_roles], default=0)
+            
+            if new_role_priority <= max_existing_priority:
+                # 기존 역할이 더 높거나 같으면 스킵 (중복 방지)
+                role_info = ", ".join(existing_roles)
+                return {
+                    "message": f"Team '{team.name}' is already connected with higher or equal role(s): {role_info}. Current connection maintained.",
+                    "action": "no_change",
+                    "existing_roles": existing_roles,
+                    "requested_role": str(role)
+                }
+            else:
+                # 새로운 역할이 더 높으면 기존 연결 업데이트
+                action_description = f"팀 '{team.name}' 역할 업그레이드: {max(existing_roles, key=lambda r: role_priority.get(str(r).lower(), 1))} → {role}"
+                
+                # 기존 연결들 삭제 (더 높은 권한으로 교체)
+                for conn in existing_connections:
+                    db.delete(conn)
+                    
+        else:
+            action_description = f"새 팀 '{team.name}' 프로젝트에 연결"
         
     else:
         # 새 팀 생성
