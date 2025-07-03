@@ -5,7 +5,7 @@ Teams API 모듈화 라우터 통합
 
 from fastapi import APIRouter
 
-from . import core, members, api_keys, projects, settings, activity
+from . import core, members, api_keys, projects, settings, activity, servers, tools
 
 # 메인 팀 라우터 생성
 router = APIRouter(prefix="/api/teams", tags=["teams"])
@@ -17,6 +17,8 @@ router.include_router(api_keys.router, tags=["teams-api-keys"])
 router.include_router(projects.router, tags=["teams-projects"])
 router.include_router(settings.router, tags=["teams-settings"])
 router.include_router(activity.router, tags=["teams-activity"])
+router.include_router(servers.router, tags=["teams-servers"])
+router.include_router(tools.router, tags=["teams-tools"])
 
 # 하위 호환성을 위한 라우터 정보
 __all__ = ['router']
@@ -26,7 +28,7 @@ __refactoring_info__ = {
     "original_file": "teams.py",
     "original_lines": 1069,
     "new_modules": 7,
-    "total_endpoints": 14,
+    "total_endpoints": 18,
     "refactoring_date": "2025-06-29",
     "modules": {
         "common.py": "공통 구성 요소 (Pydantic 모델, 헬퍼 함수)",
@@ -35,6 +37,8 @@ __refactoring_info__ = {
         "api_keys.py": "API 키 관리 (3개 엔드포인트)",
         "projects.py": "프로젝트 관리 (2개 엔드포인트)",
         "settings.py": "설정 관리 (1개 엔드포인트)",
-        "activity.py": "활동 피드 (1개 엔드포인트)"
+        "activity.py": "활동 피드 (1개 엔드포인트)",
+        "servers.py": "서버 관리 (2개 엔드포인트)",
+        "tools.py": "도구 관리 (2개 엔드포인트)"
     }
 }

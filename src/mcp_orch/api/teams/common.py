@@ -95,6 +95,33 @@ class UpdateMemberRoleRequest(BaseModel):
     role: TeamRole = Field(..., description="New role for the member")
 
 
+class TeamServerResponse(BaseModel):
+    """Team server information."""
+    id: str
+    name: str
+    description: Optional[str]
+    command: str
+    args: List[str]
+    env: dict
+    disabled: bool
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+class TeamToolResponse(BaseModel):
+    """Team tool information."""
+    id: str
+    name: str
+    server_name: str
+    description: Optional[str]
+    usage_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
 # Helper Functions
 async def get_user_from_jwt_token(request: Request, db: Session) -> Optional[User]:
     """
