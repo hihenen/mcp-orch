@@ -1014,7 +1014,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [TASK_064] Fix Docker network CIDR conflicts by configuring custom 10.123.0.0/16 subnet (2025-06-24)
-  - Add custom network configuration to all docker-compose files to avoid corporate network conflicts
+  - Add custom network configuration to all docker compose files to avoid corporate network conflicts
   - Set dedicated mcp-orch-network with 10.123.0.0/16 subnet and 10.123.0.1 gateway
   - Update docker-compose.yml, docker-compose.hybrid.yml, and docker-compose.monitoring.yml
   - Resolve container networking issues in corporate environments with overlapping IP ranges

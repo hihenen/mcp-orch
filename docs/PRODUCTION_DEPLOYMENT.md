@@ -186,7 +186,7 @@ server {
 1. Build and start services:
    ```bash
    # Using Docker Compose
-   docker-compose -f docker-compose.yml up -d
+   docker compose -f docker-compose.yml up -d
    
    # Or using quickstart script (with your custom .env)
    ./scripts/quickstart.sh
@@ -195,10 +195,10 @@ server {
 2. Verify deployment:
    ```bash
    # Check service status
-   docker-compose ps
+   docker compose ps
    
    # Check logs
-   docker-compose logs -f
+   docker compose logs -f
    
    # Test API health
    curl https://api.your-domain.com/health
@@ -266,8 +266,8 @@ Set up monitoring for:
 Configure log rotation and monitoring:
 ```bash
 # Check application logs
-docker-compose logs backend
-docker-compose logs frontend
+docker compose logs backend
+docker compose logs frontend
 
 # Monitor system resources
 docker stats

@@ -70,14 +70,14 @@ install_dependencies() {
         # Ubuntu/Debian
         if command -v apt-get &> /dev/null; then
             sudo apt-get update
-            sudo apt-get install -y python3 python3-pip python3-venv git curl docker.io docker-compose postgresql-client
+            sudo apt-get install -y python3 python3-pip python3-venv git curl docker.io docker-compose-plugin postgresql-client
             sudo systemctl enable docker
             sudo systemctl start docker
             sudo usermod -aG docker $USER
         # CentOS/RHEL/Fedora
         elif command -v yum &> /dev/null; then
             sudo yum update -y
-            sudo yum install -y python3 python3-pip git curl docker docker-compose postgresql
+            sudo yum install -y python3 python3-pip git curl docker docker-compose-plugin postgresql
             sudo systemctl enable docker
             sudo systemctl start docker
             sudo usermod -aG docker $USER
@@ -89,7 +89,7 @@ install_dependencies() {
             print_status "Install Homebrew: https://brew.sh"
             exit 1
         fi
-        brew install python3 git curl docker docker-compose postgresql
+        brew install python3 git curl docker postgresql
     fi
     
     print_success "System dependencies installed"
