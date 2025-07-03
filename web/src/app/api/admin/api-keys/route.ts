@@ -40,7 +40,7 @@ export const GET = auth(async function GET(req) {
       expired_only
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/api-keys/?${queryParams}`, {
+    const response = await fetch(`${BACKEND_URL}/api/admin/api-keys?${queryParams}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,

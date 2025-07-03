@@ -346,7 +346,17 @@ def create_app(settings: Settings = None) -> FastAPI:
     # 1. 일반 REST API 라우터들 (/api/* 경로) - 프론트엔드용
     app.include_router(users_router)
     # app.include_router(teams_router)  # 기존 모놀리식 라우터 비활성화
+    
+    # DEBUG: teams 라우터 등록 전 디버그 정보
+    logger.info("🔧 DEBUG: Registering teams_modular_router...")
+    logger.info(f"🔧 DEBUG: teams_modular_router prefix: {teams_modular_router.prefix}")
+    logger.info(f"🔧 DEBUG: teams_modular_router routes count: {len(teams_modular_router.routes)}")
+    for route in teams_modular_router.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            logger.info(f"🔧 DEBUG: Route: {route.methods} {route.path}")
+    
     app.include_router(teams_modular_router)  # 새로운 모듈화된 라우터 활성화
+    logger.info("✅ DEBUG: teams_modular_router registered successfully")
     # app.include_router(projects_router)  # 기존 모놀리식 라우터 비활성화
     app.include_router(projects_modular_router)  # 새로운 모듈화된 라우터 활성화
     app.include_router(project_servers_router)  # 🔧 프로젝트 서버 관리 API (도구 실행 포함)
@@ -375,6 +385,19 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(mcp_standard_sse_router)  # 기존 표준 MCP SSE 엔드포인트 (호환성)
     # app.include_router(standard_mcp_router)  # 제거됨: 사용하지 않는 legacy 라우터
     
+    # DEBUG: 최종적으로 등록된 모든 라우트 출력
+    logger.info("🔧 DEBUG: Final registered routes summary:")
+    total_routes = 0
+    teams_routes = 0
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            total_routes += 1
+            if '/teams' in route.path:
+                teams_routes += 1
+                logger.info(f"🔧 DEBUG: Teams route: {route.methods} {route.path}")
+    
+    logger.info(f"🔧 DEBUG: Total routes registered: {total_routes}")
+    logger.info(f"🔧 DEBUG: Teams routes registered: {teams_routes}")
     
     # 전역 예외 핸들러
     @app.exception_handler(Exception)

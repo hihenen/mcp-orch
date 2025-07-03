@@ -39,8 +39,8 @@ export const GET = auth(async function GET(req, { params }) {
     searchParams.set('limit', limit);
     searchParams.set('offset', offset);
 
-    // 5. 백엔드 API 호출
-    const apiUrl = `${BACKEND_URL}/api/teams/${teamId}/activity/?${searchParams.toString()}`;
+    // 5. 백엔드 API 호출 (트레일링 슬래시 제거하여 307 리다이렉트 방지)
+    const apiUrl = `${BACKEND_URL}/api/teams/${teamId}/activity?${searchParams.toString()}`;
     console.log('🔗 Calling backend API:', apiUrl);
 
     const response = await fetch(apiUrl, {
@@ -48,6 +48,7 @@ export const GET = auth(async function GET(req, { params }) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
       },
+      signal: AbortSignal.timeout(30000), // 30초 타임아웃
     });
 
     if (!response.ok) {

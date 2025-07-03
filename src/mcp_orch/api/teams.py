@@ -22,6 +22,9 @@ from .jwt_auth import get_current_user, verify_jwt_token, get_user_from_jwt_toke
 
 router = APIRouter(prefix="/api/teams", tags=["teams"])
 
+# 디버그: 라우터가 로드되었는지 확인
+print("🚀 DEBUG: teams.py router loaded with servers and tools endpoints!")
+
 
 # Pydantic models for API
 class TeamResponse(BaseModel):

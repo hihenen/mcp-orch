@@ -4,44 +4,47 @@ import { getServerJwtToken } from '@/lib/jwt-utils';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MCP_API_URL || 'http://localhost:8000';
 
-export const GET = auth(async function GET(req) {
+// 팀 초대 (Team Invite API)
+export const POST = auth(async function POST(req, { params }) {
   try {
-    // NextAuth.js v5 세션 확인
     if (!req.auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // JWT 토큰 생성 (필수)
+    const resolvedParams = await params;
+    const projectId = resolvedParams.projectId;
+    const body = await req.json();
+    
     const jwtToken = await getServerJwtToken(req as any);
     
     if (!jwtToken) {
-      console.error('❌ Failed to generate JWT token for tool call logs');
+      console.error('❌ Failed to generate JWT token for team invite');
       return NextResponse.json({ error: 'Failed to generate authentication token' }, { status: 500 });
     }
 
-    console.log('✅ Using JWT token for tool call logs request');
+    console.log(`✅ Inviting team to project ${projectId}:`, body);
 
-    // URL 쿼리 파라미터를 백엔드로 전달
-    const url = new URL(req.url);
-    const searchParams = url.searchParams;
-    const backendUrl = `${BACKEND_URL}/api/tool-call-logs?${searchParams.toString()}`;
-
-    const response = await fetch(backendUrl, {
+    // 백엔드의 팀 초대 API 호출
+    const response = await fetch(`${BACKEND_URL}/api/projects/${projectId}/teams/invite`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`,
       },
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
       const error = await response.text();
+      console.error('❌ Team invite failed:', error);
       return NextResponse.json({ error }, { status: response.status });
     }
 
     const data = await response.json();
+    console.log('✅ Team invite successful:', data);
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Tool call logs API error:', error);
+    console.error('Team invite API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

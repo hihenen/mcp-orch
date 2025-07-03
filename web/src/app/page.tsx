@@ -78,180 +78,280 @@ export default function HomePage() {
   // Show landing page for unauthenticated users
   if (status === 'unauthenticated') {
     return (
-      <div className="min-h-screen bg-white">
-        {/* Problem Hero Section */}
-        <section className="min-h-screen flex items-center px-6">
-          <div className="w-full max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-purple-600/20 to-cyan-600/30">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.3),rgba(0,0,0,0.3))]"></div>
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-400 rounded-full mix-blend-screen filter blur-xl opacity-40 animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-400 rounded-full mix-blend-screen filter blur-xl opacity-40 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-screen filter blur-xl opacity-40 animate-blob animation-delay-4000"></div>
+        </div>
+
+        {/* Hero Section */}
+        <section className="relative min-h-screen flex items-center px-6 overflow-hidden">
+          <div className="w-full max-w-7xl mx-auto relative z-10">
+            {/* Floating particles effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-20 left-10 w-2 h-2 bg-blue-400 rounded-full animate-float"></div>
+              <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full animate-float-delayed"></div>
+              <div className="absolute bottom-32 left-1/4 w-3 h-3 bg-cyan-400 rounded-full animate-float"></div>
+              <div className="absolute bottom-20 right-1/3 w-2 h-2 bg-pink-400 rounded-full animate-float-delayed"></div>
+            </div>
+            
             {/* Target audience badge */}
-            <div className="text-center mb-8">
-              <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
-                For Developers & AI Teams
+            <div className="text-center mb-8 animate-fade-in">
+              <span className="inline-block bg-white/20 backdrop-blur-sm border border-white/30 text-white px-6 py-3 rounded-full text-sm font-medium shadow-lg">
+                ✨ For Developers & AI Teams
               </span>
             </div>
             
-            {/* Main headline */}
-            <h1 className="text-5xl md:text-7xl font-bold text-center mb-16">
-              Open Source MCP
-              <span className="block text-blue-600 mt-4">Server Orchestration</span>
+            {/* Main headline with gradient text */}
+            <h1 className="text-5xl md:text-7xl font-bold text-center mb-16 animate-slide-up">
+              <span className="text-white drop-shadow-2xl">
+                Open Source MCP
+              </span>
+              <span className="block bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent mt-4 drop-shadow-lg">
+                Server Orchestration
+              </span>
             </h1>
-            <p className="text-xl text-gray-600 text-center mb-8 max-w-3xl mx-auto">
-              Self-hosted MCP server management platform with project-based team collaboration. 
-              Deploy anywhere, manage everywhere. No vendor lock-in, full control over your AI infrastructure.
+            
+            <p className="text-xl text-white/90 text-center mb-12 max-w-4xl mx-auto leading-relaxed animate-slide-up animation-delay-300 drop-shadow-lg">
+              Industry-first <span className="text-cyan-300 font-semibold">unified MCP platform</span> with enterprise-grade team collaboration. 
+              Deploy anywhere, orchestrate everywhere. 
+              <span className="text-purple-300 font-semibold">Zero vendor lock-in</span>, complete infrastructure control.
             </p>
 
             {/* Quick Install Section */}
-            <div className="max-w-5xl mx-auto mb-16 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
-                Get Started in 30 Seconds, Connect Your First MCP Server in 5 Minutes
+            <div className="max-w-6xl mx-auto mb-16 text-center animate-slide-up animation-delay-600">
+              <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white drop-shadow-lg">
+                Get Started in <span className="text-green-300">30 Seconds</span>, Connect Your First MCP Server in <span className="text-cyan-300">5 Minutes</span>
               </h2>
               
-              {/* Installation Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Installation Options with Glass Effect */}
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
                 {/* Quick Start Option */}
-                <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left">
-                  <div className="text-blue-400 font-medium mb-3 flex items-center">
-                    🚀 Quick Start (Recommended)
-                  </div>
-                  <div className="font-mono text-sm space-y-1">
-                    <div className="text-gray-500"># Clone and start everything</div>
-                    <div className="text-green-400">git clone https://github.com/hihenen/mcp-orch.git</div>
-                    <div className="text-blue-400">cd mcp-orch</div>
-                    <div className="text-yellow-400">./scripts/quickstart.sh</div>
-                  </div>
-                  <div className="mt-3 text-xs text-gray-400">
-                    ✓ All services ready instantly<br/>
-                    ✓ Web UI at http://localhost:3000
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                  <div className="relative bg-black/70 backdrop-blur-xl border border-white/30 p-8 rounded-2xl text-left hover:border-white/40 transition-all duration-300 shadow-2xl">
+                    <div className="text-cyan-300 font-semibold mb-4 flex items-center text-lg">
+                      <span className="mr-3 text-2xl">🚀</span>
+                      Quick Start (Recommended)
+                    </div>
+                    <div className="font-mono text-sm space-y-2 bg-black/50 p-4 rounded-lg border border-white/20">
+                      <div className="text-gray-300"># Clone and start everything</div>
+                      <div className="text-green-300 hover:text-green-200 transition-colors">git clone https://github.com/hihenen/mcp-orch.git</div>
+                      <div className="text-blue-300 hover:text-blue-200 transition-colors">cd mcp-orch</div>
+                      <div className="text-yellow-300 hover:text-yellow-200 transition-colors">./scripts/quickstart.sh</div>
+                    </div>
+                    <div className="mt-4 space-y-1 text-sm text-white/90">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-green-300 rounded-full mr-3"></div>
+                        All services ready instantly
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-cyan-300 rounded-full mr-3"></div>
+                        Web UI at http://localhost:3000
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Component-Based Option */}
-                <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-left">
-                  <div className="text-purple-400 font-medium mb-3 flex items-center">
-                    🔧 Component-Based (Advanced)
-                  </div>
-                  <div className="font-mono text-sm space-y-1">
-                    <div className="text-gray-500"># Individual component control</div>
-                    <div className="text-green-400">./scripts/database.sh</div>
-                    <div className="text-blue-400">./scripts/backend.sh</div>
-                    <div className="text-yellow-400">./scripts/frontend.sh</div>
-                    <div className="text-cyan-400">./scripts/status.sh</div>
-                  </div>
-                  <div className="mt-3 text-xs text-gray-400">
-                    ✓ Granular service control<br/>
-                    ✓ Mix Docker & native execution
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                  <div className="relative bg-black/70 backdrop-blur-xl border border-white/30 p-8 rounded-2xl text-left hover:border-white/40 transition-all duration-300 shadow-2xl">
+                    <div className="text-purple-300 font-semibold mb-4 flex items-center text-lg">
+                      <span className="mr-3 text-2xl">🔧</span>
+                      Component-Based (Advanced)
+                    </div>
+                    <div className="font-mono text-sm space-y-2 bg-black/50 p-4 rounded-lg border border-white/20">
+                      <div className="text-gray-300"># Individual component control</div>
+                      <div className="text-green-300 hover:text-green-200 transition-colors">./scripts/database.sh</div>
+                      <div className="text-blue-300 hover:text-blue-200 transition-colors">./scripts/backend.sh</div>
+                      <div className="text-yellow-300 hover:text-yellow-200 transition-colors">./scripts/frontend.sh</div>
+                      <div className="text-cyan-300 hover:text-cyan-200 transition-colors">./scripts/status.sh</div>
+                    </div>
+                    <div className="mt-4 space-y-1 text-sm text-white/90">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-purple-300 rounded-full mr-3"></div>
+                        Granular service control
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-pink-300 rounded-full mr-3"></div>
+                        Mix Docker & native execution
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-center space-x-4">
-                <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                  <Link href="/auth/signin">
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Start Project
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="https://github.com/hihenen/mcp-orch" target="_blank">
-                    <Star className="w-4 h-4 mr-2" />
-                    View Documentation
-                  </Link>
-                </Button>
+              {/* CTA Buttons with Glass Effect */}
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-slide-up animation-delay-900">
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300"></div>
+                  <Button asChild className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl border-0">
+                    <Link href="/auth/signin">
+                      <LogIn className="w-5 h-5 mr-3" />
+                      Start Your AI Orchestra
+                    </Link>
+                  </Button>
+                </div>
+                
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-500/30 to-white/30 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300"></div>
+                  <Button asChild className="relative bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20 hover:border-white/30 px-8 py-4 text-lg font-semibold rounded-xl">
+                    <Link href="https://github.com/hihenen/mcp-orch" target="_blank">
+                      <Star className="w-5 h-5 mr-3" />
+                      View on GitHub
+                    </Link>
+                  </Button>
+                </div>
               </div>
               
-              {/* Trust indicators */}
-              <div className="mt-6 text-center text-sm text-gray-500">
-                <p className="mb-2">No registration required • Open source • Self-hosted</p>
-                <div className="flex items-center justify-center space-x-6">
-                  <span>⭐ 1.2k stars</span>
-                  <span>🍴 89 forks</span>
-                  <span>📈 Active development</span>
+              {/* Trust indicators with modern design */}
+              <div className="mt-8 text-center animate-fade-in animation-delay-1200">
+                <div className="inline-flex items-center space-x-8 px-8 py-4 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/30">
+                  <div className="flex items-center space-x-2 text-green-300">
+                    <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium">No registration required</span>
+                  </div>
+                  <div className="w-px h-4 bg-white/30"></div>
+                  <div className="flex items-center space-x-2 text-cyan-300">
+                    <div className="w-2 h-2 bg-cyan-300 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium">100% Open source</span>
+                  </div>
+                  <div className="w-px h-4 bg-white/30"></div>
+                  <div className="flex items-center space-x-2 text-purple-300">
+                    <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium">Self-hosted</span>
+                  </div>
                 </div>
-                <p className="mt-3">
-                  <span className="font-medium">Supports:</span> Claude Code, Cursor, Cline, MCP Inspector
+                
+                <div className="mt-6 grid grid-cols-3 gap-6 max-w-md mx-auto">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-300">1.2k</div>
+                    <div className="text-xs text-white/70">⭐ Stars</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-300">89</div>
+                    <div className="text-xs text-white/70">🍴 Forks</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-cyan-300">Active</div>
+                    <div className="text-xs text-white/70">📈 Development</div>
+                  </div>
+                </div>
+                
+                <p className="mt-6 text-white/90">
+                  <span className="font-semibold text-white">Compatible with:</span> Claude Code, Cursor, Cline, MCP Inspector
                 </p>
               </div>
             </div>
 
-            {/* Problem visualization */}
-            <div className="max-w-6xl mx-auto mb-16">
+            {/* Problem visualization with modern design */}
+            <div className="max-w-7xl mx-auto mb-20 animate-slide-up animation-delay-1500">
+              <h3 className="text-3xl font-bold text-center mb-12 text-white">
+                The <span className="text-red-400">Developer Pain</span> We're Solving
+              </h3>
               <div className="grid md:grid-cols-3 gap-8">
                 {/* Problem 1: Scattered Servers */}
-                <div className="text-center">
-                  <div className="mb-4 relative">
-                    <div className="w-32 h-32 mx-auto bg-red-50 rounded-lg border-2 border-red-200 flex items-center justify-center">
-                      <div className="space-y-2">
-                        <div className="w-4 h-4 bg-red-400 rounded-full mx-auto"></div>
-                        <div className="w-6 h-4 bg-red-400 rounded mx-auto"></div>
-                        <div className="w-5 h-4 bg-red-400 rounded mx-auto"></div>
-                        <div className="text-xs text-red-600 font-mono">scattered</div>
+                <div className="group text-center">
+                  <div className="mb-6 relative">
+                    <div className="w-40 h-40 mx-auto bg-gradient-to-br from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+                      <div className="space-y-3">
+                        <div className="flex space-x-2 justify-center">
+                          <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
+                          <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse animation-delay-500"></div>
+                          <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse animation-delay-1000"></div>
+                        </div>
+                        <div className="w-8 h-1 bg-red-400 mx-auto rounded-full opacity-50"></div>
+                        <div className="text-xs text-red-300 font-mono font-bold">SCATTERED</div>
                       </div>
                     </div>
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pain Point
+                    <span className="absolute -top-3 -right-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">
+                      😵 Pain Point
                     </span>
                   </div>
-                  <h3 className="font-semibold mb-2 text-lg">Scattered Servers</h3>
-                  <p className="text-gray-600 text-sm">
-                    MCP servers spread across different projects and repositories
+                  <h3 className="font-bold mb-3 text-xl text-white">Scattered Chaos</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    MCP servers scattered across projects, repos, and developer machines. 
+                    <span className="text-red-400 font-semibold">No centralized control.</span>
                   </p>
                 </div>
 
                 {/* Problem 2: No Team Sync */}
-                <div className="text-center">
-                  <div className="mb-4 relative">
-                    <div className="w-32 h-32 mx-auto bg-orange-50 rounded-lg border-2 border-orange-200 flex items-center justify-center">
-                      <div className="space-y-2">
-                        <Users className="w-8 h-8 text-orange-400 mx-auto" />
-                        <div className="w-8 h-0.5 bg-orange-400 mx-auto relative">
-                          <div className="absolute inset-0 bg-orange-400 animate-pulse"></div>
-                          <X className="w-4 h-4 text-red-500 absolute -top-2 left-1/2 transform -translate-x-1/2" />
+                <div className="group text-center">
+                  <div className="mb-6 relative">
+                    <div className="w-40 h-40 mx-auto bg-gradient-to-br from-orange-500/20 to-orange-600/20 backdrop-blur-sm border border-orange-500/30 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+                      <div className="space-y-3">
+                        <Users className="w-10 h-10 text-orange-400 mx-auto" />
+                        <div className="w-8 h-1 bg-orange-400 mx-auto relative rounded-full">
+                          <X className="w-6 h-6 text-red-500 absolute -top-2 left-1/2 transform -translate-x-1/2 animate-pulse" />
                         </div>
-                        <div className="text-xs text-orange-600 font-mono">isolated</div>
+                        <div className="text-xs text-orange-300 font-mono font-bold">ISOLATED</div>
                       </div>
                     </div>
-                    <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pain Point
+                    <span className="absolute -top-3 -right-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">
+                      🔥 Pain Point
                     </span>
                   </div>
-                  <h3 className="font-semibold mb-2 text-lg">No Team Sync</h3>
-                  <p className="text-gray-600 text-sm">
-                    Can't share server configs or collaborate with team members
+                  <h3 className="font-bold mb-3 text-xl text-white">Team Isolation</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    No sharing, no collaboration, no visibility. 
+                    <span className="text-orange-400 font-semibold">Everyone works in silos.</span>
                   </p>
                 </div>
 
                 {/* Problem 3: Manual Setup */}
-                <div className="text-center">
-                  <div className="mb-4 relative">
-                    <div className="w-32 h-32 mx-auto bg-yellow-50 rounded-lg border-2 border-yellow-200 flex items-center justify-center">
-                      <div className="space-y-2">
-                        <Settings className="w-8 h-8 text-yellow-400 mx-auto animate-spin" />
+                <div className="group text-center">
+                  <div className="mb-6 relative">
+                    <div className="w-40 h-40 mx-auto bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 backdrop-blur-sm border border-yellow-500/30 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+                      <div className="space-y-3">
+                        <Settings className="w-10 h-10 text-yellow-400 mx-auto animate-spin" />
                         <div className="flex space-x-1 justify-center">
                           <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce animation-delay-300"></div>
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce animation-delay-600"></div>
                         </div>
-                        <div className="text-xs text-yellow-600 font-mono">repetitive</div>
+                        <div className="text-xs text-yellow-300 font-mono font-bold">REPETITIVE</div>
                       </div>
                     </div>
-                    <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pain Point
+                    <span className="absolute -top-3 -right-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">
+                      ⚡ Pain Point
                     </span>
                   </div>
-                  <h3 className="font-semibold mb-2 text-lg">Manual Setup Hell</h3>
-                  <p className="text-gray-600 text-sm">
-                    Repetitive configuration for every new project
+                  <h3 className="font-bold mb-3 text-xl text-white">Configuration Hell</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Copy-paste configs for every project. 
+                    <span className="text-yellow-400 font-semibold">Hours wasted on setup.</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Code example showing the problem */}
-            <div className="max-w-4xl mx-auto mb-16">
-              <p className="text-center text-gray-500 mb-6 text-lg">Sound familiar?</p>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-sm font-mono">
-                  <div className="text-gray-500 mb-3 text-xs"># Project A - cline_mcp_settings.json</div>
-                  <pre>{`{
+            {/* Enhanced code example showing the problem */}
+            <div className="max-w-5xl mx-auto mb-20 animate-slide-up animation-delay-1800">
+              <div className="text-center mb-8">
+                <p className="text-gray-300 mb-4 text-xl">Sound painfully familiar?</p>
+                <div className="inline-flex items-center px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full text-red-300 text-sm">
+                  <span className="w-2 h-2 bg-red-400 rounded-full mr-2 animate-pulse"></span>
+                  The same config, copy-pasted everywhere
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                  <div className="relative bg-black/60 backdrop-blur-sm border border-red-500/30 p-6 rounded-2xl text-sm font-mono">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-red-300 text-xs">📁 Project A - cline_mcp_settings.json</div>
+                      <div className="flex space-x-1">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                    </div>
+                    <pre className="text-gray-300">{`{
   "mcpServers": {
     "github": {
       "transport": "stdio",
@@ -265,10 +365,21 @@ export default function HomePage() {
     }
   }
 }`}</pre>
+                  </div>
                 </div>
-                <div className="bg-gray-900 text-gray-300 p-6 rounded-lg text-sm font-mono">
-                  <div className="text-gray-500 mb-3 text-xs"># Project B - cline_mcp_settings.json</div>
-                  <pre>{`{
+                
+                <div className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                  <div className="relative bg-black/60 backdrop-blur-sm border border-orange-500/30 p-6 rounded-2xl text-sm font-mono">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-orange-300 text-xs">📁 Project B - cline_mcp_settings.json</div>
+                      <div className="flex space-x-1">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                    </div>
+                    <pre className="text-gray-300">{`{
   "mcpServers": {
     "github": {
       "transport": "stdio",
@@ -279,59 +390,133 @@ export default function HomePage() {
       "transport": "stdio",
       "command": "./notion-server"
     }
-    // Where's slack? Copy-paste again?
+    `}<span className="text-red-400">{`// Where's slack? Copy-paste again?`}</span>{`
   }
 }`}</pre>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Scroll indicator */}
-            <div className="text-center">
-              <p className="text-gray-500 mb-4 text-lg">There's a better way</p>
-              <ChevronDown className="w-6 h-6 mx-auto animate-bounce text-gray-400" />
+            {/* Enhanced scroll indicator */}
+            <div className="text-center animate-fade-in animation-delay-2100">
+              <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-sm border border-green-500/30 rounded-full mb-6">
+                <span className="w-2 h-2 bg-green-400 rounded-full mr-3 animate-pulse"></span>
+                <p className="text-green-300 font-semibold text-lg">There's a better way</p>
+              </div>
+              <ChevronDown className="w-8 h-8 mx-auto text-gray-400 animate-bounce" />
             </div>
           </div>
         </section>
 
         {/* Features Highlight Section */}
-        <section className="py-24 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Why Choose MCP Orch?
+        <section className="py-32 bg-gradient-to-br from-white via-blue-50 to-purple-50 relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-200/30 rounded-full blur-2xl"></div>
+          </div>
+          
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-20">
+              <div className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-sm font-semibold mb-4 tracking-wide uppercase">
+                Why Choose MCP Orchestrator
+              </div>
+              <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                Built for <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Modern AI Teams</span>
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Built for developers who need reliable, scalable MCP server management
+              <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                Industry-first unified platform that transforms how development teams manage MCP infrastructure. 
+                From startup to enterprise scale.
               </p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white p-8 rounded-lg shadow-sm">
-                <div className="text-4xl mb-4">🚀</div>
-                <h3 className="text-xl font-bold mb-4">Rapid Deployment</h3>
-                <p className="text-gray-600">
-                  Deploy in minutes with Docker or uv. No complex configuration needed. 
-                  Get your MCP infrastructure running instantly.
-                </p>
+              {/* Feature 1 */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                <div className="relative bg-white/70 backdrop-blur-sm border border-white/50 p-10 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 group-hover:scale-105">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+                    <span className="text-3xl">🚀</span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Lightning-Fast Deployment</h3>
+                  <p className="text-gray-600 leading-relaxed mb-6">
+                    From zero to full MCP infrastructure in <span className="font-semibold text-blue-600">30 seconds</span>. 
+                    Docker, UV, or native deployment. No complex configuration nightmares.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                      One-command setup
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                      Auto-configured services
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                      Production-ready defaults
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="bg-white p-8 rounded-lg shadow-sm">
-                <div className="text-4xl mb-4">🔗</div>
-                <h3 className="text-xl font-bold mb-4">Universal Compatibility</h3>
-                <p className="text-gray-600">
-                  Works seamlessly with Claude Code, Cursor, Cline, MCP Inspector, 
-                  and any MCP-compatible client out of the box.
-                </p>
+              {/* Feature 2 */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                <div className="relative bg-white/70 backdrop-blur-sm border border-white/50 p-10 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 group-hover:scale-105">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+                    <span className="text-3xl">🔗</span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Universal AI Compatibility</h3>
+                  <p className="text-gray-600 leading-relaxed mb-6">
+                    Works with <span className="font-semibold text-purple-600">every MCP tool</span> out of the box. 
+                    Claude Code, Cursor, Cline, VS Code extensions – seamless integration.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                      Standard MCP protocol
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                      Auto-generated configs
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                      Zero client changes needed
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="bg-white p-8 rounded-lg shadow-sm">
-                <div className="text-4xl mb-4">👥</div>
-                <h3 className="text-xl font-bold mb-4">Team Collaboration</h3>
-                <p className="text-gray-600">
-                  Project-based access control, shared configurations, and team management. 
-                  Scale from individual to enterprise.
-                </p>
+              {/* Feature 3 */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                <div className="relative bg-white/70 backdrop-blur-sm border border-white/50 p-10 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 group-hover:scale-105">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+                    <span className="text-3xl">👥</span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Enterprise Team Collaboration</h3>
+                  <p className="text-gray-600 leading-relaxed mb-6">
+                    Real-time team sync, role-based permissions, activity tracking. 
+                    <span className="font-semibold text-green-600">Scale from 1 to 1000+ developers</span>.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                      Live activity monitoring
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                      Granular access control
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                      Shared configurations
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -642,6 +827,176 @@ $ cat ~/.config/cline/mcp_settings.json
           </div>
         </section>
 
+        {/* MCP Unified Management Section */}
+        <section className="py-24 border-t px-6 bg-gradient-to-br from-blue-50 to-purple-50">
+          <div className="w-full max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                Industry First: MCP Command Center
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                From MCP Chaos to Enterprise Orchestra
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Stop managing dozens of individual MCP servers. Start conducting your AI infrastructure like a symphony.
+              </p>
+            </div>
+
+            {/* Before/After Comparison */}
+            <div className="max-w-6xl mx-auto mb-16">
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Before - Chaos */}
+                <div className="relative">
+                  <div className="absolute -top-4 left-4 bg-red-500 text-white px-3 py-1 rounded text-sm font-medium">
+                    The Old Way: MCP Chaos
+                  </div>
+                  <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
+                    <div className="space-y-4">
+                      <div className="text-red-800 font-semibold mb-4">Your Current Reality:</div>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-start gap-3">
+                          <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="font-medium">GitHub MCP Server</div>
+                            <div className="text-gray-600 font-mono text-xs">localhost:8001/github/sse</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Slack MCP Server</div>
+                            <div className="text-gray-600 font-mono text-xs">localhost:8002/slack/sse</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Notion MCP Server</div>
+                            <div className="text-gray-600 font-mono text-xs">localhost:8003/notion/sse</div>
+                          </div>
+                        </div>
+                        <div className="border-t pt-3 mt-4 text-red-700">
+                          <div className="font-medium">IT Security asks:</div>
+                          <div className="italic">"How many AI tools are we really using?"</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* After - Orchestra */}
+                <div className="relative">
+                  <div className="absolute -top-4 left-4 bg-green-500 text-white px-3 py-1 rounded text-sm font-medium">
+                    MCP Orchestrator: Command Center
+                  </div>
+                  <div className="border-2 border-green-200 rounded-lg p-6 bg-green-50">
+                    <div className="space-y-4">
+                      <div className="text-green-800 font-semibold mb-4">Your New Reality:</div>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                          <div>
+                            <div className="font-medium">Unified Endpoint</div>
+                            <div className="text-gray-600 font-mono text-xs">localhost:8000/projects/abc/unified/sse</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                          <div>
+                            <div className="font-medium">Namespace Magic</div>
+                            <div className="text-gray-600 text-xs">github.search(), slack.send(), notion.create()</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                          <div>
+                            <div className="font-medium">Zero Config Scaling</div>
+                            <div className="text-gray-600 text-xs">Add unlimited servers, zero client updates</div>
+                          </div>
+                        </div>
+                        <div className="border-t pt-3 mt-4 text-green-700">
+                          <div className="font-medium">IT Security gets:</div>
+                          <div className="italic">"100% visibility, centralized control"</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Flexible Management Options */}
+            <div className="max-w-4xl mx-auto mb-16">
+              <h3 className="text-2xl font-bold text-center mb-8">Choose Your Management Style</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span className="text-blue-600 font-bold">1</span>
+                    </div>
+                    <h4 className="font-semibold">Individual Server Control</h4>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Perfect for getting started or when you need granular control over specific servers.
+                  </p>
+                  <div className="bg-gray-50 p-3 rounded font-mono text-xs">
+                    /servers/github/sse<br/>
+                    /servers/slack/sse
+                  </div>
+                </div>
+                <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <span className="text-purple-600 font-bold">∞</span>
+                    </div>
+                    <h4 className="font-semibold">Unified Orchestra Mode</h4>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Scale to enterprise with one endpoint for unlimited servers and centralized governance.
+                  </p>
+                  <div className="bg-gray-50 p-3 rounded font-mono text-xs">
+                    /unified/sse<br/>
+                    <span className="text-gray-500">// All servers, one endpoint</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ROI Calculator */}
+            <div className="max-w-4xl mx-auto bg-white rounded-lg border border-gray-200 p-8">
+              <h3 className="text-xl font-bold mb-6 text-center">The ROI of MCP Centralization</h3>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h4 className="font-semibold text-red-600 mb-4">Without MCP-Orch:</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>• 50 developers × 3 servers × 30min setup</div>
+                    <div>• = 75 hours/month configuration overhead</div>
+                    <div>• Shadow IT proliferation</div>
+                    <div>• Manual compliance reporting</div>
+                    <div className="font-bold text-red-600 pt-2">Cost: $18,000+ annually</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-green-600 mb-4">With MCP-Orch:</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>• One-time setup, infinite scale</div>
+                    <div>• 100% infrastructure visibility</div>
+                    <div>• Automated compliance & governance</div>
+                    <div>• Zero shadow IT risk</div>
+                    <div className="font-bold text-green-600 pt-2">Savings: 90% reduction</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* How It Works Section */}
         <section className="py-24 border-t px-6 bg-gray-50">
           <div className="w-full max-w-7xl mx-auto">
@@ -670,7 +1025,7 @@ $ cat ~/.config/cline/mcp_settings.json
                   </p>
                   <div className="bg-black text-white p-4 rounded-lg font-mono text-sm max-w-lg">
                     <pre>{`# Quick start with all services
-$ git clone https://github.com/your-org/mcp-orch
+$ git clone https://github.com/hihenen/mcp-orch.git
 $ cd mcp-orch
 $ ./scripts/quickstart.sh
 

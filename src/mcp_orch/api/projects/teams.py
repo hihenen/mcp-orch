@@ -54,6 +54,7 @@ class TeamCreateRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="팀 이름 (새 팀 생성 시 필수)")
     description: Optional[str] = Field(None, max_length=500, description="팀 설명")
     team_id: Optional[str] = Field(None, description="기존 팀 ID (연결하려는 경우)")
+    role: ProjectRole = Field(ProjectRole.DEVELOPER, description="팀 멤버들에게 부여할 프로젝트 역할")
 
 
 class TeamResponse(BaseModel):
@@ -534,13 +535,18 @@ async def create_or_connect_team_to_project(
             
             if new_role_priority <= max_existing_priority:
                 # 기존 역할이 더 높거나 같으면 스킵 (중복 방지)
-                role_info = ", ".join(existing_roles)
-                return {
-                    "message": f"Team '{team.name}' is already connected with higher or equal role(s): {role_info}. Current connection maintained.",
-                    "action": "no_change",
-                    "existing_roles": existing_roles,
-                    "requested_role": str(team_request.role)
-                }
+                # 멤버 수 계산
+                member_count = db.query(TeamMember).filter(TeamMember.team_id == team.id).count()
+                
+                # TeamResponse 형식으로 반환 (이미 연결된 팀 정보)
+                return TeamResponse(
+                    id=str(team.id),
+                    name=team.name,
+                    description=team.description,
+                    member_count=member_count,
+                    created_at=team.created_at,
+                    updated_at=team.updated_at
+                )
             else:
                 # 새로운 역할이 더 높으면 기존 연결 업데이트
                 action_description = f"팀 '{team.name}' 역할 업그레이드: {max(existing_roles, key=lambda r: role_priority.get(str(r).lower(), 1))} → {team_request.role}"
@@ -620,14 +626,14 @@ async def create_or_connect_team_to_project(
             }
             
             existing_role = existing_member.role.value if hasattr(existing_member.role, 'value') else existing_member.role
-            new_role = str(team_request.role)
+            new_role = team_request.role
             
             existing_priority = role_priority.get(str(existing_role).lower(), 1)
             new_priority = role_priority.get(str(new_role).lower(), 1)
             
             if new_priority > existing_priority:
                 # 새로운 역할이 더 높으면 업데이트
-                existing_member.role = team_request.role
+                existing_member.role = new_role
                 existing_member.invited_as = InviteSource.TEAM_MEMBER
                 existing_member.invited_by = current_user.id
                 added_members.append(team_member.user_id)

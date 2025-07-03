@@ -1084,7 +1084,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
-      const response = await fetch(`/api/projects/${projectId}/teams`, {
+      const response = await fetch(`/api/projects/${projectId}/teams/invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
