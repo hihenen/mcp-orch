@@ -1,3 +1,6 @@
+# Claude Code private instructions (should not be public)
+CLAUDE.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
