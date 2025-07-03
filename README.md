@@ -1,15 +1,15 @@
 # MCP Orch
 
-**The GitHub for MCP Servers** - Your centralized hub for Model Context Protocol ecosystem management
+**Central Hub for MCP Servers** - Your unified platform for Model Context Protocol ecosystem management
 
 > **📖 [한국어 버전](./README_KOR.md)** | **🌏 English Version** | **📋 [Changelog](./CHANGELOG.md)**
 
 ## Overview
 
-MCP Orchestrator is **the central hub for your entire MCP ecosystem** - think GitHub for Git repositories, but for MCP servers. Just as GitHub revolutionized how developers collaborate on code, MCP Orchestrator transforms how teams manage, share, and scale their Model Context Protocol infrastructure.
+MCP Orchestrator is **the central hub for your entire MCP ecosystem** - like popular Git platforms for repositories, but for MCP servers. Just as centralized Git platforms revolutionized how developers collaborate on code, MCP Orchestrator transforms how teams manage, share, and scale their Model Context Protocol infrastructure.
 
 **🏛️ One Platform, Unlimited MCP Servers**  
-Like how GitLab provides a single platform for all your repositories, MCP Orchestrator gives you one unified control center for all your MCP servers - from development to production, from individual projects to enterprise-wide deployments.
+Like how Git hosting platforms provide a single place for all your repositories, MCP Orchestrator gives you one unified control center for all your MCP servers - from development to production, from individual projects to enterprise-wide deployments.
 
 **Why MCP Orchestrator?**
 - 🏢 **Enterprise-Ready**: Team management, role-based access, activity monitoring
@@ -175,7 +175,7 @@ uv run mcp-orch list-tools
 
 ### The Enterprise Challenge: Scattered MCP Infrastructure
 
-**Before Git had GitHub, code was scattered everywhere. Before MCP had Orchestrator, your AI infrastructure is scattered too:**
+**Before Git had centralized platforms, code was scattered everywhere. Before MCP had Orchestrator, your AI infrastructure is scattered too:**
 
 ```
 🗂️ Team A: GitHub MCP running on localhost:3001
@@ -184,13 +184,13 @@ uv run mcp-orch list-tools
 🗂️ IT Security: "How many AI endpoints do we even have?"
 ```
 
-**Sound familiar?** This is exactly where Git repositories were before GitHub centralized everything.
+**Sound familiar?** This is exactly where Git repositories were before centralized platforms organized everything.
 
 ### 🎯 The MCP Hub: Your Centralized Control Center
 
-**Just like GitHub revolutionized code collaboration, MCP Orchestrator revolutionizes AI infrastructure management.**
+**Just like centralized Git platforms revolutionized code collaboration, MCP Orchestrator revolutionizes AI infrastructure management.**
 
-Think of it as your **"GitHub for MCP servers"** with two powerful operating modes:
+Think of it as your **"central platform for MCP servers"** with two powerful operating modes:
 
 #### 🔰 Individual Repository Mode
 **Like managing individual Git repos - perfect for starting safe:**
@@ -222,8 +222,8 @@ Think of it as your **"GitHub for MCP servers"** with two powerful operating mod
 }
 ```
 ✅ **Namespace magic** - `github.search()`, `slack.send()`, `notion.create()` (like repo namespaces)  
-✅ **Automatic scaling** - Add servers without client updates (like adding repos to org)  
-✅ **Enterprise governance** - Centralized policies and monitoring (like GitHub Enterprise)
+✅ **Automatic scaling** - Add servers without client updates (like adding repos to organizations)  
+✅ **Enterprise governance** - Centralized policies and monitoring (like enterprise Git platforms)
 
 ### 🛡️ Enterprise Security by Design
 

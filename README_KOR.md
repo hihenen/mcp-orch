@@ -1,13 +1,13 @@
 # MCP Orch
 
-**MCP 서버들의 GitHub** - Model Context Protocol 생태계 관리를 위한 중앙 허브
+**MCP 서버 중앙 허브** - Model Context Protocol 생태계 관리를 위한 통합 플랫폼
 
 ## 개요
 
-MCP Orchestrator는 **전체 MCP 생태계를 위한 중앙 허브**입니다. Git 저장소를 위한 GitHub처럼, MCP 서버를 위한 통합 플랫폼이죠. GitHub가 개발자들의 코드 협업을 혁신했듯이, MCP Orchestrator는 팀이 Model Context Protocol 인프라를 관리, 공유, 확장하는 방식을 변화시킵니다.
+MCP Orchestrator는 **전체 MCP 생태계를 위한 중앙 허브**입니다. Git 저장소를 위한 중앙화된 플랫폼처럼, MCP 서버를 위한 통합 플랫폼이죠. 중앙화된 Git 플랫폼이 개발자들의 코드 협업을 혁신했듯이, MCP Orchestrator는 팀이 Model Context Protocol 인프라를 관리, 공유, 확장하는 방식을 변화시킵니다.
 
 **🏛️ 하나의 플랫폼, 무제한 MCP 서버**  
-GitLab이 모든 저장소를 위한 단일 플랫폼을 제공하는 것처럼, MCP Orchestrator는 개발부터 프로덕션까지, 개별 프로젝트부터 엔터프라이즈 전체 배포까지 모든 MCP 서버를 위한 통합 제어 센터를 제공합니다.
+Git 호스팅 플랫폼이 모든 저장소를 위한 단일 장소를 제공하는 것처럼, MCP Orchestrator는 개발부터 프로덕션까지, 개별 프로젝트부터 엔터프라이즈 전체 배포까지 모든 MCP 서버를 위한 통합 제어 센터를 제공합니다.
 
 **왜 MCP Orchestrator인가?**
 - 🏢 **엔터프라이즈 준비**: 팀 관리, 역할 기반 접근, 활동 모니터링
@@ -283,7 +283,7 @@ uv run python test_mcp_proxy_mode.py
 
 ### 엔터프라이즈 과제: 흩어진 MCP 인프라
 
-**Git에 GitHub가 있기 전에는 코드가 모든 곳에 흩어져 있었습니다. MCP에 Orchestrator가 있기 전에는 AI 인프라도 똑같이 흩어져 있습니다:**
+**Git에 중앙화된 플랫폼이 있기 전에는 코드가 모든 곳에 흩어져 있었습니다. MCP에 Orchestrator가 있기 전에는 AI 인프라도 똑같이 흩어져 있습니다:**
 
 ```
 🗂️ A팀: localhost:3001에서 실행되는 GitHub MCP
@@ -292,13 +292,13 @@ uv run python test_mcp_proxy_mode.py
 🗂️ IT 보안팀: "도대체 AI 엔드포인트가 몇 개나 있는 거야?"
 ```
 
-**익숙하지 않나요?** 이는 GitHub가 모든 것을 중앙화하기 전의 Git 저장소 상황과 정확히 같습니다.
+**익숙하지 않나요?** 이는 중앙화된 플랫폼이 모든 것을 정리하기 전의 Git 저장소 상황과 정확히 같습니다.
 
 ### 🎯 MCP 허브: 중앙 집중식 제어 센터
 
-**GitHub가 코드 협업을 혁신한 것처럼, MCP Orchestrator는 AI 인프라 관리를 혁신합니다.**
+**중앙화된 Git 플랫폼이 코드 협업을 혁신한 것처럼, MCP Orchestrator는 AI 인프라 관리를 혁신합니다.**
 
-**"MCP 서버들의 GitHub"**라고 생각하시면 됩니다. 두 가지 강력한 운영 모드를 제공합니다:
+**"MCP 서버를 위한 중앙 플랫폼"**이라고 생각하시면 됩니다. 두 가지 강력한 운영 모드를 제공합니다:
 
 #### 🔰 개별 저장소 모드
 **개별 Git 저장소 관리처럼 - 안전하게 시작하기에 완벽:**
@@ -331,7 +331,7 @@ uv run python test_mcp_proxy_mode.py
 ```
 ✅ **네임스페이스 마법** - `github.search()`, `slack.send()`, `notion.create()` (저장소 네임스페이스처럼)  
 ✅ **자동 확장** - 클라이언트 업데이트 없이 서버 추가 (조직에 저장소 추가하는 것처럼)  
-✅ **엔터프라이즈 거버넌스** - 중앙 집중식 정책 및 모니터링 (GitHub Enterprise처럼)
+✅ **엔터프라이즈 거버넌스** - 중앙 집중식 정책 및 모니터링 (엔터프라이즈 Git 플랫폼처럼)
 
 ### 🛡️ 디자인부터 엔터프라이즈 보안
 
