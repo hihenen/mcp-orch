@@ -1,10 +1,13 @@
 # MCP Orch
 
-**MCP Proxy 호환 서버** - 여러 MCP 서버를 하나의 포트에서 SSE로 제공
+**MCP 서버들의 GitHub** - Model Context Protocol 생태계 관리를 위한 중앙 허브
 
 ## 개요
 
-MCP Orchestrator는 단순한 프록시를 넘어선 **프로젝트 기반 MCP 서버 관리 플랫폼**입니다. 안전한 팀 협업, 웹 기반 관리, 그리고 엔터프라이즈급 접근 제어를 Model Context Protocol 서버에 제공합니다.
+MCP Orchestrator는 **전체 MCP 생태계를 위한 중앙 허브**입니다. Git 저장소를 위한 GitHub처럼, MCP 서버를 위한 통합 플랫폼이죠. GitHub가 개발자들의 코드 협업을 혁신했듯이, MCP Orchestrator는 팀이 Model Context Protocol 인프라를 관리, 공유, 확장하는 방식을 변화시킵니다.
+
+**🏛️ 하나의 플랫폼, 무제한 MCP 서버**  
+GitLab이 모든 저장소를 위한 단일 플랫폼을 제공하는 것처럼, MCP Orchestrator는 개발부터 프로덕션까지, 개별 프로젝트부터 엔터프라이즈 전체 배포까지 모든 MCP 서버를 위한 통합 제어 센터를 제공합니다.
 
 **왜 MCP Orchestrator인가?**
 - 🏢 **엔터프라이즈 준비**: 팀 관리, 역할 기반 접근, 활동 모니터링
@@ -14,13 +17,14 @@ MCP Orchestrator는 단순한 프록시를 넘어선 **프로젝트 기반 MCP �
 
 ## 주요 특징
 
-- **🔐 프로젝트 기반 보안**: 프로젝트별 개별 API 키와 팀 기반 접근 제어
-- **👥 팀 협업**: 역할 기반 권한과 멤버 관리를 통한 실시간 협업
-- **🎯 스마트 서버 관리**: MCP 서버 추가, 설정, 모니터링을 위한 웹 UI
+- **🏛️ MCP 명령 센터**: 여러 MCP 서버를 단일 액세스 포인트로 집계하는 통합 엔드포인트
+- **🔐 엔터프라이즈 보안**: 중앙 집중식 액세스 제어, 감사 추적 및 규정 준수 모니터링을 갖춘 보안 아키텍처
+- **🎯 유연한 관리**: 개별 서버 제어 또는 통합 오케스트레이션 선택 - 안전하게 시작하고 현명하게 확장
+- **👥 팀 협업**: 역할 기반 권한 및 멤버 관리를 통한 실시간 협업
 - **🔄 원클릭 통합**: Cursor, Cline, Claude 및 모든 MCP 도구용 자동 생성 보안 엔드포인트
-- **📊 활동 모니터링**: 서버 사용량, 팀 활동, 시스템 성능 추적
-- **🏗️ 엔터프라이즈 준비**: 확장 가능한 아키텍처의 자체 호스팅 배포
-- **🔌 완전한 MCP 호환성**: SSE 트랜스포트 지원을 포함한 표준 MCP 프로토콜
+- **📊 완전한 가시성**: 전체 MCP 인프라에서 서버 사용량, 팀 활동 및 시스템 성능 추적
+- **🏗️ 엔터프라이즈 준비**: 확장 가능한 아키텍처 및 거버넌스 제어를 갖춘 자체 호스팅 배포
+- **🔌 범용 호환성**: SSE 전송 지원 및 네임스페이스 기반 도구 라우팅을 갖춘 표준 MCP 프로토콜
 
 ## 설치
 
@@ -35,52 +39,69 @@ uv sync
 
 ## 빠른 시작
 
-### 옵션 1: 웹 인터페이스 (권장)
+배포 옵션을 선택하세요:
+
+### 🎯 옵션 1: 로컬 개발 (권장)
+**PostgreSQL (Docker) + Backend (Native) + Frontend (자동 시작)**
 
 ```bash
-# 웹 인터페이스와 함께 설치 및 시작
-uv sync
-uv run mcp-orch serve
-
-# 웹 인터페이스 접속
-open http://localhost:3000
+# 클론 및 모든 것을 시작
+git clone https://github.com/fnf-ea/mcp-orch.git
+cd mcp-orch
+./scripts/quickstart.sh
 ```
 
-1. **웹 UI를 통해 프로젝트 생성**
-2. **포인트 앤 클릭으로 MCP 서버 추가 및 설정**
-3. **팀 멤버 초대 및 권한 설정**
-4. **보안 접속을 위한 API 키 생성**
-5. **AI 도구용 설정 복사** (Cursor, Cline, Claude)
+✅ **개발에 완벽**
+- 모든 서비스가 즉시 준비
+- http://localhost:3000에서 프론트엔드 자동 제공
+- 최적의 MCP 서버 호환성
+- 쉬운 디버깅 및 문제 해결
 
-### 옵션 2: CLI 설정 (고급)
+### 🐳 옵션 2: 완전 Docker (프로덕션)  
+**완전한 컨테이너화된 환경**
 
 ```bash
-# CLI로 초기화
-uv run mcp-orch init
-
-# mcp-config.json 편집
-{
-  "mcpServers": {
-    "brave-search": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
-
-# 서버 시작
-uv run mcp-orch serve
+# 클론 및 프로덕션 배포
+git clone https://github.com/fnf-ea/mcp-orch.git
+cd mcp-orch
+docker compose up -d
 ```
 
-### 🚀 제공되는 기능
+✅ **프로덕션에 완벽**
+- 완전한 컨테이너화
+- EC2/VPS 배포 준비
+- 환경 간 일관성
+- 쉬운 확장
 
-- **웹 대시보드**: `http://localhost:3000` - 프로젝트, 팀, 서버 관리
-- **API 엔드포인트**: `http://localhost:8000` - 보안 MCP 서버 접속
-- **프로젝트 URL**: `http://localhost:8000/projects/{project-id}/sse`
-- **팀 협업**: 실시간 멤버 관리 및 활동 추적
+### 🔧 옵션 3: 컴포넌트 기반 개발 (신규!)
+**고급 개발을 위한 개별 컴포넌트 제어**
+
+```bash
+# 저장소 클론
+git clone https://github.com/fnf-ea/mcp-orch.git
+cd mcp-orch
+
+# 서비스를 개별적으로 시작 (개발 권장)
+./scripts/database.sh        # PostgreSQL 데이터베이스
+./scripts/backend.sh          # Python 백엔드 (네이티브)
+./scripts/frontend.sh         # 프론트엔드 (Docker with --no-deps)
+
+# 모든 서비스 상태 확인
+./scripts/status.sh
+```
+
+✅ **컴포넌트 개발에 완벽**
+- 각 서비스에 대한 세밀한 제어
+- Docker와 네이티브 실행 혼합
+- 독립적인 서비스 관리
+- 고급 디버깅 기능
+
+## 제공되는 기능
+
+- **🌐 웹 대시보드**: `http://localhost:3000` - 직관적인 프로젝트 및 팀 관리
+- **🔧 백엔드 API**: `http://localhost:8000` - 보안 MCP 서버 오케스트레이션
+- **📊 프로젝트 URL**: `http://localhost:8000/projects/{project-id}/sse` - 직접 AI 도구 통합
+- **👥 팀 협업**: 실시간 멤버 관리 및 활동 추적
 
 ## 보안 AI 도구 통합
 
@@ -257,6 +278,98 @@ uv run python test_mcp_connection.py
 # 도구 호출 테스트
 uv run python test_mcp_proxy_mode.py
 ```
+
+## 🏛️ MCP 혼란에서 엔터프라이즈 오케스트라로
+
+### 엔터프라이즈 과제: 흩어진 MCP 인프라
+
+**Git에 GitHub가 있기 전에는 코드가 모든 곳에 흩어져 있었습니다. MCP에 Orchestrator가 있기 전에는 AI 인프라도 똑같이 흩어져 있습니다:**
+
+```
+🗂️ A팀: localhost:3001에서 실행되는 GitHub MCP
+🗂️ B팀: 어떤 EC2 인스턴스의 Slack MCP  
+🗂️ C팀: 어디선가 Docker 컨테이너의 Notion MCP
+🗂️ IT 보안팀: "도대체 AI 엔드포인트가 몇 개나 있는 거야?"
+```
+
+**익숙하지 않나요?** 이는 GitHub가 모든 것을 중앙화하기 전의 Git 저장소 상황과 정확히 같습니다.
+
+### 🎯 MCP 허브: 중앙 집중식 제어 센터
+
+**GitHub가 코드 협업을 혁신한 것처럼, MCP Orchestrator는 AI 인프라 관리를 혁신합니다.**
+
+**"MCP 서버들의 GitHub"**라고 생각하시면 됩니다. 두 가지 강력한 운영 모드를 제공합니다:
+
+#### 🔰 개별 저장소 모드
+**개별 Git 저장소 관리처럼 - 안전하게 시작하기에 완벽:**
+```json
+{
+  "github-server": {
+    "url": "http://localhost:8000/projects/abc123/servers/github/sse",
+    "auth": "Bearer your-token"
+  },
+  "slack-server": {
+    "url": "http://localhost:8000/projects/abc123/servers/slack/sse", 
+    "auth": "Bearer your-token"
+  }
+}
+```
+✅ **세밀한 제어** - 각 MCP 서버를 개별 저장소처럼 관리  
+✅ **보안 격리** - 프라이빗 저장소처럼 서버별 접근 정책  
+✅ **쉬운 마이그레이션** - Git 도입처럼 팀 간 점진적 적용
+
+#### 🚀 조직 전체 모드  
+**GitHub Organizations처럼 - 확장할 준비가 되었을 때:**
+```json
+{
+  "enterprise-workspace": {
+    "url": "http://localhost:8000/projects/abc123/unified/sse",
+    "auth": "Bearer your-unified-token"
+    // 하나의 엔드포인트, 무제한 서버, 설정 오버헤드 제로
+  }
+}
+```
+✅ **네임스페이스 마법** - `github.search()`, `slack.send()`, `notion.create()` (저장소 네임스페이스처럼)  
+✅ **자동 확장** - 클라이언트 업데이트 없이 서버 추가 (조직에 저장소 추가하는 것처럼)  
+✅ **엔터프라이즈 거버넌스** - 중앙 집중식 정책 및 모니터링 (GitHub Enterprise처럼)
+
+### 🛡️ 디자인부터 엔터프라이즈 보안
+
+#### 보안 MCP 아키텍처
+```
+🏢 기존 방식: N개 서버 = N개 보안 정책 = 여러 관리 포인트
+🎯 MCP-Orch: 1개 제어 플레인 = 통합 보안 모델 = 단순화된 관리
+
+✅ 중앙 집중식 접근 제어 및 감사 추적
+✅ 실시간 규정 준수 모니터링  
+✅ 자동화된 보안 정책 시행
+✅ MCP 생태계 전체에 대한 완전한 가시성
+```
+
+#### MCP 중앙화의 이점
+```
+MCP-Orch 없이:
+• 여러 개별 서버 설정 및 유지 관리
+• 분산된 보안 정책 및 관리
+• 수동 모니터링 및 규정 준수 추적
+
+MCP-Orch와 함께:
+• 중앙 집중식 설정 및 구성
+• 통합 인프라 가시성
+• 간소화된 규정 준수 및 거버넌스
+• 관리 오버헤드의 현저한 감소
+```
+
+### 🚀 마이그레이션 안전망
+
+**안전하게 시작하고, 현명하게 확장하세요 - 선택은 여러분의 것:**
+
+1. **🔰 시작**: 완전한 제어를 갖춘 개별 서버
+2. **📈 발전**: 팀이 성장함에 따라 개별과 통합 혼합
+3. **🏛️ 확장**: 엔터프라이즈 전체 통합 오케스트레이션
+4. **♾️ 거버넌스**: 다중 테넌트 글로벌 MCP 거버넌스
+
+**이러한 진화적 접근 방식은 점진적 도입과 확장을 가능하게 합니다.**
 
 ## 문제 해결
 

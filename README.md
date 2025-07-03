@@ -1,12 +1,15 @@
 # MCP Orch
 
-**MCP Proxy Compatible Server** - Serve multiple MCP servers on a single port via SSE
+**The GitHub for MCP Servers** - Your centralized hub for Model Context Protocol ecosystem management
 
 > **📖 [한국어 버전](./README_KOR.md)** | **🌏 English Version** | **📋 [Changelog](./CHANGELOG.md)**
 
 ## Overview
 
-MCP Orchestrator is a comprehensive **project-based MCP server management platform** that goes beyond simple proxying. It provides secure team collaboration, web-based management, and enterprise-grade access control for Model Context Protocol servers.
+MCP Orchestrator is **the central hub for your entire MCP ecosystem** - think GitHub for Git repositories, but for MCP servers. Just as GitHub revolutionized how developers collaborate on code, MCP Orchestrator transforms how teams manage, share, and scale their Model Context Protocol infrastructure.
+
+**🏛️ One Platform, Unlimited MCP Servers**  
+Like how GitLab provides a single platform for all your repositories, MCP Orchestrator gives you one unified control center for all your MCP servers - from development to production, from individual projects to enterprise-wide deployments.
 
 **Why MCP Orchestrator?**
 - 🏢 **Enterprise-Ready**: Team management, role-based access, activity monitoring
@@ -16,15 +19,16 @@ MCP Orchestrator is a comprehensive **project-based MCP server management platfo
 
 ## Key Features
 
-- **🔐 Project-Based Security**: Individual API keys per project with team-based access control
+- **🏛️ MCP Command Center**: Unified endpoint that aggregates multiple MCP servers into a single access point
+- **🔐 Enterprise Security**: Secure architecture with centralized access control, audit trails, and compliance monitoring
+- **🎯 Flexible Management**: Choose individual server control or unified orchestration - start safe, scale smart
 - **👥 Team Collaboration**: Real-time collaboration with role-based permissions and member management
-- **🎯 Smart Server Management**: Web UI for adding, configuring, and monitoring MCP servers
 - **🔄 One-Click Integration**: Auto-generated secure endpoints for Cursor, Cline, Claude, and all MCP tools
-- **📊 Activity Monitoring**: Track server usage, team activities, and system performance
-- **🏗️ Enterprise Ready**: Self-hosted deployment with scalable architecture
-- **🔌 Full MCP Compatibility**: Standard MCP protocol with SSE transport support
+- **📊 Complete Visibility**: Track server usage, team activities, and system performance across your entire MCP infrastructure
+- **🏗️ Enterprise Ready**: Self-hosted deployment with scalable architecture and governance controls
+- **🔌 Universal Compatibility**: Standard MCP protocol with SSE transport support and namespace-based tool routing
 
-## Quick Start (30 seconds!)
+## Quick Start
 
 Choose your deployment option:
 
@@ -166,6 +170,98 @@ uv run mcp-orch list-servers
 # List available tools
 uv run mcp-orch list-tools
 ```
+
+## 🏛️ From MCP Chaos to Enterprise Orchestra
+
+### The Enterprise Challenge: Scattered MCP Infrastructure
+
+**Before Git had GitHub, code was scattered everywhere. Before MCP had Orchestrator, your AI infrastructure is scattered too:**
+
+```
+🗂️ Team A: GitHub MCP running on localhost:3001
+🗂️ Team B: Slack MCP on some EC2 instance  
+🗂️ Team C: Notion MCP in a Docker container somewhere
+🗂️ IT Security: "How many AI endpoints do we even have?"
+```
+
+**Sound familiar?** This is exactly where Git repositories were before GitHub centralized everything.
+
+### 🎯 The MCP Hub: Your Centralized Control Center
+
+**Just like GitHub revolutionized code collaboration, MCP Orchestrator revolutionizes AI infrastructure management.**
+
+Think of it as your **"GitHub for MCP servers"** with two powerful operating modes:
+
+#### 🔰 Individual Repository Mode
+**Like managing individual Git repos - perfect for starting safe:**
+```json
+{
+  "github-server": {
+    "url": "http://localhost:8000/projects/abc123/servers/github/sse",
+    "auth": "Bearer your-token"
+  },
+  "slack-server": {
+    "url": "http://localhost:8000/projects/abc123/servers/slack/sse", 
+    "auth": "Bearer your-token"
+  }
+}
+```
+✅ **Granular control** - Each MCP server managed like individual repos  
+✅ **Security isolation** - Server-specific access policies like private repos  
+✅ **Easy migration** - Gradual adoption across teams (like Git adoption)
+
+#### 🚀 Organization-Wide Mode  
+**Like GitHub Organizations - when you're ready to scale:**
+```json
+{
+  "enterprise-workspace": {
+    "url": "http://localhost:8000/projects/abc123/unified/sse",
+    "auth": "Bearer your-unified-token"
+    // One endpoint, unlimited servers, zero config overhead
+  }
+}
+```
+✅ **Namespace magic** - `github.search()`, `slack.send()`, `notion.create()` (like repo namespaces)  
+✅ **Automatic scaling** - Add servers without client updates (like adding repos to org)  
+✅ **Enterprise governance** - Centralized policies and monitoring (like GitHub Enterprise)
+
+### 🛡️ Enterprise Security by Design
+
+#### Secure MCP Architecture
+```
+🏢 Traditional: N servers = N security policies = multiple management points
+🎯 MCP-Orch: 1 control plane = unified security model = simplified management
+
+✅ Centralized access control and audit trails
+✅ Real-time compliance monitoring  
+✅ Automated security policy enforcement
+✅ Complete visibility across your MCP ecosystem
+```
+
+#### Benefits of MCP Centralization
+```
+Without MCP-Orch:
+• Multiple individual server setups and maintenance
+• Distributed security policies and management
+• Manual monitoring and compliance tracking
+
+With MCP-Orch:
+• Centralized setup and configuration
+• Unified infrastructure visibility
+• Streamlined compliance and governance
+• Significant reduction in management overhead
+```
+
+### 🚀 Migration Safety Net
+
+**Start Safe, Scale Smart - Your Choice:**
+
+1. **🔰 Begin**: Individual servers with full control
+2. **📈 Evolve**: Mix individual and unified as teams grow
+3. **🏛️ Scale**: Enterprise-wide unified orchestration
+4. **♾️ Govern**: Multi-tenant global MCP governance
+
+**This evolutionary approach allows gradual adoption and scaling.**
 
 ## Secure AI Tool Integration
 
