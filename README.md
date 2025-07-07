@@ -37,7 +37,7 @@ Choose your deployment option:
 
 ```bash
 # Clone and start everything
-git clone https://github.com/fnf-ea/mcp-orch.git
+git clone https://github.com/hihenen/mcp-orch.git
 cd mcp-orch
 ./scripts/quickstart.sh
 ```
@@ -53,7 +53,7 @@ cd mcp-orch
 
 ```bash
 # Clone and deploy to production
-git clone https://github.com/fnf-ea/mcp-orch.git
+git clone https://github.com/hihenen/mcp-orch.git
 cd mcp-orch
 docker compose up -d
 ```
@@ -69,7 +69,7 @@ docker compose up -d
 
 ```bash
 # Clone the repository
-git clone https://github.com/fnf-ea/mcp-orch.git
+git clone https://github.com/hihenen/mcp-orch.git
 cd mcp-orch
 
 # Start services individually (recommended for development)

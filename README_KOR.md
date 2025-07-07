@@ -46,7 +46,7 @@ uv sync
 
 ```bash
 # 클론 및 모든 것을 시작
-git clone https://github.com/fnf-ea/mcp-orch.git
+git clone https://github.com/hihenen/mcp-orch.git
 cd mcp-orch
 ./scripts/quickstart.sh
 ```
@@ -62,7 +62,7 @@ cd mcp-orch
 
 ```bash
 # 클론 및 프로덕션 배포
-git clone https://github.com/fnf-ea/mcp-orch.git
+git clone https://github.com/hihenen/mcp-orch.git
 cd mcp-orch
 docker compose up -d
 ```
@@ -78,7 +78,7 @@ docker compose up -d
 
 ```bash
 # 저장소 클론
-git clone https://github.com/fnf-ea/mcp-orch.git
+git clone https://github.com/hihenen/mcp-orch.git
 cd mcp-orch
 
 # 서비스를 개별적으로 시작 (개발 권장)
