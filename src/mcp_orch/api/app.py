@@ -36,6 +36,7 @@ from .mcp_sse_transport import router as mcp_sse_transport_router
 from .mcp_sdk_sse_bridge import router as mcp_sdk_sse_bridge_router
 from .unified_mcp_transport import router as unified_mcp_transport_router
 from .fastmcp_impl import router as fastmcp_router
+from .mcp.unified.fast_routes import router as fast_unified_router
 from .servers import router as servers_router
 from .server_logs import router as server_logs_router
 from .tools import router as tools_router
@@ -379,6 +380,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(project_sse_router)   # 프로젝트 관리 API
     
     # 3. SSE 전용 라우터들 (/projects/*/sse 경로) - MCP 클라이언트용 (Cline, Cursor 등)
+    app.include_router(fast_unified_router)  # ⚡ FASTEST: Claude Code 전용 초고속 라우터
     app.include_router(unified_mcp_transport_router)  # 🚀 NEW: 통합 MCP 서버 엔드포인트 (Unified Mode)
     app.include_router(mcp_sdk_sse_bridge_router)  # 🚀 NEW: python-sdk 표준 + mcp-orch URL 하이브리드 (최우선)
     app.include_router(mcp_sse_transport_router)  # 새로운 MCP 표준 준수 SSE Transport (호환성)
