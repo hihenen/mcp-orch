@@ -1,23 +1,42 @@
-# MCP Orch
+# MCP Orchestrator
 
-**Central Hub for MCP Servers** - Your unified platform for Model Context Protocol ecosystem management
+<p align="center">
+  <strong>The ONLY Model Context Protocol solution with built-in project management and enterprise security</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/hihenen/mcp-orch/stargazers"><img src="https://img.shields.io/github/stars/hihenen/mcp-orch?style=social" alt="GitHub stars"></a>
+  <a href="https://github.com/hihenen/mcp-orch/network/members"><img src="https://img.shields.io/github/forks/hihenen/mcp-orch?style=social" alt="GitHub forks"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+</p>
 
 > **📖 [한국어 버전](./README_KOR.md)** | **🌏 English Version** | **📋 [Changelog](./CHANGELOG.md)**
 
-## Overview
+## 🚀 Why MCP Orchestrator?
 
-MCP Orchestrator is **the central hub for your entire MCP ecosystem** - like popular Git platforms for repositories, but for MCP servers. Just as centralized Git platforms revolutionized how developers collaborate on code, MCP Orchestrator transforms how teams manage, share, and scale their Model Context Protocol infrastructure.
+While other MCP tools manage servers as a flat list, **MCP Orchestrator** brings **enterprise-grade project management** to the MCP ecosystem:
 
-**🏛️ One Platform, Unlimited MCP Servers**  
-Like how Git hosting platforms provide a single place for all your repositories, MCP Orchestrator gives you one unified control center for all your MCP servers - from development to production, from individual projects to enterprise-wide deployments.
+### 🎯 Unique Features
 
-**Why MCP Orchestrator?**
-- 🏢 **Enterprise-Ready**: Team management, role-based access, activity monitoring
-- 🔐 **Security-First**: Project-specific API keys, Bearer token authentication, access control
-- 🌐 **Web Interface**: No more JSON files - manage everything through an intuitive UI
-- 👥 **Team Collaboration**: Share servers, invite members, track activities in real-time
+- **📁 Project-Based Organization** - Manage MCP servers by projects, not just a flat list
+- **👥 Team Collaboration** - Invite members, set permissions, track activities
+- **🔐 Enterprise Security** - JWT authentication, API keys, audit logs
+- **🖥️ Professional Web UI** - 6-tab management interface with real-time monitoring
+- **🚀 Production Ready** - Docker support, PostgreSQL backend, scalable architecture
 
-## Key Features
+## 📊 How We Compare
+
+> **MCP-Orch is the ONLY solution** that combines project management, team collaboration, and enterprise security in one platform.
+
+| What You Need | Other Tools | MCP-Orch |
+|---------------|-------------|----------|
+| Organize by projects? | ❌ Flat server list | ✅ **Project-based** |
+| Team collaboration? | ❌ Single user | ✅ **Multi-user with permissions** |
+| Enterprise security? | ⚠️ Basic auth only | ✅ **JWT + API Keys + Audit logs** |
+| Professional UI? | ⚠️ Basic or CLI only | ✅ **Full web dashboard** |
+| Ready for production? | ⚠️ Experimental | ✅ **Battle-tested** |
+
+## 🛠️ Key Features
 
 - **🏛️ MCP Command Center**: Unified endpoint that aggregates multiple MCP servers into a single access point
 - **🔐 Enterprise Security**: Secure architecture with centralized access control, audit trails, and compliance monitoring
@@ -27,6 +46,39 @@ Like how Git hosting platforms provide a single place for all your repositories,
 - **📊 Complete Visibility**: Track server usage, team activities, and system performance across your entire MCP infrastructure
 - **🏗️ Enterprise Ready**: Self-hosted deployment with scalable architecture and governance controls
 - **🔌 Universal Compatibility**: Standard MCP protocol with dual transport support (SSE + Streamable HTTP) and namespace-based tool routing
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐   HTTPS/SSE   ┌──────────────────┐
+│   AI Tools      │ ◄────────────► │   Web Interface  │
+│ (Cursor, Cline) │   +JWT Auth    │  (React/Next.js) │
+└─────────────────┘                └──────────────────┘
+         │                                    │
+         │ Project-based                      │ Team Management
+         │ Secure Endpoints                   │ Real-time Updates
+         │                                    │
+         ▼                                    ▼
+┌─────────────────────────────────────────────────────────┐
+│              MCP Orchestrator Core                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   Project   │  │    Team     │  │  Activity   │     │
+│  │  Manager    │  │  Manager    │  │   Logger    │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │    API      │  │   Server    │  │   Access    │     │
+│  │   Gateway   │  │  Registry   │  │  Control    │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+└─────────────────────────────────────────────────────────┘
+         │
+         │ stdio/subprocess
+         ▼
+┌─────────────────┐
+│   MCP Servers   │
+│ (GitHub, Slack, │
+│  Notion, etc.)  │
+└─────────────────┘
+```
 
 ## Quick Start
 

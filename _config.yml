@@ -1,0 +1,63 @@
+title: MCP Orchestrator
+description: The ONLY Model Context Protocol solution with built-in project management and enterprise security
+url: https://hihenen.github.io/mcp-orch
+baseurl: /mcp-orch
+
+# Jekyll theme
+theme: jekyll-theme-cayman
+
+# Plugins
+plugins:
+  - jekyll-default-layout
+  - jekyll-readme-index
+  - jekyll-titles-from-headings
+  - jekyll-relative-links
+
+# SEO
+lang: en-US
+author: hihenen
+twitter:
+  username: hihenen
+  card: summary_large_image
+
+# GitHub metadata
+repository: hihenen/mcp-orch
+
+# Enable relative links
+relative_links:
+  enabled: true
+  collections: true
+
+# Enable titles from headings
+titles_from_headings:
+  enabled: true
+  strip_title: true
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Include/exclude files
+include:
+  - README.md
+  - CHANGELOG.md
+  - LICENSE.md
+
+exclude:
+  - node_modules/
+  - vendor/
+  - .bundle/
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - package.json
+  - package-lock.json
+  - yarn.lock
+  - pnpm-lock.yaml
+  - docker-compose.yml
+  - Dockerfile.*
+  - "*.log"
