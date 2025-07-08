@@ -1283,8 +1283,10 @@ async def get_project_server_detail(
                         timeout=10.0  # 10초 타임아웃
                     )
                     if server_status == "online":
+                        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+                        session_manager_server_id = f"{server.project_id}.{server.name}"
                         tools = await asyncio.wait_for(
-                            mcp_connection_service.get_server_tools(unique_server_id, server_config),
+                            mcp_connection_service.get_server_tools(session_manager_server_id, server_config),
                             timeout=15.0  # 15초 타임아웃
                         )
                         tools_count = len(tools)
@@ -1789,7 +1791,9 @@ async def refresh_project_server_status(
         # 도구 목록 조회 (온라인인 경우에만)
         tools = []
         if status_result == "online":
-            tools = await mcp_connection_service.get_server_tools(server.name, server_config)
+            # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+            session_manager_server_id = f"{project_id}.{server.name}"
+            tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config)
             # 데이터베이스 업데이트
             server.last_used_at = datetime.utcnow()
             db.commit()

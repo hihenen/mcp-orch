@@ -14,7 +14,7 @@ import asyncio
 import json
 import logging
 import time
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, AsyncGenerator
 from datetime import datetime
 from uuid import UUID
 
@@ -47,6 +47,7 @@ class McpToolExecutor(IMcpToolExecutor):
     MCP Tool Executor Implementation
     
     Handles tool execution on MCP servers with proper logging and error handling.
+    Includes streaming support for large outputs and real-time processing.
     """
     
     def __init__(
@@ -420,3 +421,230 @@ class McpToolExecutor(IMcpToolExecutor):
         except Exception as e:
             logger.error(f"Failed to log tool execution: {e}")
             db.rollback()
+    
+    async def execute_tool_streaming(
+        self,
+        connection: McpConnection,
+        tool_name: str,
+        arguments: Dict,
+        db: Optional[Session] = None,
+        project_id: Optional[str] = None,
+        server_id: Optional[str] = None,
+        chunk_size: int = 8192
+    ) -> AsyncGenerator[str, None]:
+        """
+        Execute a tool with streaming output support
+        
+        Designed for Streamable HTTP transport to provide real-time streaming
+        of large outputs, file processing, or long-running operations.
+        
+        Args:
+            connection: Active MCP connection
+            tool_name: Name of tool to execute
+            arguments: Tool arguments
+            db: Database session for logging
+            project_id: Project ID for logging
+            server_id: Server ID for logging
+            chunk_size: Size of chunks to yield (bytes)
+            
+        Yields:
+            str: Chunks of tool output as they become available
+            
+        Raises:
+            ToolExecutionError: If execution fails
+        """
+        start_time = time.time()
+        execution_id = f"{server_id}_{tool_name}_{int(start_time)}"
+        total_output = ""
+        
+        try:
+            logger.info(f"🌊 Executing streaming tool {tool_name} on server {server_id}")
+            
+            # Validate connection
+            if not await self.connection_manager.is_connection_alive(connection):
+                raise ToolExecutionError(
+                    f"Connection to server {server_id} is not alive",
+                    "CONNECTION_DEAD"
+                )
+            
+            # Prepare tool call message with streaming hint
+            call_message = {
+                "jsonrpc": "2.0",
+                "id": int(start_time * 1000),
+                "method": "tools/call",
+                "params": {
+                    "name": tool_name,
+                    "arguments": {
+                        **arguments,
+                        "_streaming": True,  # Hint to MCP server for streaming support
+                        "_chunk_size": chunk_size
+                    }
+                }
+            }
+            
+            # Send message to MCP server
+            message_json = json.dumps(call_message) + '\n'
+            
+            if not connection.process.stdin:
+                raise ToolExecutionError(
+                    f"No stdin available for server {server_id}",
+                    "NO_STDIN"
+                )
+            
+            connection.process.stdin.write(message_json.encode())
+            await connection.process.stdin.drain()
+            
+            logger.debug(f"📤 Sent streaming tool call: {call_message}")
+            
+            # Stream response processing
+            async for chunk in self._read_streaming_response(
+                connection, 
+                call_message["id"],
+                chunk_size=chunk_size
+            ):
+                total_output += chunk
+                yield chunk
+            
+            execution_time = time.time() - start_time
+            logger.info(f"✅ Streaming tool {tool_name} completed in {execution_time:.2f}s, {len(total_output)} chars")
+            
+            # Log successful streaming execution
+            if db and project_id and server_id:
+                await self._log_tool_execution(
+                    db, server_id, project_id, tool_name, arguments,
+                    execution_time, True, None, {"output_length": len(total_output), "streaming": True}
+                )
+        
+        except Exception as e:
+            execution_time = time.time() - start_time
+            error_message = str(e)
+            
+            logger.error(f"❌ Streaming tool {tool_name} failed after {execution_time:.2f}s: {error_message}")
+            
+            # Log failed execution
+            if db and project_id and server_id:
+                await self._log_tool_execution(
+                    db, server_id, project_id, tool_name, arguments,
+                    execution_time, False, error_message, None
+                )
+            
+            # Yield error as final chunk for Streamable HTTP
+            yield f"\n\n[ERROR] Tool execution failed: {error_message}"
+            raise ToolExecutionError(error_message, "STREAMING_EXECUTION_ERROR")
+    
+    async def _read_streaming_response(
+        self,
+        connection: McpConnection,
+        expected_id: int,
+        chunk_size: int = 8192,
+        timeout: int = 60
+    ) -> AsyncGenerator[str, None]:
+        """
+        Read streaming response from MCP server
+        
+        Implements chunked reading similar to Python SDK's stdio streaming approach.
+        Supports both line-based JSON responses and chunked binary data.
+        """
+        try:
+            buffer = ""
+            total_chunks = 0
+            
+            # First, read the initial JSON-RPC response
+            initial_response = await asyncio.wait_for(
+                connection.process.stdout.readline(),
+                timeout=timeout
+            )
+            
+            if not initial_response:
+                raise ToolExecutionError(
+                    "No initial response received from MCP server",
+                    "NO_RESPONSE"
+                )
+            
+            response_text = initial_response.decode().strip()
+            logger.debug(f"💷 Initial streaming response: {response_text[:200]}...")
+            
+            try:
+                response = json.loads(response_text)
+            except json.JSONDecodeError:
+                # If not JSON, treat as first chunk of streaming data
+                buffer = response_text
+                response = None
+            
+            # Handle JSON-RPC response vs streaming data
+            if response and "result" in response:
+                # Standard JSON-RPC response - yield as single chunk
+                result = response["result"]
+                if isinstance(result, dict) and "content" in result:
+                    # MCP tool result format
+                    for content_item in result["content"]:
+                        if content_item.get("type") == "text":
+                            text_content = content_item.get("text", "")
+                            # Yield in chunks for streaming
+                            for i in range(0, len(text_content), chunk_size):
+                                chunk = text_content[i:i + chunk_size]
+                                yield chunk
+                                total_chunks += 1
+                                
+                                # Add small delay for realistic streaming
+                                if total_chunks % 10 == 0:
+                                    await asyncio.sleep(0.01)
+                else:
+                    # Simple result - convert to string and chunk
+                    result_text = str(result)
+                    for i in range(0, len(result_text), chunk_size):
+                        chunk = result_text[i:i + chunk_size]
+                        yield chunk
+                        total_chunks += 1
+                        
+                        if total_chunks % 10 == 0:
+                            await asyncio.sleep(0.01)
+                            
+            elif response and "error" in response:
+                # Error response
+                error_info = response["error"]
+                error_message = f"Tool execution failed: {error_info.get('message', 'Unknown error')}"
+                yield f"[ERROR] {error_message}"
+                raise ToolExecutionError(error_message, "TOOL_ERROR")
+                
+            else:
+                # Raw streaming data - process buffer and continue reading
+                if buffer:
+                    yield buffer
+                    total_chunks += 1
+                
+                # Continue reading streaming chunks
+                while True:
+                    try:
+                        chunk_data = await asyncio.wait_for(
+                            connection.process.stdout.read(chunk_size),
+                            timeout=5  # Shorter timeout for chunks
+                        )
+                        
+                        if not chunk_data:
+                            break  # End of stream
+                        
+                        chunk_text = chunk_data.decode(errors='replace')
+                        yield chunk_text
+                        total_chunks += 1
+                        
+                        # Small delay for controlled streaming
+                        if total_chunks % 5 == 0:
+                            await asyncio.sleep(0.01)
+                            
+                    except asyncio.TimeoutError:
+                        # No more data available, end streaming
+                        break
+            
+            logger.debug(f"🏁 Streaming completed: {total_chunks} chunks yielded")
+            
+        except asyncio.TimeoutError:
+            raise ToolExecutionError(
+                f"Timeout waiting for streaming response from server {connection.server_id}",
+                "STREAMING_TIMEOUT"
+            )
+        except Exception as e:
+            raise ToolExecutionError(
+                f"Error reading streaming response from server {connection.server_id}: {e}",
+                "STREAMING_ERROR"
+            )

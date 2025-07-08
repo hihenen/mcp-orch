@@ -25,8 +25,8 @@ pyjwt>=2.8.0
 email-validator>=2.2.0
 
 # MCP Protocol
-mcp>=1.9.1
-fastmcp>=2.8.0
+mcp>=1.10.1
+fastmcp>=2.10.2
 
 # Configuration & CLI
 pydantic>=2.5.0

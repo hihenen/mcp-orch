@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, AsyncGenerator, List
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Request, HTTPException, status, Depends
+from fastapi import APIRouter, Request, HTTPException, status, Depends, Query
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -235,7 +235,9 @@ async def generate_mcp_sse_stream(
         try:
             server_config = _build_server_config_from_db(server)
             if server_config:
-                tools = await mcp_connection_service.get_server_tools(str(server.id), server_config)
+                # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+                session_manager_server_id = f"{project_id}.{server_name}"
+                tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config)
                 if tools:
                     tools_event = {
                         "jsonrpc": "2.0",
@@ -443,9 +445,12 @@ async def handle_tool_call(message: Dict[str, Any], server: McpServer, project_i
         if not server_config:
             raise ValueError("Failed to build server configuration")
         
+        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+        session_manager_server_id = f"{project_id}.{server_name}"
+        
         # 도구 호출
         result = await mcp_connection_service.call_tool(
-            str(server.id),
+            session_manager_server_id,
             server_config,
             tool_name,
             arguments
@@ -491,7 +496,11 @@ async def handle_tools_list(server: McpServer):
         if not server_config:
             raise ValueError("Failed to build server configuration")
         
-        tools = await mcp_connection_service.get_server_tools(str(server.id), server_config)
+        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+        # server는 McpServer 객체이므로 project_id를 가져와서 사용
+        session_manager_server_id = f"{server.project_id}.{server.name}"
+        
+        tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config)
         
         response = {
             "jsonrpc": "2.0",
@@ -589,6 +598,366 @@ async def send_message_to_sse_connections(project_id: UUID, server_name: str, me
     
     logger.info(f"Sent message to {sent_count} SSE connections for {server_name}")
     return sent_count
+
+
+# Claude Code 호환 개별 서버 Streamable HTTP 엔드포인트
+@router.get("/projects/{project_id}/servers/{server_name}/mcp")
+async def individual_streamable_http_endpoint(
+    project_id: UUID,
+    server_name: str,
+    request: Request,
+    sessionId: Optional[str] = Query(None, description="Session ID for Streamable HTTP connection"),
+    db: Session = Depends(get_db)
+):
+    """개별 서버용 MCP Streamable HTTP GET 엔드포인트 - Claude Code 호환"""
+    
+    try:
+        # 사용자 인증
+        current_user = await get_current_user_for_mcp_sse(request, project_id, db)
+        
+        # 서버 존재 확인
+        server = db.query(McpServer).filter(
+            and_(
+                McpServer.project_id == project_id,
+                McpServer.name == server_name,
+                McpServer.is_enabled == True
+            )
+        ).first()
+        
+        if not server:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Server '{server_name}' not found or disabled in project {project_id}"
+            )
+        
+        logger.info(f"🌊 Starting individual server Streamable HTTP: project={project_id}, server={server_name}")
+        
+        # SSE 스트림 생성기
+        async def sse_stream():
+            try:
+                # 초기 연결 확인 메시지
+                yield f"data: {json.dumps({'type': 'connection', 'status': 'connected'})}\\n\\n"
+                
+                # 서버 정보 전송
+                yield f"data: {json.dumps({
+                    'type': 'server_info',
+                    'project_id': str(project_id),
+                    'server_name': server_name,
+                    'server_id': str(server.id)
+                })}\\n\\n"
+                
+                # 준비 완료 신호
+                yield f"data: {json.dumps({'type': 'ready', 'timestamp': datetime.utcnow().isoformat()})}\\n\\n"
+                
+                # 표준 keepalive (30초마다)
+                keepalive_count = 0
+                while True:
+                    await asyncio.sleep(30)
+                    keepalive_count += 1
+                    yield f"data: {json.dumps({
+                        'type': 'keepalive', 
+                        'count': keepalive_count,
+                        'timestamp': datetime.utcnow().isoformat()
+                    })}\\n\\n"
+                    
+            except Exception as e:
+                logger.error(f"❌ SSE stream error: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\\n\\n"
+        
+        return StreamingResponse(
+            sse_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "GET, POST, DELETE"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Individual Streamable HTTP error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Individual Streamable HTTP connection failed: {str(e)}"
+        )
+
+
+@router.post("/projects/{project_id}/servers/{server_name}/mcp")
+async def individual_streamable_http_messages(
+    project_id: UUID,
+    server_name: str,
+    request: Request,
+    sessionId: Optional[str] = Query(None, description="Session ID from Streamable HTTP connection"),
+    db: Session = Depends(get_db)
+):
+    """개별 서버용 MCP Streamable HTTP POST 엔드포인트 - Claude Code 호환"""
+    
+    try:
+        # 사용자 인증
+        current_user = await get_current_user_for_mcp_sse(request, project_id, db)
+        
+        # 서버 존재 확인
+        server = db.query(McpServer).filter(
+            and_(
+                McpServer.project_id == project_id,
+                McpServer.name == server_name,
+                McpServer.is_enabled == True
+            )
+        ).first()
+        
+        if not server:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Server '{server_name}' not found or disabled"
+            )
+        
+        # 요청 처리 로깅
+        logger.info(f"🔧 Individual POST: project={project_id}, server={server_name}, sessionId={sessionId}")
+        
+        # 요청 바디 읽기 및 파싱
+        request_body = await request.body()
+        
+        try:
+            # JSON-RPC 메시지 파싱
+            message = json.loads(request_body.decode('utf-8'))
+            method = message.get('method')
+            
+            logger.info(f"🔧 Method: {method}, ID: {message.get('id')}")
+            
+            # 메서드별 빠른 처리
+            if method == 'initialize':
+                result = await handle_individual_initialize(message, project_id, server_name, server, sessionId)
+            elif method == 'tools/list':
+                result = await handle_individual_tools_list(message, project_id, server_name, server)
+            elif method == 'tools/call':
+                result = await handle_individual_tool_call(message, project_id, server_name, server)
+            elif method == 'resources/list':
+                result = await handle_individual_resources_list(message)
+            elif method == 'resources/templates/list':
+                result = await handle_individual_resources_templates_list(message)
+            elif method.startswith('notifications/'):
+                result = await handle_individual_notification(message)
+            else:
+                # 빠른 202 응답
+                result = JSONResponse(
+                    content={
+                        "message": "Request accepted for processing",
+                        "method": method,
+                        "project_id": str(project_id),
+                        "server_name": server_name,
+                        "session_id": sessionId
+                    },
+                    status_code=202,
+                    headers={
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Headers": "*", 
+                        "Access-Control-Allow-Methods": "GET, POST, DELETE"
+                    }
+                )
+            
+            # 처리 완료 로깅
+            logger.info(f"✅ Individual POST completed: {method}")
+            
+            return result
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Invalid JSON in request body: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid JSON: {str(e)}"
+            )
+        
+    except Exception as e:
+        logger.error(f"❌ Individual Streamable HTTP POST error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Individual Streamable HTTP POST failed: {str(e)}"
+        )
+
+
+# 개별 서버용 핸들러 함수들
+async def handle_individual_initialize(message: dict, project_id: UUID, server_name: str, server: McpServer, sessionId: Optional[str]) -> JSONResponse:
+    """개별 서버 Initialize 요청 처리"""
+    request_id = message.get("id")
+    
+    response = {
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "result": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {
+                "tools": {},
+                "logging": {}
+            },
+            "serverInfo": {
+                "name": f"mcp-orch-{server_name}",
+                "version": "1.0.0"
+            },
+            "instructions": f"Individual MCP server '{server_name}' in project {project_id}. Use tools/list to see available tools."
+        }
+    }
+    
+    logger.info(f"✅ Individual initialize complete for server {server_name}")
+    return JSONResponse(
+        content=response,
+        headers={
+            "mcp-session-id": sessionId or str(uuid.uuid4()),
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "GET, POST, DELETE"
+        }
+    )
+
+
+async def handle_individual_tools_list(message: dict, project_id: UUID, server_name: str, server: McpServer) -> JSONResponse:
+    """개별 서버 Tools/list 요청 처리"""
+    try:
+        server_config = _build_server_config_from_db(server)
+        if not server_config:
+            raise ValueError("Failed to build server configuration")
+        
+        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+        session_manager_server_id = f"{project_id}.{server_name}"
+        logger.info(f"🔍 Individual server - server: {server_name}, session_id: {session_manager_server_id}")
+        
+        # 필터링이 적용된 도구 목록 조회
+        from ..services.mcp_connection_service import mcp_connection_service
+        tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config)
+        
+        response = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": {
+                "tools": [
+                    {
+                        "name": tool.get("name"),
+                        "description": tool.get("description", ""),
+                        "inputSchema": tool.get("schema", tool.get("inputSchema", {
+                            "type": "object",
+                            "properties": {},
+                            "required": []
+                        }))
+                    }
+                    for tool in tools
+                ] if tools else []
+            }
+        }
+        
+        logger.info(f"📋 Sent {len(tools) if tools else 0} filtered tools for individual server {server_name}")
+        return JSONResponse(content=response)
+        
+    except Exception as e:
+        logger.error(f"❌ Individual tools list error: {e}")
+        
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "error": {
+                "code": -32000,
+                "message": f"Failed to list tools: {str(e)}"
+            }
+        }
+        return JSONResponse(content=error_response)
+
+
+async def handle_individual_tool_call(message: dict, project_id: UUID, server_name: str, server: McpServer) -> JSONResponse:
+    """개별 서버 Tools/call 요청 처리"""
+    try:
+        params = message.get("params", {})
+        tool_name = params.get("name")
+        arguments = params.get("arguments", {})
+        
+        if not tool_name:
+            raise ValueError("Missing tool name")
+        
+        logger.info(f"🔧 Individual tool call: {tool_name} on server {server_name}")
+        
+        # 서버 설정 구성
+        server_config = _build_server_config_from_db(server)
+        if not server_config:
+            raise ValueError("Failed to build server configuration")
+        
+        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+        session_manager_server_id = f"{project_id}.{server_name}"
+        
+        # 도구 호출
+        from ..services.mcp_connection_service import mcp_connection_service
+        result = await mcp_connection_service.call_tool(
+            session_manager_server_id,
+            server_config,
+            tool_name,
+            arguments
+        )
+        
+        # 응답 형식 변환
+        if isinstance(result, dict) and "content" in result:
+            response_content = result["content"]
+        else:
+            response_content = [{"type": "text", "text": str(result) if result else "Tool executed successfully"}]
+        
+        response = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": {"content": response_content}
+        }
+        
+        logger.info(f"✅ Individual tool call completed: {tool_name} on server {server_name}")
+        return JSONResponse(content=response)
+        
+    except Exception as e:
+        logger.error(f"❌ Individual tool call error: {e}")
+        
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "error": {
+                "code": -32000,
+                "message": f"Tool execution failed: {str(e)}"
+            }
+        }
+        return JSONResponse(content=error_response)
+
+
+async def handle_individual_resources_list(message: dict) -> JSONResponse:
+    """개별 서버 Resources/list 요청 처리"""
+    response = {
+        "jsonrpc": "2.0",
+        "id": message.get("id"),
+        "result": {
+            "resources": []
+        }
+    }
+    return JSONResponse(content=response)
+
+
+async def handle_individual_resources_templates_list(message: dict) -> JSONResponse:
+    """개별 서버 Resources/templates/list 요청 처리"""
+    response = {
+        "jsonrpc": "2.0",
+        "id": message.get("id"),
+        "result": {
+            "resourceTemplates": []
+        }
+    }
+    return JSONResponse(content=response)
+
+
+async def handle_individual_notification(message: dict) -> JSONResponse:
+    """개별 서버 Notification 요청 처리"""
+    method = message.get("method")
+    logger.info(f"🔔 Individual notification: {method}")
+    
+    return JSONResponse(
+        content={"message": "Notification processed"},
+        status_code=202,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "GET, POST, DELETE"
+        }
+    )
 
 
 # 호환성을 위한 추가 라우트 - SSE 연결 컨텍스트 기반 메시지 처리

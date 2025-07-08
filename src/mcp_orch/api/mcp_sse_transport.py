@@ -246,8 +246,12 @@ class MCPSSETransport:
             if not server_config:
                 raise ValueError("Failed to build server configuration")
             
+            # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+            session_manager_server_id = f"{self.project_id}.{self.server.name}"
+            logger.info(f"🔍 SSE Transport - server: {self.server.name}, session_id: {session_manager_server_id}")
+            
             # 🆕 필터링이 적용된 도구 목록 조회 (세션 매니저에서 자동 처리)
-            tools = await mcp_connection_service.get_server_tools(str(self.server.id), server_config)
+            tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config)
             
             response = {
                 "jsonrpc": "2.0",
@@ -301,9 +305,12 @@ class MCPSSETransport:
             if not server_config:
                 raise ValueError("Failed to build server configuration")
             
+            # Session manager가 기대하는 server_id 형식: "project_id.server_name"  
+            session_manager_server_id = f"{self.project_id}.{self.server.name}"
+            
             # 도구 호출
             result = await mcp_connection_service.call_tool(
-                str(self.server.id),
+                session_manager_server_id,
                 server_config,
                 tool_name,
                 arguments

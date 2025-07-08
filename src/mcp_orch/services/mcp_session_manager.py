@@ -108,6 +108,50 @@ class McpSessionManager:
         self._message_id_counter += 1
         return self._message_id_counter
     
+    def _resolve_server_id(self, server_id: str) -> Tuple[Optional[UUID], Optional[UUID]]:
+        """
+        server_id를 해석해서 (project_id, actual_server_id) 튜플 반환
+        
+        Args:
+            server_id: "project_id.server_name" 형식 또는 UUID 문자열
+            
+        Returns:
+            tuple: (project_id, actual_server_id) - 둘 다 UUID 또는 None
+        """
+        if '.' in server_id:
+            try:
+                project_id_str, server_name = server_id.split('.', 1)
+                project_id = UUID(project_id_str)
+                
+                # DB에서 실제 서버 ID 조회
+                from ..database import get_db
+                from ..models import McpServer
+                db = next(get_db())
+                try:
+                    server = db.query(McpServer).filter(
+                        McpServer.project_id == project_id,
+                        McpServer.name == server_name
+                    ).first()
+                    if server:
+                        logger.debug(f"Resolved server_id {server_id} to project={project_id}, server={server.id}")
+                        return project_id, server.id
+                    else:
+                        logger.warning(f"Server not found for {server_id}")
+                        return project_id, None
+                finally:
+                    db.close()
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Failed to parse server_id format {server_id}: {e}")
+                return None, None
+        else:
+            # 이미 UUID 형식인 경우
+            try:
+                actual_server_id = UUID(server_id)
+                return None, actual_server_id
+            except (ValueError, TypeError) as e:
+                logger.error(f"Cannot convert server_id {server_id} to UUID: {e}")
+                return None, None
+    
     async def get_or_create_session(self, server_id: str, server_config: Dict) -> McpSession:
         """서버 세션을 가져오거나 새로 생성 (MCP 표준 패턴)"""
         # 기존 세션이 있고 유효한지 확인
@@ -274,9 +318,12 @@ class McpSessionManager:
             except (ValueError, TypeError) as e:
                 logger.warning(f"Invalid project_id format: {project_id}, error: {e}")
         
+        # server_id 해석: "project_id.server_name" 형식 또는 UUID
+        resolved_project_id, actual_server_id = self._resolve_server_id(server_id)
+        
         # 로그 데이터 준비
         log_data = {
-            'server_id': UUID(server_id),
+            'server_id': actual_server_id,
             'project_id': converted_project_id,
             'tool_name': tool_name,
             'arguments': arguments,
@@ -300,15 +347,24 @@ class McpSessionManager:
             await self.initialize_session(session)
             
             # 도구 호출 메시지 생성
+            message_id = self._get_next_message_id()
             tool_message = {
                 "jsonrpc": "2.0",
-                "id": self._get_next_message_id(),
+                "id": message_id,
                 "method": "tools/call",
                 "params": {
-                    "name": tool_name,
-                    "arguments": arguments
+                    "name": tool_name
                 }
             }
+            
+            # arguments가 비어있지 않은 경우에만 추가
+            if arguments:
+                tool_message["params"]["arguments"] = arguments
+            else:
+                # 일부 MCP 서버는 빈 arguments를 기대하므로 명시적으로 추가
+                tool_message["params"]["arguments"] = {}
+            
+            logger.info(f"🔧 Sending tool call message: {json.dumps(tool_message)}")
             
             # 메시지 전송
             await self._send_message(session, tool_message)
@@ -324,7 +380,7 @@ class McpSessionManager:
                 raise ToolExecutionError("No response received from MCP server")
             
             logger.info(f"📥 Received response for {tool_name}: ID={response.get('id')}, expected={tool_message['id']}")
-            logger.debug(f"📥 Full response content: {response}")
+            logger.info(f"📥 Full response content: {json.dumps(response)}")
             
             if response.get('id') != tool_message['id']:
                 logger.error(f"❌ Message ID mismatch: expected {tool_message['id']}, got {response.get('id')}")
@@ -374,29 +430,8 @@ class McpSessionManager:
             # 세션 초기화 (필요시)
             await self.initialize_session(session)
             
-            # 🆕 프로젝트 ID 추출 (server_id가 "project_id.server_name" 형태인 경우)
-            project_id = None
-            actual_server_id = None
-            if '.' in server_id:
-                try:
-                    project_id_str, server_name = server_id.split('.', 1)
-                    project_id = UUID(project_id_str)
-                    
-                    # 실제 서버 ID 조회 (DB에서)
-                    from ..database import get_db
-                    from ..models import McpServer
-                    db = next(get_db())
-                    try:
-                        server = db.query(McpServer).filter(
-                            McpServer.project_id == project_id,
-                            McpServer.name == server_name
-                        ).first()
-                        if server:
-                            actual_server_id = server.id
-                    finally:
-                        db.close()
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"⚠️ Failed to parse server_id {server_id}: {e}")
+            # 🆕 server_id 해석: "project_id.server_name" 형식 또는 UUID
+            project_id, actual_server_id = self._resolve_server_id(server_id)
             
             # 캐시된 도구 목록이 있으면 필터링 후 반환
             if session.tools_cache is not None:

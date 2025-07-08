@@ -200,6 +200,81 @@ class McpOrchestrator:
             logger.error(error_msg)
             raise ToolExecutionError(error_msg, "ORCHESTRATOR_ERROR", {"original_error": str(e)})
     
+    async def call_tool_streaming(
+        self,
+        server_id: str,
+        server_config: Dict,
+        tool_name: str,
+        arguments: Dict,
+        db: Optional[Session] = None,
+        project_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        chunk_size: int = 8192
+    ):
+        """
+        NEW STREAMING METHOD: Execute tool with streaming output
+        
+        This method is specifically designed for Streamable HTTP transport
+        to provide real-time streaming of large outputs, file processing,
+        or long-running operations.
+        
+        Args:
+            server_id: Unique server identifier
+            server_config: Server configuration
+            tool_name: Name of tool to execute
+            arguments: Tool arguments
+            db: Database session for logging
+            project_id: Project ID for logging
+            user_id: User ID for logging
+            session_id: Session ID for tracking
+            user_agent: Client user agent
+            ip_address: Client IP address
+            chunk_size: Size of chunks to stream
+            
+        Yields:
+            str: Chunks of tool output as they become available
+            
+        Raises:
+            ToolExecutionError: If execution fails
+        """
+        try:
+            logger.info(f"🌊 Executing streaming tool {tool_name} via orchestrator")
+            
+            if not server_config.get('is_enabled', True):
+                logger.info("⚠️ Server is disabled, cannot execute streaming tool")
+                raise ToolExecutionError(f"Server {server_id} is disabled", "SERVER_DISABLED")
+            
+            # Get or create connection using connection manager
+            connection = await self.connection_manager.get_connection(server_id, server_config)
+            
+            if not connection:
+                raise ToolExecutionError(f"Failed to establish connection to server {server_id}", "CONNECTION_FAILED")
+            
+            # Use tool executor for streaming execution
+            async for chunk in self.tool_executor.execute_tool_streaming(
+                connection=connection,
+                tool_name=tool_name,
+                arguments=arguments,
+                db=db,
+                project_id=project_id,
+                server_id=server_id,
+                chunk_size=chunk_size
+            ):
+                yield chunk
+            
+            logger.info(f"✅ Streaming tool {tool_name} completed successfully")
+            
+        except ToolExecutionError:
+            # Re-raise tool execution errors as-is
+            raise
+        except Exception as e:
+            error_msg = f"Unexpected error in call_tool_streaming: {e}"
+            logger.error(error_msg)
+            raise ToolExecutionError(error_msg, "ORCHESTRATOR_STREAMING_ERROR", {"original_error": str(e)})
+    
     async def refresh_all_servers(self, db: Session) -> Dict[str, Dict]:
         """
         BACKWARD COMPATIBILITY: Original refresh_all_servers method

@@ -41,7 +41,8 @@ class UnifiedMCPTransport(MCPSSETransport):
     """
     
     def __init__(self, session_id: str, message_endpoint: str, 
-                 project_servers: List[McpServer], project_id: UUID):
+                 project_servers: List[McpServer], project_id: UUID,
+                 transport_type: str = "sse"):
         
         # Initialize base MCPSSETransport with first server or dummy
         primary_server = project_servers[0] if project_servers else None
@@ -60,6 +61,7 @@ class UnifiedMCPTransport(MCPSSETransport):
         
         # Additional attributes for unified functionality
         self.project_servers = project_servers
+        self.transport_type = transport_type  # "sse" or "streamable_http"
         self.namespace_registry = NamespaceRegistry()
         self.server_connections = {}  # Individual server connection cache
         self.server_health = {}  # Server health tracking
@@ -297,3 +299,131 @@ class UnifiedMCPTransport(MCPSSETransport):
         except Exception as e:
             logger.error(f"Failed to build config for server {server.name}: {e}")
             return None
+    
+    async def start_streamable_http_connection(self, scope, receive, send, cleanup_callback=None):
+        """
+        Start Unified MCP Streamable HTTP connection
+        
+        Provides the same unified functionality as SSE but with Streamable HTTP transport:
+        1. HTTP/2 양방향 스트리밍
+        2. 네임스페이스 기반 도구 라우팅
+        3. 서버별 에러 격리
+        4. 표준 MCP 프로토콜 완전 지원
+        
+        Args:
+            scope: ASGI scope
+            receive: ASGI receive callable
+            send: ASGI send callable
+            cleanup_callback: Optional cleanup function
+        """
+        try:
+            from mcp.server.streamable_http import StreamableHTTPServerTransport
+            
+            # StreamableHTTPServerTransport 인스턴스 생성
+            streamable_transport = StreamableHTTPServerTransport(self.message_endpoint)
+            
+            logger.info(f"🌊 Starting unified Streamable HTTP connection: session={self.session_id}, transport_type={self.transport_type}")
+            
+            # Python SDK의 StreamableHTTPTransport 사용
+            async with streamable_transport.connect_streamable_http(
+                scope, receive, send
+            ) as streams:
+                read_stream, write_stream = streams
+                
+                # 통합 MCP 서버 세션 실행 (SSE와 동일한 로직)
+                await self._run_unified_mcp_session(
+                    read_stream,
+                    write_stream,
+                    cleanup_callback
+                )
+                
+        except Exception as e:
+            logger.error(f"❌ Unified Streamable HTTP connection failed: {e}")
+            # 에러 응답
+            await send({
+                "type": "http.response.start",
+                "status": 500,
+                "headers": [[b"content-type", b"application/json"]]
+            })
+            await send({
+                "type": "http.response.body", 
+                "body": json.dumps({"error": str(e)}).encode()
+            })
+    
+    async def _run_unified_mcp_session(self, read_stream, write_stream, cleanup_callback=None):
+        """
+        통합 MCP 세션 실행 (SSE와 Streamable HTTP 공통 로직)
+        
+        이 메서드는 transport 타입에 관계없이 동일한 통합 MCP 기능을 제공:
+        - 네임스페이스 기반 도구 라우팅
+        - 서버별 에러 격리  
+        - 동적 도구 로딩
+        - 서버 헬스 모니터링
+        """
+        try:
+            from mcp.server.lowlevel import Server
+            import mcp.types as types
+            
+            # MCP 서버 인스턴스 생성
+            mcp_server = Server(f"unified-mcp-{self.session_id}")
+            
+            # 통합 도구 목록 등록
+            @mcp_server.list_tools()
+            async def list_unified_tools():
+                """통합 도구 목록 반환 (네임스페이스 포함)"""
+                return await self.protocol_handler.handle_list_tools()
+            
+            # 통합 도구 호출 처리
+            @mcp_server.call_tool()
+            async def call_unified_tool(name: str, arguments: dict):
+                """통합 도구 호출 (네임스페이스 라우팅)"""
+                return await self.protocol_handler.handle_call_tool(name, arguments)
+            
+            # 통합 리소스 목록 (필요시)
+            @mcp_server.list_resources()
+            async def list_unified_resources():
+                """통합 리소스 목록 반환"""
+                return await self.protocol_handler.handle_list_resources()
+            
+            logger.info(f"🚀 Running unified MCP session: session={self.session_id}, transport={self.transport_type}")
+            
+            # 세션 시작 로깅
+            self.structured_logger.session_event(
+                "session_started",
+                transport_type=self.transport_type,
+                servers_count=len(self.project_servers),
+                enabled_servers=[s.name for s in self.project_servers if s.is_enabled]
+            )
+            
+            # MCP 서버 실행
+            await mcp_server.run(
+                read_stream,
+                write_stream,
+                mcp_server.create_initialization_options()
+            )
+            
+        except Exception as e:
+            logger.error(f"❌ Unified MCP session error: {e}")
+            
+            # 세션 에러 로깅
+            self.structured_logger.session_event(
+                "session_error",
+                error=str(e),
+                transport_type=self.transport_type
+            )
+            
+            raise
+        
+        finally:
+            # 정리 작업
+            if cleanup_callback:
+                await cleanup_callback()
+            
+            # 세션 종료 로깅
+            self.structured_logger.session_event(
+                "session_ended",
+                transport_type=self.transport_type,
+                health_summary=self._get_server_health_summary()
+            )
+            
+            logger.info(f"🏁 Unified MCP session ended: session={self.session_id}, transport={self.transport_type}")

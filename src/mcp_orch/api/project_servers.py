@@ -150,7 +150,9 @@ async def list_project_servers(
                     server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
                     logger.debug(f"Live check for {server.name}: status={server_status}")
                     if server_status == "online":
-                        tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
+                        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+                        session_manager_server_id = f"{server.project_id}.{server.name}"
+                        tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config, db, str(server.project_id))
                         tools_count = len(tools)
                         logger.info(f"✅ Live check: Retrieved {tools_count} tools for server {server.name}")
                 else:
@@ -267,7 +269,9 @@ async def get_project_server_detail(
                 unique_server_id = mcp_connection_service._generate_unique_server_id(server)
                 server_status = await mcp_connection_service.check_server_status(unique_server_id, server_config)
                 if server_status == "online":
-                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
+                    # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+                    session_manager_server_id = f"{server.project_id}.{server.name}"
+                    tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config, db, str(server.project_id))
                     tools_count = len(tools)
                     print(f"✅ Retrieved {tools_count} tools for server {server.name}")
         except Exception as e:
@@ -649,7 +653,9 @@ async def refresh_project_servers_status(
                 # 도구 목록 조회 (온라인인 경우에만)
                 tools = []
                 if status_result == "online":
-                    tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
+                    # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+                    session_manager_server_id = f"{server.project_id}.{server.name}"
+                    tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config, db, str(server.project_id))
                     server.status = McpServerStatus.ACTIVE
                     server.last_used_at = datetime.utcnow()
                     server.last_error = None
@@ -753,7 +759,9 @@ async def refresh_project_server_status(
         # 도구 목록 조회 (온라인인 경우에만)
         tools = []
         if status_result == "online":
-            tools = await mcp_connection_service.get_server_tools(unique_server_id, server_config, db, str(server.project_id))
+            # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+            session_manager_server_id = f"{server.project_id}.{server.name}"
+            tools = await mcp_connection_service.get_server_tools(session_manager_server_id, server_config, db, str(server.project_id))
             # 상태를 active로 업데이트
             server.status = McpServerStatus.ACTIVE
             server.last_used_at = datetime.utcnow()
@@ -851,8 +859,11 @@ async def execute_project_server_tool(
         # 도구 실행
         logger.info(f"Executing tool '{tool_name}' on server '{server.name}' with arguments: {request.arguments}")
         
+        # Session manager가 기대하는 server_id 형식: "project_id.server_name"
+        session_manager_server_id = f"{project_id}.{server.name}"
+        
         result = await mcp_connection_service.call_tool(
-            str(server.id),  # UUID를 문자열로 변환하여 전달
+            session_manager_server_id,
             server_config, 
             tool_name, 
             request.arguments,
