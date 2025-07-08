@@ -923,10 +923,42 @@
   - [x] 점 표기법 대신 언더스코어 대문자 표기법으로 통일 (API_KEY_CREATED)
   - [x] 누락된 ActivityType enum 값들을 데이터베이스에 추가하는 마이그레이션 생성 및 실행
 
+### TASK_181: UI에서 Streamable HTTP 연결 정보 표시 및 가이드 개선 ✅
+- [x] Phase 1: Unified MCP 연결 정보 업데이트
+  - [x] /api/projects/[projectId]/unified-connection/route.ts에서 Streamable HTTP 엔드포인트 추가
+  - [x] SSE와 Streamable HTTP 모두 포함하는 cline_config 구성 생성
+  - [x] 연결 타입별 설명 및 가이드 메시지 추가
+- [x] Phase 2: UnifiedMcpConnectionInfo 컴포넌트 업그레이드
+  - [x] TypeScript 인터페이스에 streamable_http_endpoint 필드 추가
+  - [x] SSE와 Streamable HTTP 엔드포인트 모두 표시하도록 UI 수정
+  - [x] 각 연결 타입별 배지 및 복사 기능 구현
+  - [x] 연결 타입 설명 추가 (Traditional vs New)
+- [x] Phase 3: 개별 서버 페이지에서 Streamable HTTP 지원 추가
+  - [x] ServerOverviewTab에서 Streamable HTTP 엔드포인트 표시 추가
+  - [x] SSE와 Streamable HTTP 설정 JSON 모두 제공
+  - [x] 연결 타입별 가이드 정보 추가 (SSE/Streamable HTTP/Local Direct)
+  - [x] 사용자 친화적인 설명과 배지로 UI 개선
+
+### TASK_182: 연결 정보 UI를 탭 구조로 개선 ✅
+- [x] Phase 1: UnifiedMcpConnectionInfo 컴포넌트 탭화
+  - [x] Tabs 컴포넌트 임포트 및 상태 관리 추가
+  - [x] SSE/Streamable HTTP/Combined Config 3개 탭으로 구분
+  - [x] 각 탭별 독립적인 엔드포인트 URL 및 설정 JSON 제공
+  - [x] 탭별 아이콘 및 설명 배지 추가 (Monitor/Zap/Code)
+- [x] Phase 2: ServerOverviewTab 컴포넌트 탭화
+  - [x] SSE/Streamable HTTP/Local Direct 3개 탭으로 구분
+  - [x] 각 연결 방식별 상세 설정 및 가이드 제공
+  - [x] 통합된 복사 기능 및 사용자 피드백 개선
+  - [x] 연결 방식 비교 가이드 추가 (성능, 호환성, 사용 사례)
+- [x] Phase 3: 사용자 경험 개선
+  - [x] 연결 방식별 명확한 구분 및 설명
+  - [x] 각 방식의 장단점 및 사용 시나리오 가이드
+  - [x] 일관된 디자인 및 상호작용 패턴 적용
+
 ## Progress Status  
-- Current Progress: TASK_180 - 팀 삭제 Dialog 컴포넌트 구현 및 API 연동 ✅ 완료
+- Current Progress: TASK_182 - 연결 정보 UI를 탭 구조로 개선 ✅ 완료
 - Next Task: 다음 개발 작업 대기
-- Last Update: 2025-07-01
+- Last Update: 2025-07-08
 - Automatic Check Feedback: 
   - ✅ 전체 리팩토링 여정 포괄적 분석 완료 (29,552줄 → 37개 모듈)
   - ✅ 5개 Critical Priority 파일 (7,207줄) 성공적 모듈화

@@ -244,6 +244,11 @@ export default function HomePage() {
                 
                 <p className="mt-6 text-white/90">
                   <span className="font-semibold text-white">Compatible with:</span> Claude Code, Cursor, Cline, MCP Inspector
+                  <br />
+                  <span className="text-sm text-white/70">
+                    🚀 <span className="font-medium text-cyan-300">Streamable HTTP</span> for Claude Code | 
+                    📡 <span className="font-medium text-blue-300">SSE</span> for universal compatibility
+                  </span>
                 </p>
               </div>
             </div>
@@ -471,20 +476,20 @@ export default function HomePage() {
                   <h3 className="text-2xl font-bold mb-4 text-gray-900">Universal AI Compatibility</h3>
                   <p className="text-gray-600 leading-relaxed mb-6">
                     Works with <span className="font-semibold text-purple-600">every MCP tool</span> out of the box. 
-                    Claude Code, Cursor, Cline, VS Code extensions – seamless integration.
+                    Dual transport support (SSE + Streamable HTTP) for maximum compatibility and performance.
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-center text-sm text-gray-500">
                       <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
-                      Standard MCP protocol
+                      SSE + Streamable HTTP protocols
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                      Claude Code optimized
                     </div>
                     <div className="flex items-center text-sm text-gray-500">
                       <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
                       Auto-generated configs
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
-                      Zero client changes needed
                     </div>
                   </div>
                 </div>

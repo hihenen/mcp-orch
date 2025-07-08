@@ -26,7 +26,7 @@ Like how Git hosting platforms provide a single place for all your repositories,
 - **🔄 One-Click Integration**: Auto-generated secure endpoints for Cursor, Cline, Claude, and all MCP tools
 - **📊 Complete Visibility**: Track server usage, team activities, and system performance across your entire MCP infrastructure
 - **🏗️ Enterprise Ready**: Self-hosted deployment with scalable architecture and governance controls
-- **🔌 Universal Compatibility**: Standard MCP protocol with SSE transport support and namespace-based tool routing
+- **🔌 Universal Compatibility**: Standard MCP protocol with dual transport support (SSE + Streamable HTTP) and namespace-based tool routing
 
 ## Quick Start
 
@@ -196,13 +196,15 @@ Think of it as your **"central platform for MCP servers"** with two powerful ope
 **Like managing individual Git repos - perfect for starting safe:**
 ```json
 {
-  "github-server": {
+  "github-server-sse": {
+    "type": "sse",
     "url": "http://localhost:8000/projects/abc123/servers/github/sse",
-    "auth": "Bearer your-token"
+    "headers": { "Authorization": "Bearer your-token" }
   },
-  "slack-server": {
-    "url": "http://localhost:8000/projects/abc123/servers/slack/sse", 
-    "auth": "Bearer your-token"
+  "slack-server-streamable": {
+    "type": "streamable-http", 
+    "url": "http://localhost:8000/projects/abc123/servers/slack/mcp",
+    "headers": { "Authorization": "Bearer your-token" }
   }
 }
 ```
@@ -278,15 +280,34 @@ MCP Orchestrator uses **project-specific API keys** for secure access control. E
 
 ### 🔧 AI Tool Configuration
 
-After setting up your project in the web UI, you'll get secure endpoints like:
+After setting up your project in the web UI, you'll get secure endpoints for both connection types:
 
+#### 📡 SSE Connection (Traditional)
+**Widely supported by all MCP clients:**
 ```json
 {
-  "mcp-orchestrator": {
+  "mcp-orchestrator-sse": {
     "disabled": false,
     "timeout": 60,
     "type": "sse",
     "url": "http://localhost:8000/projects/c41aa472-15c3-4336-bcf8-21b464253d62/servers/brave-search/sse",
+    "headers": {
+      "Authorization": "Bearer project_7xXZb_tq_QreIJ3CB2wvWRpklyOmsGSGy1BeByTYe2Ia",
+      "Content-Type": "application/json"
+    }
+  }
+}
+```
+
+#### ⚡ Streamable HTTP Connection (Modern)
+**Optimized for Claude Code and modern MCP clients:**
+```json
+{
+  "mcp-orchestrator-streamable": {
+    "disabled": false,
+    "timeout": 60,
+    "type": "streamable-http",
+    "url": "http://localhost:8000/projects/c41aa472-15c3-4336-bcf8-21b464253d62/servers/brave-search/mcp",
     "headers": {
       "Authorization": "Bearer project_7xXZb_tq_QreIJ3CB2wvWRpklyOmsGSGy1BeByTYe2Ia",
       "Content-Type": "application/json"
@@ -305,7 +326,7 @@ Configure multiple servers through a single secure endpoint:
     "disabled": false,
     "timeout": 60,
     "type": "sse", 
-    "url": "http://localhost:8000/projects/your-project-id/sse",
+    "url": "http://localhost:8000/projects/your-project-id/unified/sse",
     "headers": {
       "Authorization": "Bearer your-project-api-key",
       "Content-Type": "application/json"
@@ -313,6 +334,20 @@ Configure multiple servers through a single secure endpoint:
   }
 }
 ```
+
+### 🔗 Connection Method Comparison
+
+**Choose the right transport for your use case:**
+
+| Feature | SSE (Traditional) | Streamable HTTP (Modern) |
+|---------|------------------|--------------------------|
+| **Compatibility** | ✅ All MCP clients | ✅ Claude Code optimized |
+| **Performance** | ⭐⭐⭐ Good | ⭐⭐⭐⭐ Excellent |
+| **Reliability** | ⭐⭐⭐⭐ Very stable | ⭐⭐⭐⭐ Very stable |
+| **Use Case** | Broad compatibility | Modern performance |
+| **Endpoint** | `/sse` | `/mcp` |
+
+**💡 Recommendation**: Start with SSE for maximum compatibility, switch to Streamable HTTP for enhanced performance with Claude Code.
 
 ### 🔒 Security Features
 

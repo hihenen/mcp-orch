@@ -24,7 +24,7 @@ Git 호스팅 플랫폼이 모든 저장소를 위한 단일 장소를 제공하
 - **🔄 원클릭 통합**: Cursor, Cline, Claude 및 모든 MCP 도구용 자동 생성 보안 엔드포인트
 - **📊 완전한 가시성**: 전체 MCP 인프라에서 서버 사용량, 팀 활동 및 시스템 성능 추적
 - **🏗️ 엔터프라이즈 준비**: 확장 가능한 아키텍처 및 거버넌스 제어를 갖춘 자체 호스팅 배포
-- **🔌 범용 호환성**: SSE 전송 지원 및 네임스페이스 기반 도구 라우팅을 갖춘 표준 MCP 프로토콜
+- **🔌 범용 호환성**: 이중 전송 지원(SSE + Streamable HTTP) 및 네임스페이스 기반 도구 라우팅을 갖춘 표준 MCP 프로토콜
 
 ## 설치
 
@@ -118,15 +118,34 @@ MCP Orchestrator는 **프로젝트별 API 키**를 사용한 보안 접근 제�
 
 ### 🔧 AI 도구 설정
 
-웹 UI에서 프로젝트를 설정한 후, 다음과 같은 보안 엔드포인트를 얻을 수 있습니다:
+웹 UI에서 프로젝트를 설정한 후, 두 가지 연결 타입에 대한 보안 엔드포인트를 얻을 수 있습니다:
 
+#### 📡 SSE 연결 (전통적)
+**모든 MCP 클라이언트에서 널리 지원:**
 ```json
 {
-  "mcp-orchestrator": {
+  "mcp-orchestrator-sse": {
     "disabled": false,
     "timeout": 60,
     "type": "sse",
     "url": "http://localhost:8000/projects/c41aa472-15c3-4336-bcf8-21b464253d62/servers/brave-search/sse",
+    "headers": {
+      "Authorization": "Bearer project_7xXZb_tq_QreIJ3CB2wvWRpklyOmsGSGy1BeByTYe2Ia",
+      "Content-Type": "application/json"
+    }
+  }
+}
+```
+
+#### ⚡ Streamable HTTP 연결 (모던)
+**Claude Code 및 현대적 MCP 클라이언트에 최적화:**
+```json
+{
+  "mcp-orchestrator-streamable": {
+    "disabled": false,
+    "timeout": 60,
+    "type": "streamable-http",
+    "url": "http://localhost:8000/projects/c41aa472-15c3-4336-bcf8-21b464253d62/servers/brave-search/mcp",
     "headers": {
       "Authorization": "Bearer project_7xXZb_tq_QreIJ3CB2wvWRpklyOmsGSGy1BeByTYe2Ia",
       "Content-Type": "application/json"
@@ -145,7 +164,7 @@ MCP Orchestrator는 **프로젝트별 API 키**를 사용한 보안 접근 제�
     "disabled": false,
     "timeout": 60,
     "type": "sse", 
-    "url": "http://localhost:8000/projects/your-project-id/sse",
+    "url": "http://localhost:8000/projects/your-project-id/unified/sse",
     "headers": {
       "Authorization": "Bearer your-project-api-key",
       "Content-Type": "application/json"
@@ -153,6 +172,20 @@ MCP Orchestrator는 **프로젝트별 API 키**를 사용한 보안 접근 제�
   }
 }
 ```
+
+### 🔗 연결 방법 비교
+
+**사용 사례에 맞는 전송 방식을 선택하세요:**
+
+| 기능 | SSE (전통적) | Streamable HTTP (모던) |
+|------|-------------|----------------------|
+| **호환성** | ✅ 모든 MCP 클라이언트 | ✅ Claude Code 최적화 |
+| **성능** | ⭐⭐⭐ 좋음 | ⭐⭐⭐⭐ 우수 |
+| **안정성** | ⭐⭐⭐⭐ 매우 안정적 | ⭐⭐⭐⭐ 매우 안정적 |
+| **사용 사례** | 광범위한 호환성 | 현대적 성능 |
+| **엔드포인트** | `/sse` | `/mcp` |
+
+**💡 권장사항**: 최대 호환성을 위해 SSE로 시작하고, Claude Code와 함께 향상된 성능을 위해 Streamable HTTP로 전환하세요.
 
 ### 🔒 보안 기능
 

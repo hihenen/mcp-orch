@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Copy, 
   CheckCircle, 
@@ -12,8 +13,9 @@ import {
   Globe, 
   Code, 
   InfoIcon,
-  ChevronDown,
-  ChevronUp
+  Monitor,
+  Zap,
+  Download
 } from 'lucide-react';
 
 interface UnifiedConnectionInfo {
@@ -21,9 +23,10 @@ interface UnifiedConnectionInfo {
   project_name: string;
   unified_mcp_enabled: boolean;
   sse_endpoint: string;
+  streamable_http_endpoint: string;
   cline_config: {
     mcpServers: Record<string, {
-      transport: string;
+      type: string;
       url: string;
       headers: Record<string, string>;
     }>;
@@ -32,6 +35,7 @@ interface UnifiedConnectionInfo {
     setup: string;
     note: string;
     namespace_info: string;
+    connection_types: string;
   };
 }
 
@@ -45,7 +49,7 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState('sse');
 
   useEffect(() => {
     if (projectId && unified_mcp_enabled) {
@@ -147,120 +151,215 @@ export function UnifiedMcpConnectionInfo({ projectId, unified_mcp_enabled }: Uni
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* SSE Endpoint */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Link className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">SSE Endpoint</span>
-          </div>
-          <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-blue-200">
-            <code className="flex-1 text-sm font-mono text-gray-800">
-              {connectionInfo.sse_endpoint}
-            </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyToClipboard(connectionInfo.sse_endpoint, 'endpoint')}
-              className="text-blue-600 border-blue-300 hover:bg-blue-100"
-            >
-              {copiedField === 'endpoint' ? (
-                <CheckCircle className="h-4 w-4" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
+        {/* Connection Type Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="sse" className="flex items-center gap-2">
+              <Monitor className="h-4 w-4" />
+              SSE
+            </TabsTrigger>
+            <TabsTrigger value="streamable" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Streamable HTTP
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Configuration Toggle */}
-        <div className="border-t border-blue-200 pt-4">
-          <Button
-            variant="ghost"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between p-3 text-blue-900 hover:bg-blue-100 rounded-lg"
-          >
-            <div className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              <span className="text-sm font-medium">Configuration Details</span>
+          {/* SSE Tab */}
+          <TabsContent value="sse" className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Monitor className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">SSE Connection (Traditional)</span>
+                <Badge variant="outline" className="text-xs">Widely Supported</Badge>
+              </div>
+              
+              {/* SSE Endpoint */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Endpoint URL</label>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-blue-200">
+                  <code className="flex-1 text-sm font-mono text-gray-800">
+                    {connectionInfo.sse_endpoint}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(connectionInfo.sse_endpoint, 'sse_endpoint')}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                  >
+                    {copiedField === 'sse_endpoint' ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* SSE Configuration */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">MCP Configuration JSON</label>
+                <div className="relative">
+                  <pre className="text-xs font-mono bg-white p-4 rounded-lg border border-blue-200 overflow-x-auto max-h-48">
+{JSON.stringify({
+  mcpServers: {
+    [`${connectionInfo.project_name}-unified-sse`]: {
+      type: "sse",
+      url: connectionInfo.sse_endpoint,
+      headers: {
+        "Authorization": "Bearer YOUR_API_TOKEN"
+      }
+    }
+  }
+}, null, 2)}</pre>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(JSON.stringify({
+                      mcpServers: {
+                        [`${connectionInfo.project_name}-unified-sse`]: {
+                          type: "sse",
+                          url: connectionInfo.sse_endpoint,
+                          headers: {
+                            "Authorization": "Bearer YOUR_API_TOKEN"
+                          }
+                        }
+                      }
+                    }, null, 2), 'sse_config')}
+                    className="absolute top-2 right-2 text-blue-600 border-blue-300 hover:bg-blue-100"
+                  >
+                    {copiedField === 'sse_config' ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+          </TabsContent>
+
+          {/* Streamable HTTP Tab */}
+          <TabsContent value="streamable" className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-blue-900">Streamable HTTP Connection (Modern)</span>
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">Claude Code Optimized</Badge>
+              </div>
+              
+              {/* Streamable HTTP Endpoint */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Endpoint URL</label>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-blue-200">
+                  <code className="flex-1 text-sm font-mono text-gray-800">
+                    {connectionInfo.streamable_http_endpoint}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(connectionInfo.streamable_http_endpoint, 'streamable_endpoint')}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                  >
+                    {copiedField === 'streamable_endpoint' ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Streamable HTTP Configuration */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">MCP Configuration JSON</label>
+                <div className="relative">
+                  <pre className="text-xs font-mono bg-white p-4 rounded-lg border border-blue-200 overflow-x-auto max-h-48">
+{JSON.stringify({
+  mcpServers: {
+    [`${connectionInfo.project_name}-unified-streamable`]: {
+      type: "streamable-http",
+      url: connectionInfo.streamable_http_endpoint,
+      headers: {
+        "Authorization": "Bearer YOUR_API_TOKEN"
+      }
+    }
+  }
+}, null, 2)}</pre>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(JSON.stringify({
+                      mcpServers: {
+                        [`${connectionInfo.project_name}-unified-streamable`]: {
+                          type: "streamable-http",
+                          url: connectionInfo.streamable_http_endpoint,
+                          headers: {
+                            "Authorization": "Bearer YOUR_API_TOKEN"
+                          }
+                        }
+                      }
+                    }, null, 2), 'streamable_config')}
+                    className="absolute top-2 right-2 text-blue-600 border-blue-300 hover:bg-blue-100"
+                  >
+                    {copiedField === 'streamable_config' ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+        </Tabs>
+
+        {/* General Instructions */}
+        <Alert className="border-blue-200 bg-white">
+          <InfoIcon className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <div className="space-y-2">
+              <p className="font-medium">{connectionInfo.instructions.setup}</p>
+              <p className="text-sm">{connectionInfo.instructions.note}</p>
+              <p className="text-sm">{connectionInfo.instructions.namespace_info}</p>
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm font-medium text-blue-900 mb-1">Connection Type Guide:</p>
+                <ul className="text-xs text-blue-800 space-y-1">
+                  <li><strong>SSE:</strong> Traditional real-time streaming, widely supported by all MCP clients</li>
+                  <li><strong>Streamable HTTP:</strong> Modern HTTP-based streaming, optimized for Claude Code</li>
+                </ul>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/projects/${projectId}/servers`}
+            className="text-blue-600 border-blue-300 hover:bg-blue-100"
+          >
+            View Servers
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/projects/${projectId}/settings`}
+            className="text-blue-600 border-blue-300 hover:bg-blue-100"
+          >
+            MCP Settings
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
+            className="text-blue-600 border-blue-300 hover:bg-blue-100"
+          >
+            API Keys
           </Button>
         </div>
-
-
-        {/* Expandable Configuration Section */}
-        {isExpanded && (
-          <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-            {/* Cline/Cursor Configuration */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Code className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">Cline/Cursor Configuration</span>
-              </div>
-              <div className="relative">
-                <pre className="text-xs font-mono bg-white p-4 rounded-lg border border-blue-200 overflow-x-auto">
-                  {formatJson(connectionInfo.cline_config)}
-                </pre>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(formatJson(connectionInfo.cline_config), 'config')}
-                  className="absolute top-2 right-2 text-blue-600 border-blue-300 hover:bg-blue-100"
-                >
-                  {copiedField === 'config' ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <Alert className="border-blue-200 bg-white">
-              <InfoIcon className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <div className="space-y-2">
-                  <p className="font-medium">{connectionInfo.instructions.setup}</p>
-                  <p className="text-sm">{connectionInfo.instructions.note}</p>
-                  <p className="text-sm">{connectionInfo.instructions.namespace_info}</p>
-                </div>
-              </AlertDescription>
-            </Alert>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.href = `/projects/${projectId}/servers`}
-                className="text-blue-600 border-blue-300 hover:bg-blue-100"
-              >
-                View Servers
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.href = `/projects/${projectId}/settings`}
-                className="text-blue-600 border-blue-300 hover:bg-blue-100"
-              >
-                MCP Settings
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.href = `/projects/${projectId}/api-keys`}
-                className="text-blue-600 border-blue-300 hover:bg-blue-100"
-              >
-                API Keys
-              </Button>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

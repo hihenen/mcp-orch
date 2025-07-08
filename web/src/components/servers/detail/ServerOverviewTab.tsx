@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, Shield, ShieldOff, ShieldCheck } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Settings, Shield, ShieldOff, ShieldCheck, Monitor, Zap, Download, Copy, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ServerTabProps } from './types';
 import { formatDateTime } from '@/lib/date-utils';
@@ -13,6 +15,21 @@ const getServerBaseUrl = () => {
 };
 
 export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
+  const [activeConnectionTab, setActiveConnectionTab] = useState('sse');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+      toast.success(`${fieldName} copied to clipboard`);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
@@ -159,111 +176,289 @@ export function ServerOverviewTab({ server, projectId }: ServerTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Cline/Cursor Connection Information
+            Connection Information
           </CardTitle>
           <CardDescription>
-            To connect this server from Cline or Cursor using MCP Orch SSE method, copy the settings below.
+            Choose your preferred connection method. Each tab provides the complete setup for that connection type.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-medium text-sm">SSE Endpoint</div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const endpoint = `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`;
-                    navigator.clipboard.writeText(endpoint);
-                    toast.success('Endpoint copied to clipboard.');
-                  }}
-                >
-                  Copy
-                </Button>
-              </div>
-              <div className="font-mono bg-muted p-3 rounded text-sm break-all">
-                {getServerBaseUrl()}/projects/{projectId}/servers/{server.name}/sse
-              </div>
-            </div>
+          <Tabs value={activeConnectionTab} onValueChange={setActiveConnectionTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="sse" className="flex items-center gap-2">
+                <Monitor className="h-4 w-4" />
+                SSE
+              </TabsTrigger>
+              <TabsTrigger value="streamable" className="flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                Streamable HTTP
+              </TabsTrigger>
+              <TabsTrigger value="local" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Local Direct
+              </TabsTrigger>
+            </TabsList>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-medium text-sm">MCP Proxy SSE Settings JSON</div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const mcpConfig = {
-                      mcpServers: {
-                        [server.name]: {
-                          disabled: false,
-                          timeout: 30,
-                          url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`,
-                          headers: {
-                            Authorization: "Bearer YOUR_API_TOKEN"
-                          },
-                          type: "sse"
-                        }
-                      }
-                    };
-                    navigator.clipboard.writeText(JSON.stringify(mcpConfig, null, 2));
-                    toast.success('MCP Proxy SSE settings copied to clipboard.');
-                  }}
-                >
-                  Copy
-                </Button>
-              </div>
-              <div className="font-mono bg-muted p-3 rounded text-xs overflow-auto max-h-48">
-                <pre>{JSON.stringify({
-                  mcpServers: {
-                    [server.name]: {
-                      disabled: false,
-                      timeout: 30,
-                      url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`,
-                      headers: {
-                        Authorization: "Bearer YOUR_API_TOKEN"
-                      },
-                      type: "sse"
-                    }
-                  }
-                }, null, 2)}</pre>
-              </div>
-            </div>
+            {/* SSE Tab */}
+            <TabsContent value="sse" className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">SSE Connection (Traditional)</span>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Widely Supported
+                  </span>
+                </div>
+                
+                {/* SSE Endpoint */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Endpoint URL</label>
+                  <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                    <code className="flex-1 text-sm font-mono text-gray-800">
+                      {getServerBaseUrl()}/projects/{projectId}/servers/{server.name}/sse
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(`${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`, 'SSE endpoint')}
+                    >
+                      {copiedField === 'SSE endpoint' ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-medium text-sm">Local Direct Installation JSON (Optional)</div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const mcpConfig = {
-                      mcpServers: {
-                        [server.name]: {
-                          command: server.command,
-                          args: server.args || [],
-                          env: server.env || {}
-                        }
-                      }
-                    };
-                    navigator.clipboard.writeText(JSON.stringify(mcpConfig, null, 2));
-                    toast.success('Local installation settings copied to clipboard.');
-                  }}
-                >
-                  Copy
-                </Button>
+                {/* SSE Configuration */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">MCP Configuration JSON</label>
+                  <div className="relative">
+                    <pre className="text-xs font-mono bg-white p-4 rounded-lg border overflow-x-auto max-h-48">
+{JSON.stringify({
+  mcpServers: {
+    [server.name]: {
+      disabled: false,
+      timeout: 30,
+      url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`,
+      headers: {
+        Authorization: "Bearer YOUR_API_TOKEN"
+      },
+      type: "sse"
+    }
+  }
+}, null, 2)}</pre>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const config = {
+                          mcpServers: {
+                            [server.name]: {
+                              disabled: false,
+                              timeout: 30,
+                              url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/sse`,
+                              headers: {
+                                Authorization: "Bearer YOUR_API_TOKEN"
+                              },
+                              type: "sse"
+                            }
+                          }
+                        };
+                        copyToClipboard(JSON.stringify(config, null, 2), 'SSE configuration');
+                      }}
+                      className="absolute top-2 right-2"
+                    >
+                      {copiedField === 'SSE configuration' ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="font-mono bg-muted p-3 rounded text-xs overflow-auto max-h-48">
-                <pre>{JSON.stringify({
-                  mcpServers: {
-                    [server.name]: {
-                      command: server.command,
-                      args: server.args || [],
-                      env: server.env || {}
-                    }
-                  }
-                }, null, 2)}</pre>
+            </TabsContent>
+
+            {/* Streamable HTTP Tab */}
+            <TabsContent value="streamable" className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-blue-900">Streamable HTTP Connection (Modern)</span>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Claude Code Optimized
+                  </span>
+                </div>
+                
+                {/* Streamable HTTP Endpoint */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Endpoint URL</label>
+                  <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                    <code className="flex-1 text-sm font-mono text-gray-800">
+                      {getServerBaseUrl()}/projects/{projectId}/servers/{server.name}/mcp
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(`${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/mcp`, 'Streamable HTTP endpoint')}
+                    >
+                      {copiedField === 'Streamable HTTP endpoint' ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Streamable HTTP Configuration */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">MCP Configuration JSON</label>
+                  <div className="relative">
+                    <pre className="text-xs font-mono bg-white p-4 rounded-lg border overflow-x-auto max-h-48">
+{JSON.stringify({
+  mcpServers: {
+    [`${server.name}-streamable`]: {
+      disabled: false,
+      timeout: 30,
+      url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/mcp`,
+      headers: {
+        Authorization: "Bearer YOUR_API_TOKEN"
+      },
+      type: "streamable-http"
+    }
+  }
+}, null, 2)}</pre>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const config = {
+                          mcpServers: {
+                            [`${server.name}-streamable`]: {
+                              disabled: false,
+                              timeout: 30,
+                              url: `${getServerBaseUrl()}/projects/${projectId}/servers/${server.name}/mcp`,
+                              headers: {
+                                Authorization: "Bearer YOUR_API_TOKEN"
+                              },
+                              type: "streamable-http"
+                            }
+                          }
+                        };
+                        copyToClipboard(JSON.stringify(config, null, 2), 'Streamable HTTP configuration');
+                      }}
+                      className="absolute top-2 right-2"
+                    >
+                      {copiedField === 'Streamable HTTP configuration' ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Local Direct Tab */}
+            <TabsContent value="local" className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Download className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium text-blue-900">Local Direct Installation</span>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    No Proxy
+                  </span>
+                </div>
+                
+                {/* Local Direct Configuration */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Direct MCP Configuration JSON</label>
+                  <div className="relative">
+                    <pre className="text-xs font-mono bg-white p-4 rounded-lg border overflow-x-auto max-h-48">
+{JSON.stringify({
+  mcpServers: {
+    [server.name]: {
+      command: server.command,
+      args: server.args || [],
+      env: server.env || {}
+    }
+  }
+}, null, 2)}</pre>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const config = {
+                          mcpServers: {
+                            [server.name]: {
+                              command: server.command,
+                              args: server.args || [],
+                              env: server.env || {}
+                            }
+                          }
+                        };
+                        copyToClipboard(JSON.stringify(config, null, 2), 'Local direct configuration');
+                      }}
+                      className="absolute top-2 right-2"
+                    >
+                      {copiedField === 'Local direct configuration' ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="text-sm text-purple-800">
+                    <p className="font-medium mb-2">Local Direct Installation Notes:</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• Requires the MCP server to be installed locally on your machine</li>
+                      <li>• No authentication or proxy - direct connection to the server process</li>
+                      <li>• Best performance but requires manual server installation and maintenance</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          
+          {/* General Connection Guide */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <div className="font-medium text-sm text-blue-900 mb-2">Connection Method Comparison</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-blue-800">
+              <div>
+                <div className="font-medium flex items-center gap-1">
+                  <Monitor className="h-3 w-3" />
+                  SSE
+                </div>
+                <div>• Traditional streaming</div>
+                <div>• Widely supported</div>
+                <div>• Reliable fallback</div>
+              </div>
+              <div>
+                <div className="font-medium flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  Streamable HTTP
+                </div>
+                <div>• Modern HTTP streaming</div>
+                <div>• Claude Code optimized</div>
+                <div>• Better performance</div>
+              </div>
+              <div>
+                <div className="font-medium flex items-center gap-1">
+                  <Download className="h-3 w-3" />
+                  Local Direct
+                </div>
+                <div>• No proxy required</div>
+                <div>• Maximum performance</div>
+                <div>• Manual installation</div>
               </div>
             </div>
           </div>

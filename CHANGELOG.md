@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- [TASK_182] Enhanced connection information UI with tab structure for better user experience (2025-07-08)
+  - Transform connection information into organized tab structure (SSE/Streamable HTTP/Local Direct)
+  - Add Streamable HTTP connection support with Claude Code optimization
+  - Update UnifiedMcpConnectionInfo with dual transport support (SSE + Streamable HTTP)
+  - Enhance ServerOverviewTab with comprehensive connection method comparison
+  - Provide separate configurations for each connection type with copy functionality
+  - Add connection method comparison guide with performance and compatibility information
+  - Remove unnecessary "Combined Config" tab for simplified user experience
+  - Update component titles from "Cline/Cursor Connection Information" to "Connection Information"
+- [TASK_181] Streamable HTTP connection support and comprehensive UI improvements (2025-07-08)
+  - Add Streamable HTTP endpoint support for modern MCP clients (Claude Code optimized)
+  - Implement dual transport architecture: traditional SSE + modern Streamable HTTP
+  - Update unified MCP connection API to provide both SSE and Streamable HTTP endpoints
+  - Enhance UI components to display both connection types with clear differentiation
+  - Add connection type badges and user-friendly guidance (Traditional vs New vs Claude Code Optimized)
+  - Update individual server pages with comprehensive connection method support
+  - Provide complete MCP configuration JSON examples for both transport types
+  - Add connection type selection guide with performance and compatibility recommendations
 - [TASK_180] Complete team deletion Dialog component implementation and API integration (2025-07-01)
   - Add team deletion endpoint to modular teams/core.py router to fix 405 Method Not Allowed error
   - Replace native confirm/alert in admin teams page with showDeleteConfirm and showError
@@ -42,6 +60,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensure consistent JWT encryption keys across frontend-backend communication
   - Fix Docker Compose environment variable references and defaults
   - Enable seamless frontend build and deployment with only .env file modification
+
+### Enhanced
+- [TASK_182] Documentation and marketing updates for Streamable HTTP support (2025-07-08)
+  - Update README.md with comprehensive Streamable HTTP connection examples
+  - Add connection method comparison table (SSE vs Streamable HTTP) with use case guidance
+  - Update README_KOR.md with Korean translations for dual transport support
+  - Enhance main page (landing page) with Streamable HTTP compatibility information
+  - Update feature descriptions to highlight Claude Code optimization and modern transport support
+  - Add unified endpoint examples showing both connection types
+  - Provide clear recommendations for choosing between SSE and Streamable HTTP
 
 ### Changed
 - [TASK_176] Simplify migrate.sh script based on user feedback (2025-07-01)
