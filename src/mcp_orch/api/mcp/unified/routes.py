@@ -338,6 +338,7 @@ async def handle_notification_request(message: dict) -> JSONResponse:
 
 
 @router.get("/projects/{project_id}/unified/sse")
+@router.post("/projects/{project_id}/unified/sse")
 async def unified_mcp_endpoint(
     request: Request,
     project_id: UUID,
