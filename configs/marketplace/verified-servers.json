@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2024-01-15T10:00:00Z",
+  "servers": {
+    "github": {
+      "name": "GitHub Integration",
+      "description": "GitHub 저장소, 이슈, PR 관리",
+      "category": "productivity",
+      "icon": "github",
+      "tags": ["git", "repository", "issue", "pull-request"],
+      "verified": true,
+      "repository": "https://github.com/modelcontextprotocol/servers",
+      "config": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-github"],
+        "env_template": {
+          "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
+        },
+        "timeout": 60,
+        "transport": "stdio"
+      },
+      "setup": {
+        "required_env": ["GITHUB_TOKEN"],
+        "setup_guide": "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
+      }
+    },
+    "browsermcp": {
+      "name": "Browser Control",
+      "description": "웹 브라우저 자동화 및 제어",
+      "category": "automation",
+      "icon": "browser",
+      "tags": ["browser", "automation", "web", "scraping"],
+      "verified": true,
+      "repository": "https://github.com/browsermcp/mcp",
+      "config": {
+        "command": "npx",
+        "args": ["@browsermcp/mcp@latest"],
+        "env_template": {},
+        "timeout": 30,
+        "transport": "stdio"
+      },
+      "setup": {
+        "required_env": [],
+        "setup_guide": "https://github.com/browsermcp/mcp"
+      }
+    },
+    "filesystem": {
+      "name": "File System",
+      "description": "로컬 파일 시스템 접근 및 관리",
+      "category": "development",
+      "icon": "folder",
+      "tags": ["file", "directory", "filesystem", "local"],
+      "verified": true,
+      "repository": "https://github.com/modelcontextprotocol/servers",
+      "config": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+        "env_template": {},
+        "timeout": 30,
+        "transport": "stdio"
+      },
+      "setup": {
+        "required_env": [],
+        "setup_guide": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
+      }
+    },
+    "brave-search": {
+      "name": "Brave Search",
+      "description": "Brave Search API를 통한 웹 검색",
+      "category": "data",
+      "icon": "search",
+      "tags": ["search", "web", "api", "brave"],
+      "verified": true,
+      "repository": "https://github.com/modelcontextprotocol/servers",
+      "config": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        "env_template": {
+          "BRAVE_API_KEY": "your_brave_search_api_key_here"
+        },
+        "timeout": 30,
+        "transport": "stdio"
+      },
+      "setup": {
+        "required_env": ["BRAVE_API_KEY"],
+        "setup_guide": "https://brave.com/search/api/"
+      }
+    },
+    "notion": {
+      "name": "Notion Integration",
+      "description": "Notion 데이터베이스 및 페이지 관리",
+      "category": "productivity",
+      "icon": "notion",
+      "tags": ["notion", "database", "notes", "wiki"],
+      "verified": true,
+      "repository": "https://github.com/modelcontextprotocol/servers",
+      "config": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-notion"],
+        "env_template": {
+          "NOTION_API_KEY": "secret_your_notion_integration_token_here"
+        },
+        "timeout": 45,
+        "transport": "stdio"
+      },
+      "setup": {
+        "required_env": ["NOTION_API_KEY"],
+        "setup_guide": "https://developers.notion.com/docs/create-a-notion-integration"
+      }
+    },
+    "sqlite": {
+      "name": "SQLite Database",
+      "description": "SQLite 데이터베이스 조작 및 쿼리",
+      "category": "data",
+      "icon": "database",
+      "tags": ["sqlite", "database", "sql", "query"],
+      "verified": true,
+      "repository": "https://github.com/modelcontextprotocol/servers",
+      "config": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sqlite"],
+        "env_template": {},
+        "timeout": 45,
+        "transport": "stdio"
+      },
+      "setup": {
+        "required_env": [],
+        "setup_guide": "https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite"
+      }
+    }
+  }
+}

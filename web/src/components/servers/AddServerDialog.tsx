@@ -340,6 +340,24 @@ interface ServerConfig {
   jwt_auth_required?: boolean | null;  // null = inherit from project
 }
 
+interface MarketplaceServerConfig {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  config: {
+    command: string;
+    args: string[];
+    env_template: Record<string, string>;
+    timeout: number;
+    transport: string;
+  };
+  setup: {
+    required_env: string[];
+    setup_guide: string;
+  };
+}
+
 interface AddServerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -357,6 +375,7 @@ interface AddServerDialogProps {
     cwd?: string;
     jwt_auth_required?: boolean | null;
   };
+  marketplaceConfig?: MarketplaceServerConfig;
 }
 
 export function AddServerDialog({ 
@@ -365,7 +384,8 @@ export function AddServerDialog({
   onServerAdded, 
   onServerUpdated,
   projectId,
-  editServer 
+  editServer,
+  marketplaceConfig
 }: AddServerDialogProps) {
   // const { toast } = useToast(); // TODO: 토스트 시스템 구현 후 활성화
   const [isLoading, setIsLoading] = useState(false);
@@ -445,7 +465,24 @@ export function AddServerDialog({
     return JSON.stringify({ mcpServers: mcpServerConfig }, null, 2);
   };
 
-  // 편집 모드일 때 폼 데이터 초기화
+  // 마켓플레이스 설정을 JSON으로 변환
+  const convertMarketplaceToJson = (marketplaceServer: MarketplaceServerConfig) => {
+    const mcpServerConfig = {
+      [marketplaceServer.name]: {
+        disabled: false,
+        timeout: marketplaceServer.config.timeout,
+        type: marketplaceServer.config.transport,
+        command: marketplaceServer.config.command,
+        args: marketplaceServer.config.args,
+        env: marketplaceServer.config.env_template,
+        ...(marketplaceServer.description && { description: marketplaceServer.description })
+      }
+    };
+    
+    return JSON.stringify({ mcpServers: mcpServerConfig }, null, 2);
+  };
+
+  // 편집 모드 또는 마켓플레이스 모드일 때 폼 데이터 초기화
   useEffect(() => {
     if (editServer) {
       const serverConfig = {
@@ -463,11 +500,16 @@ export function AddServerDialog({
       
       // 편집 모드일 때 JSON 탭을 현재 서버 설정으로 초기화
       setJsonConfig(convertServerToJson(serverConfig));
+    } else if (marketplaceConfig) {
+      // 마켓플레이스 모드일 때
+      resetForm();
+      setActiveTab('json'); // JSON 탭으로 자동 전환
+      setJsonConfig(convertMarketplaceToJson(marketplaceConfig));
     } else {
       resetForm();
       setJsonConfig('');
     }
-  }, [editServer, open]);
+  }, [editServer, marketplaceConfig, open]);
 
   // 폼 초기화
   const resetForm = () => {

@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "categories": {
+    "productivity": {
+      "name": "생산성",
+      "icon": "briefcase",
+      "description": "업무 효율성 도구"
+    },
+    "development": {
+      "name": "개발",
+      "icon": "code",
+      "description": "개발 도구"
+    },
+    "automation": {
+      "name": "자동화", 
+      "icon": "bot",
+      "description": "자동화 도구"
+    },
+    "data": {
+      "name": "데이터",
+      "icon": "database",
+      "description": "데이터 처리"
+    }
+  }
+}

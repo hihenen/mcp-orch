@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { formatDateTime } from '@/lib/date-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,8 @@ import {
   Clock,
   Shield,
   ShieldOff,
-  ShieldCheck
+  ShieldCheck,
+  ShoppingCart
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { AddServerDialog } from '@/components/servers/AddServerDialog';
@@ -40,6 +41,7 @@ import { toast } from 'sonner';
 
 export default function ProjectServersPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.projectId as string;
   
   const {
@@ -257,10 +259,19 @@ export default function ProjectServersPage() {
               Manage your project's MCP servers
             </p>
           </div>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Server
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => router.push(`/projects/${projectId}/marketplace`)}
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Marketplace
+            </Button>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Server
+            </Button>
+          </div>
         </div>
 
         {/* Unified MCP Connection Info Section */}
