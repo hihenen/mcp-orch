@@ -6,7 +6,7 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import QueuePool
 
 from .models.base import Base
 
@@ -17,21 +17,51 @@ DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "1234")
 DB_NAME = os.getenv("DB_NAME", "mcp_orch")
 
+# Connection pool configuration
+POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5"))
+MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10"))
+POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", "3600"))  # 1 hour
+
+# SSL configuration
+SSL_MODE = os.getenv("DB_SSL_MODE", "prefer")  # prefer, require, disable
+SSL_CERT = os.getenv("DB_SSL_CERT")
+SSL_KEY = os.getenv("DB_SSL_KEY")
+SSL_ROOT_CERT = os.getenv("DB_SSL_ROOT_CERT")
+
 # Construct database URL from components
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-# Create async engine with search_path for mcp_orch schema
+# Prepare SSL connect_args
+ssl_context = {}
+if SSL_MODE != "disable":
+    ssl_context["ssl"] = SSL_MODE
+    if SSL_CERT:
+        ssl_context["ssl_cert"] = SSL_CERT
+    if SSL_KEY:
+        ssl_context["ssl_key"] = SSL_KEY
+    if SSL_ROOT_CERT:
+        ssl_context["ssl_ca"] = SSL_ROOT_CERT
+
+# Create async engine with optimized connection pool  
+# Note: poolclass is omitted for async engines - SQLAlchemy automatically uses AsyncAdaptedQueuePool
 engine = create_async_engine(
     DATABASE_URL,
     echo=bool(os.getenv("SQL_ECHO", False)),
-    poolclass=NullPool,  # Disable pooling for async safety
+    pool_size=POOL_SIZE,
+    max_overflow=MAX_OVERFLOW,
+    pool_timeout=POOL_TIMEOUT,
+    pool_recycle=POOL_RECYCLE,
+    pool_pre_ping=True,  # Validate connections before use
     connect_args={
         "server_settings": {
-            "search_path": "mcp_orch"
-        }
+            "search_path": "mcp_orch",
+            "application_name": "mcp-orch"
+        },
+        **ssl_context
     }
 )
 
@@ -44,12 +74,30 @@ async_session = async_sessionmaker(
 
 # Create sync engine and session for compatibility
 sync_database_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+
+# Prepare sync SSL connect_args (different format for psycopg2)
+sync_ssl_context = {}
+if SSL_MODE != "disable":
+    sync_ssl_context["sslmode"] = SSL_MODE
+    if SSL_CERT:
+        sync_ssl_context["sslcert"] = SSL_CERT
+    if SSL_KEY:
+        sync_ssl_context["sslkey"] = SSL_KEY
+    if SSL_ROOT_CERT:
+        sync_ssl_context["sslrootcert"] = SSL_ROOT_CERT
+
 sync_engine = create_engine(
     sync_database_url,
     echo=bool(os.getenv("SQL_ECHO", False)),
-    poolclass=NullPool,
+    poolclass=QueuePool,
+    pool_size=POOL_SIZE,
+    max_overflow=MAX_OVERFLOW,
+    pool_timeout=POOL_TIMEOUT,
+    pool_recycle=POOL_RECYCLE,
+    pool_pre_ping=True,  # Validate connections before use
     connect_args={
-        "options": "-c search_path=mcp_orch"
+        "options": "-c search_path=mcp_orch -c application_name=mcp-orch-sync",
+        **sync_ssl_context
     }
 )
 

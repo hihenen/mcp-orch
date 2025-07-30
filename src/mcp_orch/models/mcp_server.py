@@ -74,6 +74,9 @@ class McpServer(Base):
     total_tool_calls = Column(Integer, default=0, nullable=False)
     last_used_at = Column(DateTime, nullable=True)
     
+    # Metadata for server-specific information and failure tracking
+    server_metadata = Column(JSON, default=dict, nullable=False, comment="Server metadata including failure tracking")
+    
     # Relationships
     project = relationship("Project", back_populates="servers")
     created_by = relationship("User")

@@ -229,14 +229,21 @@ class ToolRegistry:
                 db_server.updated_at = datetime.utcnow()
                 
                 # 실패 이유를 메타데이터에 저장 (JSON 필드가 있다면)
-                if hasattr(db_server, 'metadata'):
-                    metadata = db_server.metadata or {}
-                    metadata['last_failure'] = {
+                if hasattr(db_server, 'server_metadata'):
+                    # db_server.server_metadata는 SQLAlchemy의 JSON 타입이므로 딕셔너리로 안전하게 처리
+                    current_metadata = db_server.server_metadata if db_server.server_metadata is not None else {}
+                    
+                    # JSON 필드에 실패 정보 추가
+                    failure_info = {
                         'error': error_message,
                         'timestamp': datetime.utcnow().isoformat(),
                         'auto_disabled': True
                     }
-                    db_server.metadata = metadata
+                    
+                    # 새로운 딕셔너리 생성하여 할당 (SQLAlchemy JSON 타입은 mutation tracking을 위해 재할당 필요)
+                    updated_metadata = dict(current_metadata)
+                    updated_metadata['last_failure'] = failure_info
+                    db_server.server_metadata = updated_metadata
                 
                 db.commit()
                 logger.warning(f"Auto-disabled MCP server '{server_name}' in database due to connection failure")
