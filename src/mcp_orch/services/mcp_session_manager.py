@@ -144,9 +144,16 @@ class McpSessionManager:
                 logger.warning(f"Failed to parse server_id format {server_id}: {e}")
                 return None, None
         else:
-            # 이미 UUID 형식인 경우
+            # UUID 또는 UUID_server_name 형식 처리
             try:
-                actual_server_id = UUID(server_id)
+                # '_'가 포함된 경우 UUID 부분만 추출
+                if '_' in server_id:
+                    uuid_part = server_id.split('_')[0]
+                    actual_server_id = UUID(uuid_part)
+                    logger.debug(f"Extracted UUID {uuid_part} from server_id {server_id}")
+                else:
+                    # 순수 UUID 형식
+                    actual_server_id = UUID(server_id)
                 return None, actual_server_id
             except (ValueError, TypeError) as e:
                 logger.error(f"Cannot convert server_id {server_id} to UUID: {e}")

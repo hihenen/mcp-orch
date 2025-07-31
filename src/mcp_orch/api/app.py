@@ -49,6 +49,7 @@ from .admin_projects import router as admin_projects_router
 from .admin_api_keys import router as admin_api_keys_router
 from .workers import router as workers_router
 from .tool_preferences import router as tool_preferences_router
+from .process_management import router as process_management_router
 from starlette.routing import Mount
 from mcp.server.sse import SseServerTransport
 
@@ -107,6 +108,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to start MCP Session Manager: {e}")
     
+    # 🚀 ProcessManager 초기화 (MCP 프로세스 자동 관리)
+    from ..services.process_manager import initialize_process_manager
+    try:
+        await initialize_process_manager()
+        logger.info("🎉 ProcessManager started - 자동 프로세스 관리 활성화")
+    except Exception as e:
+        logger.error(f"❌ ProcessManager 시작 실패: {e}")
+    
     yield
     
     # 종료 시
@@ -126,6 +135,14 @@ async def lifespan(app: FastAPI):
         logger.info("MCP Session Manager stopped")
     except Exception as e:
         logger.error(f"Error stopping MCP Session Manager: {e}")
+    
+    # 🛑 ProcessManager 종료 (모든 MCP 프로세스 안전하게 정리)
+    from ..services.process_manager import shutdown_process_manager
+    try:
+        await shutdown_process_manager()
+        logger.info("🎉 ProcessManager stopped - 모든 프로세스 정리 완료")
+    except Exception as e:
+        logger.error(f"❌ ProcessManager 종료 중 오류: {e}")
     
     await controller.shutdown()
 
@@ -374,6 +391,7 @@ def create_app(settings: Settings = None) -> FastAPI:
     app.include_router(admin_api_keys_router)  # 🔧 관리자 API Keys 관리 API
     app.include_router(workers_router)  # 🔧 워커 관리 API
     app.include_router(tool_preferences_router)  # 🔧 Tool Preferences 관리 API (필터링 시스템)
+    app.include_router(process_management_router)  # 🔧 MCP 프로세스 관리 API
     app.include_router(fastmcp_router)
     
     # 2. 프로젝트 관리 API (일반 API 라우터)

@@ -66,9 +66,17 @@ class McpServer(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Process tracking
-    process_id = Column(Integer, nullable=True)  # OS process ID when running
+    process_id = Column(Integer, nullable=True, comment="OS process ID when running")
     last_started_at = Column(DateTime, nullable=True)
     last_error = Column(String(1000), nullable=True)
+    
+    # Health monitoring
+    last_health_check = Column(DateTime, nullable=True, comment="Last successful health check timestamp")
+    health_check_failures = Column(Integer, default=0, nullable=False, comment="Consecutive health check failures count")
+    last_restart_attempt = Column(DateTime, nullable=True, comment="Last restart attempt timestamp")
+    restart_count = Column(Integer, default=0, nullable=False, comment="Total restart count")
+    is_auto_restart_enabled = Column(Boolean, default=True, nullable=False, comment="Auto restart on failure enabled")
+    failure_reason = Column(String(1000), nullable=True, comment="Last failure reason")
     
     # Usage statistics
     total_tool_calls = Column(Integer, default=0, nullable=False)
@@ -103,6 +111,26 @@ class McpServer(Base):
     def is_running(self) -> bool:
         """Check if server is currently running."""
         return self.status == McpServerStatus.ACTIVE
+    
+    @property
+    def is_healthy(self) -> bool:
+        """Check if server is healthy (running with recent health check)."""
+        if not self.is_running or not self.last_health_check:
+            return False
+        
+        # Consider healthy if health check was within 10 minutes
+        from datetime import timedelta
+        healthy_threshold = datetime.utcnow() - timedelta(minutes=10)
+        return self.last_health_check > healthy_threshold
+    
+    @property
+    def needs_restart(self) -> bool:
+        """Check if server needs restart due to failures."""
+        return (
+            self.is_auto_restart_enabled and
+            self.health_check_failures >= 3 and
+            self.status != McpServerStatus.STARTING
+        )
     
     def get_effective_jwt_auth_required(self) -> bool:
         """
