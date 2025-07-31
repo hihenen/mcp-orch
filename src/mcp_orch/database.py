@@ -17,11 +17,15 @@ DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "1234")
 DB_NAME = os.getenv("DB_NAME", "mcp_orch")
 
-# Connection pool configuration
-POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "5"))
-MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10"))
-POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+# Connection pool configuration optimized for Aurora RDS
+POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "20"))  # Aurora can handle more concurrent connections
+MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "30"))  # Total max: 50 connections
+POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "60"))  # Increased timeout for high load
 POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", "3600"))  # 1 hour
+
+# Aurora-specific optimizations
+POOL_PRE_PING = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"  # Validate connections
+POOL_RESET_ON_RETURN = os.getenv("DB_POOL_RESET_ON_RETURN", "commit")  # commit, rollback, none
 
 # SSL configuration
 SSL_MODE = os.getenv("DB_SSL_MODE", "prefer")  # prefer, require, disable
@@ -46,7 +50,7 @@ if SSL_MODE != "disable":
     if SSL_ROOT_CERT:
         ssl_context["ssl_ca"] = SSL_ROOT_CERT
 
-# Create async engine with optimized connection pool  
+# Create async engine with Aurora RDS optimized connection pool  
 # Note: poolclass is omitted for async engines - SQLAlchemy automatically uses AsyncAdaptedQueuePool
 engine = create_async_engine(
     DATABASE_URL,
@@ -55,7 +59,8 @@ engine = create_async_engine(
     max_overflow=MAX_OVERFLOW,
     pool_timeout=POOL_TIMEOUT,
     pool_recycle=POOL_RECYCLE,
-    pool_pre_ping=True,  # Validate connections before use
+    pool_pre_ping=POOL_PRE_PING,  # Validate connections before use
+    pool_reset_on_return=POOL_RESET_ON_RETURN,  # Aurora connection state management
     connect_args={
         "server_settings": {
             "search_path": "mcp_orch",
@@ -94,7 +99,8 @@ sync_engine = create_engine(
     max_overflow=MAX_OVERFLOW,
     pool_timeout=POOL_TIMEOUT,
     pool_recycle=POOL_RECYCLE,
-    pool_pre_ping=True,  # Validate connections before use
+    pool_pre_ping=POOL_PRE_PING,  # Validate connections before use
+    pool_reset_on_return=POOL_RESET_ON_RETURN,  # Aurora connection state management
     connect_args={
         "options": "-c search_path=mcp_orch -c application_name=mcp-orch-sync",
         **sync_ssl_context
