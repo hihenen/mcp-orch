@@ -18,8 +18,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "1234")
 DB_NAME = os.getenv("DB_NAME", "mcp_orch")
 
 # Connection pool configuration optimized for Aurora RDS
-POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "20"))  # Aurora can handle more concurrent connections
-MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "30"))  # Total max: 50 connections
+POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "30"))  # Aurora can handle more concurrent connections
+MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "70"))  # Total max: 100 connections
 POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "60"))  # Increased timeout for high load
 POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", "3600"))  # 1 hour
 
