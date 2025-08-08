@@ -493,6 +493,7 @@ async def run_mcp_bridge_session(
         # 도구 실행을 실제 서버로 프록시
         @mcp_server.call_tool()
         async def call_tool(name: str, arguments: dict):
+            tool_log_db = None  # 세션 변수 초기화
             try:
                 logger.info(f"Proxying tool call to {server_name}: {name} with arguments: {arguments}")
                 
@@ -548,14 +549,19 @@ async def run_mcp_bridge_session(
                     raise
                     
                 finally:
-                    # 동기 세션 정리
+                    # 동기 세션 정리 - 확실한 정리 보장
                     if tool_log_db:
-                        tool_log_db.close()
+                        try:
+                            tool_log_db.close()
+                            logger.debug(f"Tool log DB session closed for tool: {name}")
+                        except Exception as close_error:
+                            logger.error(f"Error closing tool log DB session: {close_error}")
                 
             except Exception as e:
                 logger.error(f"Error calling tool {name} on {server_name}: {e}")
                 
                 # SSE 브리지 레벨 에러도 ToolCallLog에 기록
+                error_log_db = None  # 세션 변수 초기화
                 try:
                     from ..models import ToolCallLog, CallStatus
                     import time
@@ -607,8 +613,19 @@ async def run_mcp_bridge_session(
                         
                     except Exception as log_error:
                         logger.error(f"❌ Failed to log SSE bridge error: {log_error}")
+                        if error_log_db:
+                            try:
+                                error_log_db.rollback()  # 롤백 시도
+                            except:
+                                pass
                     finally:
-                        error_log_db.close()
+                        # 에러 로그 DB 세션 확실한 정리
+                        if error_log_db:
+                            try:
+                                error_log_db.close()
+                                logger.debug(f"Error log DB session closed for tool: {name}")
+                            except Exception as close_error:
+                                logger.error(f"Error closing error log DB session: {close_error}")
                         
                 except ImportError:
                     logger.warning("Could not import ToolCallLog for error logging")
@@ -639,18 +656,21 @@ async def run_mcp_bridge_session(
         raise
         
     finally:
-        # 세션 종료 처리
-        if client_session and db:
-            try:
-                client_session.status = 'inactive'
-                client_session.updated_at = datetime.utcnow()
-                db.commit()
-                logger.info(f"🔌 ClientSession {session_id} disconnected")
-                
-                # ServerLog에 연결 종료 이벤트 기록 (별도 DB 세션 사용)
+        # 세션 종료 처리 - 안전한 DB 세션 관리
+        log_db = None
+        try:
+            if client_session and db:
                 try:
+                    client_session.status = 'inactive'
+                    client_session.updated_at = datetime.utcnow()
+                    db.commit()
+                    logger.info(f"🔌 ClientSession {session_id} disconnected")
+                    
+                    # ServerLog에 연결 종료 이벤트 기록 (별도 DB 세션 사용)
+                    # 중요: context manager 대신 try-finally로 확실한 정리 보장
                     from ..services.server_log_service import ServerLogService
-                    with next(get_db()) as log_db:
+                    try:
+                        log_db = next(get_db())  # DB 세션 생성
                         log_service = ServerLogService(log_db)
                         log_service.add_log(
                             server_id=server_record.id,
@@ -665,14 +685,35 @@ async def run_mcp_bridge_session(
                                 "failed_requests": client_session.failed_requests
                             }
                         )
-                    logger.info(f"📝 Disconnection log recorded for session {session_id}")
-                except Exception as log_error:
-                    logger.error(f"Failed to record disconnection log: {log_error}")
+                        log_db.commit()  # 명시적 commit
+                        logger.info(f"📝 Disconnection log recorded for session {session_id}")
+                    except Exception as log_error:
+                        logger.error(f"Failed to record disconnection log: {log_error}")
+                        if log_db:
+                            try:
+                                log_db.rollback()  # 롤백 시도
+                            except:
+                                pass
+                    finally:
+                        # 로그 DB 세션 확실한 정리
+                        if log_db:
+                            try:
+                                log_db.close()
+                                logger.debug(f"Log DB session closed for session {session_id}")
+                            except Exception as close_error:
+                                logger.error(f"Error closing log DB session: {close_error}")
+                        
+                except Exception as e:
+                    logger.error(f"Error updating session on disconnect: {e}")
                     
-            except Exception as e:
-                logger.error(f"Error updating session on disconnect: {e}")
-            finally:
-                db.close()
+        finally:
+            # 메인 DB 세션 정리
+            if db:
+                try:
+                    db.close()
+                    logger.debug(f"Main DB session closed for session {session_id}")
+                except Exception as close_error:
+                    logger.error(f"Error closing main DB session: {close_error}")
 
 
 # 이제 python-sdk Server 클래스가 모든 메시지 처리를 담당하므로

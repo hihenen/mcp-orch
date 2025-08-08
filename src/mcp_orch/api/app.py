@@ -65,6 +65,7 @@ async def lifespan(app: FastAPI):
     
     # 시작 시
     import time
+    import asyncio
     logger.info("Starting MCP Orch API server")
     
     # Set application start time for uptime tracking
@@ -73,6 +74,20 @@ async def lifespan(app: FastAPI):
     # 컨트롤러 초기화
     controller = app.state.controller
     await controller.initialize()
+    
+    # 데이터베이스 풀 모니터링 초기화
+    try:
+        from ..database import engine, sync_engine
+        from ..utils.db_pool_monitor import init_monitor
+        
+        monitor = init_monitor(engine, sync_engine)
+        app.state.db_monitor = monitor
+        
+        # 모니터링 태스크 시작 (1분마다 체크)
+        monitor_task = asyncio.create_task(monitor.monitor_loop(interval=60))
+        logger.info("📊 Database pool monitoring started")
+    except Exception as e:
+        logger.warning(f"Failed to initialize database pool monitoring: {e}")
     
     # Auto-provisioning 설정 상태 로깅
     auto_provision = os.getenv("AUTO_PROVISION", "false").lower() == "true"
@@ -672,11 +687,17 @@ def create_app(settings: Settings = None) -> FastAPI:
         """서버 상태 확인"""
         controller_status = await app.state.controller.get_status()
         
+        # 데이터베이스 풀 상태 추가
+        db_pool_status = None
+        if hasattr(app.state, 'db_monitor') and app.state.db_monitor:
+            db_pool_status = app.state.db_monitor.get_pool_status()
+        
         return {
             "status": "healthy" if controller_status["is_running"] else "unhealthy",
             "mode": controller_status["mode"],
             "version": "0.1.0",
-            "details": controller_status
+            "details": controller_status,
+            "db_pool": db_pool_status
         }
         
     # 루트 엔드포인트

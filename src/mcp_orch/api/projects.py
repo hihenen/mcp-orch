@@ -1613,16 +1613,48 @@ async def toggle_project_server(
         )
     
     # 서버 상태 토글
+    was_enabled = server.is_enabled
     server.is_enabled = not server.is_enabled
     server.updated_at = datetime.utcnow()
+    
+    # Disable 시 실행 중인 프로세스 종료
+    process_stop_result = None
+    if was_enabled and not server.is_enabled:
+        logger.info(f"🛑 서버 '{server.name}' 비활성화로 인한 프로세스 종료 시도")
+        try:
+            # ProcessManager를 통한 프로세스 종료
+            from ..services.process_manager import get_process_manager
+            
+            # ProcessManager 인스턴스 가져오기
+            process_manager = get_process_manager()
+            process_stop_result = await process_manager.stop_server(str(server.id))
+            
+            if process_stop_result:
+                logger.info(f"✅ 서버 '{server.name}' 프로세스 정상 종료")
+            else:
+                logger.warning(f"⚠️ 서버 '{server.name}' 프로세스 종료 실패 또는 이미 중지됨")
+                
+        except Exception as e:
+            logger.error(f"❌ 서버 '{server.name}' 프로세스 종료 중 오류: {e}")
+            process_stop_result = False
     
     db.commit()
     db.refresh(server)
     
     status_text = "비활성화" if not server.is_enabled else "활성화"
+    response_message = f"서버 '{server.name}'가 {status_text}되었습니다."
+    
+    # 프로세스 종료 결과 메시지 추가
+    if not server.is_enabled and process_stop_result is not None:
+        if process_stop_result:
+            response_message += " (실행 중이던 프로세스도 정상 종료됨)"
+        else:
+            response_message += " (프로세스 종료 실패 또는 이미 중지된 상태)"
+    
     return {
-        "message": f"서버 '{server.name}'가 {status_text}되었습니다.",
-        "is_enabled": server.is_enabled
+        "message": response_message,
+        "is_enabled": server.is_enabled,
+        "process_stopped": process_stop_result if not server.is_enabled else None
     }
 
 
