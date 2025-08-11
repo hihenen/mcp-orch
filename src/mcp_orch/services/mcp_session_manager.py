@@ -232,7 +232,7 @@ class McpSessionManager:
         return session
     
     async def initialize_session(self, session: McpSession) -> None:
-        """MCP 세션 초기화 (한 번만 실행)"""
+        """MCP 세션 초기화 (재시도 메커니즘 포함)"""
         if session.is_initialized:
             return
             
@@ -242,46 +242,65 @@ class McpSessionManager:
                 
             logger.info(f"🔧 Initializing MCP session for server {session.server_id}")
             
-            # MCP 프로토콜 초기화 메시지
-            init_message = {
-                "jsonrpc": "2.0",
-                "id": self._get_next_message_id(),
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "roots": {"listChanged": True},
-                        "sampling": {}
-                    },
-                    "clientInfo": {
-                        "name": "mcp-orch", 
-                        "version": "1.0.0"
+            # 재시도 설정
+            max_retries = 3
+            base_delay = 1  # 초기 대기 시간 (초)
+            
+            for attempt in range(max_retries):
+                try:
+                    if attempt > 0:
+                        delay = base_delay * (2 ** (attempt - 1))
+                        logger.info(f"⏳ Retrying initialization (attempt {attempt + 1}/{max_retries}) after {delay}s delay...")
+                        await asyncio.sleep(delay)
+                    
+                    # MCP 프로토콜 초기화 메시지
+                    init_message = {
+                        "jsonrpc": "2.0",
+                        "id": self._get_next_message_id(),
+                        "method": "initialize",
+                        "params": {
+                            "protocolVersion": "2024-11-05",
+                            "capabilities": {
+                                "roots": {"listChanged": True},
+                                "sampling": {}
+                            },
+                            "clientInfo": {
+                                "name": "mcp-orch", 
+                                "version": "1.0.0"
+                            }
+                        }
                     }
-                }
-            }
-            
-            # 초기화 메시지 전송
-            await self._send_message(session, init_message)
-            
-            # 초기화 응답 대기 (메시지 ID 매칭)
-            init_response = await self._read_message(session, timeout=10, expected_id=init_message['id'])
-            if not init_response or init_response.get('id') != init_message['id']:
-                raise Exception("Failed to receive initialization response")
-            
-            if 'error' in init_response:
-                error_msg = init_response['error'].get('message', 'Unknown error')
-                raise Exception(f"Server initialization failed: {error_msg}")
-            
-            # initialized notification 전송 (MCP 표준)
-            initialized_notification = {
-                "jsonrpc": "2.0",
-                "method": "notifications/initialized",
-                "params": {}
-            }
-            await self._send_message(session, initialized_notification)
-            
-            session.is_initialized = True
-            logger.info(f"✅ MCP session initialized for server {session.server_id}")
+                    
+                    # 초기화 메시지 전송
+                    await self._send_message(session, init_message)
+                    
+                    # 초기화 응답 대기 (메시지 ID 매칭) - Context7 등 복잡한 서버를 위해 타임아웃 증가
+                    init_response = await self._read_message(session, timeout=30, expected_id=init_message['id'])
+                    if not init_response or init_response.get('id') != init_message['id']:
+                        raise Exception("Failed to receive initialization response")
+                    
+                    if 'error' in init_response:
+                        error_msg = init_response['error'].get('message', 'Unknown error')
+                        raise Exception(f"Server initialization failed: {error_msg}")
+                    
+                    # initialized notification 전송 (MCP 표준)
+                    initialized_notification = {
+                        "jsonrpc": "2.0",
+                        "method": "notifications/initialized",
+                        "params": {}
+                    }
+                    await self._send_message(session, initialized_notification)
+                    
+                    session.is_initialized = True
+                    logger.info(f"✅ MCP session initialized for server {session.server_id} (attempt {attempt + 1})")
+                    break  # 성공 시 재시도 루프 종료
+                    
+                except Exception as e:
+                    logger.warning(f"❌ Initialization attempt {attempt + 1} failed for server {session.server_id}: {e}")
+                    if attempt == max_retries - 1:
+                        # 모든 재시도 실패
+                        logger.error(f"💥 All {max_retries} initialization attempts failed for server {session.server_id}")
+                        raise e
             
             # 🔄 서버 상태 자동 업데이트: MCP 세션 초기화 성공 시 ACTIVE로 설정
             try:
@@ -299,6 +318,54 @@ class McpSessionManager:
             except Exception as e:
                 logger.error(f"❌ Failed to update server status on MCP session init: {e}")
     
+    def _should_retry_error(self, error: Exception) -> str:
+        """재시도 가능한 오류인지 확인하고 오류 타입 반환"""
+        error_msg = str(error).lower()
+        
+        # 초기화 관련 오류
+        if any(keyword in error_msg for keyword in [
+            'initialization', 'initialize', 'before initialization', 
+            'not initialized', 'initialization incomplete'
+        ]):
+            return 'initialization'
+        
+        # 파라미터 관련 오류
+        if any(keyword in error_msg for keyword in [
+            'invalid request parameters', 'invalid parameters',
+            'parameter error', 'bad request'
+        ]):
+            return 'parameters'
+        
+        # 타임아웃 관련 오류
+        if any(keyword in error_msg for keyword in [
+            'timeout', 'timed out', 'connection timeout'
+        ]):
+            return 'timeout'
+        
+        # 연결 관련 오류
+        if any(keyword in error_msg for keyword in [
+            'connection', 'connect', 'no response', 'read timeout'
+        ]):
+            return 'connection'
+        
+        return None  # 재시도 불가능한 오류
+    
+    async def _wait_before_retry(self, error_type: str, attempt: int):
+        """오류 타입별 재시도 대기"""
+        delay_maps = {
+            'initialization': [2, 4, 8],     # 초기화 오류: 긴 대기
+            'parameters': [0.5, 1, 2],       # 파라미터 오류: 짧은 대기
+            'timeout': [1, 3, 5],            # 타임아웃 오류: 중간 대기
+            'connection': [1, 2, 4],         # 연결 오류: 기본 대기
+            'default': [1, 2, 4]             # 기본
+        }
+        
+        delays = delay_maps.get(error_type, delay_maps['default'])
+        delay = delays[min(attempt, len(delays) - 1)]
+        
+        logger.info(f"⏳ Waiting {delay}s before retry (error_type: {error_type}, attempt: {attempt + 1})")
+        await asyncio.sleep(delay)
+    
     async def call_tool(
         self, 
         server_id: str, 
@@ -311,7 +378,65 @@ class McpSessionManager:
         ip_address: Optional[str] = None,
         db: Optional[Session] = None
     ) -> Dict:
-        """MCP 도구 호출 - 지속적 세션 사용"""
+        """MCP 도구 호출 - 재시도 메커니즘 포함"""
+        max_retries = 3
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                if attempt > 0:
+                    logger.info(f"🔄 Retrying tool call {tool_name} (attempt {attempt + 1}/{max_retries})")
+                
+                result = await self._call_tool_single(
+                    server_id, server_config, tool_name, arguments,
+                    session_id, project_id, user_agent, ip_address, db
+                )
+                
+                if attempt > 0:
+                    logger.info(f"✅ Tool call {tool_name} succeeded on attempt {attempt + 1}")
+                
+                return result
+                
+            except Exception as e:
+                last_error = e
+                error_type = self._should_retry_error(e)
+                
+                if error_type and attempt < max_retries - 1:
+                    logger.warning(f"❌ Tool call {tool_name} failed (attempt {attempt + 1}): {e}")
+                    logger.info(f"🔄 Will retry due to {error_type} error")
+                    
+                    # 심각한 초기화 오류의 경우 세션 재생성 고려
+                    if error_type == 'initialization' and attempt > 0:
+                        try:
+                            logger.info(f"🔄 Recreating session due to persistent initialization issues")
+                            if server_id in self.sessions:
+                                await self.close_session(server_id)
+                        except Exception as cleanup_error:
+                            logger.warning(f"⚠️ Session cleanup failed: {cleanup_error}")
+                    
+                    await self._wait_before_retry(error_type, attempt)
+                    continue
+                
+                # 재시도 불가능하거나 모든 재시도 실패
+                break
+        
+        # 모든 재시도 실패
+        logger.error(f"💥 Tool call {tool_name} failed after {max_retries} attempts")
+        raise last_error
+    
+    async def _call_tool_single(
+        self, 
+        server_id: str, 
+        server_config: Dict, 
+        tool_name: str, 
+        arguments: Dict,
+        session_id: Optional[str] = None,
+        project_id: Optional[Union[str, UUID]] = None,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        db: Optional[Session] = None
+    ) -> Dict:
+        """단일 MCP 도구 호출 (재시도 로직 없음)"""
         start_time = time.time()
         
         # 프로젝트 ID 변환

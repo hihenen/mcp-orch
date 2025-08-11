@@ -122,11 +122,17 @@ class ProcessManager:
                 server.last_error = None
                 await db.commit()
                 
-                # 세션 매니저에 등록
-                await self.session_manager.register_process(server_id, process)
+                # TODO: 세션 매니저 통합 필요
+                # await self.session_manager.register_process(server_id, process)
                 
                 # 시작 검증 (30초 대기)
                 if await self._verify_startup(process.pid):
+                    # 프로세스 시작 확인됨, 이제 MCP 초기화 대기
+                    logger.info(f"✅ 프로세스 시작 확인됨. MCP 초기화 대기 중... (서버: {server.name}, PID: {process.pid})")
+                    
+                    # MCP 세션 초기화 시도 (별도 스레드에서 처리하되 결과는 로그로만)
+                    asyncio.create_task(self._verify_mcp_initialization(server_id, server.name))
+                    
                     logger.info(f"🎉 서버 {server.name} 시작 완료 (PID: {process.pid})")
                     return True
                 else:
@@ -159,8 +165,8 @@ class ProcessManager:
                 server.status = McpServerStatus.INACTIVE
                 await db.commit()
                 
-                # 세션 매니저에서 제거
-                await self.session_manager.unregister_process(server_id)
+                # TODO: 세션 매니저 통합 필요
+                # await self.session_manager.unregister_process(server_id)
                 
                 logger.info(f"🛑 서버 {server.name} 중지 완료")
                 return success
@@ -454,6 +460,38 @@ class ProcessManager:
                     statuses.append(status)
             
             return statuses
+    
+    async def _verify_mcp_initialization(self, server_id: str, server_name: str):
+        """MCP 초기화 검증 (백그라운드 작업)"""
+        try:
+            logger.info(f"🔄 MCP 초기화 검증 시작: {server_name}")
+            
+            # 서버 설정 조회
+            async with async_session() as db:
+                server = await db.get(McpServer, server_id)
+                if not server:
+                    logger.error(f"❌ 서버 {server_id} 찾을 수 없음")
+                    return
+                
+                server_config = {
+                    "command": server.command,
+                    "args": server.args or [],
+                    "env": server.env or {},
+                    "timeout": server.timeout,
+                    "is_enabled": server.is_enabled
+                }
+            
+            # 세션 매니저 사용하여 초기화 시도
+            try:
+                session = await self.session_manager.get_or_create_session(server_id, server_config)
+                await self.session_manager.initialize_session(session)
+                logger.info(f"✅ MCP 초기화 성공: {server_name}")
+            except Exception as e:
+                logger.warning(f"⚠️ MCP 초기화 실패 (정상적인 경우일 수 있음): {server_name} - {e}")
+                # 초기화 실패는 크리티컬하지 않음 - 첫 요청 시에도 시도됨
+            
+        except Exception as e:
+            logger.error(f"❌ MCP 초기화 검증 중 오류: {server_name} - {e}")
 
 
 # 전역 인스턴스
