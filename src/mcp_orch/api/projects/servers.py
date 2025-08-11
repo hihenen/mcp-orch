@@ -8,6 +8,7 @@ from uuid import UUID
 from datetime import datetime
 import logging
 import json
+import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
@@ -243,14 +244,17 @@ async def list_project_servers(
     
     logger.info(f"Retrieved {len(servers)} servers for project {project_id}")
     
-    # 각 서버의 상태 정보를 병렬로 가져오기
-    server_responses = []
-    for server in servers:
+    # 병렬로 모든 서버의 상태 정보를 동시에 가져오기
+    async def get_server_response(server: McpServer) -> McpServerResponse:
+        """단일 서버의 상태 정보를 조회하여 응답 객체 생성"""
         try:
-            # 각 서버의 상태 정보 조회
-            status_info = await get_server_status(server)
+            # 개별 서버의 상태 정보 조회 (타임아웃 추가)
+            status_info = await asyncio.wait_for(
+                get_server_status(server),
+                timeout=10.0  # 개별 서버당 최대 10초
+            )
             
-            server_responses.append(McpServerResponse(
+            return McpServerResponse(
                 id=str(server.id),
                 name=server.name,
                 command=server.command,
@@ -265,26 +269,68 @@ async def list_project_servers(
                 jwt_auth_required=server.get_effective_jwt_auth_required(),
                 status=status_info["status"],
                 tools_count=len(status_info["tools"])
-            ))
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"⏱️ Timeout getting status for server {server.id}")
+            return _create_fallback_response(server, "timeout")
         except Exception as e:
             logger.warning(f"⚠️ Failed to get status for server {server.id}: {e}")
-            # 상태 조회 실패 시 기본값으로 응답
-            server_responses.append(McpServerResponse(
-                id=str(server.id),
-                name=server.name,
-                command=server.command,
-                args=server.args or [],
-                env=server.env or {},
-                timeout=server.timeout,
-                is_enabled=server.is_enabled,
-                project_id=str(server.project_id),
-                created_at=server.created_at,
-                updated_at=server.updated_at,
-                last_used_at=server.last_used_at,
-                jwt_auth_required=server.get_effective_jwt_auth_required(),
-                status="unknown",
-                tools_count=0
-            ))
+            return _create_fallback_response(server, "unknown")
+    
+    def _create_fallback_response(server: McpServer, status: str = "unknown") -> McpServerResponse:
+        """상태 조회 실패 시 기본 응답 생성"""
+        return McpServerResponse(
+            id=str(server.id),
+            name=server.name,
+            command=server.command,
+            args=server.args or [],
+            env=server.env or {},
+            timeout=server.timeout,
+            is_enabled=server.is_enabled,
+            project_id=str(server.project_id),
+            created_at=server.created_at,
+            updated_at=server.updated_at,
+            last_used_at=server.last_used_at,
+            jwt_auth_required=server.get_effective_jwt_auth_required(),
+            status=status,
+            tools_count=0
+        )
+    
+    # 모든 서버의 상태를 병렬로 확인 (최대 15초 전체 타임아웃)
+    try:
+        start_time = datetime.utcnow()
+        logger.info(f"🚀 Starting parallel status check for {len(servers)} servers")
+        
+        server_responses = await asyncio.wait_for(
+            asyncio.gather(
+                *[get_server_response(server) for server in servers],
+                return_exceptions=True
+            ),
+            timeout=15.0  # 전체 작업에 대한 최대 타임아웃
+        )
+        
+        # 예외 처리된 결과들 필터링
+        valid_responses = []
+        for i, response in enumerate(server_responses):
+            if isinstance(response, Exception):
+                logger.error(f"❌ Exception for server {servers[i].id}: {response}")
+                valid_responses.append(_create_fallback_response(servers[i], "error"))
+            else:
+                valid_responses.append(response)
+        
+        elapsed_time = (datetime.utcnow() - start_time).total_seconds()
+        logger.info(f"✅ Parallel status check completed in {elapsed_time:.2f} seconds")
+        
+        server_responses = valid_responses
+        
+    except asyncio.TimeoutError:
+        logger.error(f"⏱️ Global timeout reached for server status checks")
+        # 타임아웃 시 모든 서버를 기본 상태로 반환
+        server_responses = [_create_fallback_response(server, "timeout") for server in servers]
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in parallel status check: {e}")
+        # 에러 시 모든 서버를 기본 상태로 반환
+        server_responses = [_create_fallback_response(server, "error") for server in servers]
     
     return server_responses
 

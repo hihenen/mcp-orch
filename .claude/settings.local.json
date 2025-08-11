@@ -14,7 +14,16 @@
       "mcp__serena__find_symbol",
       "mcp__serena__get_symbols_overview",
       "mcp__serena__find_file",
-      "mcp__serena__replace_regex"
+      "mcp__serena__replace_regex",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(mkdir:*)",
+      "Bash(python:*)",
+      "Bash(pip show:*)",
+      "Bash(uv run:*)",
+      "Bash(uv pip:*)",
+      "WebFetch(domain:github.com)",
+      "mcp__serena__think_about_collected_information"
     ],
     "deny": []
   },

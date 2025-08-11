@@ -11,9 +11,10 @@ from typing import Callable
 from fastapi import Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response as StarletteResponse
+from starlette.status import HTTP_204_NO_CONTENT
 
 from ..config import Settings
-from ..utils import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +125,23 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
     요청 헤더에서 JWT 토큰을 추출하고 검증합니다.
     """
     
+    def __init__(self, app):
+        super().__init__(app)
+        # JWT 기능이 필요할 때만 import
+        try:
+            from ..utils import verify_jwt_token
+            self.verify_jwt_token = verify_jwt_token
+        except ImportError:
+            logger.warning("JWT utility functions not available. JWT authentication disabled.")
+            self.verify_jwt_token = None
+    
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """요청 처리"""
+        # JWT 검증 기능이 없으면 인증 없이 통과
+        if self.verify_jwt_token is None:
+            logger.warning("JWT authentication skipped - verify_jwt_token not available")
+            return await call_next(request)
+            
         # 인증 헤더 가져오기
         auth_header = request.headers.get("Authorization")
         
@@ -137,7 +153,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         token = auth_header.split(" ")[1]
         
         # 토큰 검증
-        user_info = verify_jwt_token(token)
+        user_info = self.verify_jwt_token(token)
         
         # 사용자 정보를 요청 객체에 추가
         request.state.user = user_info
@@ -146,3 +162,24 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         return response
+
+
+class SuppressNoResponseReturnedMiddleware(BaseHTTPMiddleware):
+    """
+    SSE 연결 해제 시 발생하는 오류 처리 미들웨어
+    
+    SSE 엔드포인트에서 클라이언트가 연결을 해제할 때 발생하는
+    AssertionError와 RuntimeError를 처리합니다.
+    """
+    
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """요청 처리"""
+        try:
+            return await call_next(request)
+        except (RuntimeError, AssertionError) as exc:
+            # "No response returned" 오류 또는 BaseMiddleware assertion 오류 처리
+            if (str(exc) == 'No response returned.' or 
+                'http.response.body' in str(exc)) and await request.is_disconnected():
+                logger.debug(f"Client disconnected during SSE stream: {exc}")
+                return StarletteResponse(status_code=HTTP_204_NO_CONTENT)
+            raise

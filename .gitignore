@@ -1,6 +1,11 @@
 # Claude Code private instructions (should not be public)
 CLAUDE.md
 
+# Agent OS and related tool directories
+.agent-os/
+.claude/
+.taskmaster/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

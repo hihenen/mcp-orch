@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from ..config import Settings
 from ..core.controller import DualModeController
 from .jwt_auth import JWTAuthMiddleware
+from .middleware import SuppressNoResponseReturnedMiddleware
 from .users import router as users_router
 # 기존 모놀리식 teams 라우터 임시 비활성화
 # from .teams import router as teams_router
@@ -188,6 +189,9 @@ def create_app(settings: Settings = None) -> FastAPI:
     # 설정 및 컨트롤러 저장
     app.state.settings = settings
     app.state.controller = DualModeController(settings)
+    
+    # SSE 연결 해제 오류 처리 미들웨어 (가장 첫 번째)
+    app.add_middleware(SuppressNoResponseReturnedMiddleware)
     
     # CORS 미들웨어
     app.add_middleware(
